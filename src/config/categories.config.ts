@@ -1,5 +1,5 @@
-import { PALETTE } from '@/theme/colors'
-import type { Category, CategoryType, SubCategory } from '@/types'
+import { PALETTE } from '@/theme'
+import type { Category, SubCategory } from '@/types'
 
 // ===============================================================
 // 1. CATEGORY META
@@ -10,91 +10,91 @@ const CATEGORY_META = {
     name: 'Housing',
     icon: '🏡',
     color: PALETTE.orange[500],
-    type: 'expense' as CategoryType
+    type: 'expense' as const
   },
   food: {
     name: 'Food',
     icon: '🍽️',
     color: PALETTE.amber[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   lifestyle: {
     name: 'Lifestyle',
     icon: '💅',
     color: PALETTE.pink[300],
-    type: 'expense'
+    type: 'expense' as const
   },
   health: {
     name: 'Health',
     icon: '🩺',
     color: PALETTE.red[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   family: {
     name: 'Family & Children',
     icon: '🧸',
     color: PALETTE.yellow[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   pets: {
     name: 'Pets',
     icon: '🐶',
     color: PALETTE.green[300],
-    type: 'expense'
+    type: 'expense' as const
   },
   social: {
     name: 'Social & Entertainment',
     icon: '🎉',
     color: PALETTE.purple[300],
-    type: 'expense'
+    type: 'expense' as const
   },
   gifts: {
     name: 'Gifts & Occasions',
     icon: '🎁',
     color: PALETTE.fuchsia[300],
-    type: 'expense'
+    type: 'expense' as const
   },
   transport: {
     name: 'Transportation',
     icon: '🚗',
     color: PALETTE.blue[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   communication: {
     name: 'Communication',
     icon: '📱',
     color: PALETTE.teal[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   subscriptions: {
     name: 'Subscriptions',
     icon: '📺',
     color: PALETTE.indigo[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   travel: {
     name: 'Travel',
     icon: '🌍',
     color: PALETTE.blue[500],
-    type: 'expense'
+    type: 'expense' as const
   },
   insurance: {
     name: 'Insurance',
     icon: '🛡️',
     color: PALETTE.orange[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   donations: {
     name: 'Donations',
     icon: '🙏',
     color: PALETTE.rose[400],
-    type: 'expense'
+    type: 'expense' as const
   },
   savings: {
     name: 'Savings & Investment',
     icon: '💰',
     color: PALETTE.green[500],
-    type: 'transfer'
+    type: 'transfer' as const
   }
 } as const
 
@@ -102,7 +102,7 @@ const CATEGORY_META = {
 // 2. SUBCATEGORIES
 // ===============================================================
 
-const SUB: Record<string, SubCategory[]> = {
+const SUBCATEGORIES: Record<string, SubCategory[]> = {
   // ---------------------------------------------------------------
   // 1) Housing
   // ---------------------------------------------------------------
@@ -264,6 +264,6 @@ export const CATEGORIES: Category[] = Object.entries(CATEGORY_META).map(
     icon: meta.icon,
     color: meta.color,
     type: meta.type,
-    subCategories: SUB[id] ?? []
+    subCategories: SUBCATEGORIES[id] ?? []
   })
 )
