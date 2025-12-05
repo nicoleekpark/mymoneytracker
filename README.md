@@ -1,12 +1,25 @@
-# HoH Finance Tracker
-
-## Overview
-A cross platform application that provides flexible budget setting and tracking.
+# WIP
 
 ## Table of Contents
+- [WIP](#wip)
+  - [Table of Contents](#table-of-contents)
 - [HoH Finance Tracker](#hoh-finance-tracker)
   - [Overview](#overview)
-  - [Table of Contents](#table-of-contents)
+  - [Idea](#idea)
+  - [Breakdown](#breakdown)
+    - [Tabs](#tabs)
+      - [Dashboard](#dashboard)
+      - [Cashflow](#cashflow)
+      - [Accounts](#accounts)
+      - [Transactions](#transactions)
+      - [Add Transaction](#add-transaction)
+      - [Investments](#investments)
+      - [Assets (Net Worth)](#assets-net-worth)
+      - [Budget](#budget)
+      - [Reports](#reports)
+      - [Recurring](#recurring)
+      - [Goal](#goal)
+      - [Credit Score](#credit-score)
   - [Developer Guide](#developer-guide)
     - [Step 1. Developer Environment Setup](#step-1-developer-environment-setup)
       - [1.1 Install required softwares](#11-install-required-softwares)
@@ -16,6 +29,43 @@ A cross platform application that provides flexible budget setting and tracking.
       - [2.2 Run project](#22-run-project)
       - [2.3 How to test](#23-how-to-test)
     - [Step 3. Update Project Structure](#step-3-update-project-structure)
+
+# HoH Finance Tracker
+
+## Overview
+A cross platform application that provides flexible budget setting and tracking.
+
+## Idea
+- manual type in transaction
+- every end of the day, it pulls daily cc usage from the bank and compare
+- calendar view of how much spent etc
+## Breakdown
+
+### Tabs
+
+#### Dashboard
+Aggregated view of everything
+- Current spend this month
+  - graph view
+  - compare to last month
+  - compare manual input vs. automated (sync with the bank)
+- Net worth
+  - graph view
+  - compare to last month
+- Accounts
+- Upcoming
+#### Cashflow
+#### Accounts
+#### Transactions
+#### Add Transaction
+- One click adding transactions
+#### Investments
+#### Assets (Net Worth)
+#### Budget
+#### Reports
+#### Recurring
+#### Goal
+#### Credit Score
 
 ## Developer Guide
 

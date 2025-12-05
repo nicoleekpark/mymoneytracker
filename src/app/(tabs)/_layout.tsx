@@ -1,11 +1,10 @@
-import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Tabs } from 'expo-router';
+import React from 'react';
 
-import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+
+import { useHoHTheme } from '@/theme';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -17,41 +16,75 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-
+  const theme = useHoHTheme()
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: theme.semantic.background
+        },
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          color: theme.semantic.text
+        },
+        tabBarActiveTintColor: theme.semantic.primary,
+        tabBarInactiveTintColor: theme.semantic.textMuted,
+        tabBarStyle: {
+          backgroundColor: theme.semantic.background
+        },
+        // tabBarLabelStyle: {
+        //   fontSize: 12,
+        //   fontWeight: '600',
+        // },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          title: 'Dashboard',
+          headerTitle: 'HoH Finance',
+          tabBarIcon: ({ color }) => <TabBarIcon name="th-large" color={color} />
+        }}
+      />
+      {/* <Tabs.Screen
+        name="cashflow"
+        options={{
+          title: 'Cashflow',
+          headerTitle: 'Cashflow',
+          tabBarIcon: ({ color }) => <TabBarIcon name="bar-chart-o" color={color} />
+        }}
+      /> */}
+      {/* <Tabs.Screen
+        name="accounts"
+        options={{
+          title: 'Accounts',
+          headerTitle: 'Accounts',
+          tabBarIcon: ({ color }) => <TabBarIcon name="bank" color={color} />
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="transactions"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Transactions',
+          headerTitle: 'Transactions',
+          tabBarIcon: ({ color }) => <TabBarIcon name="files-o" color={color} />
+        }}
+      />
+      <Tabs.Screen
+        name="categories"
+        options={{
+          title: 'Categories',
+          headerTitle: 'Categories',
+          tabBarIcon: ({ color }) => <TabBarIcon name="tag" color={color} />
+        }}
+      /> */}
+      <Tabs.Screen
+        name="add"
+        options={{
+          title: 'Add Transaction',
+          headerTitle: 'Add Transaction',
+          tabBarIcon: ({ color }) => <TabBarIcon name="plus" color={color} />
         }}
       />
     </Tabs>
