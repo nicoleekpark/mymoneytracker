@@ -52,8 +52,8 @@ function RootLayoutNav() {
   return (
     <HoHThemeProvider initialMode={isDark ? 'dark' : 'light'}>
 
-      <Stack>
-        <Stack.Screen name="index" options={{ title: 'Dashboard' }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
         {/* <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
         <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
         <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />

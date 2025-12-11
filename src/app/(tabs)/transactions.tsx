@@ -1,7 +1,7 @@
 import { useHoHTheme } from '@/providers';
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function AddScreen() {
+export default function TransactionsScreen() {
   const theme = useHoHTheme();
 
   return (
@@ -17,7 +17,7 @@ export default function AddScreen() {
           { color: theme.semantic.text }
         ]}
       >
-        Add Transaction Page
+        Transactions Page
       </Text>
     </View>
   );

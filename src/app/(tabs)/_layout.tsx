@@ -41,8 +41,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          headerTitle: 'HoH Finance',
+          title: 'dashboard',
+          headerTitle: 'Dashboard',
           tabBarIcon: ({ color }) => <TabBarIcon name="th-large" color={color} />
         }}
       />
@@ -63,14 +63,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="transactions"
-        options={{
-          title: 'Transactions',
-          headerTitle: 'Transactions',
-          tabBarIcon: ({ color }) => <TabBarIcon name="files-o" color={color} />
-        }}
-      />
-      <Tabs.Screen
         name="categories"
         options={{
           title: 'Categories',
@@ -79,10 +71,18 @@ export default function TabLayout() {
         }}
       /> */}
       <Tabs.Screen
+        name="transactions"
+        options={{
+          title: 'transactions',
+          headerTitle: 'Transactions',
+          tabBarIcon: ({ color }) => <TabBarIcon name="files-o" color={color} />
+        }}
+      />
+      <Tabs.Screen
         name="add"
         options={{
-          title: 'Add Transaction',
-          headerTitle: 'Add Transaction',
+          title: 'add Transaction',
+          // headerTitle: 'Add Transaction',
           tabBarIcon: ({ color }) => <TabBarIcon name="plus" color={color} />
         }}
       />

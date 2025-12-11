@@ -1,6 +1,6 @@
 import { useHoHTheme } from '@/providers';
 import { useMemo } from 'react';
-import { Text, TextStyle, ViewStyle } from 'react-native';
+import { TextStyle, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
@@ -23,7 +23,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
+      {/* <Text style={styles.title}>ddashboard</Text> */}
     </SafeAreaView>
   );
 }
