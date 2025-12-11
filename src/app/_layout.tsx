@@ -1,13 +1,12 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
-import { HoHThemeProvider } from '@/theme/provider';
+import { HoHThemeProvider } from '@/providers';
+import { useColorScheme } from 'react-native';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -51,23 +50,21 @@ function RootLayoutNav() {
   const isDark = colorScheme === 'dark';
 
   return (
-    <ThemeProvider value={isDark? DarkTheme : DefaultTheme}>
-      <HoHThemeProvider initialMode={isDark ? 'dark' : 'light'}>
+    <HoHThemeProvider initialMode={isDark ? 'dark' : 'light'}>
 
-        <Stack>
-          <Stack.Screen name="index" options={{ title: 'Dashboard' }} />
-          <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
-          <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
-          <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />
-          <Stack.Screen name="categories" options={{ title: 'Categories' }} />
-          <Stack.Screen name="add" options={{ title: 'Add Transaction' }} />
-          {/* <Stack.Screen name="investments" options={{ title: 'Investments' }} />
-          <Stack.Screen name="assets" options={{ title: 'Assets' }} />
-          <Stack.Screen name="budget" options={{ title: 'Budget' }} />
-          <Stack.Screen name="reports" options={{ title: 'Reports' }} /> */}
-        </Stack>
+      <Stack>
+        <Stack.Screen name="index" options={{ title: 'Dashboard' }} />
+        {/* <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
+        <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
+        <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />
+        <Stack.Screen name="categories" options={{ title: 'Categories' }} /> */}
+        <Stack.Screen name="add" options={{ title: 'Add Transaction' }} />
+        {/* <Stack.Screen name="investments" options={{ title: 'Investments' }} />
+        <Stack.Screen name="assets" options={{ title: 'Assets' }} />
+        <Stack.Screen name="budget" options={{ title: 'Budget' }} />
+        <Stack.Screen name="reports" options={{ title: 'Reports' }} /> */}
+      </Stack>
 
-      </HoHThemeProvider>
-    </ThemeProvider>
-  );
+    </HoHThemeProvider>
+);
 }

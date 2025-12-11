@@ -1,14 +1,31 @@
-import { StyleSheet } from 'react-native';
-
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import { useHoHTheme } from '@/providers';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function AddScreen() {
+  const theme = useHoHTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab Two</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/two.tsx" />
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.semantic.background }
+      ]}
+    >
+      <Text
+        style={[
+          styles.title,
+          { color: theme.semantic.text }
+        ]}
+      >
+        Add Transaction
+      </Text>
+
+      <View
+        style={[
+          styles.separator,
+          { backgroundColor: theme.semantic.border }
+        ]}
+      />
     </View>
   );
 }
@@ -17,15 +34,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   separator: {
     marginVertical: 30,
     height: 1,
-    width: '80%',
-  },
+    width: '80%'
+  }
 });

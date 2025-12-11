@@ -1,5 +1,5 @@
+import { ThemeMode } from '@/theme'
 import { create } from 'zustand'
-import { ThemeMode } from './theme'
 
 type ThemeState = {
   mode: ThemeMode,
