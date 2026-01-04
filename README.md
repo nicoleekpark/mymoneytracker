@@ -32,6 +32,7 @@
     - [Step 4. Install TamaGUI](#step-4-install-tamagui)
       - [Step 4. Install sqlite](#step-4-install-sqlite)
       - [Step 5. Install dev client build (iOS)](#step-5-install-dev-client-build-ios)
+      - [Step 6. How to run](#step-6-how-to-run)
 
 # HoH Finance Tracker
 
@@ -238,7 +239,21 @@ $ npx expo install expo-sqlite
 $ eas build -p ios --profile development
 ```
 
-로컬 실행:
+#### Step 6. How to run
 ```
-$ npx expo start --dev-client
+# Fastest, UI focus - quick test on simulator with Expo Go
+$ npm run start:ios
+
+# SQLite + Native check - test on simulator with dev-client mode
+$ npm run start:dev:ios
+
+# Big changes - need to rebuild native (add/update expo-sqlite, plugins change, iOS auth change, prebuild env change)
+$ npm run build:ios
+$ npm run start:dev:ios
+
+# only server
+$ npm run start:dev
+
+# server + simulator
+$ npm run start:dev:ios
 ```

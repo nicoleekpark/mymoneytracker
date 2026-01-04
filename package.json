@@ -3,11 +3,11 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "npx expo start",
     "start:ios": "npx expo start --ios",
+    "start:android": "npx expo start --android",
     "start:dev": "npx expo start -c --dev-client",
-    "start:dev:ios": "npx expo start --dev-client --ios",
-    "start:cache:dev:ios": "npx expo start -c --dev-client --ios",
+    "start:dev:ios": "npx expo start -c --dev-client --ios",
     "build:ios": "npx expo run:ios",
     "web": "expo start --web"
   },
