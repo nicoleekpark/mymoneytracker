@@ -4,8 +4,11 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start:ios": "npx expo start --ios",
+    "start:dev": "npx expo start -c --dev-client",
+    "start:dev:ios": "npx expo start --dev-client --ios",
+    "start:cache:dev:ios": "npx expo start -c --dev-client --ios",
+    "build:ios": "npx expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
@@ -26,12 +29,14 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-get-random-values": "^2.0.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
     "tamagui": "^1.142.0",
+    "uuid": "^13.0.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

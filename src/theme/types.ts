@@ -7,7 +7,7 @@ export type SemanticColors = {
   surfaceAlt: string
   border: string
   text: string
-  textMuted: string
+  textSecondary: string
   primary: string
   primarySoft: string
   primaryStrong: string

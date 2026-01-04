@@ -9,7 +9,7 @@ export const semanticLight: SemanticColors = {
   border: PALETTE.gray[200],
 
   text: PALETTE.gray[900],
-  textMuted: PALETTE.gray[500],
+  textSecondary: PALETTE.gray[500],
 
   primary: PALETTE.orange[500],
   primarySoft: PALETTE.orange[100],
@@ -30,7 +30,7 @@ export const semanticDark: SemanticColors = {
   border: PALETTE.gray[700],
 
   text: PALETTE.gray[50],
-  textMuted: PALETTE.gray[400],
+  textSecondary: PALETTE.gray[400],
 
   primary: PALETTE.orange[500],
   primarySoft: PALETTE.orange[800],

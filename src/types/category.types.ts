@@ -1,4 +1,4 @@
-import type { CategoryType } from '@/domain/category';
+import type { CategoryType } from '@/domain/category'
 
 export type SubCategory = Readonly<{
   id: string

@@ -1,20 +1,20 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
-import React from 'react';
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import { Tabs } from 'expo-router'
+import React from 'react'
 
-import { useHoHTheme } from '@/providers';
-import { useColorScheme } from 'react-native';
+import { useHoHTheme } from '@/providers'
+import { useColorScheme } from 'react-native'
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
+  name: React.ComponentProps<typeof FontAwesome>['name']
+  color: string
 }) {
-  return <FontAwesome size={20} style={{ marginBottom: -3 }} {...props} />;
+  return <FontAwesome size={20} style={{ marginBottom: -3 }} {...props} />
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme()
   const theme = useHoHTheme()
   return (
     <Tabs
@@ -28,7 +28,7 @@ export default function TabLayout() {
           color: theme.semantic.text
         },
         tabBarActiveTintColor: theme.semantic.primary,
-        tabBarInactiveTintColor: theme.semantic.textMuted,
+        tabBarInactiveTintColor: theme.semantic.textSecondary,
         tabBarStyle: {
           backgroundColor: theme.semantic.background
         },
@@ -87,5 +87,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  );
+  )
 }

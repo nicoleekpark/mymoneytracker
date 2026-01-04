@@ -42,9 +42,9 @@ export function createTransaction(categoryIndex: CategoryIndex, input: Transacti
       throw new Error('fromAccountId and toAccountId must differ')
     }
   } else {
-    if (!input.accountId) {
-      throw new Error('income/expense requires accountId')
-    }
+    // if (!input.accountId) {
+    //   throw new Error('income/expense requires accountId')
+    // }
   }
 
   if (input.category) {
