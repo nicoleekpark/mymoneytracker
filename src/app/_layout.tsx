@@ -8,6 +8,9 @@ import 'react-native-reanimated';
 import { HoHThemeProvider } from '@/providers';
 import { useColorScheme } from 'react-native';
 
+import * as SQLite from 'expo-sqlite';
+import { TamaguiProvider } from 'tamagui';
+import tamaguiConfig from '../../tamagui.config';
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary
@@ -17,7 +20,7 @@ export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
-
+SQLite.openDatabaseSync('test.db')
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -51,20 +54,20 @@ function RootLayoutNav() {
 
   return (
     <HoHThemeProvider initialMode={isDark ? 'dark' : 'light'}>
-
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        {/* <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
-        <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
-        <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />
-        <Stack.Screen name="categories" options={{ title: 'Categories' }} /> */}
-        <Stack.Screen name="add" options={{ title: 'Add Transaction' }} />
-        {/* <Stack.Screen name="investments" options={{ title: 'Investments' }} />
-        <Stack.Screen name="assets" options={{ title: 'Assets' }} />
-        <Stack.Screen name="budget" options={{ title: 'Budget' }} />
-        <Stack.Screen name="reports" options={{ title: 'Reports' }} /> */}
+      <TamaguiProvider config={tamaguiConfig}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          {/* <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
+          <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
+          <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />
+          <Stack.Screen name="categories" options={{ title: 'Categories' }} /> */}
+          <Stack.Screen name="add" options={{ title: 'Add Transaction' }} />
+          {/* <Stack.Screen name="investments" options={{ title: 'Investments' }} />
+          <Stack.Screen name="assets" options={{ title: 'Assets' }} />
+          <Stack.Screen name="budget" options={{ title: 'Budget' }} />
+          <Stack.Screen name="reports" options={{ title: 'Reports' }} /> */}
       </Stack>
-
+      </TamaguiProvider>
     </HoHThemeProvider>
 );
 }

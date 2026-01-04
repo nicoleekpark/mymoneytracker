@@ -1,1 +1,1 @@
-helper utils
+shared helpers (should stay UI-agnostic if possible)

@@ -29,6 +29,9 @@
       - [2.2 Run project](#22-run-project)
       - [2.3 How to test](#23-how-to-test)
     - [Step 3. Update Project Structure](#step-3-update-project-structure)
+    - [Step 4. Install TamaGUI](#step-4-install-tamagui)
+      - [Step 4. Install sqlite](#step-4-install-sqlite)
+      - [Step 5. Install dev client build (iOS)](#step-5-install-dev-client-build-ios)
 
 # HoH Finance Tracker
 
@@ -217,3 +220,25 @@ const [loaded, error] = useFonts({
 ```
 
 Run `npx expo start --clear` and `w` to see if works.
+
+### Step 4. Install TamaGUI
+
+```
+$ npm install tamagui @tamagui/config @tamagui/babel-plugin
+```
+
+
+#### Step 4. Install sqlite
+```
+$ npx expo install expo-sqlite
+```
+
+#### Step 5. Install dev client build (iOS)
+```
+$ eas build -p ios --profile development
+```
+
+로컬 실행:
+```
+$ npx expo start --dev-client
+```

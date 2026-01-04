@@ -81,7 +81,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="add"
         options={{
-          title: 'add Transaction',
+          title: 'add transaction',
           // headerTitle: 'Add Transaction',
           tabBarIcon: ({ color }) => <TabBarIcon name="plus" color={color} />
         }}

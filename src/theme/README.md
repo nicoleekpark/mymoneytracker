@@ -1,1 +1,1 @@
-design system
+implementation (visual design system)

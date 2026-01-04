@@ -1,3 +1,4 @@
+import type { CategoryType } from '@/domain/category'
 import { PALETTE } from '@/theme'
 import type { Category, SubCategory } from '@/types'
 
@@ -10,91 +11,91 @@ const CATEGORY_META = {
     name: 'Housing',
     icon: '🏡',
     color: PALETTE.orange[500],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   food: {
     name: 'Food',
     icon: '🍽️',
     color: PALETTE.amber[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   lifestyle: {
     name: 'Lifestyle',
     icon: '💅',
     color: PALETTE.pink[300],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   health: {
     name: 'Health',
     icon: '🩺',
     color: PALETTE.red[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   family: {
     name: 'Family & Children',
     icon: '🧸',
     color: PALETTE.yellow[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   pets: {
     name: 'Pets',
     icon: '🐶',
     color: PALETTE.green[300],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   social: {
     name: 'Social & Entertainment',
     icon: '🎉',
     color: PALETTE.purple[300],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   gifts: {
     name: 'Gifts & Occasions',
     icon: '🎁',
     color: PALETTE.fuchsia[300],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   transport: {
     name: 'Transportation',
     icon: '🚗',
     color: PALETTE.blue[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   communication: {
     name: 'Communication',
     icon: '📱',
     color: PALETTE.teal[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   subscriptions: {
     name: 'Subscriptions',
     icon: '📺',
     color: PALETTE.indigo[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   travel: {
     name: 'Travel',
     icon: '🌍',
     color: PALETTE.blue[500],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   insurance: {
     name: 'Insurance',
     icon: '🛡️',
     color: PALETTE.orange[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   donations: {
     name: 'Donations',
     icon: '🙏',
     color: PALETTE.rose[400],
-    type: 'expense' as const
+    type: 'expense' as const satisfies CategoryType
   },
   savings: {
     name: 'Savings & Investment',
     icon: '💰',
     color: PALETTE.green[500],
-    type: 'transfer' as const
+    type: 'transfer' as const satisfies CategoryType
   }
 } as const
 

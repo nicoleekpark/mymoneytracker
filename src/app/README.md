@@ -1,1 +1,1 @@
-expo-router pages
+implementation (expo router UI + navigation)
