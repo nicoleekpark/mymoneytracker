@@ -3,12 +3,11 @@ import type { CategoryRef } from '@/domain/category'
 import { assertValidCategoryRef } from '@/domain/category'
 
 export type UUID = string
-
 export type TransactionType = 'income' | 'expense' | 'transfer'
 
 export type Money = Readonly<{
   amount: number
-  currency: 'USD'
+  currency: 'USD' 
 }>
 
 export type Transaction = Readonly<{
@@ -22,6 +21,7 @@ export type Transaction = Readonly<{
 
   money: Money
   category?: CategoryRef
+  item?: string
   memo?: string
 }>
 
@@ -41,10 +41,6 @@ export function createTransaction(categoryIndex: CategoryIndex, input: Transacti
     if (input.fromAccountId === input.toAccountId) {
       throw new Error('fromAccountId and toAccountId must differ')
     }
-  } else {
-    // if (!input.accountId) {
-    //   throw new Error('income/expense requires accountId')
-    // }
   }
 
   if (input.category) {

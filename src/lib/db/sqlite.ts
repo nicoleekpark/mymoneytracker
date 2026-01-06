@@ -32,3 +32,15 @@ export function queryFirst<T>(sql: string, args: any[] = []): T | null {
     stmt.finalizeSync()
   }
 }
+
+export type DatabaseListRow = {
+  seq: number
+  name: string
+  file: string
+}
+
+export function getMainDbFilePath(): string | null {
+  const rows = queryAll<DatabaseListRow>(`PRAGMA database_list;`)
+  const main = rows.find(r => r.name === 'main')
+  return main?.file ?? null
+}

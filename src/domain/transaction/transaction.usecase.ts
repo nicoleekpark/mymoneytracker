@@ -1,36 +1,16 @@
 import type { CategoryIndex } from '@/config/categories.index'
-import type { Transaction, TransactionType } from '@/domain/transaction/transaction'
-import { createTransaction } from '@/domain/transaction/transaction'
-import { deleteTransactionRow, fetchExpenseTotalForMonth, fetchMonthlyExpenseTotals, fetchTransactions, insertTransactionRow } from '@/domain/transaction/transaction.repo'
 import { uuid } from '@/utils/uuid'
+import type { Transaction, TransactionType } from './transaction'
+import { createTransaction } from './transaction'
 
-export function addTransactionUsecase(
-  categoryIndex: CategoryIndex,
-  input: { amount: number; memo?: string; type?: TransactionType; occurredAt?: Date }
-): Transaction {
-  const tx: Transaction = createTransaction(categoryIndex, {
-    id: uuid(),
-    occurredAt: input.occurredAt ?? new Date(),
-    type: input.type ?? 'expense',
-    money: { amount: input.amount, currency: 'USD' },
-    memo: input.memo,
-  })
-
-  insertTransactionRow({
-    id: tx.id,
-    occurred_at: tx.occurredAt.toISOString(),
-    type: tx.type,
-    amount: tx.money.amount,
-    currency: tx.money.currency,
-    memo: tx.memo ?? null,
-  })
-
-  return tx
-}
-
-export function listTransactionsUsecase(limit = 200): Transaction[] {
-  return fetchTransactions(limit)
-}
+import { rowToTransaction, transactionToRow } from './transaction.mapper'
+import {
+  deleteTransactionRow,
+  fetchExpenseTotalForMonth,
+  fetchMonthlyExpenseTotals,
+  insertTransactionRow,
+  listTransactionRows,
+} from './transaction.repo'
 
 export type MonthlyTotal = {
   month: string
@@ -47,15 +27,23 @@ export async function addTransaction(
   categoryIndex: CategoryIndex,
   input: { amount: number; memo?: string; type?: TransactionType; occurredAt?: Date }
 ): Promise<Transaction> {
-  return addTransactionUsecase(categoryIndex, input)
+  const tx: Transaction = createTransaction(categoryIndex, {
+    id: uuid(),
+    occurredAt: input.occurredAt ?? new Date(),
+    type: input.type ?? 'expense',
+    money: { amount: input.amount, currency: 'USD' },
+    memo: input.memo,
+  })
+
+  insertTransactionRow(transactionToRow(tx))
+  return tx
 }
 
-export async function listTransactions(limit = 200) {
-  return listTransactionsUsecase(limit)
+export async function listTransactions(limit = 200): Promise<Transaction[]> {
+  return listTransactionRows(limit).map(rowToTransaction)
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
-  // TODO: add rules (e.g. prevent delete for locked months)
   deleteTransactionRow(id)
 }
 

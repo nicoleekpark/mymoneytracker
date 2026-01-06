@@ -1,53 +1,37 @@
-// only maps SQL rows
-import type { Transaction, TransactionType } from '@/domain/transaction/transaction'
 import { exec, queryAll } from '@/lib/db/sqlite'
+import type { TransactionRow } from './transaction.types'
 
-// TODO: expand row
-type TxRow = {
-  id: string
-  occurred_at: string
-  type: TransactionType
-  amount: number
-  currency: 'USD'
-  memo: string | null
-}
-
-function fromRow(r: TxRow): Transaction {
-  return {
-    id: r.id,
-    occurredAt: new Date(r.occurred_at),
-    type: r.type,
-    money: { amount: r.amount, currency: r.currency },
-    memo: r.memo ?? undefined,
-  }
-}
-
-export function insertTransactionRow(row: TxRow) {
+export function insertTransactionRow(row: TransactionRow) {
   exec(
-    `INSERT INTO transactions (id, occurred_at, type, amount, currency, memo)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [row.id, row.occurred_at, row.type, row.amount, row.currency, row.memo]
+    `INSERT INTO transactions (
+      id, occurred_at, type, amount, currency, memo
+    ) VALUES (?, ?, ?, ?, ?, ?);`,
+    [
+      row.id,
+      row.occurred_at, 
+      row.type, 
+      row.amount, 
+      row.currency, 
+      row.memo
+    ]
   )
 }
 
-export function fetchTransactions(limit = 200): Transaction[] {
-  const rows = queryAll<TxRow>(
-    `SELECT id, occurred_at, type, amount, currency, memo
-     FROM transactions
-     ORDER BY occurred_at DESC, id DESC
-     LIMIT ?`,
+export function listTransactionRows(limit = 200): TransactionRow[] {
+  return queryAll<TransactionRow>(
+    `
+    SELECT id, occurred_at, type, amount, currency, memo
+    FROM transactions
+    ORDER BY occurred_at DESC, id DESC
+    LIMIT ?;
+    `,
     [limit]
   )
-  return rows.map(fromRow)
 }
 
 export function deleteTransactionRow(id: string): void {
-  exec(
-    `DELETE FROM transactions WHERE id = ?`,
-    [id]
-  )
+  exec(`DELETE FROM transactions WHERE id = ?`, [id])
 }
-
 
 export type MonthlyTotalRow = {
   month: string // 'YYYY-MM'
@@ -79,7 +63,7 @@ export function fetchExpenseTotalForMonth(monthYYYYMM: string): number {
     SELECT SUM(amount) AS total
     FROM transactions
     WHERE type = 'expense'
-      AND substr(occurred_at, 1, 7) = ?
+      AND substr(occurred_at, 1, 7) = ?;
     `,
     [monthYYYYMM]
   )

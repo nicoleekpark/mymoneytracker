@@ -9,6 +9,7 @@ export type Currency = {
 }
 
 export type FeatureFlags = {
+  devTools: boolean
   familySharing: boolean
   bankConnection: boolean
   bankSync: boolean
