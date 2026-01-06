@@ -7,7 +7,7 @@ export type TransactionType = 'income' | 'expense' | 'transfer'
 
 export type Money = Readonly<{
   amount: number
-  currency: 'USD' 
+  currency: string 
 }>
 
 export type Transaction = Readonly<{

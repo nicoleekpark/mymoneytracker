@@ -11,7 +11,9 @@
     "build:ios": "npx expo run:ios",
     "web": "expo start --web",
     "dev:export-db": "./scripts/export-db-from-simulator.sh",
-    "dev:dbpull": "./scripts/dbpull.sh"
+    "dev:dbpull": "./scripts/dbpull.sh",
+    "db:migration": "node scripts/create-migration.js",
+    "db:migration:regen": "node scripts/create-migration.js --regen"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -33,6 +33,7 @@
       - [Step 4. Install sqlite](#step-4-install-sqlite)
       - [Step 5. Install dev client build (iOS)](#step-5-install-dev-client-build-ios)
       - [Step 6. How to run](#step-6-how-to-run)
+      - [2.4 Database](#24-database)
 
 # HoH Finance Tracker
 
@@ -257,3 +258,5 @@ $ npm run start:dev
 # server + simulator
 $ npm run start:dev:ios
 ```
+
+#### 2.4 Database

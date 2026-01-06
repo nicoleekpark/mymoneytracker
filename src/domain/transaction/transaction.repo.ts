@@ -3,16 +3,23 @@ import type { TransactionRow } from './transaction.types'
 
 export function insertTransactionRow(row: TransactionRow) {
   exec(
-    `INSERT INTO transactions (
-      id, occurred_at, type, amount, currency, memo
-    ) VALUES (?, ?, ?, ?, ?, ?);`,
+    `
+    INSERT INTO transactions (
+      id, occurred_at, type, amount_cents, currency, account_id, category_id, merchant, note, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `,
     [
       row.id,
-      row.occurred_at, 
-      row.type, 
-      row.amount, 
-      row.currency, 
-      row.memo
+      row.occurred_at,
+      row.type,
+      row.amount_cents,
+      row.currency,
+      row.account_id,
+      row.category_id,
+      row.merchant,
+      row.note,
+      new Date().toISOString(),
+      new Date().toISOString(),
     ]
   )
 }
@@ -20,7 +27,8 @@ export function insertTransactionRow(row: TransactionRow) {
 export function listTransactionRows(limit = 200): TransactionRow[] {
   return queryAll<TransactionRow>(
     `
-    SELECT id, occurred_at, type, amount, currency, memo
+    SELECT
+      id, occurred_at, type, amount_cents, currency, account_id, category_id, merchant, note
     FROM transactions
     ORDER BY occurred_at DESC, id DESC
     LIMIT ?;
@@ -34,40 +42,35 @@ export function deleteTransactionRow(id: string): void {
 }
 
 export type MonthlyTotalRow = {
-  month: string // 'YYYY-MM'
-  total: number
+  month: string
+  total_cents: number
 }
 
 export function fetchMonthlyExpenseTotals(limitMonths = 24): MonthlyTotalRow[] {
-  // SQLite: substr(occurred_at, 1, 7) works with ISO strings like '2026-01-04T...'
-  const rows = queryAll<MonthlyTotalRow>(
+  return queryAll<MonthlyTotalRow>(
     `
     SELECT
-      substr(occurred_at, 1, 7) AS month,
-      SUM(amount) AS total
+        substr(occurred_at, 1, 7) AS month,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
     FROM transactions
     WHERE type = 'expense'
     GROUP BY month
     ORDER BY month DESC
-    LIMIT ?
+    LIMIT ?;
     `,
     [limitMonths]
   )
-  // SUM can return null if no rows, but with GROUP BY it should be numbers
-  return rows.map((r) => ({ month: r.month, total: Number(r.total) }))
 }
 
 export function fetchExpenseTotalForMonth(monthYYYYMM: string): number {
-  const rows = queryAll<{ total: number | null }>(
+  const rows = queryAll<{ total_cents: number }>(
     `
-    SELECT SUM(amount) AS total
+    SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
     FROM transactions
     WHERE type = 'expense'
       AND substr(occurred_at, 1, 7) = ?;
     `,
     [monthYYYYMM]
   )
-
-  const total = rows[0]?.total
-  return total == null ? 0 : Number(total)
+  return Number(rows[0]?.total_cents ?? 0)
 }

@@ -6,12 +6,13 @@ import { useEffect, useState } from 'react'
 import 'react-native-reanimated'
 
 import { HoHThemeProvider } from '@/providers'
-import { useColorScheme } from 'react-native'
+import { ScrollView, Text, useColorScheme, View } from 'react-native'
 
-import { migrate } from '@/lib/db/migrations'
+import { initDbPragmas } from '@/lib/db/sqlite'
 
 import { DevToolsOverlay } from '@/components/dev/DevToolsOverlay'
 import { APP_CONFIG } from '@/config'
+import { migrate } from '@/lib/db/migrate'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
 export {
@@ -32,6 +33,8 @@ export default function RootLayout() {
   const isDark = colorScheme === 'dark'
 
   const [dbReady, setDbReady] = useState(false)
+  const [dbError, setDbError] = useState<unknown>(null)
+
   const [loaded, error] = useFonts({
     SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
@@ -48,11 +51,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     try {
+      initDbPragmas()
       migrate()
       setDbReady(true)
     } catch (e) {
       console.error('DB migrate failed', e)
-      setDbReady(true)
+      setDbError(e)
+      setDbReady(false)
     }
   }, [])
 
@@ -62,10 +67,29 @@ export default function RootLayout() {
     }
   }, [loaded, dbReady])
 
-  if (!loaded || !dbReady) {
-    return null
+  if (!loaded) return null
+
+  if (dbError) {
+    return (
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
+          DB init failed
+        </Text>
+        <Text selectable>
+          {String((dbError as any)?.message ?? dbError)}
+        </Text>
+      </ScrollView>
+    )
   }
 
+  if (!dbReady) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Text>Loading…</Text>
+      </View>
+    )
+  }
+  
   return <RootLayoutNav initialMode={isDark ? 'dark' : 'light'} />
 }
 

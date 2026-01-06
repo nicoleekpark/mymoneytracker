@@ -2,6 +2,13 @@ import * as SQLite from 'expo-sqlite'
 
 const db = SQLite.openDatabaseSync('hoh_finance.db')
 
+export function initDbPragmas() {
+  exec(`PRAGMA foreign_keys = ON;`)
+  exec(`PRAGMA journal_mode = WAL;`)
+  exec(`PRAGMA synchronous = NORMAL;`)
+  exec(`PRAGMA busy_timeout = 5000;`)
+}
+
 export function exec(sql: string, args: any[] = []) {
   const stmt = db.prepareSync(sql)
   try {
@@ -23,13 +30,30 @@ export function queryAll<T>(sql: string, args: any[] = []): T[] {
 }
 
 export function queryFirst<T>(sql: string, args: any[] = []): T | null {
-  const stmt = db.prepareSync(sql)
+  const rows = queryAll<T>(sql, args)
+  return rows[0] ?? null
+}
+
+export function withTransaction<T>(fn: () => T): T {
+  exec('BEGIN;')
   try {
-    const res = stmt.executeSync(args)
-    const rows = res.getAllSync() as T[]
-    return rows[0] ?? null
-  } finally {
-    stmt.finalizeSync()
+    const out = fn()
+    exec('COMMIT;')
+    return out
+  } catch (e) {
+    exec('ROLLBACK;')
+    throw e
+  }
+}
+
+export function execMany(sql: string) {
+  const statements = sql
+    .split(';')
+    .map(s => s.trim())
+    .filter(Boolean)
+
+  for (const s of statements) {
+    exec(s + ';')
   }
 }
 
@@ -41,6 +65,5 @@ export type DatabaseListRow = {
 
 export function getMainDbFilePath(): string | null {
   const rows = queryAll<DatabaseListRow>(`PRAGMA database_list;`)
-  const main = rows.find(r => r.name === 'main')
-  return main?.file ?? null
+  return rows.find(r => r.name === 'main')?.file ?? null
 }
