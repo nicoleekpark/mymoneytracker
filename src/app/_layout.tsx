@@ -10,6 +10,8 @@ import { useColorScheme } from 'react-native'
 
 import { migrate } from '@/lib/db/migrations'
 
+import { DevToolsOverlay } from '@/components/dev/DevToolsOverlay'
+import { APP_CONFIG } from '@/config'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
 export {
@@ -71,19 +73,22 @@ function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
   return (
     <HoHThemeProvider initialMode={initialMode}>
       <TamaguiProvider config={tamaguiConfig}>
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* <Stack.Screen name="index" /> */}
-          {/* <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
-          <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
-          <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />
-          <Stack.Screen name="categories" options={{ title: 'Categories' }} /> */}
-          {/* <Stack.Screen name="add" options={{ title: 'Add Transaction' }} /> */}
-          {/* <Stack.Screen name="investments" options={{ title: 'Investments' }} />
-          <Stack.Screen name="assets" options={{ title: 'Assets' }} />
-          <Stack.Screen name="budget" options={{ title: 'Budget' }} />
-          <Stack.Screen name="reports" options={{ title: 'Reports' }} /> */}
-      </Stack>
+        <>
+          <Stack screenOptions={{ headerShown: false }}>
+            {/* <Stack.Screen name="index" /> */}
+            {/* <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
+            <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
+            <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />
+            <Stack.Screen name="categories" options={{ title: 'Categories' }} /> */}
+            {/* <Stack.Screen name="add" options={{ title: 'Add Transaction' }} /> */}
+            {/* <Stack.Screen name="investments" options={{ title: 'Investments' }} />
+            <Stack.Screen name="assets" options={{ title: 'Assets' }} />
+            <Stack.Screen name="budget" options={{ title: 'Budget' }} />
+            <Stack.Screen name="reports" options={{ title: 'Reports' }} /> */}
+          </Stack>
+          {APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />}
+        </>
       </TamaguiProvider>
     </HoHThemeProvider>
-)
+  )
 }

@@ -2,9 +2,6 @@ import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { Tabs } from 'expo-router'
 import React from 'react'
 
-import { DevToolsFlagCheck } from '@/components/dev/DevToolsFlagCheck'
-import { DevToolsOverlay } from '@/components/dev/DevToolsOverlay'
-import { APP_CONFIG } from '@/config'
 import { useHoHTheme } from '@/providers'
 import { useColorScheme, View } from 'react-native'
 
@@ -91,8 +88,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      {APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />}
-      <DevToolsFlagCheck />
     </View>
   )
 }
