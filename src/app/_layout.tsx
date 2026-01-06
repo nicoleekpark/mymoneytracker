@@ -1,8 +1,9 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import { router, Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
+import { Pressable } from 'react-native'
 import 'react-native-reanimated'
 
 import { HoHThemeProvider } from '@/providers'
@@ -98,17 +99,25 @@ function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
     <HoHThemeProvider initialMode={initialMode}>
       <TamaguiProvider config={tamaguiConfig}>
         <>
-          <Stack screenOptions={{ headerShown: false }}>
-            {/* <Stack.Screen name="index" /> */}
-            {/* <Stack.Screen name="cashflow" options={{ title: 'Cashflow' }} />
-            <Stack.Screen name="accounts" options={{ title: 'Accounts' }} />
-            <Stack.Screen name="transactions" options={{ title: 'Transactions' }} />
-            <Stack.Screen name="categories" options={{ title: 'Categories' }} /> */}
-            {/* <Stack.Screen name="add" options={{ title: 'Add Transaction' }} /> */}
-            {/* <Stack.Screen name="investments" options={{ title: 'Investments' }} />
-            <Stack.Screen name="assets" options={{ title: 'Assets' }} />
-            <Stack.Screen name="budget" options={{ title: 'Budget' }} />
-            <Stack.Screen name="reports" options={{ title: 'Reports' }} /> */}
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen
+              name="add"
+              options={{
+                title: 'Add Transaction',
+                presentation: 'modal',
+                headerTitleAlign: 'center',
+                 headerLeft: () => (
+                  <Pressable onPress={() => router.back()} hitSlop={12} style={{ paddingHorizontal: 12 }}>
+                    <FontAwesome name="close" size={20} />
+                  </Pressable>
+                ) 
+              }}
+            />
+            <Stack.Screen name="settings" options={{ 
+              title: 'Settings', 
+              headerTitleAlign: 'center',
+              headerBackTitle: '' }} />
           </Stack>
           {APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />}
         </>
