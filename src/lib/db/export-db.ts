@@ -1,4 +1,4 @@
-import { getMainDbFilePath } from '@/lib/db/sqlite'
+import { exec, getMainDbFilePath } from '@/lib/db/sqlite'
 import { File, Paths } from 'expo-file-system'
 import * as Sharing from 'expo-sharing'
 
@@ -7,6 +7,9 @@ function toFileUri(path: string): string {
 }
 
 export async function exportDatabase(): Promise<void> {
+  // Merrge WAL into main DB
+  // TRUNCATE empties WAL file
+  exec('PRAGMA wal_checkpoint(TRUNCATE);')
   const dbPath = getMainDbFilePath()
   if (!dbPath) {
     throw new Error('SQLite DB file path not found')

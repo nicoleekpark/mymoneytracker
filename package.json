@@ -9,7 +9,9 @@
     "start:dev": "npx expo start -c --dev-client",
     "start:dev:ios": "npx expo start -c --dev-client --ios",
     "build:ios": "npx expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "dev:export-db": "./scripts/export-db-from-simulator.sh",
+    "dev:dbpull": "./scripts/dbpull.sh"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

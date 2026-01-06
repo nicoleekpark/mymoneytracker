@@ -1,7 +1,8 @@
 import { APP_CONFIG } from '@/config'
+import { countRows, listTables, resetDbDataOnly, seedDbMinimal } from '@/lib/db/admin'
 import { exportDatabase } from '@/lib/db/export-db'
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 
 export function DevToolsOverlay() {
   const [open, setOpen] = useState(false)
@@ -24,6 +25,20 @@ export function DevToolsOverlay() {
           <View style={styles.body}>
             <Pressable
               style={styles.btn}
+              onPress={() => {
+                try {
+                  const tables = listTables()
+                  const sample = tables.slice(0, 5).map(t => `${t}:${countRows(t)}`).join('\n')
+                  Alert.alert('DB snapshot', sample || 'no tables')
+                } catch (e: any) {
+                  Alert.alert('Snapshot failed', String(e?.message ?? e))
+                }
+              }}
+            >
+              <Text style={styles.btnText}>DB Snapshot</Text>
+            </Pressable>
+            <Pressable
+              style={styles.btn}
               onPress={exportDatabase}
             >
               <Text style={styles.btnText}>Export DB</Text>
@@ -32,8 +47,36 @@ export function DevToolsOverlay() {
             <Pressable
               style={styles.btn}
               onPress={() => {
-                // TODO
-                console.log('reset db')
+                Alert.alert(
+                  'Reset DB',
+                  'Choose reset mode',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Data only',
+                      onPress: () => {
+                        try {
+                          resetDbDataOnly({ resetAutoIncrement: false })
+                          Alert.alert('Reset DB', 'All rows deleted. IDs preserved.')
+                        } catch (e: any) {
+                          Alert.alert('Reset failed', String(e?.message ?? e))
+                        }
+                      },
+                    },
+                    {
+                      text: 'Data + Reset IDs',
+                      style: 'destructive',
+                      onPress: () => {
+                        try {
+                          resetDbDataOnly({ resetAutoIncrement: true })
+                          Alert.alert('Reset DB', 'All rows deleted. IDs reset.')
+                        } catch (e: any) {
+                          Alert.alert('Reset failed', String(e?.message ?? e))
+                        }
+                      },
+                    },
+                  ]
+                )
               }}
             >
               <Text style={styles.btnText}>Reset DB</Text>
@@ -42,8 +85,12 @@ export function DevToolsOverlay() {
             <Pressable
               style={styles.btn}
               onPress={() => {
-                // TODO
-                console.log('seed db')
+                try {
+                  seedDbMinimal()
+                  Alert.alert('Seed DB', 'Seed completed')
+                } catch (e: any) {
+                  Alert.alert('Seed failed', String(e?.message ?? e))
+                }
               }}
             >
               <Text style={styles.btnText}>Seed DB</Text>

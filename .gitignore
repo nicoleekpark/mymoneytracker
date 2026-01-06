@@ -41,3 +41,7 @@ yarn-error.*
 /android
 
 Notes.md
+db_exports/
+*.db
+*.db-wal
+*.db-shm
