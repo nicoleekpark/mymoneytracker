@@ -62,7 +62,7 @@ function CenterAddButton() {
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
       <Pressable
-        onPress={() => router.push('/add')}
+        onPress={() => router.push('/add-transaction')}
         hitSlop={12}
         style={{
           width: 60,
@@ -123,7 +123,7 @@ export default function TabLayout() {
           }}
         />
          <Tabs.Screen
-          name="_add"
+          name="_add-transaction"
           options={{
             title: '',
             headerShown: false,

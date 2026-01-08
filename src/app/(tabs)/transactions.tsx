@@ -39,7 +39,7 @@ export default function TransactionsScreen() {
           Transactions
         </Text>
 
-        <TouchableOpacity onPress={() => router.push('/add')} style={[styles.addBtn, { borderColor: theme.semantic.border }]}>
+        <TouchableOpacity onPress={() => router.push('/add-transaction')} style={[styles.addBtn, { borderColor: theme.semantic.border }]}>
           <Text style={{ color: theme.semantic.primary }}>Add</Text>
         </TouchableOpacity>
       </View>
@@ -60,8 +60,8 @@ export default function TransactionsScreen() {
         renderItem={({ item }) => (
           <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
             <Text style={{ color: theme.semantic.text }}>${item.money.amount}</Text>
-            {item.memo ? (
-              <Text style={{ color: theme.semantic.textSecondary }}>{item.memo}</Text>
+            {item.note ? (
+              <Text style={{ color: theme.semantic.textSecondary }}>{item.note}</Text>
             ) : null}
             <Text style={{ color: theme.semantic.textSecondary, marginTop: 6 }}>
               {item.occurredAt.toLocaleString()}

@@ -5,13 +5,14 @@ export function insertTransactionRow(row: TransactionRow) {
   exec(
     `
     INSERT INTO transactions (
-      id, occurred_at, type, amount_cents, currency, account_id, category_id, merchant, note, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      id, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `,
     [
       row.id,
       row.occurred_at,
       row.type,
+      row.item,
       row.amount_cents,
       row.currency,
       row.account_id,
@@ -28,7 +29,7 @@ export function listTransactionRows(limit = 200): TransactionRow[] {
   return queryAll<TransactionRow>(
     `
     SELECT
-      id, occurred_at, type, amount_cents, currency, account_id, category_id, merchant, note
+      id, occurred_at, type, amount_cents, currency, account_id, category_id, merchant, note, item
     FROM transactions
     ORDER BY occurred_at DESC, id DESC
     LIMIT ?;

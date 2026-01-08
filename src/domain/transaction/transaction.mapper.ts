@@ -1,3 +1,4 @@
+import { resolveCategoryId, resolveCategoryRefFromDbId } from '../category/category.resolve';
 import type { Transaction } from './transaction';
 import type { TransactionRow } from './transaction.types';
 
@@ -10,23 +11,25 @@ export function rowToTransaction(row: TransactionRow): Transaction {
       amount: row.amount_cents / 100,
       currency: row.currency,
     },
-    memo: row.note ?? undefined,
+    accountId: row.account_id,
+    category: row.category_id ? resolveCategoryRefFromDbId(row.category_id) : undefined,
+    merchant: row.merchant ?? undefined,
+    note: row.note ?? undefined,
+    item: row.item,
   }
 }
 
-export function transactionToRow(
-  tx: Transaction,
-  opts: { accountId: string; categoryId?: string | null }
-): TransactionRow {
+export function transactionToRow(tx: Transaction): TransactionRow {
   return {
     id: tx.id,
     occurred_at: tx.occurredAt.toISOString(),
     type: tx.type,
     amount_cents: Math.round(tx.money.amount * 100),
     currency: tx.money.currency,
-    account_id: opts.accountId,
-    category_id: opts.categoryId ?? null,
+    account_id: tx.accountId,
+    category_id: tx.category ? resolveCategoryId(tx.category) : null,
     merchant: null,
-    note: tx.memo ?? null,
+    note: tx.note ?? null,
+    item: tx.item,
   }
 }

@@ -3,6 +3,8 @@ import { uuid } from '@/utils/uuid'
 import type { Transaction, TransactionType } from './transaction'
 import { createTransaction } from './transaction'
 
+import { CategoryRef } from '@/domain/category'
+import { getAccountIdByKey } from '@/lib/db/account'
 import { rowToTransaction, transactionToRow } from './transaction.mapper'
 import {
   deleteTransactionRow,
@@ -14,7 +16,7 @@ import {
 
 export type MonthlyTotal = {
   month: string
-  total: number
+  total_cents: number
 }
 
 function currentMonthYYYYMM(d = new Date()): string {
@@ -23,16 +25,43 @@ function currentMonthYYYYMM(d = new Date()): string {
   return `${y}-${m}`
 }
 
+// TODO: receipt image
 export async function addTransaction(
   categoryIndex: CategoryIndex,
-  input: { amount: number; memo?: string; type?: TransactionType; occurredAt?: Date }
+  input: {
+    occurredAt?: Date,
+    type: TransactionType;
+    item: string;
+    amount: number;
+    accountId: string;
+    category?: CategoryRef;
+    merchant?: string;
+    note?: string
+  }
 ): Promise<Transaction> {
+
+  // {"accountId": "adf",
+  // "amount": 574,
+  // "category":
+  // {"categoryId": "food", "subCategoryId": "eating_out", "type": "expense"},
+  // "item": "Coffee",
+  // "note": undefined, "occurredAt": 2026-01-08T19:59:04.909Z,
+  // "type": "expense"}
+  const accountId =
+    input.accountId && input.accountId.includes('-')
+      ? input.accountId
+      : getAccountIdByKey('cash')
+
   const tx: Transaction = createTransaction(categoryIndex, {
     id: uuid(),
     occurredAt: input.occurredAt ?? new Date(),
     type: input.type ?? 'expense',
+    item: input.item,
     money: { amount: input.amount, currency: 'USD' },
-    memo: input.memo,
+    accountId,
+    category: input.category,
+    merchant: input.merchant ?? '',
+    note: input.note
   })
 
   insertTransactionRow(transactionToRow(tx))

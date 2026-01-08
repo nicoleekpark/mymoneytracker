@@ -102,7 +102,7 @@ function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
             <Stack.Screen
-              name="add"
+              name="add-transaction"
               options={{
                 title: 'Add Transaction',
                 presentation: 'modal',

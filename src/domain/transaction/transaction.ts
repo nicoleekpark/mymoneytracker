@@ -7,22 +7,21 @@ export type TransactionType = 'income' | 'expense' | 'transfer'
 
 export type Money = Readonly<{
   amount: number
-  currency: string 
+  currency: string
 }>
 
 export type Transaction = Readonly<{
   id: UUID
   occurredAt: Date
   type: TransactionType
-
-  accountId?: UUID
+  item: string
+  money: Money
+  accountId: UUID
+  category?: CategoryRef
+  merchant?: string
+  note?: string
   fromAccountId?: UUID
   toAccountId?: UUID
-
-  money: Money
-  category?: CategoryRef
-  item?: string
-  memo?: string
 }>
 
 export function createTransaction(categoryIndex: CategoryIndex, input: Transaction): Transaction {
@@ -42,6 +41,7 @@ export function createTransaction(categoryIndex: CategoryIndex, input: Transacti
       throw new Error('fromAccountId and toAccountId must differ')
     }
   }
+  console.log('createTransaction input.category keys=', input.category && Object.keys(input.category as any), input.category)
 
   if (input.category) {
     assertValidCategoryRef(categoryIndex, input.category)
