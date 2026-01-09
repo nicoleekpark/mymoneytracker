@@ -1,7 +1,8 @@
+import type { UUID } from '@/domain/common/uuid'
 import { queryAll, queryFirst } from '@/lib/db/sqlite'
 
 export type AccountListItem = {
-  id: string
+  id: UUID
   key: string
   name: string
   type: string
@@ -25,8 +26,8 @@ export function listActiveAccounts(): AccountListItem[] {
   )
 }
 
-export function getAccountIdByKey(key: string): string {
-  const row = queryFirst<{ id: string }>(
+export function getAccountIdByKey(key: string): UUID {
+  const row = queryFirst<AccountListItem>(
     `SELECT id FROM accounts WHERE key = ? AND is_archived = 0 LIMIT 1;`,
     [key]
   )

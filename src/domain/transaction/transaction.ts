@@ -1,8 +1,7 @@
 import type { CategoryIndex } from '@/config/categories.index'
 import type { CategoryRef } from '@/domain/category'
 import { assertValidCategoryRef } from '@/domain/category'
-
-export type UUID = string
+import type { UUID } from '@/domain/common/uuid'
 export type TransactionType = 'income' | 'expense' | 'transfer'
 
 export type Money = Readonly<{

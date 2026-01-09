@@ -1,14 +1,15 @@
 import type { CategoryType } from '@/domain/category'
+import { UUID } from '@/domain/common/uuid'
 
 export type SubCategory = Readonly<{
-  id: string
+  id: UUID
   name: string
   icon: string
   color: string
 }>
 
 export type Category = Readonly<{
-  id: string
+  id: UUID
   name: string
   icon: string
   color: string

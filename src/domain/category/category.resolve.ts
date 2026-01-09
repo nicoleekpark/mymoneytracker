@@ -1,13 +1,13 @@
-import { UUID } from '@/domain/transaction/transaction'
+import type { UUID } from '@/domain/common/uuid'
 import { getCategoryIdByKey, getSubCategoryIdByKeyAndParent } from '@/lib/db/categories'
 import { queryFirst } from '@/lib/db/sqlite'
 import type { CategoryRef } from './category.ref'
 import type { CategoryType } from './category.type'
 
 type CategoryRow = {
-  id: string
+  id: UUID
   type: CategoryType
-  parent_id: string | null
+  parent_id: UUID | null
 }
 
 export function resolveCategoryId(ref?: CategoryRef): UUID | null {

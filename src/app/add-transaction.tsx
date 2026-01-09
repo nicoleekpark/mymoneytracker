@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { CATEGORIES } from '@/config/categories.config'
 import type { CategoryRef } from '@/domain/category'
+import { UUID } from '@/domain/common/uuid'
 import type { Category, SubCategory } from '@/types/category.types'
 
 type TxType = 'income' | 'expense' | 'transfer'
@@ -102,10 +103,16 @@ export default function AddTransactionScreen() {
   const [item, setItem] = useState('')
   const [note, setNote] = useState('')
 
-  // cents-only input
+  // cents-only input (UI/Keypad)
   const [amountCentsText, setAmountCentsText] = useState('')
   const amountCents = useMemo(() => centsNumber(amountCentsText), [amountCentsText])
   const amountDisplay = useMemo(() => formatCentsDisplay(amountCentsText), [amountCentsText])
+
+  // ✅ domain expects dollars (because mapper does *100)
+  const amountDollars = useMemo(() => {
+    if (!Number.isFinite(amountCents) || amountCents < 0) return NaN
+    return amountCents / 100
+  }, [amountCents])
 
   const [occurredAt, setOccurredAt] = useState<Date>(new Date())
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -354,6 +361,11 @@ export default function AddTransactionScreen() {
       return
     }
 
+    if (!Number.isFinite(amountDollars) || amountDollars <= 0) {
+      Alert.alert('Invalid amount', 'Please enter an amount')
+      return
+    }
+
     if (!categoryRef) {
       Alert.alert('Category required', 'Please select a category')
       return
@@ -368,7 +380,7 @@ export default function AddTransactionScreen() {
       return
     }
 
-    let accountId: string
+    let accountId: UUID
     try {
       accountId = getAccountIdByKey(accountKey)
     } catch (e: any) {
@@ -380,7 +392,8 @@ export default function AddTransactionScreen() {
       await addTransaction(categoryIndex, {
         type,
         item: cleanedItem,
-        amount: amountCents,
+        // ✅ IMPORTANT: pass dollars to domain, mapper will do *100 exactly once
+        amount: amountDollars,
         category: categoryRef,
         accountId,
         occurredAt,
@@ -474,7 +487,6 @@ export default function AddTransactionScreen() {
         ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
-        // ✅ 핵심: 탭을 무조건 자식에게 전달해서 TextInput이 항상 포커스/키보드가 뜨게 함
         keyboardShouldPersistTaps="always"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         showsVerticalScrollIndicator={false}
@@ -530,7 +542,6 @@ export default function AddTransactionScreen() {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => {
-              // ✅ 키보드 유지 + 다음 필드로 자연스럽게 이동
               noteInputRef.current?.focus()
             }}
           />
@@ -951,7 +962,6 @@ export default function AddTransactionScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
           >
-            {/* backdrop는 content 뒤에서만 눌리도록 분리 */}
             <Pressable
               onPress={closeAccount}
               style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.25)' }]}

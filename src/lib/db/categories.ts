@@ -1,17 +1,18 @@
 import { CategoryRef, CategoryType } from "@/domain/category"
+import type { UUID } from "@/domain/common/uuid"
 import { queryFirst } from "./sqlite"
 
 type CategoryRow = {
-  id: string
+  id: UUID
   key: string
   type: CategoryType
-  parent_id: string | null
+  parent_id: UUID | null
 }
 
 export function getSubCategoryIdByKeyAndParent(subKey: string, parentKey: string): string {
   const composite = `${parentKey}.${subKey}`
 
-  const row = queryFirst<{ id: string }>(
+  const row = queryFirst<{ id: UUID }>(
     `
     SELECT c.id
     FROM categories c
@@ -32,7 +33,7 @@ function normalizeSubKeyFromDbKey(dbKey: string): string {
   return parts[parts.length - 1] || dbKey
 }
 
-export function resolveCategoryRefById(categoryId: string): CategoryRef {
+export function resolveCategoryRefById(categoryId: UUID): CategoryRef {
   const leaf = queryFirst<CategoryRow>(
     `SELECT id, key, type, parent_id FROM categories WHERE id = ? LIMIT 1;`,
     [categoryId]
@@ -58,4 +59,20 @@ export function resolveCategoryRefById(categoryId: string): CategoryRef {
     type: leaf.type,
     categoryId: leaf.key // ✅ key로 리턴
   }
+}
+
+export function getCategoryIdByKey(categoryKey: string): UUID {
+  const row = queryFirst<{ id: UUID }>(
+    `
+    SELECT id
+    FROM categories
+    WHERE key = ?
+      AND parent_id IS NULL
+    LIMIT 1;
+    `,
+    [categoryKey]
+  )
+
+  if (!row?.id) throw new Error(`Category not found for key=${categoryKey}`)
+  return row.id
 }

@@ -4,6 +4,7 @@ import type { Transaction, TransactionType } from './transaction'
 import { createTransaction } from './transaction'
 
 import { CategoryRef } from '@/domain/category'
+import { UUID } from '@/domain/common/uuid'
 import { getAccountIdByKey } from '@/lib/db/account'
 import { rowToTransaction, transactionToRow } from './transaction.mapper'
 import {
@@ -33,7 +34,7 @@ export async function addTransaction(
     type: TransactionType;
     item: string;
     amount: number;
-    accountId: string;
+    accountId: UUID;
     category?: CategoryRef;
     merchant?: string;
     note?: string
