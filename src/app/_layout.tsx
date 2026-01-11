@@ -44,7 +44,7 @@ export default function RootLayout() {
   useEffect(() => {
     console.log('DEV_TOOLS', process.env.EXPO_PUBLIC_DEV_TOOLS)
   }, [])
-  
+
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error
@@ -90,7 +90,7 @@ export default function RootLayout() {
       </View>
     )
   }
-  
+
   return <RootLayoutNav initialMode={isDark ? 'dark' : 'light'} />
 }
 
@@ -111,15 +111,15 @@ function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
                   <Pressable onPress={() => router.back()} hitSlop={12} style={{ paddingHorizontal: 12 }}>
                     <FontAwesome name="close" size={20} />
                   </Pressable>
-                ) 
+                )
               }}
             />
-            <Stack.Screen name="settings" options={{ 
-              title: 'Settings', 
+            <Stack.Screen name="settings" options={{
+              title: 'Settings',
               headerTitleAlign: 'center',
               headerBackTitle: '' }} />
           </Stack>
-          {APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />}
+          {__DEV__ && APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />}
         </>
       </TamaguiProvider>
     </HoHThemeProvider>

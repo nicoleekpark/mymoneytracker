@@ -6,13 +6,12 @@ import { m20260106121718_init } from './20260106121718_init'
 import { m20260106123754_create_accounts } from './20260106123754_create_accounts'
 import { m20260106123802_create_categories } from './20260106123802_create_categories'
 import { m20260106123806_create_transactions } from './20260106123806_create_transactions'
-import { m20260106160653_seed_categories_from_config } from './20260106160653_seed_categories_from_config'
+
 import type { Migration } from './types'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
   m20260106123754_create_accounts,
   m20260106123802_create_categories,
-  m20260106123806_create_transactions,
-  m20260106160653_seed_categories_from_config
+  m20260106123806_create_transactions
 ]

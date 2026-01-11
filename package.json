@@ -11,6 +11,7 @@
     "build:ios": "npx expo run:ios",
     "web": "expo start --web",
     "dev:export-db": "./scripts/export-db-from-simulator.sh",
+    "dev:dbserver": "node ./scripts/dev-server.cjs",
     "dev:dbpull": "./scripts/dbpull.sh",
     "db:migration": "node scripts/create-migration.js",
     "db:migration:regen": "node scripts/create-migration.js --regen"
@@ -32,6 +33,7 @@
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
     "expo-web-browser": "~15.0.10",
+    "express": "^5.2.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",

@@ -1,5 +1,5 @@
 import type { CategoryIndex } from '@/config/categories.index'
-import { uuid } from '@/utils/uuid'
+import { uuid } from '@/lib/platform/uuid'
 import type { Transaction, TransactionType } from './transaction'
 import { createTransaction } from './transaction'
 

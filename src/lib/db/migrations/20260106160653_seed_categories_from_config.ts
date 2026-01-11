@@ -1,6 +1,6 @@
 import { CATEGORIES } from '@/config/categories.config'
 import { exec } from '@/lib/db/sqlite'
-import { uuid } from '@/utils/uuid'
+import { uuid } from '@/lib/platform/uuid'
 import type { Migration } from './types'
 
 export const m20260106160653_seed_categories_from_config: Migration = {

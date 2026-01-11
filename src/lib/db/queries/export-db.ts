@@ -1,3 +1,4 @@
+import { getDbName } from '@/lib/db/config'
 import { exec, getMainDbFilePath } from '@/lib/db/sqlite'
 import { File, Paths } from 'expo-file-system'
 import * as Sharing from 'expo-sharing'
@@ -18,8 +19,9 @@ export async function exportDatabase(): Promise<void> {
   const sourceUri = toFileUri(dbPath)
 
   const timestamp = new Date().toISOString().replaceAll(':', '-')
-  const destFile = new File(Paths.cache, `hoh_finance_${timestamp}.db`)
-  
+  const dbName = getDbName()
+  const destFile = new File(Paths.cache, `${dbName}_${timestamp}.db`)
+
   const sourceFile = new File(sourceUri)
 
   try {

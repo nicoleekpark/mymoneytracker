@@ -1,5 +1,5 @@
 import { exec, execMany } from '@/lib/db/sqlite'
-import { uuid } from '@/utils/uuid'
+import { uuid } from '@/lib/platform/uuid'
 import type { Migration } from './types'
 
 export const m20260106123802_create_categories: Migration = {

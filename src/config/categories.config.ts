@@ -182,7 +182,7 @@ const SUBCATEGORIES: Record<string, SubCategory[]> = {
     { id: 'wedding', name: 'Wedding Gifts', icon: '💍', color: PALETTE.fuchsia[300] },
     { id: 'baby', name: 'Baby Gifts', icon: '🍼', color: PALETTE.fuchsia[200] },
     { id: 'birthday', name: 'Birthday / Holiday Gifts', icon: '🎉', color: PALETTE.fuchsia[400] },
-    { id: 'cash_gift', name: 'Cash Gifts (축의금 등)', icon: '💸', color: PALETTE.fuchsia[500] }
+    { id: 'cash_gift', name: 'Cash Gifts', icon: '💸', color: PALETTE.fuchsia[500] }
   ],
 
   // ---------------------------------------------------------------

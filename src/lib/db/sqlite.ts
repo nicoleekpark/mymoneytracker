@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite'
+import { getDbName } from './config'
 
-const db = SQLite.openDatabaseSync('hoh_finance.db')
+export const db = SQLite.openDatabaseSync(getDbName())
 
 export function initDbPragmas() {
   exec(`PRAGMA foreign_keys = ON;`)

@@ -1,79 +1,85 @@
 #!/usr/bin/env bash
-
 ####################################
 #       DEV PURPOSE ONLY           #
 ####################################
 
 set -euo pipefail
 
-BUNDLE_ID="com.houseofhuynh.finance"
-DB_NAME="hoh_finance.db"
+# usage:
+#   ./scripts/dbpull.sh dev
+#   ./scripts/dbpull.sh prod
+#
+# called by dev-server.cjs:
+#   spawn('bash', [scriptPath, env])
 
-# project root = scripts/ 상위
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+ENV_NAME="${1:-dev}"
 
-DEST="$PROJECT_ROOT/db_exports"
-LATEST_DIR="$DEST/latest"
-HISTORY_DIR="$DEST/history"
+if [[ "$ENV_NAME" != "dev" && "$ENV_NAME" != "prod" ]]; then
+  echo "Invalid env: $ENV_NAME (expected dev|prod)"
+  exit 2
+fi
+
+# --- project paths ---
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXPORT_ROOT="${PROJECT_ROOT}/db_exports"
+LATEST_DIR="${EXPORT_ROOT}/latest"
+HISTORY_DIR="${EXPORT_ROOT}/history"
 
 mkdir -p "$LATEST_DIR" "$HISTORY_DIR"
 
-ts() { date +"%Y%m%d-%H%M%S"; }
+# --- db names ---
+DB_NAME="hoh_fi_dev.db"
+if [[ "$ENV_NAME" == "prod" ]]; then
+  DB_NAME="hoh_fi_prod.db"
+fi
 
-echo "[dbpull] bundle=$BUNDLE_ID"
-echo "[dbpull] project=$PROJECT_ROOT"
+# --- candidate locations (optional explicit paths first) ---
+CANDIDATES=(
+  "${PROJECT_ROOT}/${DB_NAME}"
+)
 
-CONTAINER=$(xcrun simctl get_app_container booted "$BUNDLE_ID" data)
+DB_PATH=""
 
-if [ -z "$CONTAINER" ]; then
-  echo "[dbpull] ERROR: app container not found (is simulator booted + app installed?)"
+for p in "${CANDIDATES[@]}"; do
+  if [[ -f "$p" ]]; then
+    DB_PATH="$p"
+    break
+  fi
+done
+
+# --- fallback: search iOS simulator (scoped) ---
+if [[ -z "$DB_PATH" ]]; then
+  SIM_ROOT="${HOME}/Library/Developer/CoreSimulator/Devices"
+  if [[ -d "$SIM_ROOT" ]]; then
+    DB_PATH="$(/usr/bin/find "$SIM_ROOT" -type f -name "$DB_NAME" 2>/dev/null | tail -n 1 || true)"
+  fi
+fi
+
+if [[ -z "$DB_PATH" || ! -f "$DB_PATH" ]]; then
+  echo "Could not find ${DB_NAME}"
+  echo "Searched:"
+  echo "  - explicit candidates"
+  echo "  - ${HOME}/Library/Developer/CoreSimulator/Devices"
   exit 1
 fi
 
-# Find the original DB inside the app container
-DB_PATH=$(find "$CONTAINER" -maxdepth 14 -name "$DB_NAME" -print | head -n 1)
+# --- timestamps ---
+TS="$(date +"%Y%m%d_%H%M%S")"
+BASENAME="${DB_NAME%.db}"
 
-if [ -z "$DB_PATH" ]; then
-  echo "[dbpull] ERROR: $DB_NAME not found in container"
-  echo "[dbpull] hint: run the app once so SQLite creates the file"
-  exit 1
-fi
+# history = immutable snapshot
+HISTORY_FILE="${HISTORY_DIR}/${BASENAME}_${TS}.db"
 
-WAL_PATH="${DB_PATH}-wal"
-SHM_PATH="${DB_PATH}-shm"
+# latest = stable name (always overwritten)
+LATEST_FILE="${LATEST_DIR}/${BASENAME}.db"
 
-STAMP="$(ts)"
-HIST_BASE="$HISTORY_DIR/$STAMP"
-mkdir -p "$HIST_BASE"
+# --- copy ---
+cp -f "$DB_PATH" "$HISTORY_FILE"
+cp -f "$DB_PATH" "$LATEST_FILE"
 
-echo "[dbpull] found db:"
-echo "  $DB_PATH"
-
-# Copy main db
-cp "$DB_PATH" "$LATEST_DIR/$DB_NAME"
-cp "$DB_PATH" "$HIST_BASE/$DB_NAME"
-
-# Copy wal/shm if present (WAL mode)
-if [ -f "$WAL_PATH" ]; then
-  cp "$WAL_PATH" "$LATEST_DIR/${DB_NAME}-wal"
-  cp "$WAL_PATH" "$HIST_BASE/${DB_NAME}-wal"
-  echo "[dbpull] copied wal"
-else
-  rm -f "$LATEST_DIR/${DB_NAME}-wal" || true
-fi
-
-if [ -f "$SHM_PATH" ]; then
-  cp "$SHM_PATH" "$LATEST_DIR/${DB_NAME}-shm"
-  cp "$SHM_PATH" "$HIST_BASE/${DB_NAME}-shm"
-  echo "[dbpull] copied shm"
-else
-  rm -f "$LATEST_DIR/${DB_NAME}-shm" || true
-fi
-
-echo "[dbpull] latest ready:"
-echo "  $LATEST_DIR/$DB_NAME"
-echo "[dbpull] history saved:"
-echo "  $HIST_BASE/"
-
-open "$LATEST_DIR"
+echo "˲ DB PULL OK"
+echo "˲ env:        $ENV_NAME"
+echo "˲ db:         $DB_NAME"
+echo "˲ from:       $DB_PATH"
+echo "˲ history →   $HISTORY_FILE"
+echo "˲ latest  →   $LATEST_FILE"
