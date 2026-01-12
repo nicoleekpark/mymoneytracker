@@ -9,11 +9,10 @@ import 'react-native-reanimated'
 import { HoHThemeProvider } from '@/providers'
 import { ScrollView, Text, useColorScheme, View } from 'react-native'
 
-import { initDbPragmas } from '@/lib/db/sqlite'
+import { initDbPragmas, migrate, runSystemSeeds } from '@/lib/db'
 
 import { DevToolsOverlay } from '@/components/dev/DevToolsOverlay'
 import { APP_CONFIG } from '@/config'
-import { migrate } from '@/lib/db/migrate'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
 export {
@@ -54,7 +53,9 @@ export default function RootLayout() {
     try {
       initDbPragmas()
       migrate()
+      runSystemSeeds()
       setDbReady(true)
+      console.log('DB ready...')
     } catch (e) {
       console.error('DB migrate failed', e)
       setDbError(e)

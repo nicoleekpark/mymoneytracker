@@ -2,19 +2,24 @@
   "name": "hoh_finance-tracker",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "start": "npx expo start",
     "start:ios": "npx expo start --ios",
     "start:android": "npx expo start --android",
     "start:dev": "npx expo start -c --dev-client",
     "start:dev:ios": "npx expo start -c --dev-client --ios",
-    "build:ios": "npx expo run:ios",
-    "web": "expo start --web",
-    "dev:export-db": "./scripts/export-db-from-simulator.sh",
-    "dev:dbserver": "node ./scripts/dev-server.cjs",
-    "dev:dbpull": "./scripts/dbpull.sh",
-    "db:migration": "node scripts/create-migration.js",
-    "db:migration:regen": "node scripts/create-migration.js --regen"
+
+    "ios:run": "npx expo run:ios",
+
+    "db:migration:new": "node scripts/create-migration.js",
+    "db:migration:regen": "node scripts/create-migration.js --regen",
+
+    "db:export:sim": "./scripts/export-db-from-simulator.sh",
+
+    "db:dev:server": "node ./scripts/dev-server.js",
+    "db:dev:pull": "./scripts/dbpull.sh",
+    "db:dev:sync": "./scripts/dbsync.sh"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

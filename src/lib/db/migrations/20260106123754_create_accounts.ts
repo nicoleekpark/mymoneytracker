@@ -6,32 +6,28 @@ export const m20260106123754_create_accounts: Migration = {
   name: 'create_accounts',
   up: () => {
     execMany(`
+      PRAGMA foreign_keys = ON;
+
       CREATE TABLE IF NOT EXISTS accounts (
-        id TEXT PRIMARY KEY NOT NULL,  -- UUID
-        key TEXT NOT NULL UNIQUE,      -- stable key e.g. cash
+        id TEXT PRIMARY KEY NOT NULL,
+        key TEXT NOT NULL UNIQUE,
         name TEXT NOT NULL,
-        type TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'credit',
         currency TEXT NOT NULL DEFAULT 'USD',
-        is_archived INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        sort_order INTEGER NOT NULL DEFAULT 0,
+
+        is_system INTEGER NOT NULL DEFAULT 0 CHECK (is_system IN (0,1)),
+        is_archived INTEGER NOT NULL DEFAULT 0 CHECK (is_archived IN (0,1)),
+
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
       );
 
-      CREATE INDEX IF NOT EXISTS idx_accounts_is_archived
+      CREATE INDEX IF NOT EXISTS idx_accounts_active
       ON accounts(is_archived);
 
-      CREATE INDEX IF NOT EXISTS idx_accounts_key ON accounts(key);
+      CREATE INDEX IF NOT EXISTS idx_accounts_type_sort
+      ON accounts(type, sort_order, name);
     `)
   },
 }
-
-// accounts
-// -----------------------------------------------------------------------
-// id (UUID)                             | key        | name      | type
-// -----------------------------------------------------------------------
-// a1f3…-1111-aaaa                      | cash       | Cash      | cash
-// b2c4…-2222-bbbb                      | checking   | Chase     | bank
-// c3d5…-3333-cccc                      | savings    | Savings   | bank
-// d4e6…-4444-dddd                      | credit_amex| Amex Gold | credit
-// e5f7…-5555-eeee                      | joint      | Joint     | bank
-

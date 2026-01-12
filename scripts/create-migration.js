@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-const fs = require('fs')
-const path = require('path')
+// scripts/create-migration.js (ESM)
+import fs from 'fs'
+import path from 'path'
 
 const MIGRATIONS_DIR = path.join(process.cwd(), 'src', 'lib', 'db', 'migrations')
 const TYPES_FILE = path.join(MIGRATIONS_DIR, 'types.ts')
@@ -45,8 +46,8 @@ function listMigrationFiles() {
   if (!fs.existsSync(MIGRATIONS_DIR)) return []
   return fs
     .readdirSync(MIGRATIONS_DIR)
-    .filter((f) => f.endsWith('.ts'))
-    .filter((f) => f !== 'index.ts' && f !== 'types.ts')
+    .filter(f => f.endsWith('.ts'))
+    .filter(f => f !== 'index.ts' && f !== 'types.ts')
 }
 
 function parseFileBase(file) {
@@ -60,22 +61,22 @@ function regenIndex() {
   ensureDir(MIGRATIONS_DIR)
 
   if (!fs.existsSync(TYPES_FILE)) {
-    // types.ts 없으면 자동 생성
     fs.writeFileSync(
       TYPES_FILE,
       `export type Migration = {
-        id: number
-        name: string
-        up: () => void
-      }`,
+  id: number
+  name: string
+  up: () => void
+}
+`,
       'utf8'
     )
     console.log('[migrations] created src/lib/db/migrations/types.ts')
   }
 
   const files = listMigrationFiles()
-    .map((f) => ({ f, parsed: parseFileBase(f) }))
-    .filter((x) => {
+    .map(f => ({ f, parsed: parseFileBase(f) }))
+    .filter(x => {
       if (!x.parsed) {
         console.warn(`[migrations] skip non-standard file name: ${x.f}`)
         return false
@@ -84,7 +85,6 @@ function regenIndex() {
     })
     .sort((a, b) => a.parsed.id.localeCompare(b.parsed.id))
 
-  // guards
   const ids = new Set()
   let prev = null
   for (const x of files) {
@@ -142,13 +142,11 @@ function createMigration(rawName) {
     process.exit(1)
   }
 
-  // ensure unique timestamp within same second
   let id = timestampId()
   let fileBase = `${id}_${slug}`
   let filePath = path.join(MIGRATIONS_DIR, `${fileBase}.ts`)
+
   if (fs.existsSync(filePath)) {
-    // extremely rare, but if two migrations created in same second with same name
-    // bump by 1 second
     const asNum = Number(id) + 1
     id = String(asNum)
     fileBase = `${id}_${slug}`
@@ -179,6 +177,7 @@ export const ${constName}: Migration = {
 
 const args = process.argv.slice(2)
 const cmd = args[0]
+
 if (cmd === '--regen' || cmd === 'regen') {
   regenIndex()
 } else {

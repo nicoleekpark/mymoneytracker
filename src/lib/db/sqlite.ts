@@ -48,14 +48,35 @@ export function withTransaction<T>(fn: () => T): T {
 }
 
 export function execMany(sql: string) {
-  const statements = sql
-    .split(';')
-    .map(s => s.trim())
-    .filter(Boolean)
+  const parts = sql.split(';')
 
-  for (const s of statements) {
-    exec(s + ';')
+  for (const raw of parts) {
+    const stmt = stripSqlComments(raw).trim()
+    if (!stmt) continue
+
+    try {
+      exec(stmt.endsWith(';') ? stmt : stmt + ';')
+    } catch (e) {
+      console.error('[execMany] failed statement:', stmt)
+      throw e
+    }
   }
+}
+
+function stripSqlComments(input: string): string {
+  // remove /* ... */ blocks
+  let out = input.replace(/\/\*[\s\S]*?\*\//g, '')
+
+  // remove -- ... end-of-line comments
+  out = out
+    .split('\n')
+    .map(line => {
+      const idx = line.indexOf('--')
+      return idx >= 0 ? line.slice(0, idx) : line
+    })
+    .join('\n')
+
+  return out
 }
 
 export type DatabaseListRow = {

@@ -1,4 +1,4 @@
-import type { FeatureFlags } from '@/types'
+import type { FeatureFlags } from './feature-flags.types'
 
 export const FEATURE_FLAGS: FeatureFlags = {
   devTools: process.env.EXPO_PUBLIC_DEV_TOOLS === 'true',
@@ -8,4 +8,4 @@ export const FEATURE_FLAGS: FeatureFlags = {
   receiptCapture: false,
   notifications: false,
   widget: false
-} as const
+}

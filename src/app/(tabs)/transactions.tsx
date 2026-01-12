@@ -1,5 +1,5 @@
-import type { Transaction } from '@/domain/transaction/transaction'
-import { getThisMonthExpenseTotal, listTransactions } from '@/domain/transaction/transaction.usecase'
+import type { Transaction } from '@/domain/transaction'
+import { getThisMonthExpenseTotal, getTransactions } from '@/domain/transaction'
 import { useHoHTheme } from '@/providers'
 import { formatTransactionRowDate } from '@/ui/format/date'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
@@ -35,65 +35,42 @@ function monthTitle(d: Date) {
 }
 
 function formatCurrency(amount: number) {
-  // Keep it simple and stable across RN environments
   return `$${Number.isFinite(amount) ? amount.toFixed(2) : '0.00'}`
 }
 
 function safeDate(tx: Transaction): Date {
-  const d = tx.occurredAt instanceof Date ? tx.occurredAt : new Date(tx.occurredAt as any)
+  const d = tx.occurredAt instanceof Date ? tx.occurredAt : new Date((tx as any).occurredAt)
   return Number.isNaN(d.getTime()) ? new Date(0) : d
 }
 
 function isExpense(tx: Transaction): boolean {
   const t = (tx as any).type
-  if (typeof t === 'string') return t === 'expense'
-  return true
+  return typeof t === 'string' ? t === 'expense' : true
 }
 
 function displayItem(tx: Transaction): string {
-  return (
-    (tx as any).item ||
-    (tx as any).note ||
-    (tx as any).memo ||
-    'Untitled'
-  )
+  return (tx as any).item || (tx as any).note || (tx as any).memo || 'Untitled'
 }
 
 function categoryBadgeText(tx: Transaction): string {
   const cat = (tx as any).category
-  const label = (cat?.subCategoryId || cat?.categoryId || cat?.type) as string | undefined
+  const label = (cat?.subCategoryKey || cat?.categoryKey || cat?.type) as string | undefined
   if (!label || typeof label !== 'string') return '•'
   return label.trim().slice(0, 1).toUpperCase()
-}
-
-function formatRowDate(d: Date): string {
-  // "JAN 9 10:12 AM"
-  // Uses user's locale but forces month short in English-like format if available
-  const month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
-  const day = d.getDate()
-
-  let hours = d.getHours()
-  const minutes = pad2(d.getMinutes())
-  const ampm = hours >= 12 ? 'PM' : 'AM'
-  hours = hours % 12
-  if (hours === 0) hours = 12
-
-  return `${month} ${day} ${hours}:${minutes} ${ampm}`
 }
 
 function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   const q = query.trim().toLowerCase()
 
   const filtered = q
-    ? all.filter((tx) => {
+    ? all.filter(tx => {
         const item = displayItem(tx).toLowerCase()
-        const note = ((tx as any).note || (tx as any).memo || '').toString().toLowerCase()
+        const note = String(((tx as any).note || (tx as any).memo || '')).toLowerCase()
         return item.includes(q) || note.includes(q)
       })
     : all
 
   const sorted = [...filtered].sort((a, b) => safeDate(b).getTime() - safeDate(a).getTime())
-
   const map = new Map<string, MonthSection>()
 
   for (const tx of sorted) {
@@ -129,11 +106,22 @@ export default function TransactionsScreen() {
     return () => clearTimeout(t)
   }, [query])
 
-  const load = useCallback(async () => {
+  const load = useCallback(() => {
     try {
-      const [txs, total] = await Promise.all([listTransactions(200), getThisMonthExpenseTotal()])
-      setItems(txs)
-      setThisMonthTotal(total)
+      // works whether your usecases return values (sync) or promises (async)
+      const txsP = Promise.resolve(getTransactions(200) as any)
+      const totalP = Promise.resolve(getThisMonthExpenseTotal() as any)
+
+      Promise.all([txsP, totalP])
+        .then(([txs, total]) => {
+          setItems(Array.isArray(txs) ? txs : [])
+          setThisMonthTotal(Number(total ?? 0))
+        })
+        .catch(e => {
+          console.error(e)
+          setItems([])
+          setThisMonthTotal(0)
+        })
     } catch (e) {
       console.error(e)
       setItems([])
@@ -151,13 +139,16 @@ export default function TransactionsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.semantic.background }]}>
-      {/* Title row */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.semantic.text }]}>TRANSACTIONS</Text>
       </View>
 
-      {/* Search bar */}
-      <View style={[styles.searchWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
+      <View
+        style={[
+          styles.searchWrap,
+          { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
+        ]}
+      >
         <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as any} />
         <TextInput
           value={query}
@@ -182,7 +173,6 @@ export default function TransactionsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Summary */}
       <View style={[styles.summary, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
         <Text style={[styles.summaryLabel, { color: theme.semantic.textSecondary }]}>
           This month expense
@@ -192,7 +182,6 @@ export default function TransactionsScreen() {
         </Text>
       </View>
 
-      {/* Month-grouped list with sticky month header */}
       <SectionList
         sections={sections}
         keyExtractor={(it) => it.id}
@@ -214,13 +203,11 @@ export default function TransactionsScreen() {
         )}
         renderItem={({ item }) => {
           const amt = Number((item as any).money?.amount ?? 0)
-          const d = safeDate(item)
           return (
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
                 // Phase 2: push detail screen
-                // router.push(`/transaction/${item.id}`)
               }}
               style={[
                 styles.row,
@@ -236,10 +223,7 @@ export default function TransactionsScreen() {
 
               <View style={styles.rowMain}>
                 <View style={styles.rowTop}>
-                  <Text
-                    style={[styles.itemText, { color: theme.semantic.text }]}
-                    numberOfLines={1}
-                  >
+                  <Text style={[styles.itemText, { color: theme.semantic.text }]} numberOfLines={1}>
                     {displayItem(item)}
                   </Text>
                   <Text style={[styles.amountText, { color: theme.semantic.text }]}>
@@ -250,7 +234,6 @@ export default function TransactionsScreen() {
                 <Text style={[styles.dateText, { color: theme.semantic.textSecondary }]}>
                   {formatTransactionRowDate(safeDate(item))}
                 </Text>
-
               </View>
             </TouchableOpacity>
           )

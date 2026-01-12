@@ -1,12 +1,15 @@
+import type { CategoryMeta, SubCategoryMeta } from '@/config/categories.types'
 import type { CategoryType } from '@/domain/category'
 import { PALETTE } from '@/theme'
-import type { Category, SubCategory } from '@/types'
 
 // ===============================================================
 // 1. CATEGORY META
 // ===============================================================
 
 const CATEGORY_META = {
+  // -------------------------
+  // EXPENSE
+  // -------------------------
   housing: {
     name: 'Housing',
     icon: '🏡',
@@ -91,6 +94,56 @@ const CATEGORY_META = {
     color: PALETTE.rose[400],
     type: 'expense' as const satisfies CategoryType
   },
+  taxes: {
+    name: 'Taxes',
+    icon: '🧮',
+    color: PALETTE.stone[500],
+    type: 'expense' as const satisfies CategoryType
+  },
+  debt: {
+    name: 'Debt & Loans',
+    icon: '🧾',
+    color: PALETTE.stone[400],
+    type: 'expense' as const satisfies CategoryType
+  },
+  fees: {
+    name: 'Fees & Charges',
+    icon: '🏦',
+    color: PALETTE.stone[300],
+    type: 'expense' as const satisfies CategoryType
+  },
+  education: {
+    name: 'Education',
+    icon: '🎓',
+    color: PALETTE.yellow[500],
+    type: 'expense' as const satisfies CategoryType
+  },
+  business: {
+    name: 'Business & Work',
+    icon: '💼',
+    color: PALETTE.slate[500],
+    type: 'expense' as const satisfies CategoryType
+  },
+
+  // -------------------------
+  // INCOME
+  // -------------------------
+  income: {
+    name: 'Income',
+    icon: '💵',
+    color: PALETTE.green[600],
+    type: 'income' as const satisfies CategoryType
+  },
+
+  // -------------------------
+  // TRANSFER
+  // -------------------------
+  transfers: {
+    name: 'Transfers',
+    icon: '🔁',
+    color: PALETTE.blue[600],
+    type: 'transfer' as const satisfies CategoryType
+  },
   savings: {
     name: 'Savings & Investment',
     icon: '💰',
@@ -103,154 +156,250 @@ const CATEGORY_META = {
 // 2. SUBCATEGORIES
 // ===============================================================
 
-const SUBCATEGORIES: Record<string, SubCategory[]> = {
+const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
   // ---------------------------------------------------------------
-  // 1) Housing
+  // Housing
   // ---------------------------------------------------------------
   housing: [
-    { id: 'property_tax', name: 'Property Tax', icon: '🧾', color: PALETTE.orange[500] },
-    { id: 'utilities', name: 'Utilities', icon: '💡', color: PALETTE.orange[400] },
-    { id: 'hoa', name: 'HOA / Maintenance', icon: '🏢', color: PALETTE.orange[300] },
-    { id: 'repairs', name: 'Repairs & Updates', icon: '🛠️', color: PALETTE.orange[600] },
-    { id: 'home_insurance', name: 'Home Insurance', icon: '🛡️', color: PALETTE.orange[500] }
+    { key: 'utilities', name: 'Utilities', icon: '💡', color: PALETTE.orange[400] },
+    { key: 'hoa', name: 'HOA / Maintenance', icon: '🏢', color: PALETTE.orange[300] },
+    { key: 'repairs', name: 'Repairs & Updates', icon: '🛠️', color: PALETTE.orange[600] },
+    { key: 'home_insurance', name: 'Home Insurance', icon: '🛡️', color: PALETTE.orange[500] }
   ],
 
   // ---------------------------------------------------------------
-  // 2) Food
+  // Food
   // ---------------------------------------------------------------
   food: [
-    { id: 'groceries', name: 'Groceries', icon: '🛒', color: PALETTE.amber[300] },
-    { id: 'eating_out', name: 'Eating Out', icon: '🍽️', color: PALETTE.amber[400] }
+    { key: 'groceries', name: 'Groceries', icon: '🛒', color: PALETTE.amber[300] },
+    { key: 'eating_out', name: 'Eating Out', icon: '🍽️', color: PALETTE.amber[400] },
+    { key: 'coffee', name: 'Coffee / Snacks', icon: '☕', color: PALETTE.amber[200] }
   ],
 
   // ---------------------------------------------------------------
-  // 3) Lifestyle
+  // Lifestyle
   // ---------------------------------------------------------------
   lifestyle: [
-    { id: 'home_items', name: 'Home Items', icon: '🧻', color: PALETTE.pink[200] },
-    { id: 'clothes', name: 'Clothes & Accessories', icon: '👗', color: PALETTE.pink[300] },
-    { id: 'beauty', name: 'Beauty / Hair / Nails', icon: '💅', color: PALETTE.pink[400] },
-    { id: 'electronics', name: 'Electronics / Furniture', icon: '🛋️', color: PALETTE.pink[200] },
-    { id: 'misc', name: 'Miscellaneous', icon: '📦', color: PALETTE.pink[100] }
+    { key: 'home_items', name: 'Home Items', icon: '🧻', color: PALETTE.pink[200] },
+    { key: 'clothes', name: 'Clothes & Accessories', icon: '👗', color: PALETTE.pink[300] },
+    { key: 'beauty', name: 'Beauty / Hair / Nails', icon: '💅', color: PALETTE.pink[400] },
+    { key: 'electronics', name: 'Electronics / Furniture', icon: '🛋️', color: PALETTE.pink[200] },
+    { key: 'laundry', name: 'Laundry / Dry Cleaning', icon: '🧺', color: PALETTE.pink[200] },
+    { key: 'misc', name: 'Miscellaneous', icon: '📦', color: PALETTE.pink[100] }
   ],
 
   // ---------------------------------------------------------------
-  // 4) Health
+  // Health
   // ---------------------------------------------------------------
   health: [
-    { id: 'doctor', name: 'Doctor Visit', icon: '🩺', color: PALETTE.red[300] },
-    { id: 'pharmacy', name: 'Pharmacy', icon: '💊', color: PALETTE.red[400] },
-    { id: 'fitness', name: 'Fitness / Gym', icon: '🏋️‍♀️', color: PALETTE.red[300] },
-    { id: 'supplements', name: 'Supplements', icon: '⚕️', color: PALETTE.red[200] }
+    { key: 'doctor', name: 'Doctor Visit', icon: '🩺', color: PALETTE.red[300] },
+    { key: 'pharmacy', name: 'Pharmacy', icon: '💊', color: PALETTE.red[400] },
+    { key: 'fitness', name: 'Fitness / Gym', icon: '🏋️‍♀️', color: PALETTE.red[300] },
+    { key: 'supplements', name: 'Supplements', icon: '⚕️', color: PALETTE.red[200] },
+    { key: 'therapy', name: 'Therapy / Mental Health', icon: '🧠', color: PALETTE.red[200] }
   ],
 
   // ---------------------------------------------------------------
-  // 5) Family & Children
+  // Family & Children
   // ---------------------------------------------------------------
   family: [
-    { id: 'kids_food', name: 'Kids Food & Drinks', icon: '🍲', color: PALETTE.yellow[400] },
-    { id: 'necessities', name: 'Necessities', icon: '🧴', color: PALETTE.yellow[300] },
-    { id: 'education', name: 'Books / Education', icon: '📚', color: PALETTE.yellow[500] },
-    { id: 'kids_clothes', name: 'Kids Clothes', icon: '🧦', color: PALETTE.yellow[400] },
-    { id: 'toys', name: 'Toys / Misc', icon: '🧸', color: PALETTE.yellow[300] }
+    { key: 'childcare', name: 'Childcare / Nanny', icon: '🍼', color: PALETTE.yellow[400] },
+    { key: 'kids_food', name: 'Kids Food & Drinks', icon: '🍲', color: PALETTE.yellow[400] },
+    { key: 'necessities', name: 'Necessities', icon: '🧴', color: PALETTE.yellow[300] },
+    { key: 'education', name: 'Books / Education', icon: '📚', color: PALETTE.yellow[500] },
+    { key: 'kids_clothes', name: 'Kids Clothes', icon: '🧦', color: PALETTE.yellow[400] },
+    { key: 'toys', name: 'Toys / Misc', icon: '🧸', color: PALETTE.yellow[300] }
   ],
 
   // ---------------------------------------------------------------
-  // 6) Pets
+  // Pets
   // ---------------------------------------------------------------
   pets: [
-    { id: 'pet_food', name: 'Pet Food', icon: '🍖', color: PALETTE.green[300] },
-    { id: 'vet', name: 'Vet Visit', icon: '🐾', color: PALETTE.green[400] },
-    { id: 'pet_supplies', name: 'Supplies (Clothes / Toys)', icon: '🦴', color: PALETTE.green[200] },
-    { id: 'pet_insurance', name: 'Pet Insurance', icon: '🛡️', color: PALETTE.green[300] }
+    { key: 'pet_food', name: 'Pet Food', icon: '🍖', color: PALETTE.green[300] },
+    { key: 'vet', name: 'Vet Visit', icon: '🐾', color: PALETTE.green[400] },
+    { key: 'pet_supplies', name: 'Supplies (Clothes / Toys)', icon: '🦴', color: PALETTE.green[200] },
+    { key: 'grooming', name: 'Grooming', icon: '✂️', color: PALETTE.green[200] },
+    { key: 'pet_insurance', name: 'Pet Insurance', icon: '🛡️', color: PALETTE.green[300] }
   ],
 
   // ---------------------------------------------------------------
-  // 7) Social & Entertainment
+  // Social & Entertainment
   // ---------------------------------------------------------------
   social: [
-    { id: 'friends', name: 'Friends Hangout', icon: '🫶', color: PALETTE.purple[200] },
-    { id: 'date', name: 'Date / Fun', icon: '💑', color: PALETTE.purple[300] },
-    { id: 'classes', name: 'Classes / Hobbies', icon: '🎨', color: PALETTE.purple[300] },
-    { id: 'events', name: 'Events / Concerts', icon: '🎫', color: PALETTE.purple[400] }
+    { key: 'friends', name: 'Friends Hangout', icon: '🫶', color: PALETTE.purple[200] },
+    { key: 'date', name: 'Date / Fun', icon: '💑', color: PALETTE.purple[300] },
+    { key: 'classes', name: 'Classes / Hobbies', icon: '🎨', color: PALETTE.purple[300] },
+    { key: 'events', name: 'Events / Concerts', icon: '🎫', color: PALETTE.purple[400] }
   ],
 
   // ---------------------------------------------------------------
-  // 8) Gifts & Occasions
+  // Gifts & Occasions
   // ---------------------------------------------------------------
   gifts: [
-    { id: 'wedding', name: 'Wedding Gifts', icon: '💍', color: PALETTE.fuchsia[300] },
-    { id: 'baby', name: 'Baby Gifts', icon: '🍼', color: PALETTE.fuchsia[200] },
-    { id: 'birthday', name: 'Birthday / Holiday Gifts', icon: '🎉', color: PALETTE.fuchsia[400] },
-    { id: 'cash_gift', name: 'Cash Gifts', icon: '💸', color: PALETTE.fuchsia[500] }
+    { key: 'wedding', name: 'Wedding Gifts', icon: '💍', color: PALETTE.fuchsia[300] },
+    { key: 'baby', name: 'Baby Gifts', icon: '🍼', color: PALETTE.fuchsia[200] },
+    { key: 'birthday', name: 'Birthday / Holiday Gifts', icon: '🎉', color: PALETTE.fuchsia[400] },
+    { key: 'cash_gift', name: 'Cash Gifts', icon: '💸', color: PALETTE.fuchsia[500] }
   ],
 
   // ---------------------------------------------------------------
-  // 9) Transportation
+  // Transportation
   // ---------------------------------------------------------------
   transport: [
-    { id: 'public_transit', name: 'Public Transit', icon: '🚇', color: PALETTE.blue[300] },
-    { id: 'taxi', name: 'Taxi / Rideshare', icon: '🚕', color: PALETTE.blue[400] },
-    { id: 'parking', name: 'Parking', icon: '🅿️', color: PALETTE.blue[300] },
-    { id: 'gas', name: 'Gas', icon: '⛽', color: PALETTE.blue[500] }
+    { key: 'public_transit', name: 'Public Transit', icon: '🚇', color: PALETTE.blue[300] },
+    { key: 'taxi', name: 'Taxi / Rideshare', icon: '🚕', color: PALETTE.blue[400] },
+    { key: 'parking', name: 'Parking', icon: '🅿️', color: PALETTE.blue[300] },
+    { key: 'gas', name: 'Gas', icon: '⛽', color: PALETTE.blue[500] },
+    { key: 'car_maintenance', name: 'Car Maintenance', icon: '🛠️', color: PALETTE.blue[200] }
   ],
 
   // ---------------------------------------------------------------
-  // 10) Communication
+  // Communication
   // ---------------------------------------------------------------
   communication: [
-    { id: 'internet', name: 'Internet', icon: '🌐', color: PALETTE.teal[300] },
-    { id: 'mobile', name: 'Mobile', icon: '📱', color: PALETTE.teal[400] }
+    { key: 'internet', name: 'Internet', icon: '🌐', color: PALETTE.teal[300] },
+    { key: 'mobile', name: 'Mobile', icon: '📱', color: PALETTE.teal[400] }
   ],
 
   // ---------------------------------------------------------------
-  // 11) Subscriptions
+  // Subscriptions
   // ---------------------------------------------------------------
   subscriptions: [
-    { id: 'streaming_video', name: 'Streaming Video', icon: '📺', color: PALETTE.indigo[300] },
-    { id: 'music_audio', name: 'Music / Audio', icon: '🎧', color: PALETTE.indigo[400] },
-    { id: 'cloud_storage', name: 'Cloud Storage', icon: '☁️', color: PALETTE.indigo[300] },
-    { id: 'apps_tools', name: 'Apps / Tools', icon: '🛠️', color: PALETTE.indigo[400] },
-    { id: 'other_subscriptions', name: 'Other Subscriptions', icon: '📦', color: PALETTE.indigo[200] }
+    { key: 'streaming_video', name: 'Streaming Video', icon: '📺', color: PALETTE.indigo[300] },
+    { key: 'music_audio', name: 'Music / Audio', icon: '🎧', color: PALETTE.indigo[400] },
+    { key: 'cloud_storage', name: 'Cloud Storage', icon: '☁️', color: PALETTE.indigo[300] },
+    { key: 'apps_tools', name: 'Apps / Tools', icon: '🛠️', color: PALETTE.indigo[400] },
+    { key: 'other_subscriptions', name: 'Other Subscriptions', icon: '📦', color: PALETTE.indigo[200] }
   ],
 
   // ---------------------------------------------------------------
-  // 12) Travel
+  // Travel
   // ---------------------------------------------------------------
   travel: [
-    { id: 'flights', name: 'Flights', icon: '✈️', color: PALETTE.blue[500] },
-    { id: 'lodging', name: 'Lodging / Hotel', icon: '🏨', color: PALETTE.blue[400] },
-    { id: 'activities', name: 'Activities', icon: '🎒', color: PALETTE.blue[300] },
-    { id: 'travel_transport', name: 'Local Transport', icon: '🚌', color: PALETTE.blue[300] }
+    { key: 'flights', name: 'Flights', icon: '✈️', color: PALETTE.blue[500] },
+    { key: 'lodging', name: 'Lodging / Hotel', icon: '🏨', color: PALETTE.blue[400] },
+    { key: 'activities', name: 'Activities', icon: '🎒', color: PALETTE.blue[300] },
+    { key: 'travel_transport', name: 'Local Transport', icon: '🚌', color: PALETTE.blue[300] }
   ],
 
   // ---------------------------------------------------------------
-  // 13) Insurance
+  // Insurance
   // ---------------------------------------------------------------
   insurance: [
-    { id: 'home_insurance', name: 'Home Insurance', icon: '🏠', color: PALETTE.orange[400] },
-    { id: 'health_insurance', name: 'Health Insurance', icon: '🩺', color: PALETTE.red[300] },
-    { id: 'life_insurance', name: 'Life Insurance', icon: '❤️', color: PALETTE.red[400] },
-    { id: 'pet_insurance', name: 'Pet Insurance', icon: '🐾', color: PALETTE.green[400] }
+    { key: 'home_insurance', name: 'Home Insurance', icon: '🏠', color: PALETTE.orange[400] },
+    { key: 'health_insurance', name: 'Health Insurance', icon: '🩺', color: PALETTE.red[300] },
+    { key: 'life_insurance', name: 'Life Insurance', icon: '❤️', color: PALETTE.red[400] },
+    { key: 'pet_insurance', name: 'Pet Insurance', icon: '🐾', color: PALETTE.green[400] },
+    { key: 'auto_insurance', name: 'Auto Insurance', icon: '🚘', color: PALETTE.blue[300] }
   ],
 
   // ---------------------------------------------------------------
-  // 14) Donations
+  // Donations
   // ---------------------------------------------------------------
   donations: [
-    { id: 'general', name: 'General Donations', icon: '🙏', color: PALETTE.rose[300] },
-    { id: 'religious', name: 'Religious / Nonprofit', icon: '⛪', color: PALETTE.rose[400] },
-    { id: 'fundraiser', name: 'Fundraisers', icon: '🎗️', color: PALETTE.rose[500] }
+    { key: 'general', name: 'General Donations', icon: '🙏', color: PALETTE.rose[300] },
+    { key: 'religious', name: 'Religious / Nonprofit', icon: '⛪', color: PALETTE.rose[400] },
+    { key: 'fundraiser', name: 'Fundraisers', icon: '🎗️', color: PALETTE.rose[500] }
   ],
 
   // ---------------------------------------------------------------
-  // 15) Savings & Investment
+  // Taxes (canonical home for property_tax)
+  // ---------------------------------------------------------------
+  taxes: [
+    { key: 'federal', name: 'Federal Tax', icon: '🇺🇸', color: PALETTE.stone?.[500] ?? PALETTE.indigo[500] },
+    { key: 'state_local', name: 'State / Local Tax', icon: '🏛️', color: PALETTE.stone?.[400] ?? PALETTE.indigo[400] },
+    { key: 'property_tax', name: 'Property Tax', icon: '🏠', color: PALETTE.stone?.[300] ?? PALETTE.indigo[300] },
+    { key: 'estimated', name: 'Estimated Tax', icon: '🧾', color: PALETTE.stone?.[400] ?? PALETTE.indigo[400] }
+  ],
+
+  // ---------------------------------------------------------------
+  // Debt & Loans
+  // Notes for your liabilities tracking
+  // - Interest is expense
+  // - Principal payments should be transfer between asset and liability accounts
+  // ---------------------------------------------------------------
+  debt: [
+    { key: 'loan_interest', name: 'Loan Interest', icon: '🧾', color: PALETTE.stone?.[400] ?? PALETTE.indigo[400] },
+    { key: 'credit_card_interest', name: 'Credit Card Interest', icon: '💳', color: PALETTE.stone?.[400] ?? PALETTE.indigo[400] },
+    { key: 'student_loan_interest', name: 'Student Loan Interest', icon: '🎓', color: PALETTE.stone?.[300] ?? PALETTE.indigo[300] }
+  ],
+
+  // ---------------------------------------------------------------
+  // Fees & Charges
+  // ---------------------------------------------------------------
+  fees: [
+    { key: 'bank_fees', name: 'Bank Fees', icon: '🏦', color: PALETTE.stone?.[300] ?? PALETTE.indigo[300] },
+    { key: 'atm_fees', name: 'ATM Fees', icon: '🏧', color: PALETTE.stone?.[300] ?? PALETTE.indigo[300] },
+    { key: 'late_fees', name: 'Late Fees', icon: '⏰', color: PALETTE.stone?.[400] ?? PALETTE.indigo[400] },
+    { key: 'brokerage_fees', name: 'Brokerage Fees', icon: '📊', color: PALETTE.stone?.[300] ?? PALETTE.indigo[300] }
+  ],
+
+  // ---------------------------------------------------------------
+  // Education
+  // ---------------------------------------------------------------
+  education: [
+    { key: 'tuition', name: 'Tuition', icon: '🏫', color: PALETTE.yellow[500] },
+    { key: 'courses', name: 'Courses / Certifications', icon: '🧑‍💻', color: PALETTE.yellow[400] },
+    { key: 'books', name: 'Books', icon: '📚', color: PALETTE.yellow[300] }
+  ],
+
+  // ---------------------------------------------------------------
+  // Business & Work
+  // ---------------------------------------------------------------
+  business: [
+    { key: 'work_meals', name: 'Work Meals', icon: '🥗', color: PALETTE.slate?.[400] ?? PALETTE.indigo[400] },
+    { key: 'work_travel', name: 'Work Travel', icon: '🧳', color: PALETTE.slate?.[500] ?? PALETTE.indigo[500] },
+    { key: 'software_tools', name: 'Software / Tools', icon: '🧰', color: PALETTE.slate?.[300] ?? PALETTE.indigo[300] },
+    { key: 'office_supplies', name: 'Office Supplies', icon: '📎', color: PALETTE.slate?.[300] ?? PALETTE.indigo[300] }
+  ],
+
+  // ---------------------------------------------------------------
+  // Income (two earners + stocks + rentals)
+  // ---------------------------------------------------------------
+  income: [
+    { key: 'salary', name: 'Salary / Wages', icon: '🧾', color: PALETTE.green[600] },
+    { key: 'bonus', name: 'Bonus', icon: '🎯', color: PALETTE.green[500] },
+    { key: 'equity_vesting', name: 'Equity Vesting (RSU/Stock)', icon: '📦', color: PALETTE.green[500] },
+    { key: 'capital_gains', name: 'Capital Gains (Stock Sale)', icon: '📈', color: PALETTE.green[600] },
+    { key: 'dividends', name: 'Dividends', icon: '🪙', color: PALETTE.green[500] },
+    { key: 'interest', name: 'Interest', icon: '🏦', color: PALETTE.green[400] },
+    { key: 'rental_income', name: 'Rental Income', icon: '🏠', color: PALETTE.green[600] },
+    { key: 'side_hustle', name: 'Side Hustle / Freelance', icon: '🧑‍🍳', color: PALETTE.green[500] },
+    { key: 'reimbursement', name: 'Reimbursement / Refund', icon: '🔄', color: PALETTE.green[400] },
+    { key: 'tax_refund', name: 'Tax Refund', icon: '📬', color: PALETTE.green[400] },
+    { key: 'other_income', name: 'Other Income', icon: '📥', color: PALETTE.green[300] }
+  ],
+
+  // ---------------------------------------------------------------
+  // Transfers (required base set)
+  // For balances + liabilities tracking
+  // - between_accounts: asset -> asset
+  // - credit_card_payment: asset -> liability (reduces liability)
+  // - cash_withdrawal: asset -> cash account
+  // - cash_deposit: cash account -> asset
+  // ---------------------------------------------------------------
+  transfers: [
+    { key: 'between_accounts', name: 'Between Accounts', icon: '🔁', color: PALETTE.blue[600] },
+    { key: 'credit_card_payment', name: 'Credit Card Payment', icon: '💳', color: PALETTE.blue[500] },
+    { key: 'cash_withdrawal', name: 'Cash Withdrawal', icon: '🏧', color: PALETTE.blue[400] },
+    { key: 'cash_deposit', name: 'Cash Deposit', icon: '💵', color: PALETTE.blue[400] }
+  ],
+
+  // ---------------------------------------------------------------
+  // Savings & Investment (transfer)
+  // Keep as transfer if you are not tracking lots/positions in-app
+  // If you later track holdings, you can evolve into an investment ledger
   // ---------------------------------------------------------------
   savings: [
-    { id: 'monthly_savings', name: 'Monthly Savings', icon: '💰', color: PALETTE.green[500] },
-    { id: 'emergency', name: 'Emergency Fund', icon: '🚨', color: PALETTE.green[300] },
-    { id: 'investing', name: 'Investing Contribution', icon: '📈', color: PALETTE.green[600] },
-    { id: 'retirement', name: 'Retirement (IRA / 401K)', icon: '🏦', color: PALETTE.green[400] }
+    { key: 'monthly_savings', name: 'Monthly Savings', icon: '💰', color: PALETTE.green[500] },
+    { key: 'emergency', name: 'Emergency Fund', icon: '🚨', color: PALETTE.green[300] },
+    { key: 'brokerage_transfer', name: 'Brokerage Transfer', icon: '📈', color: PALETTE.green[600] },
+    { key: 'retirement_401k', name: '401K Contribution', icon: '🏦', color: PALETTE.green[400] },
+    { key: 'retirement_ira', name: 'IRA Contribution', icon: '🏛️', color: PALETTE.green[400] },
+    { key: 'hsa', name: 'HSA Contribution', icon: '🩺', color: PALETTE.green[300] },
+    { key: 'college_529', name: '529 / Education Savings', icon: '🎓', color: PALETTE.green[300] },
+    { key: 'crypto_transfer', name: 'Crypto Transfer', icon: '🪙', color: PALETTE.green[500] },
+    { key: 'real_estate_invest', name: 'Real Estate Investing', icon: '🏘️', color: PALETTE.green[500] }
   ]
 } as const
 
@@ -258,13 +407,11 @@ const SUBCATEGORIES: Record<string, SubCategory[]> = {
 // 3. EXPORT
 // ===============================================================
 
-export const CATEGORIES: Category[] = Object.entries(CATEGORY_META).map(
-  ([id, meta]) => ({
-    id,
-    name: meta.name,
-    icon: meta.icon,
-    color: meta.color,
-    type: meta.type,
-    subCategories: SUBCATEGORIES[id] ?? []
-  })
-)
+export const CATEGORIES: CategoryMeta[] = Object.entries(CATEGORY_META).map(([key, meta]) => ({
+  key,
+  name: meta.name,
+  icon: meta.icon,
+  color: meta.color,
+  type: meta.type,
+  subCategories: SUBCATEGORIES[key] ?? []
+}))

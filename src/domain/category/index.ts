@@ -1,3 +1,5 @@
-export * from './category.ref'
-export * from './category.type'
-export * from './category.validate'
+export type { CategoryRef, CategoryType } from './category.types'
+
+export { assertValidCategoryRef, isValidCategoryRef, normalizeSubKeyFromDbKey } from './category.model'
+
+export { getCategoryDbId, getCategoryRefByDbId } from './category.usecase'

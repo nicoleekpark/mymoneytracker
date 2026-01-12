@@ -1,7 +1,7 @@
-// scripts/dev-server.cjs
-const express = require('express')
-const { spawn } = require('child_process')
-const path = require('path')
+import { spawn } from 'child_process'
+import express from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 const app = express()
 app.use(express.json())
@@ -11,6 +11,9 @@ const PORT = Number(process.env.DB_DEV_PORT || 3333)
 
 // 🔒 Safety defaults
 const ALLOW_PROD_EXPORT = process.env.ALLOW_PROD_EXPORT === 'true' // default false
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
@@ -64,7 +67,6 @@ function getBundleIdFromReq(req) {
 }
 
 async function getBootedAppContainerPath(bundleId) {
-  // xcrun simctl get_app_container booted <bundleId> data
   const { stdout } = await run('xcrun', ['simctl', 'get_app_container', 'booted', bundleId, 'data'])
   if (!stdout) throw new Error('simctl returned empty app container path (is simulator booted?)')
   return stdout
@@ -121,9 +123,8 @@ app.post('/db/pull', async (req, res) => {
 
     const scriptPath = path.join(__dirname, 'dbpull.sh')
 
-    // Optional overrides
-    const mode = typeof req.body?.mode === 'string' ? req.body.mode : '' // backup|vacuum
-    const exportRoot = typeof req.body?.exportRoot === 'string' ? req.body.exportRoot : '' // db_exports etc
+    const mode = typeof req.body?.mode === 'string' ? req.body.mode : ''
+    const exportRoot = typeof req.body?.exportRoot === 'string' ? req.body.exportRoot : ''
 
     const childEnv = {
       ...process.env,

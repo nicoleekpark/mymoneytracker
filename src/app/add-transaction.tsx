@@ -1,5 +1,5 @@
+import { getActiveAccounts, resolveAccountIdByKey } from '@/domain/account'
 import { addTransaction } from '@/domain/transaction/transaction.usecase'
-import { getAccountIdByKey, listActiveAccounts } from '@/lib/db/account'
 import { useHoHTheme } from '@/providers'
 import { useAppStore } from '@/store/app.store'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -23,14 +23,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { CATEGORIES } from '@/config/categories.config'
 import type { CategoryRef } from '@/domain/category'
-import { UUID } from '@/domain/common/uuid'
-import type { Category, SubCategory } from '@/types/category.types'
-
-type TxType = 'income' | 'expense' | 'transfer'
-
-type CategorySearchRow =
-  | { kind: 'category'; cat: Category; score: number; tie: number }
-  | { kind: 'subcategory'; cat: Category; sub: SubCategory; score: number; tie: number }
+import type { UUID } from '@/domain/common/uuid'
+import type { TransactionType } from '@/domain/transaction'
 
 // Receipt picker (optional dependency)
 let ImagePicker: any = null
@@ -60,10 +54,10 @@ function centsNumber(centsText: string): number {
 }
 
 // ✅ Keep emoji label for display
-function buildCategoryLabel(cat: Category): string {
+function buildCategoryLabel(cat: { icon: string; name: string }): string {
   return `${cat.icon} ${cat.name}`
 }
-function buildSubLabel(sc: SubCategory): string {
+function buildSubLabel(sc: { icon: string; name: string }): string {
   return `${sc.icon} ${sc.name}`
 }
 
@@ -87,6 +81,16 @@ function scoreText(q: string, text: string, base: number): number {
   return 0
 }
 
+type CategorySearchRow =
+  | { kind: 'category'; cat: (typeof CATEGORIES)[number]; score: number; tie: number }
+  | {
+      kind: 'subcategory'
+      cat: (typeof CATEGORIES)[number]
+      sub: (typeof CATEGORIES)[number]['subCategories'][number]
+      score: number
+      tie: number
+    }
+
 export default function AddTransactionScreen() {
   const theme = useHoHTheme()
   const categoryIndex = useAppStore(s => s.categoryIndex)
@@ -98,7 +102,7 @@ export default function AddTransactionScreen() {
 
   const categorySearchRef = useRef<TextInput>(null)
 
-  const [type, setType] = useState<TxType>('expense')
+  const [type, setType] = useState<TransactionType>('expense')
 
   const [item, setItem] = useState('')
   const [note, setNote] = useState('')
@@ -118,7 +122,7 @@ export default function AddTransactionScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
 
-  // ✅ CategoryRef (type + categoryId + optional subCategoryId)
+  // ✅ CategoryRef (type + categoryKey + optional subCategoryKey)
   const [categoryRef, setCategoryRef] = useState<CategoryRef | null>(null)
 
   // ✅ Category modal (searchable)
@@ -139,7 +143,7 @@ export default function AddTransactionScreen() {
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [accountQuery, setAccountQuery] = useState('')
 
-  const accounts = useMemo(() => listActiveAccounts(), [])
+  const accounts = useMemo(() => getActiveAccounts(), [])
 
   const filteredAccounts = useMemo(() => {
     const q = normalizeForSearch(accountQuery)
@@ -164,7 +168,7 @@ export default function AddTransactionScreen() {
 
   const selectedCategory = useMemo(() => {
     if (!categoryRef) return null
-    return categoriesForType.find(c => c.id === categoryRef.categoryId) ?? null
+    return categoriesForType.find(c => c.key === categoryRef.categoryKey) ?? null
   }, [categoriesForType, categoryRef])
 
   const subCategoriesForSelected = useMemo(() => {
@@ -189,17 +193,17 @@ export default function AddTransactionScreen() {
 
     for (const cat of categoriesForType) {
       const catName = normalizeForSearch(cat.name)
-      const catId = normalizeForSearch(cat.id)
+      const catKey = normalizeForSearch(cat.key)
 
-      const catScore = Math.max(scoreText(q, catName, 900), scoreText(q, catId, 850))
+      const catScore = Math.max(scoreText(q, catName, 900), scoreText(q, catKey, 850))
 
       if (catScore > 0) rows.push({ kind: 'category', cat, score: catScore, tie: tie++ })
 
       for (const sub of cat.subCategories ?? []) {
         const subName = normalizeForSearch(sub.name)
-        const subId = normalizeForSearch(sub.id)
+        const subKey = normalizeForSearch(sub.key)
 
-        const subScore = Math.max(scoreText(q, subName, 700), scoreText(q, subId, 650))
+        const subScore = Math.max(scoreText(q, subName, 700), scoreText(q, subKey, 650))
 
         if (subScore > 0) rows.push({ kind: 'subcategory', cat, sub, score: subScore, tie: tie++ })
       }
@@ -285,8 +289,8 @@ export default function AddTransactionScreen() {
   }
   const closeSubCategory = () => setShowSubCategoryModal(false)
 
-  const chooseCategory = (cat: Category) => {
-    setCategoryRef({ type, categoryId: cat.id })
+  const chooseCategory = (cat: (typeof CATEGORIES)[number]) => {
+    setCategoryRef({ type, categoryKey: cat.key })
     closeCategory()
 
     if (cat.subCategories?.length) {
@@ -294,17 +298,20 @@ export default function AddTransactionScreen() {
     }
   }
 
-  const chooseSubFromSearch = (cat: Category, sub: SubCategory) => {
-    setCategoryRef({ type, categoryId: cat.id, subCategoryId: sub.id })
+  const chooseSubFromSearch = (
+    cat: (typeof CATEGORIES)[number],
+    sub: (typeof CATEGORIES)[number]['subCategories'][number]
+  ) => {
+    setCategoryRef({ type, categoryKey: cat.key, subCategoryKey: sub.key })
     setShowSubCategoryModal(false)
     closeCategory()
   }
 
-  const chooseSubCategory = (subCategoryId?: string) => {
+  const chooseSubCategory = (subCategoryKey?: string) => {
     if (!categoryRef) return
-    const next: CategoryRef = subCategoryId
-      ? { type, categoryId: categoryRef.categoryId, subCategoryId }
-      : { type, categoryId: categoryRef.categoryId }
+    const next: CategoryRef = subCategoryKey
+      ? { type, categoryKey: categoryRef.categoryKey, subCategoryKey }
+      : { type, categoryKey: categoryRef.categoryKey }
 
     setCategoryRef(next)
     closeSubCategory()
@@ -321,12 +328,13 @@ export default function AddTransactionScreen() {
 
   const categoryDisplay = useMemo(() => {
     if (!categoryRef) return 'Select'
-    const cat = CATEGORIES.find(c => c.type === categoryRef.type && c.id === categoryRef.categoryId)
+
+    const cat = CATEGORIES.find(c => c.type === categoryRef.type && c.key === categoryRef.categoryKey)
     if (!cat) return 'Select'
 
-    if (!categoryRef.subCategoryId) return buildCategoryLabel(cat)
+    if (!categoryRef.subCategoryKey) return buildCategoryLabel(cat)
 
-    const sc = cat.subCategories.find(s => s.id === categoryRef.subCategoryId)
+    const sc = cat.subCategories.find(s => s.key === categoryRef.subCategoryKey)
     if (!sc) return buildCategoryLabel(cat)
 
     return `${buildCategoryLabel(cat)}  ›  ${buildSubLabel(sc)}`
@@ -335,9 +343,9 @@ export default function AddTransactionScreen() {
   const subCategoryDisplay = useMemo(() => {
     if (!selectedCategory) return 'Select'
     if (!selectedCategory.subCategories?.length) return 'None'
-    if (!categoryRef?.subCategoryId) return 'Select'
+    if (!categoryRef?.subCategoryKey) return 'Select'
 
-    const sc = selectedCategory.subCategories.find(s => s.id === categoryRef.subCategoryId)
+    const sc = selectedCategory.subCategories.find(s => s.key === categoryRef.subCategoryKey)
     return sc ? buildSubLabel(sc) : 'Select'
   }, [selectedCategory, categoryRef])
 
@@ -372,8 +380,8 @@ export default function AddTransactionScreen() {
     }
 
     const typeMap = categoryIndex[categoryRef.type]
-    const subIds = typeMap?.[categoryRef.categoryId]
-    const ok = !!subIds && (!categoryRef.subCategoryId || subIds.includes(categoryRef.subCategoryId))
+    const subKeys = typeMap?.[categoryRef.categoryKey]
+    const ok = !!subKeys && (!categoryRef.subCategoryKey || subKeys.includes(categoryRef.subCategoryKey))
 
     if (!ok) {
       Alert.alert('Invalid category', 'Please re-select category')
@@ -382,7 +390,7 @@ export default function AddTransactionScreen() {
 
     let accountId: UUID
     try {
-      accountId = getAccountIdByKey(accountKey)
+      accountId = resolveAccountIdByKey(accountKey)
     } catch (e: any) {
       Alert.alert('Account missing', e?.message ?? 'Please select a payment method')
       return
@@ -407,7 +415,7 @@ export default function AddTransactionScreen() {
     }
   }
 
-  // ---------- Receipt (kept as-is; phase2 DB meta later) ----------
+  // ---------- Receipt (kept as-is phase2 DB meta later) ----------
   const requestMediaPerm = async () => {
     if (!ImagePicker) return false
     const res = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -458,7 +466,6 @@ export default function AddTransactionScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 52 : 0}
     >
-      {/* Top bar */}
       <View style={[styles.topBar, { borderBottomColor: theme.semantic.border }]}>
         <Pressable onPress={onCancel} hitSlop={10}>
           <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>
@@ -491,14 +498,13 @@ export default function AddTransactionScreen() {
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         showsVerticalScrollIndicator={false}
       >
-        {/* Type toggle */}
         <View
           style={[
             styles.segmentWrap,
             { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
           ]}
         >
-          {(['expense', 'income', 'transfer'] as TxType[]).map(t => {
+          {(['expense', 'income', 'transfer'] as TransactionType[]).map(t => {
             const selected = t === type
             return (
               <Pressable
@@ -525,7 +531,6 @@ export default function AddTransactionScreen() {
           })}
         </View>
 
-        {/* Item */}
         <View
           style={[
             styles.card,
@@ -547,7 +552,6 @@ export default function AddTransactionScreen() {
           />
         </View>
 
-        {/* Amount */}
         <Pressable
           onPress={openAmountKeypad}
           style={[
@@ -573,7 +577,6 @@ export default function AddTransactionScreen() {
           </Text>
         </Pressable>
 
-        {/* Transfer notice */}
         {type === 'transfer' ? (
           <View
             style={[
@@ -593,7 +596,6 @@ export default function AddTransactionScreen() {
           </View>
         ) : null}
 
-        {/* Date + Time */}
         <View
           style={[
             styles.card,
@@ -685,7 +687,6 @@ export default function AddTransactionScreen() {
           ) : null}
         </View>
 
-        {/* Payment method (Account) */}
         <View
           style={[
             styles.card,
@@ -707,7 +708,6 @@ export default function AddTransactionScreen() {
           </Pressable>
         </View>
 
-        {/* Category + Subcategory */}
         {type !== 'transfer' ? (
           <>
             <View
@@ -751,7 +751,6 @@ export default function AddTransactionScreen() {
           </>
         ) : null}
 
-        {/* Note */}
         <View
           onLayout={e => {
             noteYRef.current = e.nativeEvent.layout.y
@@ -777,7 +776,6 @@ export default function AddTransactionScreen() {
           />
         </View>
 
-        {/* Receipt */}
         {type !== 'transfer' ? (
           <View
             style={[
@@ -824,7 +822,6 @@ export default function AddTransactionScreen() {
         <View style={{ height: 28 }} />
       </ScrollView>
 
-      {/* Amount keypad modal (cents-only, bottom sheet) */}
       <Modal visible={showAmountKeypad} transparent animationType="slide" onRequestClose={closeAmountKeypad}>
         <Pressable style={styles.sheetBackdrop} onPress={closeAmountKeypad} />
         <View
@@ -949,7 +946,6 @@ export default function AddTransactionScreen() {
         </View>
       </Modal>
 
-      {/* Account modal (fullscreen, searchable) */}
       <Modal
         visible={showAccountModal}
         animationType="slide"
@@ -1046,7 +1042,6 @@ export default function AddTransactionScreen() {
         </View>
       </Modal>
 
-      {/* Category modal (FULL SCREEN + mixed results) */}
       <Modal
         visible={showCategoryModal}
         animationType="slide"
@@ -1097,7 +1092,7 @@ export default function AddTransactionScreen() {
           <FlatList
             style={{ flex: 1 }}
             data={searchRows}
-            keyExtractor={row => (row.kind === 'category' ? `c:${row.cat.id}` : `s:${row.cat.id}:${row.sub.id}`)}
+            keyExtractor={(row) => (row.kind === 'category' ? `c:${row.cat.key}` : `s:${row.cat.key}:${row.sub.key}`)}
             keyboardShouldPersistTaps="always"
             keyboardDismissMode="none"
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24 }}
@@ -1145,7 +1140,6 @@ export default function AddTransactionScreen() {
         </View>
       </Modal>
 
-      {/* Subcategory modal (FULL SCREEN + tap category row to reselect category) */}
       <Modal
         visible={showSubCategoryModal}
         animationType="slide"
@@ -1191,14 +1185,14 @@ export default function AddTransactionScreen() {
 
           <FlatList
             style={{ flex: 1 }}
-            data={[{ id: '__none__' }, ...subCategoriesForSelected] as any}
-            keyExtractor={(x: any) => x.id}
+            data={[{ key: '__none__' }, ...subCategoriesForSelected] as any}
+            keyExtractor={(x: any) => x.key}
             keyboardShouldPersistTaps="always"
             keyboardDismissMode="none"
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24 }}
             renderItem={({ item: row }: any) => {
-              if (row.id === '__none__') {
-                const selected = !categoryRef?.subCategoryId
+              if (row.key === '__none__') {
+                const selected = !categoryRef?.subCategoryKey
                 return (
                   <Pressable
                     onPress={() => chooseSubCategory(undefined)}
@@ -1214,12 +1208,12 @@ export default function AddTransactionScreen() {
                 )
               }
 
-              const sc = row as SubCategory
-              const selected = categoryRef?.subCategoryId === sc.id
+              const sc = row as { key: string; name: string; icon: string; color: string; }
+              const selected = categoryRef?.subCategoryKey === sc.key
 
               return (
                 <Pressable
-                  onPress={() => chooseSubCategory(sc.id)}
+                  onPress={() => chooseSubCategory(sc.key)}
                   style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}
                 >
                   <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>

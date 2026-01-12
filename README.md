@@ -249,14 +249,44 @@ $ npm run start:ios
 $ npm run start:dev:ios
 
 # Big changes - need to rebuild native (add/update expo-sqlite, plugins change, iOS auth change, prebuild env change)
-$ npm run build:ios
+$ npm run ios:run
 $ npm run start:dev:ios
-
-# only server
-$ npm run start:dev
 
 # server + simulator
 $ npm run start:dev:ios
 ```
 
-#### 2.4 Database
+#### JUST KNOW:
+```
+run app
+$ npm run ios:run && npm run start:dev:ios
+```
+
+#### DB
+
+This project uses a **safe SQLite snapshot mechanism** to export the
+iOS Simulator database for inspection (DBeaver, debugging, etc).
+
+### Prerequisites
+- App must be running on iOS Simulator
+- Node & bash available
+- sqlite3 installed (`brew install sqlite`)
+
+```
+// delete the app (reset the whole db)
+$ xcrun simctl uninstall booted com.houseofhuynh.finance
+```
+
+```
+// in terminal 1 (always on)
+$ npm run db:dev:server
+```
+
+Expected output:
+```
+Dev server listening on http://127.0.0.1:3333
+```
+
+// in terminal 2 (whenever db export is needed)
+$ npm run db:dev:sync
+```

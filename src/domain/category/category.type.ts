@@ -1,1 +1,0 @@
-export type CategoryType = 'expense' | 'income' | 'transfer'

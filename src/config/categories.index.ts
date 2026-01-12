@@ -13,7 +13,7 @@ export function buildCategoryIndex(): CategoryIndex {
   } satisfies Record<CategoryType, Record<string, string[]>>
 
   for (const cat of CATEGORIES) {
-    base[cat.type][cat.id] = cat.subCategories.map(sc => sc.id)
+    base[cat.type as CategoryType][cat.key] = cat.subCategories.map(sc => sc.key)
   }
 
   return base

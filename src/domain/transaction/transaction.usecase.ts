@@ -1,24 +1,20 @@
 import type { CategoryIndex } from '@/config/categories.index'
 import { uuid } from '@/lib/platform/uuid'
-import type { Transaction, TransactionType } from './transaction'
-import { createTransaction } from './transaction'
 
-import { CategoryRef } from '@/domain/category'
-import { UUID } from '@/domain/common/uuid'
-import { getAccountIdByKey } from '@/lib/db/account'
-import { rowToTransaction, transactionToRow } from './transaction.mapper'
+import { resolveAccountIdByKey } from '@/domain/account'
+import type { CategoryRef } from '@/domain/category'
+import type { UUID } from '@/domain/common/uuid'
+
+import { createTransaction } from './transaction.model'
 import {
-  deleteTransactionRow,
-  fetchExpenseTotalForMonth,
-  fetchMonthlyExpenseTotals,
-  insertTransactionRow,
-  listTransactionRows,
+  deleteTransaction,
+  getExpenseTotalForMonth,
+  insertTransaction,
+  listMonthlyExpenseTotals,
+  listTransactions,
+  type MonthlyExpenseTotal
 } from './transaction.repo'
-
-export type MonthlyTotal = {
-  month: string
-  total_cents: number
-}
+import type { Transaction, TransactionType } from './transaction.types'
 
 function currentMonthYYYYMM(d = new Date()): string {
   const y = d.getFullYear()
@@ -30,28 +26,18 @@ function currentMonthYYYYMM(d = new Date()): string {
 export async function addTransaction(
   categoryIndex: CategoryIndex,
   input: {
-    occurredAt?: Date,
-    type: TransactionType;
-    item: string;
-    amount: number;
-    accountId: UUID;
-    category?: CategoryRef;
-    merchant?: string;
+    occurredAt?: Date
+    type: TransactionType
+    item: string
+    amount: number
+    accountId: UUID
+    category?: CategoryRef
+    merchant?: string
     note?: string
   }
 ): Promise<Transaction> {
-
-  // {"accountId": "adf",
-  // "amount": 574,
-  // "category":
-  // {"categoryId": "food", "subCategoryId": "eating_out", "type": "expense"},
-  // "item": "Coffee",
-  // "note": undefined, "occurredAt": 2026-01-08T19:59:04.909Z,
-  // "type": "expense"}
   const accountId =
-    input.accountId && input.accountId.includes('-')
-      ? input.accountId
-      : getAccountIdByKey('cash')
+    input.accountId && input.accountId.includes('-') ? input.accountId : await resolveAccountIdByKey('cash')
 
   const tx: Transaction = createTransaction(categoryIndex, {
     id: uuid(),
@@ -61,27 +47,27 @@ export async function addTransaction(
     money: { amount: input.amount, currency: 'USD' },
     accountId,
     category: input.category,
-    merchant: input.merchant ?? '',
-    note: input.note
+    merchant: input.merchant ?? undefined,
+    note: input.note ?? undefined
   })
 
-  insertTransactionRow(transactionToRow(tx))
+  insertTransaction(tx)
   return tx
 }
 
-export async function listTransactions(limit = 200): Promise<Transaction[]> {
-  return listTransactionRows(limit).map(rowToTransaction)
+export async function getTransactions(limit = 200): Promise<Transaction[]> {
+  return listTransactions(limit)
 }
 
-export async function deleteTransaction(id: string): Promise<void> {
-  deleteTransactionRow(id)
+export async function removeTransaction(id: UUID): Promise<void> {
+  deleteTransaction(id)
 }
 
 export async function getThisMonthExpenseTotal(now = new Date()): Promise<number> {
   const month = currentMonthYYYYMM(now)
-  return fetchExpenseTotalForMonth(month)
+  return getExpenseTotalForMonth(month)
 }
 
-export async function listMonthlyExpenseTotals(limitMonths = 24): Promise<MonthlyTotal[]> {
-  return fetchMonthlyExpenseTotals(limitMonths)
+export async function getMonthlyExpenseTotals(limitMonths = 24): Promise<MonthlyExpenseTotal[]> {
+  return listMonthlyExpenseTotals(limitMonths)
 }

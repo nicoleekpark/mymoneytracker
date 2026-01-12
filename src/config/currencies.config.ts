@@ -1,6 +1,6 @@
-import type { Currency } from '@/types'
+import type { Currency, CurrencyCode } from './currencies.types'
 
-export const CURRENCIES: Record<string, Currency> = {
+export const CURRENCIES: Record<CurrencyCode, Currency> = {
   USD: {
     code: 'USD',
     name: 'US Dollar',
@@ -19,4 +19,4 @@ export const CURRENCIES: Record<string, Currency> = {
     minorUnits: 0,
     symbol: '₫'
   }
-} as const
+}

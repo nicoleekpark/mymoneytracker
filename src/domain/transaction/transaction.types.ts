@@ -1,15 +1,28 @@
-import { UUID } from '@/domain/common/uuid'
-import type { TransactionType } from './transaction'
+import type { CategoryRef } from '@/domain/category'
+import type { UUID } from '@/domain/common/uuid'
 
-export type TransactionRow = Readonly<{
-  id: UUID
-  occurred_at: string
-  type: TransactionType
-  amount_cents: number
+export type TransactionType = 'income' | 'expense' | 'transfer'
+
+export type Money = Readonly<{
+  amount: number
   currency: string
-  account_id: UUID
-  category_id: UUID | null
-  merchant: string | null
-  note: string | null
+}>
+
+export type Transaction = Readonly<{
+  id: UUID
+  occurredAt: Date
+  type: TransactionType
+
   item: string
+  money: Money
+
+  accountId: UUID
+
+  category?: CategoryRef
+
+  merchant?: string
+  note?: string
+
+  fromAccountId?: UUID
+  toAccountId?: UUID
 }>

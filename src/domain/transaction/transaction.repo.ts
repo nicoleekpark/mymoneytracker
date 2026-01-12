@@ -1,7 +1,67 @@
+// src/domain/transaction/transaction.repo.ts
+import { centsToDollars, dollarsToCents } from '@/domain/common/money'
+import type { UUID } from '@/domain/common/uuid'
 import { exec, queryAll } from '@/lib/db/sqlite'
-import type { TransactionRow } from './transaction.types'
 
-export function insertTransactionRow(row: TransactionRow) {
+import { resolveCategoryId, resolveCategoryRefFromDbId } from '@/domain/category/category.repo'
+import type { Transaction, TransactionType } from './transaction.types'
+
+
+type TransactionRow = Readonly<{
+  id: UUID
+  occurred_at: string
+  type: TransactionType
+  amount_cents: number
+  currency: string
+  account_id: UUID
+  category_id: UUID | null
+  merchant: string | null
+  note: string | null
+  item: string
+}>
+
+type MonthlyTotalRow = Readonly<{
+  month: string
+  total_cents: number
+}>
+
+export type MonthlyExpenseTotal = Readonly<{
+  month: string
+  totalCents: number
+}>
+
+function rowToTransaction(row: TransactionRow): Transaction {
+  return {
+    id: row.id,
+    occurredAt: new Date(row.occurred_at),
+    type: row.type,
+    item: row.item,
+    money: { amount: centsToDollars(row.amount_cents), currency: row.currency },
+    accountId: row.account_id,
+    category: row.category_id ? resolveCategoryRefFromDbId(row.category_id) : undefined,
+    merchant: row.merchant ?? undefined,
+    note: row.note ?? undefined
+  }
+}
+
+function transactionToRow(tx: Transaction): TransactionRow {
+  return {
+    id: tx.id,
+    occurred_at: tx.occurredAt.toISOString(),
+    type: tx.type,
+    item: tx.item,
+    amount_cents: dollarsToCents(tx.money.amount),
+    currency: tx.money.currency,
+    account_id: tx.accountId,
+    category_id: resolveCategoryId(tx.category) ?? null,
+    merchant: tx.merchant ?? null,
+    note: tx.note ?? null
+  }
+}
+
+export function insertTransaction(tx: Transaction): void {
+  const row = transactionToRow(tx)
+
   exec(
     `
     INSERT INTO transactions (
@@ -20,50 +80,30 @@ export function insertTransactionRow(row: TransactionRow) {
       row.merchant,
       row.note,
       new Date().toISOString(),
-      new Date().toISOString(),
+      new Date().toISOString()
     ]
   )
 }
 
-export function listTransactionRows(limit = 200): TransactionRow[] {
-  return queryAll<TransactionRow>(
+export function listTransactions(limit = 200): Transaction[] {
+  const rows = queryAll<TransactionRow>(
     `
     SELECT
-      id, occurred_at, type, amount_cents, currency, account_id, category_id, merchant, note, item
+      id, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note
     FROM transactions
     ORDER BY occurred_at DESC, id DESC
     LIMIT ?;
     `,
     [limit]
   )
+  return rows.map(rowToTransaction)
 }
 
-export function deleteTransactionRow(id: string): void {
+export function deleteTransaction(id: UUID): void {
   exec(`DELETE FROM transactions WHERE id = ?`, [id])
 }
 
-export type MonthlyTotalRow = {
-  month: string
-  total_cents: number
-}
-
-export function fetchMonthlyExpenseTotals(limitMonths = 24): MonthlyTotalRow[] {
-  return queryAll<MonthlyTotalRow>(
-    `
-    SELECT
-        substr(occurred_at, 1, 7) AS month,
-        COALESCE(SUM(amount_cents), 0) AS total_cents
-    FROM transactions
-    WHERE type = 'expense'
-    GROUP BY month
-    ORDER BY month DESC
-    LIMIT ?;
-    `,
-    [limitMonths]
-  )
-}
-
-export function fetchExpenseTotalForMonth(monthYYYYMM: string): number {
+export function getExpenseTotalForMonth(monthYYYYMM: string): number {
   const rows = queryAll<{ total_cents: number }>(
     `
     SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
@@ -74,4 +114,22 @@ export function fetchExpenseTotalForMonth(monthYYYYMM: string): number {
     [monthYYYYMM]
   )
   return Number(rows[0]?.total_cents ?? 0)
+}
+
+export function listMonthlyExpenseTotals(limitMonths = 24): MonthlyExpenseTotal[] {
+  const rows = queryAll<MonthlyTotalRow>(
+    `
+    SELECT
+      substr(occurred_at, 1, 7) AS month,
+      COALESCE(SUM(amount_cents), 0) AS total_cents
+    FROM transactions
+    WHERE type = 'expense'
+    GROUP BY month
+    ORDER BY month DESC
+    LIMIT ?;
+    `,
+    [limitMonths]
+  )
+
+  return rows.map((r) => ({ month: r.month, totalCents: r.total_cents }))
 }

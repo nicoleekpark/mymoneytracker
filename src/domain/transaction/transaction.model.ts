@@ -1,27 +1,6 @@
 import type { CategoryIndex } from '@/config/categories.index'
-import type { CategoryRef } from '@/domain/category'
 import { assertValidCategoryRef } from '@/domain/category'
-import type { UUID } from '@/domain/common/uuid'
-export type TransactionType = 'income' | 'expense' | 'transfer'
-
-export type Money = Readonly<{
-  amount: number
-  currency: string
-}>
-
-export type Transaction = Readonly<{
-  id: UUID
-  occurredAt: Date
-  type: TransactionType
-  item: string
-  money: Money
-  accountId: UUID
-  category?: CategoryRef
-  merchant?: string
-  note?: string
-  fromAccountId?: UUID
-  toAccountId?: UUID
-}>
+import type { Transaction } from './transaction.types'
 
 export function createTransaction(categoryIndex: CategoryIndex, input: Transaction): Transaction {
   if (!(input.occurredAt instanceof Date) || Number.isNaN(input.occurredAt.getTime())) {
@@ -40,7 +19,6 @@ export function createTransaction(categoryIndex: CategoryIndex, input: Transacti
       throw new Error('fromAccountId and toAccountId must differ')
     }
   }
-  console.log('createTransaction input.category keys=', input.category && Object.keys(input.category as any), input.category)
 
   if (input.category) {
     assertValidCategoryRef(categoryIndex, input.category)
