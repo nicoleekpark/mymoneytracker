@@ -12,7 +12,8 @@ export const m20260106123754_create_accounts: Migration = {
         id TEXT PRIMARY KEY NOT NULL,
         key TEXT NOT NULL UNIQUE,
         name TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'credit',
+        nature TEXT NOT NULL CHECK (nature IN ('asset','liability')),
+        kind TEXT NOT NULL,
         currency TEXT NOT NULL DEFAULT 'USD',
         sort_order INTEGER NOT NULL DEFAULT 0,
 
@@ -26,8 +27,11 @@ export const m20260106123754_create_accounts: Migration = {
       CREATE INDEX IF NOT EXISTS idx_accounts_active
       ON accounts(is_archived);
 
-      CREATE INDEX IF NOT EXISTS idx_accounts_type_sort
-      ON accounts(type, sort_order, name);
+      CREATE INDEX IF NOT EXISTS idx_accounts_nature_kind_sort
+      ON accounts(nature, kind, sort_order, name);
+
+      CREATE INDEX IF NOT EXISTS idx_accounts_kind
+      ON accounts(kind);
     `)
   },
 }

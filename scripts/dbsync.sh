@@ -1,7 +1,9 @@
+# DELETE
+
 #!/usr/bin/env bash
 set -euo pipefail
 
-node ./scripts/dev-server.cjs &
+node ./scripts/dev-server.js &
 SERVER_PID=$!
 
 cleanup() {

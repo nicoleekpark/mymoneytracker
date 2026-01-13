@@ -1,5 +1,8 @@
-export type { Account, AccountType } from './account.types'
+export type { Account, AccountKind, AccountNature } from './account.types'
 
-export { accountTypeSortRank, normalizeAccountType } from './account.model'
+export {
+  accountKindSortRank, accountNatureSortRank, isAssetAccount, isCashAccount,
+  isCreditCard, isLiabilityAccount
+} from './account.model'
 
 export { getActiveAccounts, resolveAccountIdByKey } from './account.usecase'

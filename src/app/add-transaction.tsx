@@ -137,7 +137,7 @@ export default function AddTransactionScreen() {
   const [receiptUri, setReceiptUri] = useState<string | null>(null)
 
   // ✅ Payment method (account)
-  const [accountKey, setAccountKey] = useState<string>('cash')
+  const [accountKey, setAccountKey] = useState<string>('acct:cash_wallet')
 
   // ✅ Account modal (searchable)
   const [showAccountModal, setShowAccountModal] = useState(false)
@@ -149,7 +149,7 @@ export default function AddTransactionScreen() {
     const q = normalizeForSearch(accountQuery)
     if (!q) return accounts
     return accounts.filter(a => {
-      const hay = normalizeForSearch(`${a.key} ${a.name} ${a.type}`)
+      const hay = normalizeForSearch(`${a.key} ${a.name} ${a.nature} ${a.kind}`)
       return hay.includes(q)
     })
   }, [accounts, accountQuery])
@@ -468,14 +468,10 @@ export default function AddTransactionScreen() {
     >
       <View style={[styles.topBar, { borderBottomColor: theme.semantic.border }]}>
         <Pressable onPress={onCancel} hitSlop={10}>
-          <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>
-            Cancel
-          </Text>
+          <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
         </Pressable>
 
-        <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: 16 }}>
-          Add Transaction
-        </Text>
+        <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: 16 }}>Add Transaction</Text>
 
         <Pressable onPress={onSave} disabled={!canSave} hitSlop={10}>
           <Text
@@ -513,10 +509,7 @@ export default function AddTransactionScreen() {
                   setType(t)
                   setCategoryRef(null)
                 }}
-                style={[
-                  styles.segmentBtn,
-                  selected && { backgroundColor: theme.semantic.primarySoft }
-                ]}
+                style={[styles.segmentBtn, selected && { backgroundColor: theme.semantic.primarySoft }]}
               >
                 <Text
                   style={{
@@ -559,9 +552,7 @@ export default function AddTransactionScreen() {
             { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
           ]}
         >
-          <Text style={{ color: theme.semantic.textSecondary, fontSize: 12 }}>
-            Amount
-          </Text>
+          <Text style={{ color: theme.semantic.textSecondary, fontSize: 12 }}>Amount</Text>
           <Text
             style={{
               color: theme.semantic.text,
@@ -584,15 +575,9 @@ export default function AddTransactionScreen() {
               { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
             ]}
           >
-            <Text style={{ color: theme.semantic.text, fontWeight: '900', marginBottom: 6 }}>
-              Transfer
-            </Text>
-            <Text style={{ color: theme.semantic.textSecondary }}>
-              Accounts will be added next
-            </Text>
-            <Text style={{ color: theme.semantic.textSecondary, marginTop: 6 }}>
-              Save is disabled for now
-            </Text>
+            <Text style={{ color: theme.semantic.text, fontWeight: '900', marginBottom: 6 }}>Transfer</Text>
+            <Text style={{ color: theme.semantic.textSecondary }}>Accounts will be added next</Text>
+            <Text style={{ color: theme.semantic.textSecondary, marginTop: 6 }}>Save is disabled for now</Text>
           </View>
         ) : null}
 
@@ -609,12 +594,8 @@ export default function AddTransactionScreen() {
             }}
             style={styles.row}
           >
-            <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>
-              Date
-            </Text>
-            <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>
-              {occurredAt.toLocaleDateString()}
-            </Text>
+            <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Date</Text>
+            <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>{occurredAt.toLocaleDateString()}</Text>
           </Pressable>
 
           {showDatePicker ? (
@@ -652,9 +633,7 @@ export default function AddTransactionScreen() {
             }}
             style={styles.row}
           >
-            <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>
-              Time
-            </Text>
+            <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Time</Text>
             <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>
               {occurredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
@@ -694,9 +673,7 @@ export default function AddTransactionScreen() {
           ]}
         >
           <Pressable onPress={openAccount} style={styles.row}>
-            <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>
-              Paid with
-            </Text>
+            <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Paid with</Text>
             <Text
               style={{
                 color: selectedAccount ? theme.semantic.text : theme.semantic.textSecondary,
@@ -717,9 +694,7 @@ export default function AddTransactionScreen() {
               ]}
             >
               <Pressable onPress={openCategory} style={styles.row}>
-                <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>
-                  Category
-                </Text>
+                <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Category</Text>
                 <Text
                   style={{
                     color: categoryRef ? theme.semantic.text : theme.semantic.textSecondary,
@@ -739,12 +714,8 @@ export default function AddTransactionScreen() {
                 ]}
               >
                 <Pressable onPress={openSubCategory} style={styles.row}>
-                  <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>
-                    Sub
-                  </Text>
-                  <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>
-                    {subCategoryDisplay}
-                  </Text>
+                  <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Sub</Text>
+                  <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>{subCategoryDisplay}</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -783,27 +754,15 @@ export default function AddTransactionScreen() {
               { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
             ]}
           >
-            <Text style={{ color: theme.semantic.textSecondary, marginBottom: 10 }}>
-              Receipt
-            </Text>
+            <Text style={{ color: theme.semantic.textSecondary, marginBottom: 10 }}>Receipt</Text>
 
             <View style={styles.receiptRow}>
-              <Pressable
-                onPress={onTakeReceipt}
-                style={[styles.receiptBtn, { borderColor: theme.semantic.border }]}
-              >
-                <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>
-                  Take photo
-                </Text>
+              <Pressable onPress={onTakeReceipt} style={[styles.receiptBtn, { borderColor: theme.semantic.border }]}>
+                <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>Take photo</Text>
               </Pressable>
 
-              <Pressable
-                onPress={onPickReceipt}
-                style={[styles.receiptBtn, { borderColor: theme.semantic.border }]}
-              >
-                <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>
-                  Choose
-                </Text>
+              <Pressable onPress={onPickReceipt} style={[styles.receiptBtn, { borderColor: theme.semantic.border }]}>
+                <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>Choose</Text>
               </Pressable>
             </View>
 
@@ -832,19 +791,13 @@ export default function AddTransactionScreen() {
         >
           <View style={styles.sheetHeader}>
             <Pressable onPress={closeAmountKeypad} hitSlop={10}>
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>
-                Cancel
-              </Text>
+              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
             </Pressable>
 
-            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-              Amount
-            </Text>
+            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Amount</Text>
 
             <Pressable onPress={clearAmount} hitSlop={10}>
-              <Text style={{ color: theme.semantic.primary, fontWeight: '900' }}>
-                Clear
-              </Text>
+              <Text style={{ color: theme.semantic.primary, fontWeight: '900' }}>Clear</Text>
             </Pressable>
           </View>
 
@@ -854,9 +807,7 @@ export default function AddTransactionScreen() {
               { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
             ]}
           >
-            <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: 36 }}>
-              ${amountDisplay}
-            </Text>
+            <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: 36 }}>${amountDisplay}</Text>
           </View>
 
           <View style={styles.keypadGrid}>
@@ -939,9 +890,7 @@ export default function AddTransactionScreen() {
               { backgroundColor: theme.semantic.primarySoft, borderColor: theme.semantic.primarySoft }
             ]}
           >
-            <Text style={{ color: theme.semantic.primaryStrong, fontSize: 18, fontWeight: '900' }}>
-              Done
-            </Text>
+            <Text style={{ color: theme.semantic.primaryStrong, fontSize: 18, fontWeight: '900' }}>Done</Text>
           </Pressable>
         </View>
       </Modal>
@@ -966,14 +915,10 @@ export default function AddTransactionScreen() {
             <View style={{ flex: 1, backgroundColor: theme.semantic.background, paddingTop: insets.top }}>
               <View style={[styles.fullHeaderBar, { borderBottomColor: theme.semantic.border }]}>
                 <Pressable onPress={closeAccount} hitSlop={10}>
-                  <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>
-                    Cancel
-                  </Text>
+                  <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
                 </Pressable>
 
-                <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-                  Payment method
-                </Text>
+                <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Payment method</Text>
 
                 <View style={{ width: 56 }} />
               </View>
@@ -1016,21 +961,25 @@ export default function AddTransactionScreen() {
                 }}
                 renderItem={({ item: a }) => {
                   const selected = a.key === accountKey
+                  const badge = `${a.kind}${a.nature === 'liability' ? ' • liability' : ''}`
                   return (
                     <Pressable
                       onPress={() => chooseAccount(a.key)}
                       style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-                          {a.name}
-                        </Text>
+                        <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{a.name}</Text>
                         <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: 12 }}>
-                          {a.type}
+                          {badge}
                         </Text>
                       </View>
 
-                      <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
+                      <Text
+                        style={{
+                          color: selected ? theme.semantic.primary : theme.semantic.textSecondary,
+                          fontWeight: '900'
+                        }}
+                      >
                         {selected ? '✓' : ''}
                       </Text>
                     </Pressable>
@@ -1051,14 +1000,10 @@ export default function AddTransactionScreen() {
         <View style={[styles.fullScreenRoot, { backgroundColor: theme.semantic.background, paddingTop: insets.top }]}>
           <View style={[styles.fullHeaderBar, { borderBottomColor: theme.semantic.border }]}>
             <Pressable onPress={closeCategory} hitSlop={10}>
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>
-                Cancel
-              </Text>
+              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
             </Pressable>
 
-            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-              Category
-            </Text>
+            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Category</Text>
 
             <View style={{ width: 56 }} />
           </View>
@@ -1092,7 +1037,7 @@ export default function AddTransactionScreen() {
           <FlatList
             style={{ flex: 1 }}
             data={searchRows}
-            keyExtractor={(row) => (row.kind === 'category' ? `c:${row.cat.key}` : `s:${row.cat.key}:${row.sub.key}`)}
+            keyExtractor={row => (row.kind === 'category' ? `c:${row.cat.key}` : `s:${row.cat.key}:${row.sub.key}`)}
             keyboardShouldPersistTaps="always"
             keyboardDismissMode="none"
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24 }}
@@ -1100,14 +1045,8 @@ export default function AddTransactionScreen() {
               if (row.kind === 'category') {
                 const cat = row.cat
                 return (
-                  <Pressable
-                    onPress={() => chooseCategory(cat)}
-                    style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}
-                  >
-                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-                      {buildCategoryLabel(cat)}
-                    </Text>
-
+                  <Pressable onPress={() => chooseCategory(cat)} style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}>
+                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{buildCategoryLabel(cat)}</Text>
                     <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }}>
                       {cat.subCategories?.length ? '›' : ''}
                     </Text>
@@ -1117,22 +1056,15 @@ export default function AddTransactionScreen() {
 
               const { cat, sub } = row
               return (
-                <Pressable
-                  onPress={() => chooseSubFromSearch(cat, sub)}
-                  style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}
-                >
+                <Pressable onPress={() => chooseSubFromSearch(cat, sub)} style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-                      {buildSubLabel(sub)}
-                    </Text>
+                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{buildSubLabel(sub)}</Text>
                     <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: 12 }}>
                       in {cat.name}
                     </Text>
                   </View>
 
-                  <Text style={{ color: theme.semantic.primary, fontWeight: '900' }}>
-                    ✓
-                  </Text>
+                  <Text style={{ color: theme.semantic.primary, fontWeight: '900' }}>✓</Text>
                 </Pressable>
               )
             }}
@@ -1149,14 +1081,10 @@ export default function AddTransactionScreen() {
         <View style={[styles.fullScreenRoot, { backgroundColor: theme.semantic.background, paddingTop: insets.top }]}>
           <View style={[styles.fullHeaderBar, { borderBottomColor: theme.semantic.border }]}>
             <Pressable onPress={closeSubCategory} hitSlop={10}>
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>
-                Cancel
-              </Text>
+              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
             </Pressable>
 
-            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-              Subcategory
-            </Text>
+            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Subcategory</Text>
 
             <View style={{ width: 56 }} />
           </View>
@@ -1169,17 +1097,13 @@ export default function AddTransactionScreen() {
                 { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
               ]}
             >
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>
-                Category
-              </Text>
+              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Category</Text>
 
               <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
                 {selectedCategory ? buildCategoryLabel(selectedCategory) : 'Select'}
               </Text>
 
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }}>
-                ›
-              </Text>
+              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }}>›</Text>
             </Pressable>
           </View>
 
@@ -1194,13 +1118,8 @@ export default function AddTransactionScreen() {
               if (row.key === '__none__') {
                 const selected = !categoryRef?.subCategoryKey
                 return (
-                  <Pressable
-                    onPress={() => chooseSubCategory(undefined)}
-                    style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}
-                  >
-                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-                      None
-                    </Text>
+                  <Pressable onPress={() => chooseSubCategory(undefined)} style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}>
+                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>None</Text>
                     <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
                       {selected ? '✓' : ''}
                     </Text>
@@ -1208,17 +1127,12 @@ export default function AddTransactionScreen() {
                 )
               }
 
-              const sc = row as { key: string; name: string; icon: string; color: string; }
+              const sc = row as { key: string; name: string; icon: string; color: string }
               const selected = categoryRef?.subCategoryKey === sc.key
 
               return (
-                <Pressable
-                  onPress={() => chooseSubCategory(sc.key)}
-                  style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}
-                >
-                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-                    {buildSubLabel(sc)}
-                  </Text>
+                <Pressable onPress={() => chooseSubCategory(sc.key)} style={[styles.catRow, { borderBottomColor: theme.semantic.border }]}>
+                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{buildSubLabel(sc)}</Text>
                   <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
                     {selected ? '✓' : ''}
                   </Text>

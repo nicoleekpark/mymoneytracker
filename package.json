@@ -17,9 +17,7 @@
 
     "db:export:sim": "./scripts/export-db-from-simulator.sh",
 
-    "db:dev:server": "node ./scripts/dev-server.js",
-    "db:dev:pull": "./scripts/dbpull.sh",
-    "db:dev:sync": "./scripts/dbsync.sh"
+    "db:dev:pull": "./scripts/dbpull.sh"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

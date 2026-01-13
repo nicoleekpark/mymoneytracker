@@ -1,0 +1,63 @@
+{
+  "transactions": [
+    {
+      "seedKey": "tx:coffee:2026-01-12:blue_bottle",
+      "occurredAt": "2026-01-12T09:12:00-05:00",
+      "type": "expense",
+      "item": "Coffee",
+      "amountCents": 675,
+      "currency": "USD",
+
+      "accountKey": "acct:chase_checking",
+      "categoryKey": "food",
+
+      "merchant": "Blue Bottle",
+      "note": "Latte"
+    },
+
+    {
+      "seedKey": "tx:salary:2026-01-01:company",
+      "occurredAt": "2026-01-01T09:00:00-05:00",
+      "type": "income",
+      "item": "Salary",
+      "amountCents": 1200000,
+      "currency": "USD",
+
+      "accountKey": "acct:chase_checking",
+      "categoryKey": "income_salary",
+
+      "merchant": "Google Inc",
+      "note": "January salary"
+    },
+
+    {
+      "seedKey": "tx:cc_payment:2026-01-15",
+      "occurredAt": "2026-01-15T18:30:00-05:00",
+      "type": "transfer",
+      "item": "Pay Chase Credit Card",
+      "amountCents": 250000,
+      "currency": "USD",
+
+      "fromAccountKey": "acct:chase_checking",
+      "toAccountKey": "acct:chase_credit_card",
+      "categoryKey": "transfers",
+
+      "note": "Monthly CC payment"
+    },
+
+    {
+      "seedKey": "tx:cash_withdrawal:2026-01-20",
+      "occurredAt": "2026-01-20T14:00:00-05:00",
+      "type": "transfer",
+      "item": "ATM Withdrawal",
+      "amountCents": 20000,
+      "currency": "USD",
+
+      "fromAccountKey": "acct:chase_checking",
+      "toAccountKey": "acct:cash_wallet",
+      "categoryKey": "transfers",
+
+      "note": "Cash for weekend"
+    }
+  ]
+}

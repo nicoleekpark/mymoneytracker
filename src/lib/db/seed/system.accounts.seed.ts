@@ -23,11 +23,14 @@ function getByKey(key: string): AccountRow | null {
  * Requires accounts schema to include:
  * - is_system INTEGER NOT NULL DEFAULT 0
  * - UNIQUE(key)
+ * - kind TEXT NOT NULL CHECK(kind IN ('cash','bank','credit','other'))
+ * - nature TEXT NOT NULL CHECK(nature IN ('asset','liability'))
  */
 function upsertSystemAccount(args: {
   key: string
   name: string
-  type: string
+  kind: 'cash' | 'bank' | 'credit' | 'other'
+  nature: 'asset' | 'liability'
   currency: string
   sortOrder: number
   now: string
@@ -41,19 +44,30 @@ function upsertSystemAccount(args: {
   exec(
     `
     INSERT INTO accounts (
-      id, key, name, type, currency, sort_order,
+      id, key, name, kind, nature, currency, sort_order,
       is_system, is_archived, created_at, updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
     ON CONFLICT(key) DO UPDATE SET
       name       = excluded.name,
-      type       = excluded.type,
+      kind       = excluded.kind,
+      nature     = excluded.nature,
       currency   = excluded.currency,
       sort_order = excluded.sort_order,
       updated_at = excluded.updated_at
     WHERE accounts.is_system = 1;
     `,
-    [uuid(), args.key, args.name, args.type, args.currency, args.sortOrder, args.now, args.now]
+    [
+      uuid(),
+      args.key,
+      args.name,
+      args.kind,
+      args.nature,
+      args.currency,
+      args.sortOrder,
+      args.now,
+      args.now
+    ]
   )
 
   if (!existing) return { inserted: true, updated: false }
@@ -64,7 +78,34 @@ export function seedSystemAccounts(report: SeedReport): void {
   const now = new Date().toISOString()
 
   const SYSTEM_ACCOUNTS = [
-    { key: 'cash', name: 'Cash', type: 'cash', currency: 'USD' }
+    {
+      key: 'acct:sys:cash_wallet',
+      name: 'Cash Wallet',
+      kind: 'cash',
+      nature: 'asset',
+      currency: 'USD'
+    },
+    {
+      key: 'acct:sys:chase_checking',
+      name: 'Chase Checking',
+      kind: 'bank',
+      nature: 'asset',
+      currency: 'USD'
+    },
+    {
+      key: 'acct:sys:chase_savings',
+      name: 'Chase Savings',
+      kind: 'bank',
+      nature: 'asset',
+      currency: 'USD'
+    },
+    {
+      key: 'acct:sys:chase_credit_card',
+      name: 'Chase Credit Card',
+      kind: 'credit',
+      nature: 'liability',
+      currency: 'USD'
+    }
   ] as const
 
   withTransaction(() => {
@@ -73,7 +114,8 @@ export function seedSystemAccounts(report: SeedReport): void {
       const res = upsertSystemAccount({
         key: a.key,
         name: a.name,
-        type: a.type,
+        kind: a.kind,
+        nature: a.nature,
         currency: a.currency,
         sortOrder: sort++,
         now

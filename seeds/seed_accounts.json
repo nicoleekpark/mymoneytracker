@@ -1,0 +1,52 @@
+{
+  "accounts": [
+    {
+      "key": "acct:checking_main",
+      "name": "Chase Total Checking",
+      "nature": "asset",
+      "kind": "checking",
+      "currency": "USD",
+      "sortOrder": 10
+    },
+    {
+      "key": "acct:savings_main",
+      "name": "Chase Savings",
+      "nature": "asset",
+      "kind": "savings",
+      "currency": "USD",
+      "sortOrder": 20
+    },
+    {
+      "key": "acct:credit_card_main",
+      "name": "Chase Sapphire Preferred",
+      "nature": "liability",
+      "kind": "credit_card",
+      "currency": "USD",
+      "sortOrder": 30
+    },
+    {
+      "key": "acct:cash_wallet",
+      "name": "Cash Wallet",
+      "nature": "asset",
+      "kind": "cash",
+      "currency": "USD",
+      "sortOrder": 40
+    },
+    {
+      "key": "acct:brokerage_main",
+      "name": "Vanguard Brokerage",
+      "nature": "asset",
+      "kind": "investment",
+      "currency": "USD",
+      "sortOrder": 50
+    },
+    {
+      "key": "acct:loan_auto",
+      "name": "Auto Loan",
+      "nature": "liability",
+      "kind": "loan",
+      "currency": "USD",
+      "sortOrder": 60
+    }
+  ]
+}
