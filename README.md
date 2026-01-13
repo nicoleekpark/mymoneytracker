@@ -272,7 +272,12 @@ iOS Simulator database for inspection (DBeaver, debugging, etc).
 - Node & bash available
 - sqlite3 installed (`brew install sqlite`)
 
+그냥
 ```
+$ npm run db:dev:pull
+```
+
+<!-- ```
 // delete the app (reset the whole db)
 $ xcrun simctl uninstall booted com.houseofhuynh.finance
 ```
@@ -289,4 +294,4 @@ Dev server listening on http://127.0.0.1:3333
 
 // in terminal 2 (whenever db export is needed)
 $ npm run db:dev:sync
-```
+``` -->
