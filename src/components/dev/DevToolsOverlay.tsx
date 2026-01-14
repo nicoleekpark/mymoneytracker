@@ -1,4 +1,3 @@
-// src/components/dev/DevToolsOverlay.tsx
 import { APP_CONFIG } from '@/config'
 import {
   countRows,
@@ -7,6 +6,7 @@ import {
   seedDbMinimal,
 } from '@/lib/db/queries/admin'
 import { exportDatabase } from '@/lib/db/queries/export-db'
+import { runFixtures } from '@/lib/db/seed'
 
 import { useHoHTheme } from '@/providers'
 import React, { useMemo, useState } from 'react'
@@ -41,11 +41,7 @@ async function runDbPull(env: DbEnv = 'dev') {
   }
 
   try {
-    const health = await fetchWithTimeout(
-      `${DEV_SERVER_BASE_URL}/health`,
-      { method: 'GET' },
-      800
-    )
+    const health = await fetchWithTimeout(`${DEV_SERVER_BASE_URL}/health`, { method: 'GET' }, 800)
     if (!health.ok) throw new Error(`Health check failed (${health.status})`)
 
     const res = await fetchWithTimeout(
@@ -53,7 +49,7 @@ async function runDbPull(env: DbEnv = 'dev') {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ env }), // ✅ only env (dev/prod)
+        body: JSON.stringify({ env }),
       },
       20_000
     )
@@ -67,11 +63,42 @@ async function runDbPull(env: DbEnv = 'dev') {
     Alert.alert('DB Pull', json?.output || 'Done')
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
-    Alert.alert(
-      'DB Pull failed',
-      `Make sure dev server is running:\n\nnpm run dev:dbserver\n\n${msg}`
+    Alert.alert('DB Pull failed', `Make sure dev server is running:\n\nnpm run dev:dbserver\n\n${msg}`)
+  }
+}
+
+function summarizeFixtureReport(report: any): string {
+  if (!report || typeof report !== 'object') return 'Done'
+
+  // allow flexible report shapes (너 runFixtures 구현이 어떤 형태든 최소한 보여주게)
+  const lines: string[] = []
+
+  if (report.startedAt) lines.push(`startedAt: ${report.startedAt}`)
+  if (report.finishedAt) lines.push(`finishedAt: ${report.finishedAt}`)
+
+  // common shape: report.fixtures[accounts|transactions] = { inserted, updated, deleted, skipped, conflicts }
+  const fixtures = report.fixtures ?? report
+
+  const pick = (x: any, k: string) => (x && typeof x[k] === 'number' ? x[k] : 0)
+
+  const maybeAdd = (name: string, obj: any) => {
+    if (!obj || typeof obj !== 'object') return
+    const inserted = pick(obj, 'inserted')
+    const updated = pick(obj, 'updated')
+    const deleted = pick(obj, 'deleted')
+    const skipped = pick(obj, 'skipped')
+    const conflicts = pick(obj, 'conflicts')
+
+    // only show if anything non-zero or if object exists
+    lines.push(
+      `${name}: +${inserted} ~${updated} -${deleted} =${skipped} !${conflicts}`
     )
   }
+
+  maybeAdd('accounts', fixtures.accounts)
+  maybeAdd('transactions', fixtures.transactions)
+
+  return lines.length ? lines.join('\n') : 'Done'
 }
 
 export function DevToolsOverlay() {
@@ -136,7 +163,6 @@ export function DevToolsOverlay() {
   const runSeed = (mode: SeedMode) => {
     try {
       if (mode === 'resetThenSeed') {
-        // safest default: preserve IDs to reduce disruption
         resetDbDataOnly({ resetAutoIncrement: false })
       }
       seedDbMinimal()
@@ -158,18 +184,26 @@ export function DevToolsOverlay() {
     ])
   }
 
+  // -------- Fixtures (JSON-driven) --------
+  const runFixtureAction = (mode: 'seed' | 'delete', targets: Array<'accounts' | 'transactions'>) => {
+    try {
+      const report = runFixtures(mode, targets)
+      Alert.alert(
+        mode === 'seed' ? 'Fixtures seeded' : 'Fixtures deleted',
+        summarizeFixtureReport(report)
+      )
+    } catch (e: any) {
+      Alert.alert('Fixtures failed', String(e?.message ?? e))
+    }
+  }
+
   // top-left, stays out of the way
   const top = Math.max(8, insets.top + 6)
   const left = Math.max(8, insets.left + 8)
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[styles.root, { top, left }]}
-    >
-      {/* Only the chip/panel should capture touches */}
+    <View pointerEvents="box-none" style={[styles.root, { top, left }]}>
       <View style={[styles.panel, { borderColor: colors.border }]}>
-        {/* Chip */}
         <Pressable
           onPress={() => setOpen(v => !v)}
           style={[
@@ -187,7 +221,6 @@ export function DevToolsOverlay() {
           </Text>
         </Pressable>
 
-        {/* Expanded actions */}
         {open && (
           <View
             style={[
@@ -199,6 +232,35 @@ export function DevToolsOverlay() {
             ]}
           >
             <DevBtn label="Snapshot" onPress={runSnapshot} colors={colors} />
+
+            {/* ✅ Fixtures section (4 buttons) */}
+            <View style={[styles.sectionHeader, { borderTopColor: colors.border }]}>
+              <Text style={{ color: colors.text2, fontWeight: '800', fontSize: 12 }}>
+                Fixtures
+              </Text>
+            </View>
+
+            <DevBtn
+              label="Seed Accounts"
+              onPress={() => runFixtureAction('seed', ['accounts'])}
+              colors={colors}
+            />
+            <DevBtn
+              label="Seed Transactions"
+              onPress={() => runFixtureAction('seed', ['transactions'])}
+              colors={colors}
+            />
+            <DevBtn
+              label="Seed All"
+              onPress={() => runFixtureAction('seed', ['accounts', 'transactions'])}
+              colors={colors}
+            />
+            <DevBtn
+              label="Delete All"
+              onPress={() => runFixtureAction('delete', ['accounts', 'transactions'])}
+              colors={colors}
+            />
+
             {/* ✅ DB Pull split into explicit env buttons (simple + clear) */}
             <View style={[styles.row2, { borderTopColor: colors.border }]}>
               <DevBtn
@@ -214,16 +276,14 @@ export function DevToolsOverlay() {
                 compact
               />
             </View>
+
             <DevBtn label="Export" onPress={exportDatabase} colors={colors} />
             <DevBtn label="Reset" onPress={confirmReset} colors={colors} />
             <DevBtn label="Seed" onPress={confirmSeed} colors={colors} />
 
             <Pressable
               onPress={() => setOpen(false)}
-              style={[
-                styles.closeRow,
-                { borderTopColor: colors.border },
-              ]}
+              style={[styles.closeRow, { borderTopColor: colors.border }]}
               accessibilityLabel="Close dev tools"
             >
               <Text style={{ color: colors.text2, fontWeight: '700', fontSize: 12 }}>
@@ -252,7 +312,7 @@ function DevBtn({
     text: string
     text2: string
     primary: string
-  },
+  }
   compact?: boolean
 }) {
   return (
@@ -303,6 +363,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     minWidth: 190,
+  },
+
+  sectionHeader: {
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 2,
+    borderTopWidth: 1,
   },
 
   btn: {

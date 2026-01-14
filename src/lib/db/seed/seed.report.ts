@@ -11,6 +11,7 @@ export type SeedReport = {
 
   accounts: SeedCounts
   categories: SeedCounts
+  transactions: SeedCounts
 }
 
 export function newSeedCounts(): SeedCounts {
@@ -21,7 +22,8 @@ export function newReport(): SeedReport {
   return {
     startedAt: new Date().toISOString(),
     accounts: newSeedCounts(),
-    categories: newSeedCounts()
+    categories: newSeedCounts(),
+    transactions: newSeedCounts()
   }
 }
 

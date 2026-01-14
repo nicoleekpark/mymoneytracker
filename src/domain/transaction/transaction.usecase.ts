@@ -26,6 +26,7 @@ function currentMonthYYYYMM(d = new Date()): string {
 export async function addTransaction(
   categoryIndex: CategoryIndex,
   input: {
+    key?: string,
     occurredAt?: Date
     type: TransactionType
     item: string
@@ -41,6 +42,7 @@ export async function addTransaction(
 
   const tx: Transaction = createTransaction(categoryIndex, {
     id: uuid(),
+    key: input.key ?? '',
     occurredAt: input.occurredAt ?? new Date(),
     type: input.type ?? 'expense',
     item: input.item,

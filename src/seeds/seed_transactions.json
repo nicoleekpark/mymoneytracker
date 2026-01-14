@@ -23,7 +23,7 @@
       "amountCents": 1200000,
       "currency": "USD",
 
-      "accountKey": "acct:chase_checking",
+      "accountKey": "acct:chase_premier_plus_checking",
       "categoryKey": "income_salary",
 
       "merchant": "Google Inc",
@@ -54,7 +54,7 @@
       "currency": "USD",
 
       "fromAccountKey": "acct:chase_total_checking",
-      "toAccountKey": "acct:cash_wallet",
+      "toAccountKey": "acct:sys:cash_wallet",
       "categoryKey": "transfers",
 
       "note": "Cash for weekend"

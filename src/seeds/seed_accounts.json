@@ -1,37 +1,41 @@
 {
   "accounts": [
     {
-      "key": "acct:chase_premier_plus_checking",
-      "name": "Chase Premier Plus Checking",
-      "nature": "asset",
-      "kind": "checking",
-      "currency": "USD",
-      "sortOrder": 10
-    },
-    {
-      "key": "acct:chase_total_checking",
-      "name": "Chase Total Checking",
-      "nature": "asset",
-      "kind": "checking",
-      "currency": "USD",
-      "sortOrder": 20
-    },
-    {
       "key": "acct:chase_sapphire_reserve",
       "name": "Chase Sapphire Reserve",
       "nature": "liability",
       "kind": "credit_card",
       "currency": "USD",
-      "sortOrder": 30
+      "sortOrder": 10
     },
+
     {
       "key": "acct:chase_prime_visa",
       "name": "Chase Prime Visa",
       "nature": "liability",
       "kind": "credit_card",
       "currency": "USD",
+      "sortOrder": 20
+    },
+
+    {
+      "key": "acct:chase_premier_plus_checking",
+      "name": "Chase Premier Plus Checking",
+      "nature": "asset",
+      "kind": "checking",
+      "currency": "USD",
+      "sortOrder": 30
+    },
+
+    {
+      "key": "acct:chase_total_checking",
+      "name": "Chase Total Checking",
+      "nature": "asset",
+      "kind": "checking",
+      "currency": "USD",
       "sortOrder": 40
     },
+
     {
       "key": "acct:robinhood",
       "name": "Robinhood Brokerage",
@@ -40,6 +44,7 @@
       "currency": "USD",
       "sortOrder": 50
     },
+
     {
       "key": "acct:loan_auto",
       "name": "Auto Loan",

@@ -9,6 +9,7 @@ import type { Transaction, TransactionType } from './transaction.types'
 
 type TransactionRow = Readonly<{
   id: UUID
+  key: string
   occurred_at: string
   type: TransactionType
   amount_cents: number
@@ -33,6 +34,7 @@ export type MonthlyExpenseTotal = Readonly<{
 function rowToTransaction(row: TransactionRow): Transaction {
   return {
     id: row.id,
+    key: row.key,
     occurredAt: new Date(row.occurred_at),
     type: row.type,
     item: row.item,
@@ -47,6 +49,7 @@ function rowToTransaction(row: TransactionRow): Transaction {
 function transactionToRow(tx: Transaction): TransactionRow {
   return {
     id: tx.id,
+    key: tx.key,
     occurred_at: tx.occurredAt.toISOString(),
     type: tx.type,
     item: tx.item,
@@ -65,11 +68,12 @@ export function insertTransaction(tx: Transaction): void {
   exec(
     `
     INSERT INTO transactions (
-      id, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      id, key, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `,
     [
       row.id,
+      row.key,
       row.occurred_at,
       row.type,
       row.item,
@@ -89,7 +93,7 @@ export function listTransactions(limit = 200): Transaction[] {
   const rows = queryAll<TransactionRow>(
     `
     SELECT
-      id, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note
+      id, key, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note
     FROM transactions
     ORDER BY occurred_at DESC, id DESC
     LIMIT ?;

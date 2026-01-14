@@ -10,6 +10,7 @@ export type Money = Readonly<{
 
 export type Transaction = Readonly<{
   id: UUID
+  key: string
   occurredAt: Date
   type: TransactionType
 

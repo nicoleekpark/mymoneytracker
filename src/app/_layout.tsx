@@ -55,7 +55,6 @@ export default function RootLayout() {
       migrate()
       runSystemSeeds()
       setDbReady(true)
-      console.log('DB ready...')
     } catch (e) {
       console.error('DB migrate failed', e)
       setDbError(e)
