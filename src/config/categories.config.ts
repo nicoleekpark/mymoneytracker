@@ -172,8 +172,8 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
   // ---------------------------------------------------------------
   food: [
     { key: 'groceries', name: 'Groceries', icon: '🛒', color: PALETTE.amber[300] },
-    { key: 'eating_out', name: 'Eating Out', icon: '🍽️', color: PALETTE.amber[400] },
-    { key: 'coffee', name: 'Coffee / Snacks', icon: '☕', color: PALETTE.amber[200] }
+    { key: 'restaurants', name: 'Restaurants', icon: '🍽️', color: PALETTE.amber[400] },
+    { key: 'coffee_snacks', name: 'Coffee / Snacks', icon: '☕', color: PALETTE.amber[200] }
   ],
 
   // ---------------------------------------------------------------
@@ -359,6 +359,7 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
   income: [
     { key: 'salary', name: 'Salary / Wages', icon: '🧾', color: PALETTE.green[600] },
     { key: 'bonus', name: 'Bonus', icon: '🎯', color: PALETTE.green[500] },
+    { key: 'cash_gift', name: 'Cash Gift', icon: '🎁', color: PALETTE.green[400] },
     { key: 'equity_vesting', name: 'Equity Vesting (RSU/Stock)', icon: '📦', color: PALETTE.green[500] },
     { key: 'capital_gains', name: 'Capital Gains (Stock Sale)', icon: '📈', color: PALETTE.green[600] },
     { key: 'dividends', name: 'Dividends', icon: '🪙', color: PALETTE.green[500] },
