@@ -84,27 +84,6 @@ export function seedSystemAccounts(report: SeedReport): void {
       kind: 'cash',
       nature: 'asset',
       currency: 'USD'
-    },
-    {
-      key: 'acct:sys:chase_checking',
-      name: 'Chase Checking',
-      kind: 'bank',
-      nature: 'asset',
-      currency: 'USD'
-    },
-    {
-      key: 'acct:sys:chase_savings',
-      name: 'Chase Savings',
-      kind: 'bank',
-      nature: 'asset',
-      currency: 'USD'
-    },
-    {
-      key: 'acct:sys:chase_credit_card',
-      name: 'Chase Credit Card',
-      kind: 'credit',
-      nature: 'liability',
-      currency: 'USD'
     }
   ] as const
 

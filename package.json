@@ -12,6 +12,9 @@
 
     "ios:run": "npx expo run:ios",
 
+    "ios:uninstall": "dotenv -e .env.local -- sh -c 'xcrun simctl uninstall booted \"$EXPO_PUBLIC_IOS_BUNDLE_ID\" || true'",
+    "ios:reset": "npm run ios:uninstall && expo prebuild --clean",
+
     "db:migration:new": "node scripts/create-migration.js",
     "db:migration:regen": "node scripts/create-migration.js --regen",
 
@@ -52,6 +55,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "dotenv-cli": "^11.0.0",
     "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
