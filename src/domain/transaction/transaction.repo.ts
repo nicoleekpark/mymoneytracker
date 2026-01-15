@@ -64,11 +64,13 @@ function transactionToRow(tx: Transaction): TransactionRow {
 
 export function insertTransaction(tx: Transaction): void {
   const row = transactionToRow(tx)
+  const now = new Date().toISOString()
 
   exec(
     `
     INSERT INTO transactions (
-      id, key, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note, created_at, updated_at
+      id, key, occurred_at, type, item, amount_cents, currency,
+      account_id, category_id, merchant, note, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `,
     [
@@ -83,11 +85,12 @@ export function insertTransaction(tx: Transaction): void {
       row.category_id,
       row.merchant,
       row.note,
-      new Date().toISOString(),
-      new Date().toISOString()
+      now,
+      now
     ]
   )
 }
+
 
 export function listTransactions(limit = 200): Transaction[] {
   const rows = queryAll<TransactionRow>(

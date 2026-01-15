@@ -1,18 +1,12 @@
+import { getActiveAccounts } from '@/domain/account'
 import type { Transaction } from '@/domain/transaction'
-import { getThisMonthExpenseTotal, getTransactions } from '@/domain/transaction'
+import { getThisMonthExpenseTotal, getTransactions, TransactionType } from '@/domain/transaction'
 import { useHoHTheme } from '@/providers'
-import { formatTransactionRowDate } from '@/ui/format/date'
+import { PALETTE } from '@/theme'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFocusEffect } from '@react-navigation/native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  SectionList,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from 'react-native'
+import { SectionList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 
 type MonthSection = {
   key: string
@@ -52,13 +46,6 @@ function displayItem(tx: Transaction): string {
   return (tx as any).item || (tx as any).note || (tx as any).memo || 'Untitled'
 }
 
-function categoryBadgeText(tx: Transaction): string {
-  const cat = (tx as any).category
-  const label = (cat?.subCategoryKey || cat?.categoryKey || cat?.type) as string | undefined
-  if (!label || typeof label !== 'string') return '•'
-  return label.trim().slice(0, 1).toUpperCase()
-}
-
 function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   const q = query.trim().toLowerCase()
 
@@ -66,7 +53,8 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
     ? all.filter(tx => {
         const item = displayItem(tx).toLowerCase()
         const note = String(((tx as any).note || (tx as any).memo || '')).toLowerCase()
-        return item.includes(q) || note.includes(q)
+        const merchant = String(((tx as any).merchant || '')).toLowerCase()
+        return item.includes(q) || note.includes(q) || merchant.includes(q)
       })
     : all
 
@@ -76,12 +64,14 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   for (const tx of sorted) {
     const d = safeDate(tx)
     const key = monthKey(d)
-    const section = map.get(key) ?? {
-      key,
-      title: monthTitle(d),
-      total: 0,
-      data: []
-    }
+    const section =
+      map.get(key) ??
+      ({
+        key,
+        title: monthTitle(d),
+        total: 0,
+        data: []
+      } satisfies MonthSection)
 
     const amt = Number((tx as any).money?.amount ?? 0)
     if (Number.isFinite(amt) && isExpense(tx)) section.total += amt
@@ -95,43 +85,82 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
 
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
+
   const [items, setItems] = useState<Transaction[]>([])
   const [thisMonthTotal, setThisMonthTotal] = useState(0)
 
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
+  // debounced search
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 150)
     return () => clearTimeout(t)
   }, [query])
 
+  // accounts / id->name map (stable)
+  const accounts = useMemo(() => getActiveAccounts(), [])
+  const accountNameById = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const a of accounts) m.set(a.id, a.name)
+    return m
+  }, [accounts])
+
+  const stripBgByType = useCallback(
+    (t: TransactionType) => {
+      if (t === 'income') return theme.semantic.successSoft
+      if (t === 'transfer') return theme.semantic.infoSoft
+      return theme.semantic.dangerSoft
+    },
+    [theme.semantic]
+  )
+
+  const stripColorByType = useCallback(
+    (t: TransactionType) => {
+      if (t === 'income') return theme.semantic.success ?? PALETTE.green[600]
+      if (t === 'transfer') return theme.semantic.info ?? PALETTE.blue[600]
+      return theme.semantic.danger ?? PALETTE.red[500]
+    },
+    [theme.semantic]
+  )
+
   const load = useCallback(() => {
+    let alive = true
+
     try {
-      // works whether your usecases return values (sync) or promises (async)
       const txsP = Promise.resolve(getTransactions(200) as any)
       const totalP = Promise.resolve(getThisMonthExpenseTotal() as any)
 
       Promise.all([txsP, totalP])
         .then(([txs, total]) => {
+          if (!alive) return
           setItems(Array.isArray(txs) ? txs : [])
           setThisMonthTotal(Number(total ?? 0))
         })
         .catch(e => {
           console.error(e)
+          if (!alive) return
           setItems([])
           setThisMonthTotal(0)
         })
     } catch (e) {
       console.error(e)
+      if (!alive) return
       setItems([])
       setThisMonthTotal(0)
+    }
+
+    return () => {
+      alive = false
     }
   }, [])
 
   useFocusEffect(
     useCallback(() => {
-      load()
+      const cleanup = load()
+      return () => {
+        if (typeof cleanup === 'function') cleanup()
+      }
     }, [load])
   )
 
@@ -143,12 +172,7 @@ export default function TransactionsScreen() {
         <Text style={[styles.title, { color: theme.semantic.text }]}>TRANSACTIONS</Text>
       </View>
 
-      <View
-        style={[
-          styles.searchWrap,
-          { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
-        ]}
-      >
+      <View style={[styles.searchWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
         <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as any} />
         <TextInput
           value={query}
@@ -174,86 +198,107 @@ export default function TransactionsScreen() {
       </View>
 
       <View style={[styles.summary, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-        <Text style={[styles.summaryLabel, { color: theme.semantic.textSecondary }]}>
-          This month expense
-        </Text>
-        <Text style={[styles.summaryValue, { color: theme.semantic.text }]}>
-          {formatCurrency(thisMonthTotal)}
-        </Text>
+        <Text style={[styles.summaryLabel, { color: theme.semantic.textSecondary }]}>This month expense</Text>
+        <Text style={[styles.summaryValue, { color: theme.semantic.text }]}>{formatCurrency(thisMonthTotal)}</Text>
       </View>
 
       <SectionList
         sections={sections}
-        keyExtractor={(it) => it.id}
+        keyExtractor={it => (it as any).id}
         stickySectionHeadersEnabled
         contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderSectionHeader={({ section }) => (
-          <View
-            style={[
-              styles.monthBar,
-              { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }
-            ]}
-          >
+          <View style={[styles.monthBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
             <Text style={[styles.monthText, { color: theme.semantic.text }]}>{section.title}</Text>
-            <Text style={[styles.monthTotal, { color: theme.semantic.textSecondary }]}>
-              {formatCurrency(section.total)}
-            </Text>
+            <Text style={[styles.monthTotal, { color: theme.semantic.textSecondary }]}>{formatCurrency(section.total)}</Text>
           </View>
         )}
         renderItem={({ item }) => {
-          const amt = Number((item as any).money?.amount ?? 0)
+          const tx = item as any
+
+          const amt = Number(tx?.money?.amount ?? 0)
+
+          const t = (String(tx?.type ?? 'expense') as TransactionType) || 'expense'
+          const itemText = String(tx?.item ?? tx?.note ?? tx?.memo ?? 'Untitled')
+
+          const merchantRaw = String(tx?.merchant ?? '').trim()
+          const merchantText = merchantRaw.length ? merchantRaw : null
+
+          const d = safeDate(item)
+          const dayText = Number.isFinite(d.getTime()) ? String(d.getDate()) : '--'
+          const timeText = Number.isFinite(d.getTime())
+            ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+            : ''
+
+          const accountId = String(tx?.accountId ?? '')
+          const accountName = accountNameById.get(accountId) ?? 'Account'
+
+          const stripBg = stripBgByType(t)
+          const stripColor = stripColorByType(t)
+
+          // rule: only income amount is slightly green, expense/transfer keep default text
+          const amountColor = t === 'income' ? (theme.semantic.success ?? theme.semantic.text) : theme.semantic.text
+
           return (
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
                 // Phase 2: push detail screen
               }}
-              style={[
-                styles.row,
-                { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
-              ]}
-              accessibilityLabel={`Transaction ${displayItem(item)} ${formatCurrency(amt)}`}
+              style={[styles.rowCard, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
+              accessibilityLabel={`Transaction ${itemText} ${formatCurrency(amt)}`}
             >
-              <View style={[styles.badge, { borderColor: theme.semantic.border }]}>
-                <Text style={{ color: theme.semantic.textSecondary, fontSize: 12 }}>
-                  {categoryBadgeText(item)}
-                </Text>
-              </View>
+              <View style={[styles.leftStripBg, { backgroundColor: stripBg }]} pointerEvents="none" />
+              {/* <View style={[styles.leftStrip, { backgroundColor: stripColor }]} pointerEvents="none" /> */}
 
-              <View style={styles.rowMain}>
+              <View style={styles.rowBody}>
                 <View style={styles.rowTop}>
-                  <Text style={[styles.itemText, { color: theme.semantic.text }]} numberOfLines={1}>
-                    {displayItem(item)}
+                  <Text style={[styles.dayText, { color: theme.semantic.textSecondary }]}>{dayText}</Text>
+
+                  <Text style={[styles.itemTextNew, { color: theme.semantic.text }]} numberOfLines={1}>
+                    {itemText}
                   </Text>
-                  <Text style={[styles.amountText, { color: theme.semantic.text }]}>
+
+                  <Text style={[styles.amountTextNew, { color: amountColor }]} numberOfLines={1}>
                     {formatCurrency(amt)}
                   </Text>
                 </View>
 
-                <Text style={[styles.dateText, { color: theme.semantic.textSecondary }]}>
-                  {formatTransactionRowDate(safeDate(item))}
-                </Text>
+                {/* second line: merchant (left) + account (right) */}
+                <View style={styles.rowSecond}>
+                  <Text
+                    style={[styles.merchantTextNew, { color: theme.semantic.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {merchantText ?? ''}
+                  </Text>
+
+                  <Text
+                    style={[styles.accountTextNew, { color: theme.semantic.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {accountName}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           )
         }}
-        ListEmptyComponent={
-          <Text style={{ color: theme.semantic.textSecondary }}>No transactions yet</Text>
-        }
+        ListEmptyComponent={<Text style={{ color: theme.semantic.textSecondary }}>No transactions yet</Text>}
       />
     </View>
   )
 }
 
+const DAY_COL_W = 28
+const DAY_GAP = 8
+const LEFT_ALIGN = DAY_COL_W + DAY_GAP
+
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
 
-  header: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12
-  },
+  header: { justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   title: { fontSize: 18, letterSpacing: 0.6, fontWeight: '700' },
 
   searchWrap: {
@@ -283,28 +328,82 @@ const styles = StyleSheet.create({
   monthText: { fontSize: 12, letterSpacing: 0.8, fontWeight: '700' },
   monthTotal: { fontSize: 12 },
 
-  row: {
+  separator: { height: 10 },
+  emptyContainer: { paddingTop: 12 },
+
+  rowCard: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    minHeight: 50
+  },
+
+  leftStripBg: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 10
+  },
+
+  rowBody: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingLeft: 12 + 10
+  },
+
+  strip: {
+    width: 4,
+    height: '100%',
+    borderRadius: 999
+  },
+
+  rowTop: {
+    flexDirection: 'row',
+    alignItems: 'baseline'
+  },
+
+  dayText: {
+    width: DAY_COL_W,
+    fontSize: 18,
+    fontWeight: '900',
+    marginRight: DAY_GAP
+  },
+
+  itemTextNew: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '900',
+    paddingRight: 10
+  },
+
+  amountTextNew: {
+    fontSize: 14,
+    fontWeight: '900'
+  },
+
+  merchantTextNew: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700'
+  },
+
+  rowSecond: {
+    marginTop: 4,
+    marginLeft: 28 + 8, //
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12
+    justifyContent: 'space-between',
+    gap: 10
   },
-  badge: {
-    width: 28,
-    height: 28,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12
-  },
-  rowMain: { flex: 1 },
-  rowTop: { flexDirection: 'row', alignItems: 'center' },
-  itemText: { flex: 1, fontSize: 14, fontWeight: '600', paddingRight: 10 },
-  amountText: { fontSize: 14, fontWeight: '700' },
-  dateText: { marginTop: 6, fontSize: 12 },
 
-  separator: { height: 10 },
-  emptyContainer: { paddingTop: 12 }
+  accountTextNew: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'right'
+  },
+
 })

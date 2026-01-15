@@ -6,15 +6,24 @@ export type SemanticColors = {
   surface: string
   surfaceAlt: string
   border: string
+
   text: string
   textSecondary: string
+
   primary: string
   primarySoft: string
   primaryStrong: string
+
   success: string
+  successSoft: string
+
   warning: string
+
   danger: string
+  dangerSoft: string
+
   info: string
+  infoSoft: string
 }
 
 export type FinanceColors = {

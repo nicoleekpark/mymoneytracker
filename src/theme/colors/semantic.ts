@@ -16,9 +16,15 @@ export const semanticLight: SemanticColors = {
   primaryStrong: PALETTE.orange[600],
 
   success: PALETTE.green[600],
+  successSoft: PALETTE.green[100],
+
   warning: PALETTE.amber[500],
+
   danger: PALETTE.red[500],
-  info: PALETTE.blue[500]
+  dangerSoft: PALETTE.red[100],
+
+  info: PALETTE.blue[500],
+  infoSoft: PALETTE.blue[100]
 }
 
 
@@ -37,7 +43,13 @@ export const semanticDark: SemanticColors = {
   primaryStrong: PALETTE.orange[300],
 
   success: PALETTE.green[400],
+  successSoft: PALETTE.green[900],
+
   warning: PALETTE.amber[400],
+
   danger: PALETTE.red[400],
-  info: PALETTE.blue[400]
+  dangerSoft: PALETTE.red[900],
+
+  info: PALETTE.blue[400],
+  infoSoft: PALETTE.blue[900]
 }

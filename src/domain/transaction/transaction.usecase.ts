@@ -1,7 +1,6 @@
 import type { CategoryIndex } from '@/config/categories.index'
 import { uuid } from '@/lib/platform/uuid'
 
-import { resolveAccountIdByKey } from '@/domain/account'
 import type { CategoryRef } from '@/domain/category'
 import type { UUID } from '@/domain/common/uuid'
 
@@ -22,11 +21,34 @@ function currentMonthYYYYMM(d = new Date()): string {
   return `${y}-${m}`
 }
 
+function slugify(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]+/g, '')
+    .slice(0, 24)
+}
+
+function buildTxKey(args: {
+  occurredAt: Date
+  type: TransactionType
+  item: string
+  merchant?: string
+}): string {
+  const ts = args.occurredAt.toISOString() // includes milliseconds + Z
+  const item = slugify(args.item || 'item')
+  const merch = args.merchant ? slugify(args.merchant) : 'na'
+  const suffix = uuid().replace(/-/g, '').slice(0, 8) // random-ish, short
+  // example: tx:2026-01-14T22:10:12.123Z:expense:coffee:blue_bottle:a1b2c3d4
+  return `tx:${ts}:${args.type}:${item}:${merch}:${suffix}`
+}
+
 // TODO: receipt image
 export async function addTransaction(
   categoryIndex: CategoryIndex,
   input: {
-    key?: string,
+    key?: string
     occurredAt?: Date
     type: TransactionType
     item: string
@@ -37,20 +59,29 @@ export async function addTransaction(
     note?: string
   }
 ): Promise<Transaction> {
-  const accountId =
-    input.accountId && input.accountId.includes('-') ? input.accountId : await resolveAccountIdByKey('cash')
+  const occurredAt = input.occurredAt ?? new Date()
+
+  const txKey =
+    (input.key && input.key.trim().length > 0)
+      ? input.key.trim()
+      : buildTxKey({
+          occurredAt,
+          type: input.type,
+          item: input.item,
+          merchant: input.merchant
+        })
 
   const tx: Transaction = createTransaction(categoryIndex, {
     id: uuid(),
-    key: input.key ?? '',
-    occurredAt: input.occurredAt ?? new Date(),
+    key: txKey,
+    occurredAt,
     type: input.type ?? 'expense',
     item: input.item,
     money: { amount: input.amount, currency: 'USD' },
-    accountId,
+    accountId: input.accountId,
     category: input.category,
-    merchant: input.merchant ?? undefined,
-    note: input.note ?? undefined
+    merchant: input.merchant?.trim() || undefined,
+    note: input.note?.trim() || undefined
   })
 
   insertTransaction(tx)

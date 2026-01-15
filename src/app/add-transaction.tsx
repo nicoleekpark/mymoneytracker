@@ -143,6 +143,9 @@ export default function AddTransactionScreen() {
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [accountQuery, setAccountQuery] = useState('')
 
+  const [merchant, setMerchant] = useState('')
+  const merchantInputRef = useRef<TextInput>(null)
+
   const accounts = useMemo(() => getActiveAccounts(), [])
 
   const filteredAccounts = useMemo(() => {
@@ -400,11 +403,11 @@ export default function AddTransactionScreen() {
       await addTransaction(categoryIndex, {
         type,
         item: cleanedItem,
-        // ✅ IMPORTANT: pass dollars to domain, mapper will do *100 exactly once
         amount: amountDollars,
         category: categoryRef,
         accountId,
         occurredAt,
+        merchant: merchant.trim() || undefined,
         note: cleanedNote || undefined
       })
 
@@ -526,7 +529,7 @@ export default function AddTransactionScreen() {
 
         <View
           style={[
-            styles.card,
+            styles.titleCard,
             { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }
           ]}
         >
@@ -536,12 +539,26 @@ export default function AddTransactionScreen() {
             onChangeText={setItem}
             placeholder="Add item"
             placeholderTextColor={theme.semantic.textSecondary}
-            style={[styles.heroInput, { color: theme.semantic.text }]}
+            style={[styles.titleInput, { color: theme.semantic.text }]}
             returnKeyType="next"
             blurOnSubmit={false}
-            onSubmitEditing={() => {
-              noteInputRef.current?.focus()
-            }}
+            onSubmitEditing={() => merchantInputRef.current?.focus()}
+          />
+
+          <View style={[styles.inlineDivider, { backgroundColor: theme.semantic.border }]} />
+
+          <TextInput
+            ref={merchantInputRef}
+            value={merchant}
+            onChangeText={setMerchant}
+            placeholder="Merchant"
+            placeholderTextColor={theme.semantic.textSecondary}
+            style={[styles.subInput, { color: theme.semantic.text }]}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => noteInputRef.current?.focus()}
+            autoCorrect={false}
+            autoCapitalize="words"
           />
         </View>
 
@@ -564,7 +581,7 @@ export default function AddTransactionScreen() {
             ${amountDisplay}
           </Text>
           <Text style={{ color: theme.semantic.textSecondary, fontSize: 12, marginTop: 6 }}>
-            Tap to enter cents
+            Tap to enter amount
           </Text>
         </Pressable>
 
@@ -1103,7 +1120,7 @@ export default function AddTransactionScreen() {
                 {selectedCategory ? buildCategoryLabel(selectedCategory) : 'Select'}
               </Text>
 
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }}>›</Text>
+              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }}></Text>
             </Pressable>
           </View>
 
@@ -1177,6 +1194,30 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+
+  titleCard: {
+    borderWidth: 1,
+    borderRadius: 18,
+    overflow: 'hidden'
+  },
+  titleInput: {
+    fontSize: 30,
+    fontWeight: '900',
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 12
+  },
+
+  subInput: {
+    fontSize: 14,
+    fontWeight: '500',
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12
+  },
+  inlineDivider: {
+    height: StyleSheet.hairlineWidth
   },
 
   card: {
