@@ -42,6 +42,20 @@ function isExpense(tx: Transaction): boolean {
   return typeof t === 'string' ? t === 'expense' : true
 }
 
+function isIncome(tx: Transaction): boolean {
+  const t = (tx as any).type
+  return typeof t === 'string' ? t === 'income' : false
+}
+
+function isTransfer(tx: Transaction): boolean {
+  const t = (tx as any).type
+  return typeof t === 'string' ? t === 'transfer' : false
+}
+
+function isSameMonth(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth()
+}
+
 function displayItem(tx: Transaction): string {
   return (tx as any).item || (tx as any).note || (tx as any).memo || 'Untitled'
 }
@@ -83,11 +97,34 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1))
 }
 
+// monthly income/net from tx list (transfer excluded)
+function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
+  let income = 0
+  let expense = 0
+
+  for (const tx of all) {
+    const d = safeDate(tx)
+    if (!isSameMonth(d, now)) continue
+
+    const amt = Number((tx as any).money?.amount ?? 0)
+    if (!Number.isFinite(amt) || amt <= 0) continue
+
+    if (isTransfer(tx)) continue
+
+    if (isIncome(tx)) income += amt
+    else if (isExpense(tx)) expense += amt
+  }
+
+  return { income, net: income - expense }
+}
+
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
   const [items, setItems] = useState<Transaction[]>([])
-  const [thisMonthTotal, setThisMonthTotal] = useState(0)
+  const [thisMonthExpense, setThisMonthExpense] = useState(0)
+  const [thisMonthIncome, setThisMonthIncome] = useState(0)
+  const [thisMonthNet, setThisMonthNet] = useState(0)
 
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -129,25 +166,36 @@ export default function TransactionsScreen() {
 
     try {
       const txsP = Promise.resolve(getTransactions(200) as any)
-      const totalP = Promise.resolve(getThisMonthExpenseTotal() as any)
+      const expenseP = Promise.resolve(getThisMonthExpenseTotal() as any)
 
-      Promise.all([txsP, totalP])
-        .then(([txs, total]) => {
+      Promise.all([txsP, expenseP])
+        .then(([txs, expense]) => {
           if (!alive) return
-          setItems(Array.isArray(txs) ? txs : [])
-          setThisMonthTotal(Number(total ?? 0))
+          const arr = Array.isArray(txs) ? txs : []
+          setItems(arr)
+
+          const expenseNum = Number(expense ?? 0)
+          setThisMonthExpense(expenseNum)
+
+          const { income, net } = sumThisMonthIncomeAndNet(arr, new Date())
+          setThisMonthIncome(income)
+          setThisMonthNet(net)
         })
         .catch(e => {
           console.error(e)
           if (!alive) return
           setItems([])
-          setThisMonthTotal(0)
+          setThisMonthExpense(0)
+          setThisMonthIncome(0)
+          setThisMonthNet(0)
         })
     } catch (e) {
       console.error(e)
       if (!alive) return
       setItems([])
-      setThisMonthTotal(0)
+      setThisMonthExpense(0)
+      setThisMonthIncome(0)
+      setThisMonthNet(0)
     }
 
     return () => {
@@ -197,9 +245,40 @@ export default function TransactionsScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.summary, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-        <Text style={[styles.summaryLabel, { color: theme.semantic.textSecondary }]}>This month expense</Text>
-        <Text style={[styles.summaryValue, { color: theme.semantic.text }]}>{formatCurrency(thisMonthTotal)}</Text>
+      <View>
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryCell}>
+            <View style={[styles.summaryPill, { backgroundColor: theme.semantic.successSoft }]}>
+              <Text style={[styles.summaryPillText, { color: theme.semantic.success }]}>INFLOW</Text>
+            </View>
+            <Text style={[styles.summaryValueSm, { color: theme.semantic.success }]}>
+              {formatCurrency(thisMonthIncome)}
+            </Text>
+          </View>
+
+          <View style={styles.summaryCell}>
+            <View style={[styles.summaryPill, { backgroundColor: theme.semantic.dangerSoft }]}>
+              <Text style={[styles.summaryPillText, { color: theme.semantic.danger }]}>OUTFLOW</Text>
+            </View>
+            <Text style={[styles.summaryValueSm, { color: theme.semantic.danger }]}>
+              {formatCurrency(thisMonthExpense)}
+            </Text>
+          </View>
+
+          <View style={styles.summaryCell}>
+            <View style={[styles.summaryPill, { backgroundColor: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }]}>
+              <Text style={[styles.summaryPillText, { color: '#ffffff' }]}>NET</Text>
+            </View>
+            <Text
+              style={[
+                styles.summaryValueSm,
+                { color: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }
+              ]}
+            >
+              {formatCurrency(thisMonthNet)}
+            </Text>
+          </View>
+        </View>
       </View>
 
       <SectionList
@@ -227,9 +306,6 @@ export default function TransactionsScreen() {
 
           const d = safeDate(item)
           const dayText = Number.isFinite(d.getTime()) ? String(d.getDate()) : '--'
-          const timeText = Number.isFinite(d.getTime())
-            ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-            : ''
 
           const accountId = String(tx?.accountId ?? '')
           const accountName = accountNameById.get(accountId) ?? 'Account'
@@ -405,5 +481,42 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'right'
   },
+
+  summaryRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 8,
+    paddingVertical: 10
+  },
+
+  summaryCell: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center'
+  },
+
+  summaryPill: {
+    width: '100%',
+    borderRadius: 10,
+    paddingVertical: 6,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
+  summaryPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    justifyContent: 'center'
+  },
+
+  summaryValueSm: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: '900'
+  }
+
+
 
 })
