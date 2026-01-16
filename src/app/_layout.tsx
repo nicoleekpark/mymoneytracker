@@ -100,13 +100,16 @@ function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
       <TamaguiProvider config={tamaguiConfig}>
         <>
           <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false
+              }}
+            />
             <Stack.Screen
               name="add-transaction"
               options={{
-                title: 'Add Transaction',
                 presentation: 'modal',
-                headerTitleAlign: 'center',
                  headerLeft: () => (
                   <Pressable onPress={() => router.back()} hitSlop={12} style={{ paddingHorizontal: 12 }}>
                     <FontAwesome name="close" size={20} />
@@ -114,10 +117,7 @@ function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
                 )
               }}
             />
-            <Stack.Screen name="settings" options={{
-              title: 'Settings',
-              headerTitleAlign: 'center',
-              headerBackTitle: '' }} />
+            <Stack.Screen name="settings" />
           </Stack>
           {__DEV__ && APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />}
         </>

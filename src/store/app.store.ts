@@ -3,9 +3,20 @@ import { create } from 'zustand'
 
 type AppState = {
   categoryIndex: CategoryIndex
+
+  isAddTransactionOpen: boolean
+  openAddTransactionModal: () => void
+  closeAddTransactionModal: () => void
 }
 
-export const useAppStore = create<AppState>((set, get) => {
+export const useAppStore = create<AppState>((set) => {
   const categoryIndex = buildCategoryIndex()
-  return { categoryIndex }
+
+  return {
+    categoryIndex,
+
+    isAddTransactionOpen: false,
+    openAddTransactionModal: () => set({ isAddTransactionOpen: true }),
+    closeAddTransactionModal: () => set({ isAddTransactionOpen: false })
+  }
 })
