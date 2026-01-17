@@ -1,3 +1,3 @@
-export default function AddActionPlaceholder() {
+export default function AddPlaceHolder() {
   return null
 }

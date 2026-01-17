@@ -1,9 +1,8 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFonts } from 'expo-font'
-import { router, Stack } from 'expo-router'
+import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
-import { Pressable } from 'react-native'
 import 'react-native-reanimated'
 
 import { HoHThemeProvider } from '@/providers'
@@ -11,8 +10,6 @@ import { ScrollView, Text, useColorScheme, View } from 'react-native'
 
 import { initDbPragmas, migrate, runSystemSeeds } from '@/lib/db'
 
-import { DevToolsOverlay } from '@/components/dev/DevToolsOverlay'
-import { APP_CONFIG } from '@/config'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
 export {
@@ -39,10 +36,6 @@ export default function RootLayout() {
     SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   })
-
-  // useEffect(() => {
-  //   console.log('DEV_TOOLS', process.env.EXPO_PUBLIC_DEV_TOOLS)
-  // }, [])
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -94,32 +87,19 @@ export default function RootLayout() {
   return <RootLayoutNav initialMode={isDark ? 'dark' : 'light'} />
 }
 
+/******************************************* */
+/*                  Stacks                   */
+/******************************************* */
 function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
   return (
     <HoHThemeProvider initialMode={initialMode}>
       <TamaguiProvider config={tamaguiConfig}>
         <>
           <Stack>
-            <Stack.Screen
-              name="(tabs)"
-              options={{
-                headerShown: false
-              }}
-            />
-            <Stack.Screen
-              name="add-transaction"
-              options={{
-                presentation: 'modal',
-                 headerLeft: () => (
-                  <Pressable onPress={() => router.back()} hitSlop={12} style={{ paddingHorizontal: 12 }}>
-                    <FontAwesome name="close" size={20} />
-                  </Pressable>
-                )
-              }}
-            />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="settings" />
           </Stack>
-          {__DEV__ && APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />}
+          {/* {__DEV__ && APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />} */}
         </>
       </TamaguiProvider>
     </HoHThemeProvider>

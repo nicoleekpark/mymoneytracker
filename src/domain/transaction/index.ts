@@ -6,8 +6,8 @@ export type {
 
 export {
   addTransaction,
-  getMonthlyExpenseTotals,
-  getThisMonthExpenseTotal,
+  getMonthlyExpenseTotalsDollar,
+  getThisMonthExpenseTotalDollar,
   getTransactions,
   removeTransaction
 } from './transaction.usecase'

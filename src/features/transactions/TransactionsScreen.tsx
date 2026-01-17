@@ -1,12 +1,14 @@
 import { getActiveAccounts } from '@/domain/account'
 import type { Transaction } from '@/domain/transaction'
-import { getThisMonthExpenseTotal, getTransactions, TransactionType } from '@/domain/transaction'
+import { getThisMonthExpenseTotalDollar, getTransactions, TransactionType } from '@/domain/transaction'
 import { useHoHTheme } from '@/providers'
 import { PALETTE } from '@/theme'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFocusEffect } from '@react-navigation/native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SectionList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+
+import { Screen } from '@/ui/layout/Screen'
 
 type MonthSection = {
   key: string
@@ -29,8 +31,16 @@ function monthTitle(d: Date) {
 }
 
 function formatCurrency(amount: number) {
-  return `$${Number.isFinite(amount) ? amount.toFixed(2) : '0.00'}`
+  if (!Number.isFinite(amount)) return '$ 0.00'
+
+  const abs = Math.abs(amount).toFixed(2)
+  if (amount < 0) {
+    return `($ ${abs})`
+  }
+  return `$ ${abs}`
 }
+
+
 
 function safeDate(tx: Transaction): Date {
   const d = tx.occurredAt instanceof Date ? tx.occurredAt : new Date((tx as any).occurredAt)
@@ -64,7 +74,7 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   const q = query.trim().toLowerCase()
 
   const filtered = q
-    ? all.filter(tx => {
+    ? all.filter((tx) => {
         const item = displayItem(tx).toLowerCase()
         const note = String(((tx as any).note || (tx as any).memo || '')).toLowerCase()
         const merchant = String(((tx as any).merchant || '')).toLowerCase()
@@ -118,6 +128,11 @@ function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
   return { income, net: income - expense }
 }
 
+/***************************************************************
+ *
+ * TransactionsScreen
+ *
+ ***************************************************************/
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
@@ -129,13 +144,11 @@ export default function TransactionsScreen() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
-  // debounced search
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 150)
     return () => clearTimeout(t)
   }, [query])
 
-  // accounts / id->name map (stable)
   const accounts = useMemo(() => getActiveAccounts(), [])
   const accountNameById = useMemo(() => {
     const m = new Map<string, string>()
@@ -166,7 +179,7 @@ export default function TransactionsScreen() {
 
     try {
       const txsP = Promise.resolve(getTransactions(200) as any)
-      const expenseP = Promise.resolve(getThisMonthExpenseTotal() as any)
+      const expenseP = Promise.resolve(getThisMonthExpenseTotalDollar() as any)
 
       Promise.all([txsP, expenseP])
         .then(([txs, expense]) => {
@@ -181,7 +194,7 @@ export default function TransactionsScreen() {
           setThisMonthIncome(income)
           setThisMonthNet(net)
         })
-        .catch(e => {
+        .catch((e) => {
           console.error(e)
           if (!alive) return
           setItems([])
@@ -215,11 +228,7 @@ export default function TransactionsScreen() {
   const sections = useMemo(() => buildMonthSections(items, debouncedQuery), [items, debouncedQuery])
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.semantic.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.semantic.text }]}>TRANSACTIONS</Text>
-      </View>
-
+    <Screen topPadding>
       <View style={[styles.searchWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
         <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as any} />
         <TextInput
@@ -245,45 +254,49 @@ export default function TransactionsScreen() {
         </TouchableOpacity>
       </View>
 
-      <View>
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryCell}>
-            <View style={[styles.summaryPill, { backgroundColor: theme.semantic.successSoft }]}>
-              <Text style={[styles.summaryPillText, { color: theme.semantic.success }]}>INFLOW</Text>
-            </View>
-            <Text style={[styles.summaryValueSm, { color: theme.semantic.success }]}>
-              {formatCurrency(thisMonthIncome)}
-            </Text>
+      <View style={styles.summaryRow}>
+        <View style={styles.summaryCell}>
+          <View style={[styles.summaryPill, { backgroundColor: theme.semantic.successSoft }]}>
+            <Text style={[styles.summaryPillText, { color: theme.semantic.success }]}>INFLOW</Text>
           </View>
+          <Text style={[styles.summaryValueSm, { color: theme.semantic.success }]}>
+            {formatCurrency(thisMonthIncome)}
+          </Text>
+        </View>
 
-          <View style={styles.summaryCell}>
-            <View style={[styles.summaryPill, { backgroundColor: theme.semantic.dangerSoft }]}>
-              <Text style={[styles.summaryPillText, { color: theme.semantic.danger }]}>OUTFLOW</Text>
-            </View>
-            <Text style={[styles.summaryValueSm, { color: theme.semantic.danger }]}>
-              {formatCurrency(thisMonthExpense)}
-            </Text>
+        <View style={styles.summaryCell}>
+          <View style={[styles.summaryPill, { backgroundColor: theme.semantic.dangerSoft }]}>
+            <Text style={[styles.summaryPillText, { color: theme.semantic.danger }]}>OUTFLOW</Text>
           </View>
+          <Text style={[styles.summaryValueSm, { color: theme.semantic.danger }]}>
+            {formatCurrency(thisMonthExpense)}
+          </Text>
+        </View>
 
-          <View style={styles.summaryCell}>
-            <View style={[styles.summaryPill, { backgroundColor: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }]}>
-              <Text style={[styles.summaryPillText, { color: '#ffffff' }]}>NET</Text>
-            </View>
-            <Text
-              style={[
-                styles.summaryValueSm,
-                { color: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }
-              ]}
-            >
-              {formatCurrency(thisMonthNet)}
-            </Text>
+        <View style={styles.summaryCell}>
+          <View
+            style={[
+              styles.summaryPill,
+              { backgroundColor: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }
+            ]}
+          >
+            <Text style={[styles.summaryPillText, { color: '#ffffff' }]}>NET</Text>
           </View>
+          <Text
+            style={[
+              styles.summaryValueSm,
+              { color: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }
+            ]}
+          >
+            {formatCurrency(thisMonthNet)}
+          </Text>
         </View>
       </View>
 
       <SectionList
+        style={{ flex: 1 }}
         sections={sections}
-        keyExtractor={it => (it as any).id}
+        keyExtractor={(it) => (it as any).id}
         stickySectionHeadersEnabled
         contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -295,7 +308,6 @@ export default function TransactionsScreen() {
         )}
         renderItem={({ item }) => {
           const tx = item as any
-
           const amt = Number(tx?.money?.amount ?? 0)
 
           const t = (String(tx?.type ?? 'expense') as TransactionType) || 'expense'
@@ -311,9 +323,8 @@ export default function TransactionsScreen() {
           const accountName = accountNameById.get(accountId) ?? 'Account'
 
           const stripBg = stripBgByType(t)
-          const stripColor = stripColorByType(t)
+          const _stripColor = stripColorByType(t)
 
-          // rule: only income amount is slightly green, expense/transfer keep default text
           const amountColor = t === 'income' ? (theme.semantic.success ?? theme.semantic.text) : theme.semantic.text
 
           return (
@@ -326,7 +337,6 @@ export default function TransactionsScreen() {
               accessibilityLabel={`Transaction ${itemText} ${formatCurrency(amt)}`}
             >
               <View style={[styles.leftStripBg, { backgroundColor: stripBg }]} pointerEvents="none" />
-              {/* <View style={[styles.leftStrip, { backgroundColor: stripColor }]} pointerEvents="none" /> */}
 
               <View style={styles.rowBody}>
                 <View style={styles.rowTop}>
@@ -341,19 +351,12 @@ export default function TransactionsScreen() {
                   </Text>
                 </View>
 
-                {/* second line: merchant (left) + account (right) */}
                 <View style={styles.rowSecond}>
-                  <Text
-                    style={[styles.merchantTextNew, { color: theme.semantic.textSecondary }]}
-                    numberOfLines={1}
-                  >
+                  <Text style={[styles.merchantTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
                     {merchantText ?? ''}
                   </Text>
 
-                  <Text
-                    style={[styles.accountTextNew, { color: theme.semantic.textSecondary }]}
-                    numberOfLines={1}
-                  >
+                  <Text style={[styles.accountTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
                     {accountName}
                   </Text>
                 </View>
@@ -363,17 +366,14 @@ export default function TransactionsScreen() {
         }}
         ListEmptyComponent={<Text style={{ color: theme.semantic.textSecondary }}>No transactions yet</Text>}
       />
-    </View>
+    </Screen>
   )
 }
 
 const DAY_COL_W = 28
 const DAY_GAP = 8
-const LEFT_ALIGN = DAY_COL_W + DAY_GAP
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-
   header: { justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   title: { fontSize: 18, letterSpacing: 0.6, fontWeight: '700' },
 
@@ -389,10 +389,6 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 14, padding: 0 },
   filterBtn: { paddingLeft: 6, paddingVertical: 2 },
-
-  summary: { padding: 12, borderWidth: 1, borderRadius: 12, marginBottom: 12 },
-  summaryLabel: { fontSize: 12, fontWeight: '600' },
-  summaryValue: { fontSize: 22, fontWeight: '900', marginTop: 4 },
 
   monthBar: {
     flexDirection: 'row',
@@ -431,12 +427,6 @@ const styles = StyleSheet.create({
     paddingLeft: 12 + 10
   },
 
-  strip: {
-    width: 4,
-    height: '100%',
-    borderRadius: 999
-  },
-
   rowTop: {
     flexDirection: 'row',
     alignItems: 'baseline'
@@ -469,7 +459,7 @@ const styles = StyleSheet.create({
 
   rowSecond: {
     marginTop: 4,
-    marginLeft: 28 + 8, //
+    marginLeft: DAY_COL_W + DAY_GAP,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -516,7 +506,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900'
   }
-
-
-
 })

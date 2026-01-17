@@ -4,14 +4,14 @@ import { uuid } from '@/lib/platform/uuid'
 import type { CategoryRef } from '@/domain/category'
 import type { UUID } from '@/domain/common/uuid'
 
+import { centsToDollars } from '@/domain/common/money'
 import { createTransaction } from './transaction.model'
 import {
   deleteTransaction,
   getExpenseTotalForMonth,
   insertTransaction,
   listMonthlyExpenseTotals,
-  listTransactions,
-  type MonthlyExpenseTotal
+  listTransactions
 } from './transaction.repo'
 import type { Transaction, TransactionType } from './transaction.types'
 
@@ -96,11 +96,22 @@ export async function removeTransaction(id: UUID): Promise<void> {
   deleteTransaction(id)
 }
 
-export async function getThisMonthExpenseTotal(now = new Date()): Promise<number> {
+export async function getThisMonthExpenseTotalDollar(now = new Date()): Promise<number> {
   const month = currentMonthYYYYMM(now)
-  return getExpenseTotalForMonth(month)
+  const totalCents = getExpenseTotalForMonth(month)
+
+  return centsToDollars(totalCents)
 }
 
-export async function getMonthlyExpenseTotals(limitMonths = 24): Promise<MonthlyExpenseTotal[]> {
-  return listMonthlyExpenseTotals(limitMonths)
+export type MonthlyExpenseTotalDollar = Readonly<{
+  month: string
+  totalDollar: number
+}>
+
+export async function getMonthlyExpenseTotalsDollar(limitMonths = 24): Promise<MonthlyExpenseTotalDollar[]> {
+  const totals = listMonthlyExpenseTotals(limitMonths)
+  return totals.map((t) => ({
+    month: t.month,
+    totalDollar: centsToDollars(t.totalCents)
+  }))
 }

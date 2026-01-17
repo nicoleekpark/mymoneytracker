@@ -154,7 +154,6 @@ function createStyles(theme: ReturnType<typeof useHoHTheme>) {
 
   return StyleSheet.create({
     modeRow: {
-      paddingTop: 8,
       paddingBottom: 10
     },
 
@@ -194,7 +193,8 @@ function createStyles(theme: ReturnType<typeof useHoHTheme>) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingBottom: 12
+      paddingBottom: 12,
+      gap: 10
     },
 
     segment: {
@@ -224,7 +224,8 @@ function createStyles(theme: ReturnType<typeof useHoHTheme>) {
 
     periodControls: {
       flexDirection: 'row',
-      alignItems: 'center'
+      alignItems: 'center',
+      minWidth: 0
     },
 
     iconBtn: {

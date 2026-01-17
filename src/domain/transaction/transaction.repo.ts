@@ -138,5 +138,8 @@ export function listMonthlyExpenseTotals(limitMonths = 24): MonthlyExpenseTotal[
     [limitMonths]
   )
 
-  return rows.map((r) => ({ month: r.month, totalCents: r.total_cents }))
+  return rows.map((r) => ({
+    month: r.month,
+    totalCents: Number(r.total_cents ?? 0)
+  }))
 }
