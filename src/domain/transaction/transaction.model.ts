@@ -18,6 +18,10 @@ export function createTransaction(categoryIndex: CategoryIndex, input: Transacti
     if (input.fromAccountId === input.toAccountId) {
       throw new Error('fromAccountId and toAccountId must differ')
     }
+  } else {
+    if ((input as any).fromAccountId || (input as any).toAccountId) {
+      throw new Error('non-transfer must not include fromAccountId/toAccountId')
+    }
   }
 
   if (input.category) {

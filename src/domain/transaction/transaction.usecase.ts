@@ -1,7 +1,6 @@
 import type { CategoryIndex } from '@/config/categories.index'
 import { uuid } from '@/lib/platform/uuid'
 
-import type { CategoryRef } from '@/domain/category'
 import type { UUID } from '@/domain/common/uuid'
 
 import { centsToDollars } from '@/domain/common/money'
@@ -13,7 +12,7 @@ import {
   listMonthlyExpenseTotals,
   listTransactions
 } from './transaction.repo'
-import type { Transaction, TransactionType } from './transaction.types'
+import type { AddTransactionInput, Transaction, TransactionType } from './transaction.types'
 
 function currentMonthYYYYMM(d = new Date()): string {
   const y = d.getFullYear()
@@ -47,17 +46,7 @@ function buildTxKey(args: {
 // TODO: receipt image
 export async function addTransaction(
   categoryIndex: CategoryIndex,
-  input: {
-    key?: string
-    occurredAt?: Date
-    type: TransactionType
-    item: string
-    amount: number
-    accountId: UUID
-    category?: CategoryRef
-    merchant?: string
-    note?: string
-  }
+  input: AddTransactionInput
 ): Promise<Transaction> {
   const occurredAt = input.occurredAt ?? new Date()
 
@@ -71,19 +60,32 @@ export async function addTransaction(
           merchant: input.merchant
         })
 
-  const tx: Transaction = createTransaction(categoryIndex, {
+  const base = {
     id: uuid(),
     key: txKey,
     occurredAt,
-    type: input.type ?? 'expense',
+    type: input.type,
     item: input.item,
     money: { amount: input.amount, currency: 'USD' },
-    accountId: input.accountId,
+    merchant: input.merchant?.trim(),
+    note: input.note?.trim(),
     category: input.category,
-    merchant: input.merchant?.trim() || undefined,
-    note: input.note?.trim() || undefined
-  })
+  }
 
+  const tx: Transaction =
+    input.type === 'transfer'
+      ? createTransaction(categoryIndex, {
+          ...base,
+          type: 'transfer',
+          fromAccountId: input.fromAccountId,
+          toAccountId: input.toAccountId,
+        })
+      : createTransaction(categoryIndex, {
+          ...base,
+          type: input.type,
+          accountId: input.accountId,
+        })
+        
   insertTransaction(tx)
   return tx
 }

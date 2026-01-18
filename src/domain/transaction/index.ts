@@ -1,5 +1,5 @@
 export type {
-  Money,
+  AddTransactionInput, Money,
   Transaction,
   TransactionType
 } from './transaction.types'

@@ -12,13 +12,18 @@ type TransactionRow = Readonly<{
   key: string
   occurred_at: string
   type: TransactionType
+  item: string
+
   amount_cents: number
   currency: string
-  account_id: UUID
+
+  account_id: UUID | null
+  from_account_id: UUID | null
+  to_account_id: UUID | null
+
   category_id: UUID | null
   merchant: string | null
   note: string | null
-  item: string
 }>
 
 type MonthlyTotalRow = Readonly<{
@@ -32,22 +37,36 @@ export type MonthlyExpenseTotal = Readonly<{
 }>
 
 function rowToTransaction(row: TransactionRow): Transaction {
-  return {
+  const base = {
     id: row.id,
     key: row.key,
     occurredAt: new Date(row.occurred_at),
     type: row.type,
     item: row.item,
     money: { amount: centsToDollars(row.amount_cents), currency: row.currency },
-    accountId: row.account_id,
     category: row.category_id ? resolveCategoryRefFromDbId(row.category_id) : undefined,
     merchant: row.merchant ?? undefined,
-    note: row.note ?? undefined
+    note: row.note ?? undefined,
+  } as const
+
+  if (row.type === 'transfer') {
+    return {
+      ...base,
+      type: 'transfer',
+      fromAccountId: row.from_account_id as UUID,
+      toAccountId: row.to_account_id as UUID,
+    }
+  }
+
+  return {
+    ...base,
+    type: row.type,
+    accountId: row.account_id as UUID,
   }
 }
 
 function transactionToRow(tx: Transaction): TransactionRow {
-  return {
+  const base = {
     id: tx.id,
     key: tx.key,
     occurred_at: tx.occurredAt.toISOString(),
@@ -55,10 +74,25 @@ function transactionToRow(tx: Transaction): TransactionRow {
     item: tx.item,
     amount_cents: dollarsToCents(tx.money.amount),
     currency: tx.money.currency,
-    account_id: tx.accountId,
     category_id: resolveCategoryId(tx.category) ?? null,
     merchant: tx.merchant ?? null,
-    note: tx.note ?? null
+    note: tx.note ?? null,
+  }
+
+  if (tx.type === 'transfer') {
+    return {
+      ...base,
+      account_id: null,
+      from_account_id: tx.fromAccountId,
+      to_account_id: tx.toAccountId,
+    }
+  }
+
+  return {
+    ...base,
+    account_id: tx.accountId,
+    from_account_id: null,
+    to_account_id: null,
   }
 }
 
@@ -69,9 +103,12 @@ export function insertTransaction(tx: Transaction): void {
   exec(
     `
     INSERT INTO transactions (
-      id, key, occurred_at, type, item, amount_cents, currency,
-      account_id, category_id, merchant, note, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      id, key, occurred_at, type, item,
+      amount_cents, currency,
+      account_id, from_account_id, to_account_id,
+      category_id, merchant, note,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       row.id,
@@ -85,18 +122,21 @@ export function insertTransaction(tx: Transaction): void {
       row.category_id,
       row.merchant,
       row.note,
+      row.from_account_id,
+      row.to_account_id,
       now,
-      now
+      now,
     ]
   )
 }
-
 
 export function listTransactions(limit = 200): Transaction[] {
   const rows = queryAll<TransactionRow>(
     `
     SELECT
-      id, key, occurred_at, type, item, amount_cents, currency, account_id, category_id, merchant, note
+      id, key, occurred_at, type, item, amount_cents, currency,
+      account_id, category_id, merchant, note,
+      from_account_id, to_account_id
     FROM transactions
     ORDER BY occurred_at DESC, id DESC
     LIMIT ?;

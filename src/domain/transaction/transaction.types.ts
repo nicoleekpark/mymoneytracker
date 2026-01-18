@@ -8,7 +8,7 @@ export type Money = Readonly<{
   currency: string
 }>
 
-export type Transaction = Readonly<{
+type TransactionBase = Readonly<{
   id: UUID
   key: string
   occurredAt: Date
@@ -17,13 +17,50 @@ export type Transaction = Readonly<{
   item: string
   money: Money
 
-  accountId: UUID
-
   category?: CategoryRef
-
   merchant?: string
   note?: string
-
-  fromAccountId?: UUID
-  toAccountId?: UUID
 }>
+
+export type IncomeExpenseTransaction = TransactionBase &
+  Readonly<{
+    type: 'income' | 'expense'
+    accountId: UUID
+    fromAccountId?: never
+    toAccountId?: never
+  }>
+
+export type TransferTransaction = TransactionBase &
+  Readonly<{
+    type: 'transfer'
+    accountId?: never
+    fromAccountId: UUID
+    toAccountId: UUID
+  }>
+
+export type Transaction = IncomeExpenseTransaction | TransferTransaction
+
+export type AddTransactionInput =
+  | {
+      key?: string
+      occurredAt?: Date
+      type: 'income' | 'expense'
+      item: string
+      amount: number
+      accountId: UUID
+      category?: CategoryRef
+      merchant?: string
+      note?: string
+    }
+  | {
+      key?: string
+      occurredAt?: Date
+      type: 'transfer'
+      item: string
+      amount: number
+      fromAccountId: UUID
+      toAccountId: UUID
+      note?: string
+      merchant?: string
+      category?: CategoryRef
+    }
