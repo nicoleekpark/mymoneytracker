@@ -1,12 +1,12 @@
-import { ThemeMode } from '@/theme'
+import type { ThemeMode } from '@/theme'
 import { create } from 'zustand'
 
 type ThemeState = {
-  mode: ThemeMode,
-  setMode: (mode: ThemeMode) => void
+  mode: ThemeMode | null
+  setMode: (mode: ThemeMode | null) => void
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({
-  mode: null, // null follows system theme
+  mode: null,
   setMode: (mode) => set({ mode })
 }))

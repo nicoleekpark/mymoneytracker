@@ -1,36 +1,34 @@
-import { type ReactNode, createContext, useContext, useMemo } from 'react'
+import type { ReactNode } from 'react'
+import React, { createContext, useContext, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
 import { useThemeStore } from '@/store'
-import { THEMES, Theme, ThemeMode } from '@/theme'
-
+import type { Theme, ThemeMode } from '@/theme'
+import { THEMES } from '@/theme'
 
 export const HoHThemeContext = createContext<Theme | null>(null)
+
 export const useHoHTheme = () => {
   const ctx = useContext(HoHThemeContext)
-  if (!ctx) {
-    throw new Error('useHoHTheme must be used within HoHThemeProvider')
-  }
+  if (!ctx) throw new Error('useHoHTheme must be used within HoHThemeProvider')
   return ctx
 }
 
 type Props = {
   children: ReactNode
+  // fallback only, used when user mode is null and system is unavailable
   initialMode?: ThemeMode
 }
 
 export const HoHThemeProvider = ({ children, initialMode }: Props) => {
-  const systemThemeMode = useColorScheme() as ThemeMode
-  const userThemeMode = useThemeStore(t => t.mode)
+  const systemMode = (useColorScheme() as ThemeMode | null) ?? null
+  const userMode = useThemeStore((t) => t.mode)
 
-  const themeMode = userThemeMode ?? initialMode ?? systemThemeMode ?? 'light'
-  const theme = THEMES[themeMode]
+  // TODO const effectiveMode: ThemeMode = userMode ?? systemMode ?? initialMode ?? 'dark' is correct
+  // const effectiveMode: ThemeMode = userMode ?? systemMode ?? initialMode ?? 'dark'
+  const effectiveMode: ThemeMode = userMode ?? initialMode ?? systemMode ?? 'dark'
 
-  const value = useMemo(() => theme, [themeMode])
+  const theme = useMemo(() => THEMES[effectiveMode], [effectiveMode])
 
-  return (
-    <HoHThemeContext.Provider value={value}>
-      {children}
-    </HoHThemeContext.Provider>
-    )
+  return <HoHThemeContext.Provider value={theme}>{children}</HoHThemeContext.Provider>
 }

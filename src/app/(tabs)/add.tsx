@@ -1,3 +1,5 @@
-export default function AddPlaceHolder() {
-  return null
+import { Redirect } from 'expo-router'
+
+export default function AddTab() {
+  return <Redirect href="/(tabs)/dashboard" />
 }

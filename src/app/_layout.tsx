@@ -6,41 +6,29 @@ import { useEffect, useState } from 'react'
 import 'react-native-reanimated'
 
 import { HoHThemeProvider } from '@/providers'
-import { ScrollView, Text, useColorScheme, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { initDbPragmas, migrate, runSystemSeeds } from '@/lib/db'
 
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary
-} from 'expo-router'
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-}
+export { ErrorBoundary } from 'expo-router'
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme()
-  const isDark = colorScheme === 'dark'
-
   const [dbReady, setDbReady] = useState(false)
   const [dbError, setDbError] = useState<unknown>(null)
 
-  const [loaded, error] = useFonts({
+  const [loaded, fontError] = useFonts({
     SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
+    ...FontAwesome.font
   })
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error
-  }, [error])
+    if (fontError) throw fontError
+  }, [fontError])
 
   useEffect(() => {
     try {
@@ -66,12 +54,8 @@ export default function RootLayout() {
   if (dbError) {
     return (
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
-          DB init failed
-        </Text>
-        <Text selectable>
-          {String((dbError as any)?.message ?? dbError)}
-        </Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 8 }}>DB init failed</Text>
+        <Text selectable>{String((dbError as any)?.message ?? dbError)}</Text>
       </ScrollView>
     )
   }
@@ -84,23 +68,18 @@ export default function RootLayout() {
     )
   }
 
-  return <RootLayoutNav initialMode={isDark ? 'dark' : 'light'} />
+  return <RootLayoutNav />
 }
 
-/******************************************* */
-/*                  Stacks                   */
-/******************************************* */
-function RootLayoutNav({ initialMode }: { initialMode: 'light' | 'dark' }) {
+function RootLayoutNav() {
   return (
-    <HoHThemeProvider initialMode={initialMode}>
+    <HoHThemeProvider initialMode="dark">
       <TamaguiProvider config={tamaguiConfig}>
-        <>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="settings" />
-          </Stack>
-          {/* {__DEV__ && APP_CONFIG.featureFlags.devTools && <DevToolsOverlay />} */}
-        </>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="modal/add-transaction" options={{ presentation: 'modal', headerShown: false }} />
+        </Stack>
       </TamaguiProvider>
     </HoHThemeProvider>
   )
