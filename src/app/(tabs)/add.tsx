@@ -1,5 +1,3 @@
-import { Redirect } from 'expo-router'
-
-export default function AddTab() {
-  return <Redirect href="/(tabs)/dashboard" />
+export default function AddPlaceholder() {
+  return null
 }

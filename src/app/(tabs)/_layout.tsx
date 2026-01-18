@@ -62,7 +62,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard/index"
+        name="index"
         options={{
           title: 'dashboard',
           tabBarIcon: ({ color }) => <TabBarIcon name="th-large" color={color} />
@@ -73,23 +73,20 @@ export default function TabLayout() {
         name="add"
         options={{
           title: '',
-          tabBarIcon: () => (
-            <FontAwesome name="plus-circle" size={26} color={theme.semantic.primary as any} />
-          )
+          tabBarIcon: () => <FontAwesome name="plus-circle" size={26} color={theme.semantic.primary as any} />
         }}
         listeners={{
           tabPress: (e) => {
             e.preventDefault()
-            router.push({ pathname: '/modal/add-transaction' as any })
+            router.push('/(modal)/add-transaction' as any)
           }
         }}
       />
 
       <Tabs.Screen
-        name="transactions/index"
+        name="transactions"
         options={{
           title: 'transactions',
-          headerTitle: 'Transactions',
           tabBarIcon: ({ color }) => <TabBarIcon name="files-o" color={color} />
         }}
       />

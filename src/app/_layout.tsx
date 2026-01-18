@@ -78,7 +78,7 @@ function RootLayoutNav() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="settings" />
-          <Stack.Screen name="modal/add-transaction" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="(modal)/add-transaction" options={{ presentation: 'modal', headerShown: false }} />
         </Stack>
       </TamaguiProvider>
     </HoHThemeProvider>

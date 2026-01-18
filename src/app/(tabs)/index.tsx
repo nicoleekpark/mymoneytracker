@@ -1,5 +1,5 @@
-import { Redirect } from 'expo-router'
+import DashboardScreen from '@/features/dashboard/DashboardScreen'
 
-export default function TabsIndex() {
-  return 
+export default function DashboardRoute() {
+  return <DashboardScreen />
 }

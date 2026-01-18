@@ -2,14 +2,18 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./src/*",
-        "./scripts/*"
+        "src/*",
+        "scripts/*"
       ]
-    }
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
+    "src",
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
