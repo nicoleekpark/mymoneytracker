@@ -12,6 +12,7 @@ import {
   getIncomeTotalForMonth,
   insertTransaction,
   listDailyExpenseTotalsForMonth,
+  listDailyFlowTotalsForMonth,
   listMonthlyExpenseByCategory,
   listMonthlyExpenseTotals,
   listTransactions,
@@ -21,7 +22,6 @@ import type { AddTransactionInput, Transaction, TransactionType } from './transa
 
 function currentMonthYYYYMM(d = new Date()): string {
   const y = d.getFullYear()
-  console.log(y)
   const m = String(d.getMonth() + 1).padStart(2, '0')
   return `${y}-${m}`
 }
@@ -176,4 +176,31 @@ export async function getMonthlyExpenseByCategoryDollar(monthYYYYMM: string): Pr
 
 export async function getTransfersForMonth(monthYYYYMM: string, limit = 500): Promise<Transaction[]> {
   return listTransfersForMonth(monthYYYYMM, limit)
+}
+
+export type DailyFlowDollar = Readonly<{
+  day: string
+  incomeDollar: number
+  expenseDollar: number
+}>
+
+export async function getDailyFlowDollarForMonth(monthYYYYMM: string): Promise<DailyFlowDollar[]> {
+  const rows = listDailyFlowTotalsForMonth(monthYYYYMM)
+
+  const byDay = new Map<string, { income: number; expense: number }>()
+  for (const r of rows) {
+    const cur = byDay.get(r.day) ?? { income: 0, expense: 0 }
+    const val = centsToDollars(r.totalCents)
+    if (r.type === 'income') cur.income = val
+    if (r.type === 'expense') cur.expense = val
+    byDay.set(r.day, cur)
+  }
+
+  return Array.from(byDay.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([day, v]) => ({
+      day,
+      incomeDollar: v.income,
+      expenseDollar: v.expense
+    }))
 }

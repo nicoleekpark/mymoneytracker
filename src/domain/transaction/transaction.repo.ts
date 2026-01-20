@@ -197,7 +197,7 @@ export function getIncomeTotalForMonth(monthYYYYMM: string): number {
   return Number(rows[0]?.total_cents ?? 0)
 }
 
-export type DailyTotalRow = Readonly<{
+export type DailyExpenseTotalRow = Readonly<{
   day: string // YYYY-MM-DD
   total_cents: number
 }>
@@ -208,7 +208,7 @@ export type DailyExpenseTotal = Readonly<{
 }>
 
 export function listDailyExpenseTotalsForMonth(monthYYYYMM: string): DailyExpenseTotal[] {
-  const rows = queryAll<DailyTotalRow>(
+  const rows = queryAll<DailyExpenseTotalRow>(
     `
     SELECT
       substr(occurred_at, 1, 10) AS day,
@@ -277,4 +277,33 @@ export function listTransfersForMonth(monthYYYYMM: string, limit = 500): Transac
     [monthYYYYMM, limit]
   )
   return rows.map(rowToTransaction)
+}
+
+export type DailyFlowTotal = Readonly<{
+  day: string // YYYY-MM-DD
+  type: 'income' | 'expense'
+  totalCents: number
+}>
+
+export function listDailyFlowTotalsForMonth(monthYYYYMM: string): DailyFlowTotal[] {
+  const rows = queryAll<{ day: string; type: 'income' | 'expense'; total_cents: number }>(
+    `
+    SELECT
+      substr(occurred_at, 1, 10) AS day,
+      type,
+      COALESCE(SUM(amount_cents), 0) AS total_cents
+    FROM transactions
+    WHERE (type = 'income' OR type = 'expense')
+      AND substr(occurred_at, 1, 7) = ?
+    GROUP BY day, type
+    ORDER BY day ASC;
+    `,
+    [monthYYYYMM]
+  )
+
+  return rows.map((r) => ({
+    day: r.day,
+    type: r.type,
+    totalCents: Number(r.total_cents ?? 0)
+  }))
 }

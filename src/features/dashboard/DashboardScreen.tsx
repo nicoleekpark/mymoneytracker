@@ -75,14 +75,15 @@ export default function DashboardScreen() {
       <View style={styles.body}>
         {state.scope === 'month' ? (
           <MonthlyBody
-            styles={styles}
             monthYYYYMM={selectMonthYYYYMM(state)}
             colors={{
               text: theme.semantic.text,
               border: theme.semantic.border,
               surface: theme.semantic.surface,
               surfaceAlt: theme.semantic.surfaceAlt,
-              primary: theme.semantic.primary
+              primary: theme.semantic.primary,
+              success: (theme.semantic as any).success ?? '#16a34a',
+              danger: (theme.semantic as any).danger ?? '#dc2626'
             }}
           />
         ) : null}

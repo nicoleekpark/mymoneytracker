@@ -5,9 +5,11 @@ import { useHoHTheme } from '@/providers'
 import { PALETTE } from '@/theme'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFocusEffect } from '@react-navigation/native'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocalSearchParams } from 'expo-router'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SectionList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 
+import { formatCurrency } from '@/ui/format/currency'
 import { Screen } from '@/ui/layout/Screen'
 
 type MonthSection = {
@@ -30,21 +32,13 @@ function monthTitle(d: Date) {
   return `${month} ${d.getFullYear()}`
 }
 
-function formatCurrency(amount: number) {
-  if (!Number.isFinite(amount)) return '$ 0.00'
-
-  const abs = Math.abs(amount).toFixed(2)
-  if (amount < 0) {
-    return `($ ${abs})`
-  }
-  return `$ ${abs}`
-}
-
-
-
 function safeDate(tx: Transaction): Date {
   const d = tx.occurredAt instanceof Date ? tx.occurredAt : new Date((tx as any).occurredAt)
   return Number.isNaN(d.getTime()) ? new Date(0) : d
+}
+
+function ymd(d: Date): string {
+  return d.toISOString().slice(0, 10)
 }
 
 function isExpense(tx: Transaction): boolean {
@@ -128,6 +122,23 @@ function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
   return { income, net: income - expense }
 }
 
+function findScrollTarget(sections: MonthSection[], focusDate?: string) {
+  if (!focusDate) return null
+
+  // focusDate: YYYY-MM-DD -> month key YYYY-MM
+  const focusMonth = focusDate.slice(0, 7)
+  const sectionIndex = sections.findIndex((s) => s.key === focusMonth)
+  if (sectionIndex < 0) return null
+
+  const section = sections[sectionIndex]
+  const itemIndex = section.data.findIndex((tx) => ymd(safeDate(tx)) === focusDate)
+
+  // 날짜에 tx가 없으면, 월 헤더로만 이동
+  if (itemIndex < 0) return { sectionIndex, itemIndex: 0, fallbackToHeader: true as const }
+
+  return { sectionIndex, itemIndex, fallbackToHeader: false as const }
+}
+
 /***************************************************************
  *
  * TransactionsScreen
@@ -135,6 +146,27 @@ function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
  ***************************************************************/
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
+
+  // Dashboard에서 넘어온 날짜 파라미터
+  // router.push({ params: { focusDate: '2026-01-14' }})
+  const params = useLocalSearchParams<{ focusDate?: string }>()
+  // const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
+  const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
+  const [highlightDate, setHighlightDate] = useState<string | null>(null)
+  useEffect(() => {
+    if (!focusDate) return
+
+    setHighlightDate(focusDate)
+
+    const t = setTimeout(() => {
+      setHighlightDate(null)
+    }, 2000)
+
+    return () => clearTimeout(t)
+  }, [focusDate])
+
+  const listRef = useRef<SectionList<Transaction, MonthSection>>(null)
+  const didAutoScrollRef = useRef(false)
 
   const [items, setItems] = useState<Transaction[]>([])
   const [thisMonthExpense, setThisMonthExpense] = useState(0)
@@ -167,9 +199,9 @@ export default function TransactionsScreen() {
 
   const stripColorByType = useCallback(
     (t: TransactionType) => {
-      if (t === 'income') return theme.semantic.success ?? PALETTE.green[600]
-      if (t === 'transfer') return theme.semantic.info ?? PALETTE.blue[600]
-      return theme.semantic.danger ?? PALETTE.red[500]
+      if (t === 'income') return (theme.semantic.success as any) ?? PALETTE.green[600]
+      if (t === 'transfer') return (theme.semantic.info as any) ?? PALETTE.blue[600]
+      return (theme.semantic.danger as any) ?? PALETTE.red[500]
     },
     [theme.semantic]
   )
@@ -193,6 +225,9 @@ export default function TransactionsScreen() {
           const { income, net } = sumThisMonthIncomeAndNet(arr, new Date())
           setThisMonthIncome(income)
           setThisMonthNet(net)
+
+          // 데이터가 갱신됐으니 auto-scroll은 다시 가능하게
+          didAutoScrollRef.current = false
         })
         .catch((e) => {
           console.error(e)
@@ -201,6 +236,7 @@ export default function TransactionsScreen() {
           setThisMonthExpense(0)
           setThisMonthIncome(0)
           setThisMonthNet(0)
+          didAutoScrollRef.current = false
         })
     } catch (e) {
       console.error(e)
@@ -209,6 +245,7 @@ export default function TransactionsScreen() {
       setThisMonthExpense(0)
       setThisMonthIncome(0)
       setThisMonthNet(0)
+      didAutoScrollRef.current = false
     }
 
     return () => {
@@ -226,6 +263,31 @@ export default function TransactionsScreen() {
   )
 
   const sections = useMemo(() => buildMonthSections(items, debouncedQuery), [items, debouncedQuery])
+
+  // focusDate가 있으면 해당 위치로 자동 이동
+  useEffect(() => {
+    if (!focusDate) return
+    if (!sections.length) return
+    if (didAutoScrollRef.current) return
+
+    const target = findScrollTarget(sections, focusDate)
+    if (!target) return
+
+    // SectionList는 렌더 타이밍 이슈가 있어서 0ms로 한 틱 미룸
+    setTimeout(() => {
+      try {
+        listRef.current?.scrollToLocation({
+          sectionIndex: target.sectionIndex,
+          itemIndex: target.itemIndex,
+          animated: true,
+          viewPosition: target.fallbackToHeader ? 0 : 0
+        })
+        didAutoScrollRef.current = true
+      } catch (e) {
+        console.error(e)
+      }
+    }, 0)
+  }, [focusDate, sections])
 
   return (
     <Screen topPadding>
@@ -294,12 +356,27 @@ export default function TransactionsScreen() {
       </View>
 
       <SectionList
+        ref={listRef}
         style={{ flex: 1 }}
         sections={sections}
         keyExtractor={(it) => (it as any).id}
         stickySectionHeadersEnabled
         contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        onScrollToIndexFailed={(info) => {
+          // SectionList도 내부적으로 실패할 수 있어서 재시도
+          setTimeout(() => {
+            try {
+              listRef.current?.scrollToLocation({
+                sectionIndex: (info as any).highestMeasuredFrameIndex ? 0 : 0,
+                itemIndex: Math.max(0, info.index - 1),
+                animated: true
+              })
+            } catch (e) {
+              console.error(e)
+            }
+          }, 50)
+        }}
         renderSectionHeader={({ section }) => (
           <View style={[styles.monthBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
             <Text style={[styles.monthText, { color: theme.semantic.text }]}>{section.title}</Text>
@@ -318,6 +395,12 @@ export default function TransactionsScreen() {
 
           const d = safeDate(item)
           const dayText = Number.isFinite(d.getTime()) ? String(d.getDate()) : '--'
+          const ymd =
+            Number.isFinite(d.getTime())
+              ? `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+              : null
+
+          const isHighlighted = ymd && ymd === highlightDate
 
           const accountId = String(tx?.accountId ?? '')
           const accountName = accountNameById.get(accountId) ?? 'Account'
@@ -333,7 +416,15 @@ export default function TransactionsScreen() {
               onPress={() => {
                 // Phase 2: push detail screen
               }}
-              style={[styles.rowCard, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
+              style={[
+                styles.rowCard,
+                {
+                  borderColor: isHighlighted ? theme.semantic.primary : theme.semantic.border,
+                  backgroundColor: isHighlighted
+                    ? theme.semantic.primarySoft ?? theme.semantic.surfaceAlt
+                    : theme.semantic.surface
+                }
+              ]}
               accessibilityLabel={`Transaction ${itemText} ${formatCurrency(amt)}`}
             >
               <View style={[styles.leftStripBg, { backgroundColor: stripBg }]} pointerEvents="none" />
