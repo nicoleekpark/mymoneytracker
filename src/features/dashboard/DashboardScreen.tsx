@@ -8,19 +8,23 @@ import { MODES } from './dashboard.model'
 import {
   createInitialDashboardState,
   dashboardReducer,
-  getActiveScope,
   selectCanNext,
   selectCanPrev,
-  selectPeriodLabel,
+  selectPeriodLabel
 } from './dashboard.state'
 import { createDashboardStyles } from './dashboard.styles'
 
-import {
-  DashboardModeTabs,
-  DashboardPeriodNav,
-  DashboardPeriodPicker,
-  DashboardScopeSegment
-} from './components'
+import { DashboardModeTabs } from './components/DashboardModeTabs'
+import { DashboardPeriodNav } from './components/DashboardPeriodNav'
+import { DashboardPeriodPicker } from './components/DashboardPeriodPicker'
+import { DashboardScopeSegment } from './components/DashboardScopeSegment'
+import { MonthlyBody } from './components/monthly/MonthlyBody'
+
+function selectMonthYYYYMM(state: { period: { year: number; month?: number } }) {
+  const m = state.period.month ?? 1
+  const mm = String(m).padStart(2, '0')
+  return `${state.period.year}-${mm}`
+}
 
 export default function DashboardScreen() {
   const theme = useHoHTheme()
@@ -29,13 +33,12 @@ export default function DashboardScreen() {
   const [state, dispatch] = useReducer(dashboardReducer, undefined, createInitialDashboardState)
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const scope = getActiveScope(state)
   const periodLabel = selectPeriodLabel(state)
   const canPrev = selectCanPrev(state)
   const canNext = selectCanNext(state)
 
   function openPeriodPicker() {
-    if (scope === 'all') return
+    if (state.scope === 'all') return
     setPickerOpen(true)
   }
 
@@ -50,13 +53,13 @@ export default function DashboardScreen() {
 
       <View style={styles.scopeRow}>
         <DashboardScopeSegment
-          value={scope}
-          onChange={(s) => dispatch({ type: 'SET_SCOPE', scope: s })}
+          value={state.scope}
+          onChange={(scope) => dispatch({ type: 'SET_SCOPE', scope })}
           styles={styles}
         />
 
         <DashboardPeriodNav
-          scope={scope}
+          scope={state.scope}
           label={periodLabel}
           canPrev={canPrev}
           canNext={canNext}
@@ -68,12 +71,26 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.divider} />
-      <View style={styles.body}>{/* monthly body next */}</View>
+
+      <View style={styles.body}>
+        {state.scope === 'month' ? (
+          <MonthlyBody
+            styles={styles}
+            monthYYYYMM={selectMonthYYYYMM(state)}
+            colors={{
+              text: theme.semantic.text,
+              border: theme.semantic.border,
+              surface: theme.semantic.surface,
+              surfaceAlt: theme.semantic.surfaceAlt,
+              primary: theme.semantic.primary
+            }}
+          />
+        ) : null}
+      </View>
 
       <DashboardPeriodPicker
         visible={pickerOpen}
-        scope={scope}
-        period={state.period}
+        scope={state.scope}
         onClose={() => setPickerOpen(false)}
         onSelect={(p) => {
           dispatch({ type: 'SET_PERIOD', period: p })

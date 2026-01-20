@@ -5,40 +5,33 @@ export type Period =
   | { year: number; month: number }
   | { year: number }
 
-export const MODES: Array<{ key: DashboardMode; label: string }> = [
+export const MODES: ReadonlyArray<{ key: DashboardMode; label: string }> = [
   { key: 'overview', label: 'Overview' },
   { key: 'cashflow', label: 'Cash Flow' },
   { key: 'accounts', label: 'Accounts' },
-  { key: 'networth', label: 'Net Worth' },
+  { key: 'networth', label: 'Net Worth' }
 ]
 
 export function clampMonth(m: number): number {
+  if (!Number.isFinite(m)) return 1
   if (m < 1) return 1
   if (m > 12) return 12
   return m
-}
-
-function monthLabel(m: number): string {
-  // lightweight, no intl dependency
-  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  return labels[clampMonth(m) - 1] ?? 'Jan'
 }
 
 export function formatPeriodLabel(scope: Scope, period: Period): string {
   if (scope === 'all') return 'All time'
   if (scope === 'year') return `${period.year}`
 
-  const month = 'month' in period ? period.month : 1
-  return `${monthLabel(month)} ${period.year}`
-}
-
-export function toMonthYYYYMM(year: number, month: number): string {
+  const month = 'month' in period ? clampMonth(period.month) : 1
   const mm = String(month).padStart(2, '0')
-  return `${year}-${mm}`
+  return `${period.year}-${mm}`
 }
 
-export function getMonthYYYYMMFromPeriod(scope: Scope, period: Period): string | null {
-  if (scope !== 'month') return null
-  if (!('month' in period)) return null
-  return toMonthYYYYMM(period.year, period.month)
+export function getMaxYearMonth(now = new Date()): { year: number; month: number } {
+  return { year: now.getFullYear(), month: now.getMonth() + 1 }
+}
+
+export function ymIndex(x: { year: number; month: number }): number {
+  return x.year * 12 + (x.month - 1)
 }

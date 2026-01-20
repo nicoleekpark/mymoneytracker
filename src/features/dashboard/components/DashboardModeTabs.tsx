@@ -4,9 +4,9 @@ import type { DashboardMode } from '../dashboard.model'
 import type { DashboardStyles } from '../dashboard.styles'
 
 export function DashboardModeTabs(props: {
-  modes: Array<{ key: DashboardMode; label: string }>
+  modes: ReadonlyArray<{ key: DashboardMode; label: string }>
   value: DashboardMode
-  onChange: (mode: DashboardMode) => void
+  onChange: (m: DashboardMode) => void
   styles: DashboardStyles
 }) {
   const { modes, value, onChange, styles } = props
@@ -24,9 +24,7 @@ export function DashboardModeTabs(props: {
               accessibilityRole="button"
               accessibilityState={{ selected }}
             >
-              <Text style={selected ? styles.pillTextSelected : styles.pillText}>
-                {m.label}
-              </Text>
+              <Text style={selected ? styles.pillTextSelected : styles.pillText}>{m.label}</Text>
             </Pressable>
           )
         })}

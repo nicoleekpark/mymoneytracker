@@ -1,13 +1,11 @@
 import type { DashboardMode, Period, Scope } from './dashboard.model'
-import { clampMonth, formatPeriodLabel, getMonthYYYYMMFromPeriod } from './dashboard.model'
+import { clampMonth, getMaxYearMonth, ymIndex } from './dashboard.model'
 
-export type DashboardState = {
+export type DashboardState = Readonly<{
   mode: DashboardMode
-  scopeByMode: Record<DashboardMode, Scope>
+  scope: Scope
   period: Period
-}
-
-type YearMonth = { year: number; month: number }
+}>
 
 export type DashboardAction =
   | { type: 'SET_MODE'; mode: DashboardMode }
@@ -16,28 +14,36 @@ export type DashboardAction =
   | { type: 'SET_PERIOD'; period: Period }
 
 export function createInitialDashboardState(): DashboardState {
+  const max = getMaxYearMonth()
   return {
     mode: 'overview',
-    scopeByMode: {
-      overview: 'month',
-      cashflow: 'month',
-      accounts: 'month',
-      networth: 'month',
-    },
-    period: { year: 2026, month: 1 },
+    scope: 'month',
+    period: { year: max.year, month: max.month }
   }
 }
 
-export function getActiveScope(state: DashboardState): Scope {
-  return state.scopeByMode[state.mode]
+function normalizeForScope(scope: Scope, p: Period): Period {
+  if (scope === 'all') return { year: p.year }
+  if (scope === 'year') return { year: p.year }
+  const month = 'month' in p ? p.month : 1
+  return { year: p.year, month: clampMonth(month) }
 }
 
-function shiftPeriod(scope: Scope, p: Period, delta: -1 | 1): Period {
+function clampToMax(scope: Scope, p: Period): Period {
+  const max = getMaxYearMonth()
+
+  if (scope === 'all') return { year: p.year }
+  if (scope === 'year') return { year: Math.min(p.year, max.year) }
+
+  const month = 'month' in p ? clampMonth(p.month) : 1
+  const cur = { year: p.year, month }
+  if (ymIndex(cur) <= ymIndex(max)) return { year: p.year, month }
+  return { year: max.year, month: max.month }
+}
+
+function shift(scope: Scope, p: Period, delta: -1 | 1): Period {
   if (scope === 'all') return p
-
-  if (scope === 'year') {
-    return { year: p.year + delta }
-  }
+  if (scope === 'year') return { year: p.year + delta }
 
   const y0 = p.year
   const m0 = 'month' in p ? clampMonth(p.month) : 1
@@ -48,67 +54,26 @@ function shiftPeriod(scope: Scope, p: Period, delta: -1 | 1): Period {
   return { year: y0, month: m1 }
 }
 
-export function selectPeriodLabel(state: DashboardState): string {
-  const scope = getActiveScope(state)
-  return formatPeriodLabel(scope, state.period)
-}
-
-export function selectActiveMonthYYYYMM(state: DashboardState): string | null {
-  const scope = getActiveScope(state)
-  return getMonthYYYYMMFromPeriod(scope, state.period)
-}
-
-function getMaxYearMonth(now = new Date()): YearMonth {
-  return { year: now.getFullYear(), month: now.getMonth() + 1 }
-}
-
-function ymIndex(ym: YearMonth) {
-  return ym.year * 12 + (ym.month - 1)
-}
-
-function normalizePeriodForScope(scope: Scope, p: Period): Period {
-  if (scope === 'all') return { year: p.year }
-  if (scope === 'year') return { year: p.year }
-  const month = 'month' in p ? p.month : 1
-  return { year: p.year, month: clampMonth(month) }
-}
-
-function clampToMax(scope: Scope, p: Period, max: YearMonth): Period {
-  if (scope === 'all') return { year: p.year }
-  if (scope === 'year') return { year: Math.min(p.year, max.year) }
-
-  const m = 'month' in p ? clampMonth(p.month) : 1
-  const cur = { year: p.year, month: m }
-  if (ymIndex(cur) <= ymIndex(max)) return { year: p.year, month: m }
-  return { year: max.year, month: max.month }
-}
-
 export function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
-  const scope = getActiveScope(state)
-  const max = getMaxYearMonth()
-
   switch (action.type) {
     case 'SET_MODE':
       return { ...state, mode: action.mode }
 
     case 'SET_SCOPE': {
       const nextScope = action.scope
-      const nextPeriod = clampToMax(nextScope, normalizePeriodForScope(nextScope, state.period), max)
-      return {
-        ...state,
-        scopeByMode: { ...state.scopeByMode, [state.mode]: nextScope },
-        period: nextPeriod,
-      }
+      const normalized = normalizeForScope(nextScope, state.period)
+      const clamped = clampToMax(nextScope, normalized)
+      return { ...state, scope: nextScope, period: clamped }
     }
 
     case 'SHIFT_PERIOD': {
-      const shifted = shiftPeriod(scope, state.period, action.delta)
-      return { ...state, period: clampToMax(scope, shifted, max) }
+      const shifted = shift(state.scope, state.period, action.delta)
+      return { ...state, period: clampToMax(state.scope, shifted) }
     }
 
     case 'SET_PERIOD': {
-      const next = clampToMax(scope, normalizePeriodForScope(scope, action.period), max)
-      return { ...state, period: next }
+      const normalized = normalizeForScope(state.scope, action.period)
+      return { ...state, period: clampToMax(state.scope, normalized) }
     }
 
     default:
@@ -116,18 +81,20 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
   }
 }
 
+export function selectPeriodLabel(state: DashboardState): string {
+  const { formatPeriodLabel } = require('./dashboard.model') as typeof import('./dashboard.model')
+  return formatPeriodLabel(state.scope, state.period)
+}
+
 export function selectCanPrev(state: DashboardState): boolean {
-  return getActiveScope(state) !== 'all'
+  return state.scope !== 'all'
 }
 
 export function selectCanNext(state: DashboardState): boolean {
-  const scope = getActiveScope(state)
   const max = getMaxYearMonth()
+  if (state.scope === 'all') return false
+  if (state.scope === 'year') return state.period.year < max.year
 
-  if (scope === 'all') return false
-  if (scope === 'year') return state.period.year < max.year
-
-  if (!('month' in state.period)) return true
-  const cur = { year: state.period.year, month: clampMonth(state.period.month) }
-  return ymIndex(cur) < ymIndex(max)
+  const month = 'month' in state.period ? clampMonth(state.period.month) : 1
+  return ymIndex({ year: state.period.year, month }) < ymIndex(max)
 }
