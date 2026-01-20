@@ -118,17 +118,21 @@ export function insertTransaction(tx: Transaction): void {
       row.item,
       row.amount_cents,
       row.currency,
+
       row.account_id,
+      row.from_account_id,
+      row.to_account_id,
+
       row.category_id,
       row.merchant,
       row.note,
-      row.from_account_id,
-      row.to_account_id,
+
       now,
-      now,
+      now
     ]
   )
 }
+
 
 export function listTransactions(limit = 200): Transaction[] {
   const rows = queryAll<TransactionRow>(
@@ -305,5 +309,44 @@ export function listDailyFlowTotalsForMonth(monthYYYYMM: string): DailyFlowTotal
     day: r.day,
     type: r.type,
     totalCents: Number(r.total_cents ?? 0)
+  }))
+}
+
+export type DailyFlowTotalRow = Readonly<{
+  day: string // YYYY-MM-DD
+  type: 'income' | 'expense'
+  total_cents: number
+  tx_count: number
+}>
+
+export type DailyFlowTotalWithCount = Readonly<{
+  day: string
+  type: 'income' | 'expense'
+  totalCents: number
+  txCount: number
+}>
+
+export function listDailyFlowTotalsWithCountForMonth(monthYYYYMM: string): DailyFlowTotalWithCount[] {
+  const rows = queryAll<DailyFlowTotalRow>(
+    `
+    SELECT
+      substr(occurred_at, 1, 10) AS day,
+      type,
+      COALESCE(SUM(amount_cents), 0) AS total_cents,
+      COUNT(*) AS tx_count
+    FROM transactions
+    WHERE (type = 'income' OR type = 'expense')
+      AND substr(occurred_at, 1, 7) = ?
+    GROUP BY day, type
+    ORDER BY day ASC;
+    `,
+    [monthYYYYMM]
+  )
+
+  return rows.map((r) => ({
+    day: r.day,
+    type: r.type,
+    totalCents: Number(r.total_cents ?? 0),
+    txCount: Number((r as any).tx_count ?? 0)
   }))
 }

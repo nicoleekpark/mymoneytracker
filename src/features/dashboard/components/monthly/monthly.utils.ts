@@ -17,23 +17,33 @@ export function formatUsd(amount: number): string {
   return `${sign}$${abs.toFixed(2)}`
 }
 
-export function formatCurrencyInt(amount: number) {
+export function formatSignedUsdInt(amount: number) {
   if (!Number.isFinite(amount)) return '$ 0'
   const abs = Math.round(Math.abs(amount))
+  if (abs === 0) return '$ 0'
   const s = `$ ${abs}`
   if (amount < 0) return `(${s})`
   return s
 }
 
-// expense를 괄호로 보여주고 싶으면 이렇게 호출
-// formatExpenseInt(expenseDollar) => "($ 16)"
-export function formatExpenseInt(expenseDollar: number) {
-  return formatCurrencyInt(-Math.abs(expenseDollar))
-}
+// // expense를 괄호로 보여주고 싶으면 이렇게 호출
+// // formatExpenseInt(expenseDollar) => "($ 16)"
+// export function formatExpenseInt(expenseDollar: number) {
+//   return formatSignedUsdInt(-Math.abs(expenseDollar))
+// }
 
-// income은 그냥
-export function formatIncomeInt(incomeDollar: number) {
-  return formatCurrencyInt(Math.abs(incomeDollar))
+// // income은 그냥
+// export function formatIncomeInt(incomeDollar: number) {
+//   return formatSignedUsdInt(Math.abs(incomeDollar))
+// }
+
+function formatExpenseInt(expense: number) {
+  const v = Math.round(Math.abs(expense))
+  return v > 0 ? `($ ${v})` : ''
+}
+function formatIncomeInt(income: number) {
+  const v = Math.round(Math.abs(income))
+  return v > 0 ? `+$ ${v}` : ''
 }
 
 export function parseYYYYMM(monthYYYYMM: string): { year: number; month: number } {

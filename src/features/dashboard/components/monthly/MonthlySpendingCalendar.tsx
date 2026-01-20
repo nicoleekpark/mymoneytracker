@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { daysInMonth, firstWeekdayIndex, formatExpenseInt, formatIncomeInt, parseYYYYMM } from './monthly.utils'
+import { daysInMonth, firstWeekdayIndex, parseYYYYMM } from './monthly.utils'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const
 
@@ -8,6 +8,7 @@ export type DailyFlow = Readonly<{
   day: string // YYYY-MM-DD
   incomeDollar: number
   expenseDollar: number
+  txCount: number
 }>
 
 export type CalendarColors = Readonly<{
@@ -28,12 +29,12 @@ export function MonthlySpendingCalendar(props: {
   colors: CalendarColors
   onPressDay?: (ymd: string) => void
 }) {
-  const { monthYYYYMM, daily, showIncome, showExpense, colors, onPressDay } = props
+  const { monthYYYYMM, daily, onPressDay, colors, showIncome, showExpense } = props
   const { year, month } = parseYYYYMM(monthYYYYMM)
 
   const map = useMemo(() => {
-    const m = new Map<string, { income: number; expense: number }>()
-    for (const r of daily) m.set(r.day, { income: r.incomeDollar, expense: r.expenseDollar })
+    const m = new Map<string, { income: number; expense: number; count: number }>()
+    for (const r of daily) m.set(r.day, { income: r.incomeDollar, expense: r.expenseDollar, count: r.txCount })
     return m
   }, [daily])
 
@@ -43,97 +44,183 @@ export function MonthlySpendingCalendar(props: {
 
   const todayYMD = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
+  function fmtInt(n: number) {
+    const v = Math.round(Math.abs(n))
+    return v > 0 ? v : 0
+  }
+
+  // Google-calendar-ish sizing
+  const CELL_H = 64
+  const GRID_BORDER = colors.border
+  const TEXT = colors.text
+
   return (
     <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row' }}>
+      {/* Weekday header */}
+      <View
+        style={{
+          flexDirection: 'row',
+          borderTopWidth: 1,
+          borderLeftWidth: 1,
+          borderColor: GRID_BORDER,
+          backgroundColor: colors.surface
+        }}
+      >
         {WEEKDAYS.map((w, i) => (
-          <View key={`wd-${i}-${w}`} style={{ width: `${100 / 7}%`, paddingVertical: 6 }}>
-            <Text style={{ textAlign: 'center', fontSize: 12, opacity: 0.75, color: colors.text }}>
-              {w}
-            </Text>
+          <View
+            key={`wd-${i}`}
+            style={{
+              width: `${100 / 7}%`,
+              paddingVertical: 8,
+              borderRightWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: GRID_BORDER,
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', opacity: 0.7, color: TEXT }}>{w}</Text>
           </View>
         ))}
       </View>
 
       {/* Grid */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {/* Leading blanks */}
-        {Array.from({ length: first }).map((_, i) => (
-          <View
-            key={`pad-${i}`}
-            style={{
-              width: `${100 / 7}%`,
-              aspectRatio: 1,
-              borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: colors.surface
-            }}
-          />
-        ))}
+      <View style={{ borderLeftWidth: 1, borderColor: GRID_BORDER }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {/* leading blanks */}
+          {Array.from({ length: first }).map((_, i) => (
+            <View
+              key={`pad-${i}`}
+              style={{
+                width: `${100 / 7}%`,
+                height: CELL_H,
+                borderRightWidth: 1,
+                borderBottomWidth: 1,
+                borderColor: GRID_BORDER,
+                backgroundColor: colors.surface
+              }}
+            />
+          ))}
 
-        {/* Days */}
-        {Array.from({ length: dim }).map((_, i) => {
-          const dayNum = i + 1
-          const dd = String(dayNum).padStart(2, '0')
-          const ymd = `${monthYYYYMM}-${dd}`
+          {Array.from({ length: dim }).map((_, i) => {
+            const dayNum = i + 1
+            const dd = String(dayNum).padStart(2, '0')
+            const ymd = `${monthYYYYMM}-${dd}`
 
-          const v = map.get(ymd) ?? { income: 0, expense: 0 }
-          const showIncLine = showIncome && v.income > 0
-          const showExpLine = showExpense && v.expense > 0
-          const hasAny = showIncLine || showExpLine
+            const v = map.get(ymd) ?? { income: 0, expense: 0, count: 0 }
+            const isToday = ymd === todayYMD
 
-          const isToday = ymd === todayYMD
+            const expenseInt = fmtInt(v.expense)
+            const incomeInt = fmtInt(v.income)
 
-          return (
-            <View key={ymd} style={{ width: `${100 / 7}%` }}>
-              <Pressable
-                onPress={() => onPressDay?.(ymd)}
+            // show only what user toggled
+            const showExpenseLine = showExpense && expenseInt > 0
+            const showIncomeLine = showIncome && incomeInt > 0
+
+            return (
+              <View
+                key={ymd}
                 style={{
-                  aspectRatio: 1,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  backgroundColor: hasAny ? colors.surfaceAlt : colors.surface,
-                  padding: 6
+                  width: `${100 / 7}%`,
+                  height: CELL_H,
+                  borderRightWidth: 1,
+                  borderBottomWidth: 1,
+                  borderColor: GRID_BORDER,
+                  backgroundColor: colors.surface
                 }}
-                accessibilityRole="button"
-                accessibilityLabel={`Date ${ymd}`}
               >
-                {/* header: today dot + day number on right */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}>
-                    {isToday ? (
+                <Pressable
+                  onPress={() => onPressDay?.(ymd)}
+                  style={{
+                    flex: 1,
+                    paddingHorizontal: 6,
+                    paddingTop: 6,
+                    paddingBottom: 6
+                  }}
+                >
+                  {/* top row: day number + count */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 999,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: isToday ? colors.primary : 'transparent'
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '800',
+                          color: isToday ? '#fff' : TEXT
+                        }}
+                      >
+                        {dayNum}
+                      </Text>
+                    </View>
+
+                    {v.count > 0 ? (
                       <View
                         style={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: 7,
-                          backgroundColor: colors.primary
+                          minWidth: 18,
+                          height: 18,
+                          paddingHorizontal: 6,
+                          borderRadius: 999,
+                          backgroundColor: colors.surfaceAlt,
+                          borderWidth: 1,
+                          borderColor: GRID_BORDER,
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
-                      />
-                    ) : null}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: TEXT }}>{v.count}</Text>
+                      </View>
+                    ) : (
+                      <View style={{ width: 18, height: 18 }} />
+                    )}
                   </View>
 
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>{dayNum}</Text>
-                </View>
+                  {/* bottom lines: small “events” style */}
+                  <View style={{ marginTop: 6, gap: 2 }}>
+                    {showExpenseLine ? (
+                      <View
+                        style={{
+                          alignSelf: 'flex-start',
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: 6,
+                          backgroundColor: 'rgba(211,47,47,0.10)'
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.danger }}>
+                          ($ {expenseInt})
+                        </Text>
+                      </View>
+                    ) : null}
 
-                {/* body: like “events” lines */}
-                <View style={{ flex: 1, justifyContent: 'flex-end', gap: 2 }}>
-                  {showIncLine ? (
-                    <Text style={{ fontSize: 10, color: colors.success }} numberOfLines={1}>
-                      {formatIncomeInt(v.income)}
-                    </Text>
-                  ) : null}
-
-                  {showExpLine ? (
-                    <Text style={{ fontSize: 10, color: colors.danger }} numberOfLines={1}>
-                      {formatExpenseInt(v.expense)}
-                    </Text>
-                  ) : null}
-                </View>
-              </Pressable>
-            </View>
-          )
-        })}
+                    {showIncomeLine ? (
+                      <View
+                        style={{
+                          alignSelf: 'flex-start',
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: 6,
+                          backgroundColor: 'rgba(46,125,50,0.10)'
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.success }}>
+                          +$ {incomeInt}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </Pressable>
+              </View>
+            )
+          })}
+        </View>
       </View>
     </View>
   )

@@ -12,11 +12,11 @@ import {
   getIncomeTotalForMonth,
   insertTransaction,
   listDailyExpenseTotalsForMonth,
-  listDailyFlowTotalsForMonth,
+  listDailyFlowTotalsWithCountForMonth,
   listMonthlyExpenseByCategory,
   listMonthlyExpenseTotals,
   listTransactions,
-  listTransfersForMonth,
+  listTransfersForMonth
 } from './transaction.repo'
 import type { AddTransactionInput, Transaction, TransactionType } from './transaction.types'
 
@@ -182,17 +182,21 @@ export type DailyFlowDollar = Readonly<{
   day: string
   incomeDollar: number
   expenseDollar: number
+  txCount: number // income+expense 합산 건수
 }>
 
 export async function getDailyFlowDollarForMonth(monthYYYYMM: string): Promise<DailyFlowDollar[]> {
-  const rows = listDailyFlowTotalsForMonth(monthYYYYMM)
+  const rows = listDailyFlowTotalsWithCountForMonth(monthYYYYMM)
 
-  const byDay = new Map<string, { income: number; expense: number }>()
+  const byDay = new Map<string, { income: number; expense: number; count: number }>()
   for (const r of rows) {
-    const cur = byDay.get(r.day) ?? { income: 0, expense: 0 }
+    const cur = byDay.get(r.day) ?? { income: 0, expense: 0, count: 0 }
     const val = centsToDollars(r.totalCents)
+
     if (r.type === 'income') cur.income = val
     if (r.type === 'expense') cur.expense = val
+
+    cur.count += r.txCount
     byDay.set(r.day, cur)
   }
 
@@ -201,6 +205,7 @@ export async function getDailyFlowDollarForMonth(monthYYYYMM: string): Promise<D
     .map(([day, v]) => ({
       day,
       incomeDollar: v.income,
-      expenseDollar: v.expense
+      expenseDollar: v.expense,
+      txCount: v.count
     }))
 }

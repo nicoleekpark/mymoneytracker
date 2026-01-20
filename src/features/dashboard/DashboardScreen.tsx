@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import { useHoHTheme } from '@/providers'
 import { Screen } from '@/ui/layout/Screen'
 
-import { MODES } from './dashboard.model'
+import { MODES, Period, Scope } from './dashboard.model'
 import {
   createInitialDashboardState,
   dashboardReducer,
@@ -20,10 +20,12 @@ import { DashboardPeriodPicker } from './components/DashboardPeriodPicker'
 import { DashboardScopeSegment } from './components/DashboardScopeSegment'
 import { MonthlyBody } from './components/monthly/MonthlyBody'
 
-function selectMonthYYYYMM(state: { period: { year: number; month?: number } }) {
-  const m = state.period.month ?? 1
-  const mm = String(m).padStart(2, '0')
-  return `${state.period.year}-${mm}`
+function periodToMonthYYYYMM(p: Period): string {
+  if ('month' in p) {
+    return `${p.year}-${String(p.month).padStart(2, '0')}`
+  }
+  // year only → 1월로 fallback (or 원하는 정책)
+  return `${p.year}-01`
 }
 
 export default function DashboardScreen() {
@@ -33,15 +35,23 @@ export default function DashboardScreen() {
   const [state, dispatch] = useReducer(dashboardReducer, undefined, createInitialDashboardState)
   const [pickerOpen, setPickerOpen] = useState(false)
 
+  const [scope, setScope] = useState<Scope>('month')
+  const [period, setPeriod] = useState<Period>({ 
+    year: new Date().getFullYear(), 
+    month: new Date().getMonth() + 1 
+  })
+
   const periodLabel = selectPeriodLabel(state)
   const canPrev = selectCanPrev(state)
   const canNext = selectCanNext(state)
-
+  
   function openPeriodPicker() {
     if (state.scope === 'all') return
     setPickerOpen(true)
   }
 
+  const monthYYYYMM = periodToMonthYYYYMM(period)
+  
   return (
     <Screen topPadding>
       <DashboardModeTabs
@@ -73,20 +83,21 @@ export default function DashboardScreen() {
       <View style={styles.divider} />
 
       <View style={styles.body}>
-        {state.scope === 'month' ? (
+        {scope === 'month' ? (
           <MonthlyBody
-            monthYYYYMM={selectMonthYYYYMM(state)}
+            monthYYYYMM={monthYYYYMM}
             colors={{
               text: theme.semantic.text,
               border: theme.semantic.border,
               surface: theme.semantic.surface,
               surfaceAlt: theme.semantic.surfaceAlt,
               primary: theme.semantic.primary,
-              success: (theme.semantic as any).success ?? '#16a34a',
-              danger: (theme.semantic as any).danger ?? '#dc2626'
+              success: theme.semantic.success,
+              danger: theme.semantic.danger
             }}
           />
-        ) : null}
+          ) : null
+        }
       </View>
 
       <DashboardPeriodPicker

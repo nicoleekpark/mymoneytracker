@@ -5,6 +5,7 @@ export type DailyFlow = Readonly<{
   day: string
   incomeDollar: number
   expenseDollar: number
+  txCount: number
 }>
 
 export function useMonthlyDailyFlow(monthYYYYMM: string) {
@@ -21,7 +22,7 @@ export function useMonthlyDailyFlow(monthYYYYMM: string) {
       try {
         const rows = await getDailyFlowDollarForMonth(monthYYYYMM)
         if (!alive) return
-        setDaily(rows)
+        setDaily(Array.isArray(rows) ? (rows as any) : [])
       } catch (e) {
         if (!alive) return
         setError(e instanceof Error ? e.message : 'Unknown error')

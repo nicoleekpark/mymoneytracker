@@ -6,22 +6,19 @@ import { MonthlySpendingCalendar, type CalendarColors } from './MonthlySpendingC
 import { useMonthlyDailyFlow } from './useMonthlyDailyFlow'
 
 function buildMonthTitle(monthYYYYMM: string) {
-  // e.g. 2026-01 -> Jan 2026
   const [y, m] = monthYYYYMM.split('-')
   const month = Number(m)
-  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   return `${names[Math.max(0, Math.min(11, month - 1))]} ${y}`
 }
 
-const TRANSACTIONS_ROUTE = '/transactions' // 확실하지 않음: 너 프로젝트 route에 맞게 한 줄만 수정
+const TRANSACTIONS_ROUTE = '/transactions'
 
-export function MonthlyBody(props: {
-  monthYYYYMM: string
-  colors: CalendarColors
-}) {
+export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors }) {
   const { monthYYYYMM, colors } = props
   const router = useRouter()
 
+  // default: expense only ON, income OFF
   const [showExpense, setShowExpense] = useState(true)
   const [showIncome, setShowIncome] = useState(false)
 
@@ -30,25 +27,69 @@ export function MonthlyBody(props: {
   const title = useMemo(() => buildMonthTitle(monthYYYYMM), [monthYYYYMM])
 
   function onPressDay(ymd: string) {
-    // Transactions 탭으로 이동 + focusDate 전달
     router.push({
       pathname: TRANSACTIONS_ROUTE as any,
       params: { focusDate: ymd }
     })
   }
 
+  // guard: 최소 1개는 켜져있게 (둘 다 꺼지는 UX 방지)
+  function toggleExpense() {
+    setShowExpense((v) => {
+      const next = !v
+      if (!next && !showIncome) return true
+      return next
+    })
+  }
+
+  function toggleIncome() {
+    setShowIncome((v) => {
+      const next = !v
+      if (!next && !showExpense) return true
+      return next
+    })
+  }
+
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-      <View style={{ gap: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ gap: 2 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{title}</Text>
-            <Text style={{ fontSize: 12, opacity: 0.75, color: colors.text }}>Daily totals</Text>
-          </View>
+      <View style={{ gap: 20 }}>
+        {/* Title – centered */}
+        <View style={{ alignItems: 'center' }}>
+          <Text
+            style={{
+              fontSize: 17,
+              fontWeight: '800',
+              color: colors.text,
+              letterSpacing: 0.2
+            }}
+          >
+            Daily Cash Flow
+          </Text>
+        </View>
 
+        {/* Sub row: month (left) + toggles (right) */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+          {/* Month label */}
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: '700',
+              color: colors.text
+            }}
+          >
+            {title} {/* e.g. Jan 2026 */}
+          </Text>
+
+          {/* Toggles */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable
-              onPress={() => setShowExpense((v) => !v)}
+              onPress={toggleExpense}
               style={{
                 paddingHorizontal: 10,
                 paddingVertical: 6,
@@ -60,13 +101,19 @@ export function MonthlyBody(props: {
               accessibilityRole="button"
               accessibilityState={{ selected: showExpense }}
             >
-              <Text style={{ color: showExpense ? colors.danger : colors.text, fontSize: 12, fontWeight: '800' }}>
+              <Text
+                style={{
+                  color: showExpense ? colors.danger : colors.text,
+                  fontSize: 12,
+                  fontWeight: '800'
+                }}
+              >
                 Expense
               </Text>
             </Pressable>
 
             <Pressable
-              onPress={() => setShowIncome((v) => !v)}
+              onPress={toggleIncome}
               style={{
                 paddingHorizontal: 10,
                 paddingVertical: 6,
@@ -78,25 +125,32 @@ export function MonthlyBody(props: {
               accessibilityRole="button"
               accessibilityState={{ selected: showIncome }}
             >
-              <Text style={{ color: showIncome ? colors.success : colors.text, fontSize: 12, fontWeight: '800' }}>
+              <Text
+                style={{
+                  color: showIncome ? colors.success : colors.text,
+                  fontSize: 12,
+                  fontWeight: '800'
+                }}
+              >
                 Income
               </Text>
             </Pressable>
+
           </View>
         </View>
-
-        {loading ? <Text style={{ color: colors.text, opacity: 0.7 }}>Loading</Text> : null}
-        {error ? <Text style={{ color: colors.text, opacity: 0.7 }}>{error}</Text> : null}
-
-        <MonthlySpendingCalendar
-          monthYYYYMM={monthYYYYMM}
-          daily={daily}
-          showExpense={showExpense}
-          showIncome={showIncome}
-          colors={colors}
-          onPressDay={onPressDay}
-        />
       </View>
+
+      {loading ? <Text style={{ color: colors.text, opacity: 0.7 }}>Loading</Text> : null}
+      {error ? <Text style={{ color: colors.text, opacity: 0.7 }}>{error}</Text> : null}
+      <View style={{ height: 20 }} />
+      <MonthlySpendingCalendar
+        monthYYYYMM={monthYYYYMM}
+        daily={daily}
+        showExpense={showExpense}
+        showIncome={showIncome}
+        colors={colors}
+        onPressDay={onPressDay}
+      />
     </ScrollView>
   )
 }

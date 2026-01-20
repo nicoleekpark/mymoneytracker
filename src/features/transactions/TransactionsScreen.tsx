@@ -7,7 +7,17 @@ import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFocusEffect } from '@react-navigation/native'
 import { useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { SectionList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import {
+  LayoutAnimation,
+  Platform,
+  SectionList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  UIManager,
+  View
+} from 'react-native'
 
 import { formatCurrency } from '@/ui/format/currency'
 import { Screen } from '@/ui/layout/Screen'
@@ -38,7 +48,7 @@ function safeDate(tx: Transaction): Date {
 }
 
 function ymd(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 }
 
 function isExpense(tx: Transaction): boolean {
@@ -101,7 +111,6 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1))
 }
 
-// monthly income/net from tx list (transfer excluded)
 function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
   let income = 0
   let expense = 0
@@ -124,8 +133,8 @@ function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
 
 function findScrollTarget(sections: MonthSection[], focusDate?: string) {
   if (!focusDate) return null
+  if (focusDate.length < 10) return null
 
-  // focusDate: YYYY-MM-DD -> month key YYYY-MM
   const focusMonth = focusDate.slice(0, 7)
   const sectionIndex = sections.findIndex((s) => s.key === focusMonth)
   if (sectionIndex < 0) return null
@@ -133,37 +142,22 @@ function findScrollTarget(sections: MonthSection[], focusDate?: string) {
   const section = sections[sectionIndex]
   const itemIndex = section.data.findIndex((tx) => ymd(safeDate(tx)) === focusDate)
 
-  // 날짜에 tx가 없으면, 월 헤더로만 이동
   if (itemIndex < 0) return { sectionIndex, itemIndex: 0, fallbackToHeader: true as const }
-
   return { sectionIndex, itemIndex, fallbackToHeader: false as const }
 }
 
-/***************************************************************
- *
- * TransactionsScreen
- *
- ***************************************************************/
+function formatDayHeader(d: Date) {
+  // ex: Tue, Jan 14
+  const weekday = d.toLocaleString(undefined, { weekday: 'short' })
+  const month = d.toLocaleString(undefined, { month: 'short' })
+  return `${weekday}, ${month} ${d.getDate()}`
+}
+
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
-  // Dashboard에서 넘어온 날짜 파라미터
-  // router.push({ params: { focusDate: '2026-01-14' }})
   const params = useLocalSearchParams<{ focusDate?: string }>()
-  // const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
-  const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
-  const [highlightDate, setHighlightDate] = useState<string | null>(null)
-  useEffect(() => {
-    if (!focusDate) return
-
-    setHighlightDate(focusDate)
-
-    const t = setTimeout(() => {
-      setHighlightDate(null)
-    }, 2000)
-
-    return () => clearTimeout(t)
-  }, [focusDate])
+  const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
 
   const listRef = useRef<SectionList<Transaction, MonthSection>>(null)
   const didAutoScrollRef = useRef(false)
@@ -176,10 +170,46 @@ export default function TransactionsScreen() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
+  const [highlightDate, setHighlightDate] = useState<string | null>(null)
+  const pendingScrollRef = useRef<{ sectionIndex: number; itemIndex: number } | null>(null)
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      UIManager.setLayoutAnimationEnabledExperimental?.(true)
+    }
+  }, [])
+
+  // focusDate로 들어오면 query 자동 초기화
+  useEffect(() => {
+    if (!focusDate) return
+    if (query.length === 0 && debouncedQuery.length === 0) return
+
+    LayoutAnimation.easeInEaseOut()
+    setQuery('')
+    setDebouncedQuery('')
+    didAutoScrollRef.current = false
+  }, [focusDate])
+
+  // search debounce (focusDate로 들어온 경우 debouncedQuery를 즉시 ''로 세팅해두므로 정상 동작)
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 150)
     return () => clearTimeout(t)
   }, [query])
+
+  // highlight 2초
+  useEffect(() => {
+    if (!focusDate) return
+
+    LayoutAnimation.easeInEaseOut()
+    setHighlightDate(focusDate)
+
+    const t = setTimeout(() => {
+      LayoutAnimation.easeInEaseOut()
+      setHighlightDate(null)
+    }, 2000)
+
+    return () => clearTimeout(t)
+  }, [focusDate])
 
   const accounts = useMemo(() => getActiveAccounts(), [])
   const accountNameById = useMemo(() => {
@@ -226,7 +256,6 @@ export default function TransactionsScreen() {
           setThisMonthIncome(income)
           setThisMonthNet(net)
 
-          // 데이터가 갱신됐으니 auto-scroll은 다시 가능하게
           didAutoScrollRef.current = false
         })
         .catch((e) => {
@@ -264,7 +293,7 @@ export default function TransactionsScreen() {
 
   const sections = useMemo(() => buildMonthSections(items, debouncedQuery), [items, debouncedQuery])
 
-  // focusDate가 있으면 해당 위치로 자동 이동
+  // focusDate면 첫 매칭 row로 자동 scrollToLocation
   useEffect(() => {
     if (!focusDate) return
     if (!sections.length) return
@@ -273,14 +302,14 @@ export default function TransactionsScreen() {
     const target = findScrollTarget(sections, focusDate)
     if (!target) return
 
-    // SectionList는 렌더 타이밍 이슈가 있어서 0ms로 한 틱 미룸
     setTimeout(() => {
       try {
+        pendingScrollRef.current = { sectionIndex: target.sectionIndex, itemIndex: target.itemIndex }
         listRef.current?.scrollToLocation({
           sectionIndex: target.sectionIndex,
           itemIndex: target.itemIndex,
           animated: true,
-          viewPosition: target.fallbackToHeader ? 0 : 0
+          viewPosition: 0
         })
         didAutoScrollRef.current = true
       } catch (e) {
@@ -295,7 +324,10 @@ export default function TransactionsScreen() {
         <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as any} />
         <TextInput
           value={query}
-          onChangeText={setQuery}
+          onChangeText={(t) => {
+            didAutoScrollRef.current = false
+            setQuery(t)
+          }}
           placeholder="Search transactions"
           placeholderTextColor={theme.semantic.textSecondary as any}
           style={[styles.searchInput, { color: theme.semantic.text }]}
@@ -363,27 +395,31 @@ export default function TransactionsScreen() {
         stickySectionHeadersEnabled
         contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        onScrollToIndexFailed={(info) => {
-          // SectionList도 내부적으로 실패할 수 있어서 재시도
-          setTimeout(() => {
-            try {
-              listRef.current?.scrollToLocation({
-                sectionIndex: (info as any).highestMeasuredFrameIndex ? 0 : 0,
-                itemIndex: Math.max(0, info.index - 1),
-                animated: true
-              })
-            } catch (e) {
-              console.error(e)
-            }
-          }, 50)
-        }}
         renderSectionHeader={({ section }) => (
           <View style={[styles.monthBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
             <Text style={[styles.monthText, { color: theme.semantic.text }]}>{section.title}</Text>
             <Text style={[styles.monthTotal, { color: theme.semantic.textSecondary }]}>{formatCurrency(section.total)}</Text>
           </View>
         )}
-        renderItem={({ item }) => {
+        onScrollToIndexFailed={() => {
+          const p = pendingScrollRef.current
+          if (!p) return
+
+          setTimeout(() => {
+            try {
+              listRef.current?.scrollToLocation({
+                sectionIndex: p.sectionIndex,
+                itemIndex: p.itemIndex,
+                animated: true,
+                viewPosition: 0
+              })
+            } catch (e) {
+              console.error(e)
+            }
+          }, 120)
+        }}
+
+        renderItem={({ item, index, section }) => {
           const tx = item as any
           const amt = Number(tx?.money?.amount ?? 0)
 
@@ -395,12 +431,7 @@ export default function TransactionsScreen() {
 
           const d = safeDate(item)
           const dayText = Number.isFinite(d.getTime()) ? String(d.getDate()) : '--'
-          const ymd =
-            Number.isFinite(d.getTime())
-              ? `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
-              : null
-
-          const isHighlighted = ymd && ymd === highlightDate
+          const rowYmd = Number.isFinite(d.getTime()) ? ymd(d) : null
 
           const accountId = String(tx?.accountId ?? '')
           const accountName = accountNameById.get(accountId) ?? 'Account'
@@ -410,49 +441,69 @@ export default function TransactionsScreen() {
 
           const amountColor = t === 'income' ? (theme.semantic.success ?? theme.semantic.text) : theme.semantic.text
 
+          // 같은 month section 안에서 날짜가 바뀌는 지점에 day header 추가
+          const prev = index > 0 ? section.data[index - 1] : null
+          const prevDate = prev ? safeDate(prev) : null
+          const showDayHeader =
+            index === 0 ||
+            !prevDate ||
+            ymd(prevDate) !== (rowYmd ?? '')
+
+          const isHighlighted = rowYmd && rowYmd === highlightDate
+
           return (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => {
-                // Phase 2: push detail screen
-              }}
-              style={[
-                styles.rowCard,
-                {
-                  borderColor: isHighlighted ? theme.semantic.primary : theme.semantic.border,
-                  backgroundColor: isHighlighted
-                    ? theme.semantic.primarySoft ?? theme.semantic.surfaceAlt
-                    : theme.semantic.surface
-                }
-              ]}
-              accessibilityLabel={`Transaction ${itemText} ${formatCurrency(amt)}`}
-            >
-              <View style={[styles.leftStripBg, { backgroundColor: stripBg }]} pointerEvents="none" />
-
-              <View style={styles.rowBody}>
-                <View style={styles.rowTop}>
-                  <Text style={[styles.dayText, { color: theme.semantic.textSecondary }]}>{dayText}</Text>
-
-                  <Text style={[styles.itemTextNew, { color: theme.semantic.text }]} numberOfLines={1}>
-                    {itemText}
-                  </Text>
-
-                  <Text style={[styles.amountTextNew, { color: amountColor }]} numberOfLines={1}>
-                    {formatCurrency(amt)}
+            <View>
+              {showDayHeader && rowYmd ? (
+                <View style={{ paddingTop: 12, paddingBottom: 6 }}>
+                  <Text style={{ color: theme.semantic.textSecondary, fontSize: 12, fontWeight: '800' }}>
+                    {formatDayHeader(d)}
                   </Text>
                 </View>
+              ) : null}
 
-                <View style={styles.rowSecond}>
-                  <Text style={[styles.merchantTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
-                    {merchantText ?? ''}
-                  </Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => {
+                  // Phase 2: push detail screen
+                }}
+                style={[
+                  styles.rowCard,
+                  {
+                    borderColor: isHighlighted ? theme.semantic.primary : theme.semantic.border,
+                    backgroundColor: isHighlighted
+                      ? (theme.semantic.primarySoft ?? theme.semantic.surfaceAlt)
+                      : theme.semantic.surface
+                  }
+                ]}
+                accessibilityLabel={`Transaction ${itemText} ${formatCurrency(amt)}`}
+              >
+                <View style={[styles.leftStripBg, { backgroundColor: stripBg }]} pointerEvents="none" />
 
-                  <Text style={[styles.accountTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
-                    {accountName}
-                  </Text>
+                <View style={styles.rowBody}>
+                  <View style={styles.rowTop}>
+                    <Text style={[styles.dayText, { color: theme.semantic.textSecondary }]}>{dayText}</Text>
+
+                    <Text style={[styles.itemTextNew, { color: theme.semantic.text }]} numberOfLines={1}>
+                      {itemText}
+                    </Text>
+
+                    <Text style={[styles.amountTextNew, { color: amountColor }]} numberOfLines={1}>
+                      {formatCurrency(amt)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.rowSecond}>
+                    <Text style={[styles.merchantTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
+                      {merchantText ?? ''}
+                    </Text>
+
+                    <Text style={[styles.accountTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
+                      {accountName}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           )
         }}
         ListEmptyComponent={<Text style={{ color: theme.semantic.textSecondary }}>No transactions yet</Text>}
