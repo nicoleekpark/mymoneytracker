@@ -183,3 +183,98 @@ export function listMonthlyExpenseTotals(limitMonths = 24): MonthlyExpenseTotal[
     totalCents: Number(r.total_cents ?? 0)
   }))
 }
+
+export function getIncomeTotalForMonth(monthYYYYMM: string): number {
+  const rows = queryAll<{ total_cents: number }>(
+  `
+    SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
+    FROM transactions
+    WHERE type = 'income'
+      AND substr(occurred_at, 1, 7) = ?;
+    `,
+    [monthYYYYMM]
+  )
+  return Number(rows[0]?.total_cents ?? 0)
+}
+
+export type DailyTotalRow = Readonly<{
+  day: string // YYYY-MM-DD
+  total_cents: number
+}>
+
+export type DailyExpenseTotal = Readonly<{
+  day: string
+  totalCents: number
+}>
+
+export function listDailyExpenseTotalsForMonth(monthYYYYMM: string): DailyExpenseTotal[] {
+  const rows = queryAll<DailyTotalRow>(
+    `
+    SELECT
+      substr(occurred_at, 1, 10) AS day,
+      COALESCE(SUM(amount_cents), 0) AS total_cents
+    FROM transactions
+    WHERE type = 'expense'
+      AND substr(occurred_at, 1, 7) = ?
+    GROUP BY day
+    ORDER BY day ASC;
+    `,
+    [monthYYYYMM]
+  )
+
+  return rows.map((r) => ({
+    day: r.day,
+    totalCents: Number(r.total_cents ?? 0)
+  }))
+}
+
+export type CategoryMonthlyTotalRow = Readonly<{
+  category_id: UUID | null
+  total_cents: number
+}>
+
+export type MonthlyExpenseByCategory = Readonly<{
+  categoryId: UUID | null
+  totalCents: number
+}>
+
+// expenses by category (expense only)
+export function listMonthlyExpenseByCategory(monthYYYYMM: string): MonthlyExpenseByCategory[] {
+  const rows = queryAll<CategoryMonthlyTotalRow>(
+    `
+    SELECT
+      category_id,
+      COALESCE(SUM(amount_cents), 0) AS total_cents
+    FROM transactions
+    WHERE type = 'expense'
+      AND substr(occurred_at, 1, 7) = ?
+    GROUP BY category_id
+    ORDER BY total_cents DESC;
+    `,
+    [monthYYYYMM]
+  )
+
+  return rows.map((r) => ({
+    categoryId: r.category_id ?? null,
+    totalCents: Number(r.total_cents ?? 0)
+  }))
+}
+
+// transfers list for month (transfer only)
+export function listTransfersForMonth(monthYYYYMM: string, limit = 500): Transaction[] {
+  const rows = queryAll<TransactionRow>(
+    `
+    SELECT
+      id, key, occurred_at, type, item, amount_cents, currency,
+      account_id, from_account_id, to_account_id,
+      category_id, merchant, note
+    FROM transactions
+    WHERE type = 'transfer'
+      AND substr(occurred_at, 1, 7) = ?
+    ORDER BY occurred_at DESC, id DESC
+    LIMIT ?;
+    `,
+    [monthYYYYMM, limit]
+  )
+  return rows.map(rowToTransaction)
+}

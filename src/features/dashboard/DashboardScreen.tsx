@@ -1,4 +1,4 @@
-import React, { useMemo, useReducer } from 'react'
+import React, { useMemo, useReducer, useState } from 'react'
 import { View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
@@ -9,6 +9,8 @@ import {
   createInitialDashboardState,
   dashboardReducer,
   getActiveScope,
+  selectCanNext,
+  selectCanPrev,
   selectPeriodLabel,
 } from './dashboard.state'
 import { createDashboardStyles } from './dashboard.styles'
@@ -16,7 +18,8 @@ import { createDashboardStyles } from './dashboard.styles'
 import {
   DashboardModeTabs,
   DashboardPeriodNav,
-  DashboardScopeSegment,
+  DashboardPeriodPicker,
+  DashboardScopeSegment
 } from './components'
 
 export default function DashboardScreen() {
@@ -24,12 +27,16 @@ export default function DashboardScreen() {
   const styles = useMemo(() => createDashboardStyles(theme), [theme])
 
   const [state, dispatch] = useReducer(dashboardReducer, undefined, createInitialDashboardState)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const scope = getActiveScope(state)
   const periodLabel = selectPeriodLabel(state)
+  const canPrev = selectCanPrev(state)
+  const canNext = selectCanNext(state)
 
   function openPeriodPicker() {
-    // v1 placeholder
+    if (scope === 'all') return
+    setPickerOpen(true)
   }
 
   return (
@@ -51,6 +58,8 @@ export default function DashboardScreen() {
         <DashboardPeriodNav
           scope={scope}
           label={periodLabel}
+          canPrev={canPrev}
+          canNext={canNext}
           onPrev={() => dispatch({ type: 'SHIFT_PERIOD', delta: -1 })}
           onNext={() => dispatch({ type: 'SHIFT_PERIOD', delta: 1 })}
           onPick={openPeriodPicker}
@@ -59,10 +68,19 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.divider} />
+      <View style={styles.body}>{/* monthly body next */}</View>
 
-      <View style={styles.body}>
-        {/* body renderer (next step) */}
-      </View>
+      <DashboardPeriodPicker
+        visible={pickerOpen}
+        scope={scope}
+        period={state.period}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(p) => {
+          dispatch({ type: 'SET_PERIOD', period: p })
+          setPickerOpen(false)
+        }}
+        styles={styles}
+      />
     </Screen>
   )
 }

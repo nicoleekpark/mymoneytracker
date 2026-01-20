@@ -3,19 +3,25 @@ import { uuid } from '@/lib/platform/uuid'
 
 import type { UUID } from '@/domain/common/uuid'
 
+import type { CategoryRef } from '@/domain/category'
 import { centsToDollars } from '@/domain/common/money'
 import { createTransaction } from './transaction.model'
 import {
   deleteTransaction,
   getExpenseTotalForMonth,
+  getIncomeTotalForMonth,
   insertTransaction,
+  listDailyExpenseTotalsForMonth,
+  listMonthlyExpenseByCategory,
   listMonthlyExpenseTotals,
-  listTransactions
+  listTransactions,
+  listTransfersForMonth,
 } from './transaction.repo'
 import type { AddTransactionInput, Transaction, TransactionType } from './transaction.types'
 
 function currentMonthYYYYMM(d = new Date()): string {
   const y = d.getFullYear()
+  console.log(y)
   const m = String(d.getMonth() + 1).padStart(2, '0')
   return `${y}-${m}`
 }
@@ -116,4 +122,58 @@ export async function getMonthlyExpenseTotalsDollar(limitMonths = 24): Promise<M
     month: t.month,
     totalDollar: centsToDollars(t.totalCents)
   }))
+}
+
+export type MonthlySummaryDollar = Readonly<{
+  month: string // YYYY-MM
+  expenseTotalDollar: number
+  incomeTotalDollar: number
+  netCashFlowDollar: number // income - expense
+}>
+
+export async function getMonthlySummaryDollar(monthYYYYMM: string): Promise<MonthlySummaryDollar> {
+  const expenseCents = getExpenseTotalForMonth(monthYYYYMM)
+  const incomeCents = getIncomeTotalForMonth(monthYYYYMM)
+
+  const expense = centsToDollars(expenseCents)
+  const income = centsToDollars(incomeCents)
+
+  return {
+    month: monthYYYYMM,
+    expenseTotalDollar: expense,
+    incomeTotalDollar: income,
+    netCashFlowDollar: income - expense,
+  }
+}
+
+export type DailyExpenseTotalDollar = Readonly<{
+  day: string // YYYY-MM-DD
+  totalDollar: number
+}>
+
+export async function getDailyExpenseTotalsDollarForMonth(monthYYYYMM: string): Promise<DailyExpenseTotalDollar[]> {
+  const rows = listDailyExpenseTotalsForMonth(monthYYYYMM)
+  return rows.map((r) => ({
+    day: r.day,
+    totalDollar: centsToDollars(r.totalCents)
+  }))
+}
+
+export type MonthlyExpenseByCategoryDollar = Readonly<{
+  categoryId: UUID | null
+  category?: CategoryRef
+  totalDollar: number
+}>
+
+export async function getMonthlyExpenseByCategoryDollar(monthYYYYMM: string): Promise<MonthlyExpenseByCategoryDollar[]> {
+  const rows = listMonthlyExpenseByCategory(monthYYYYMM)
+  return rows.map((r) => ({
+    categoryId: r.categoryId,
+    totalDollar: centsToDollars(r.totalCents)
+  }))
+}
+
+
+export async function getTransfersForMonth(monthYYYYMM: string, limit = 500): Promise<Transaction[]> {
+  return listTransfersForMonth(monthYYYYMM, limit)
 }

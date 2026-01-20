@@ -6,22 +6,32 @@ import type { DashboardStyles } from '../dashboard.styles'
 export function DashboardPeriodNav(props: {
   scope: Scope
   label: string
+  canPrev: boolean
+  canNext: boolean
   onPrev: () => void
   onNext: () => void
   onPick: () => void
   styles: DashboardStyles
 }) {
-  const { scope, label, onPrev, onNext, onPick, styles } = props
+  const { scope, label, canPrev, canNext, onPrev, onNext, onPick, styles } = props
+
+  const showArrows = scope !== 'all'
 
   return (
     <View style={styles.periodControls}>
-      {scope !== 'all' ? (
+      {showArrows ? (
         <>
           <Pressable
             onPress={onPrev}
-            style={[styles.iconBtn, styles.iconBtnLeft]}
+            disabled={!canPrev}
+            style={[
+              styles.iconBtn,
+              styles.iconBtnLeft,
+              !canPrev ? { opacity: 0.35 } : null
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Previous period"
+            accessibilityState={{ disabled: !canPrev }}
           >
             <Text style={styles.iconBtnText}>◀</Text>
           </Pressable>
@@ -37,9 +47,15 @@ export function DashboardPeriodNav(props: {
 
           <Pressable
             onPress={onNext}
-            style={[styles.iconBtn, styles.iconBtnRight]}
+            disabled={!canNext}
+            style={[
+              styles.iconBtn,
+              styles.iconBtnRight,
+              !canNext ? { opacity: 0.35 } : null
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Next period"
+            accessibilityState={{ disabled: !canNext }}
           >
             <Text style={styles.iconBtnText}>▶</Text>
           </Pressable>

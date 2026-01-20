@@ -31,3 +31,14 @@ export function formatPeriodLabel(scope: Scope, period: Period): string {
   const month = 'month' in period ? period.month : 1
   return `${monthLabel(month)} ${period.year}`
 }
+
+export function toMonthYYYYMM(year: number, month: number): string {
+  const mm = String(month).padStart(2, '0')
+  return `${year}-${mm}`
+}
+
+export function getMonthYYYYMMFromPeriod(scope: Scope, period: Period): string | null {
+  if (scope !== 'month') return null
+  if (!('month' in period)) return null
+  return toMonthYYYYMM(period.year, period.month)
+}
