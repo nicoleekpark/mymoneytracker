@@ -9,17 +9,12 @@
     "start:android": "npx expo start --android",
     "start:dev": "npx expo start -c --dev-client",
     "start:dev:ios": "npx expo start -c --dev-client --ios",
-
     "ios:run": "npx expo run:ios",
-
     "ios:uninstall": "dotenv -e .env.local -- sh -c 'xcrun simctl uninstall booted \"$EXPO_PUBLIC_IOS_BUNDLE_ID\" || true'",
     "ios:reset": "npm run ios:uninstall && expo prebuild --clean",
-
     "db:migration:new": "node scripts/create-migration.js",
     "db:migration:regen": "node scripts/create-migration.js --regen",
-
     "db:export:sim": "./scripts/export-db-from-simulator.sh",
-
     "db:dev:pull": "./scripts/dbpull.sh"
   },
   "dependencies": {
@@ -47,6 +42,7 @@
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
     "tamagui": "^1.142.0",

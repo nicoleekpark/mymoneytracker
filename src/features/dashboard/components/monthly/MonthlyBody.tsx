@@ -2,8 +2,9 @@ import { useRouter } from 'expo-router'
 import React, { useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
-import { MonthlySpendingCalendar, type CalendarColors } from './MonthlySpendingCalendar'
-import { useMonthlyDailyFlow } from './useMonthlyDailyFlow'
+import { MonthlySpendingCalendar, type CalendarColors } from './calendar/MonthlySpendingCalendar'
+import { useMonthlyDailyFlow } from './calendar/useMonthlyDailyFlow'
+import { MonthlyCategorySection } from './category/MonthlyCategorySection'
 
 function buildMonthTitle(monthYYYYMM: string) {
   const [y, m] = monthYYYYMM.split('-')
@@ -151,6 +152,16 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         colors={colors}
         onPressDay={onPressDay}
       />
+
+      <View style={{ height: 14 }} />
+      <View style={{ height: 1, backgroundColor: colors.border, opacity: 0.6 }} />
+      <View style={{ height: 14 }} />
+
+      <MonthlyCategorySection
+        monthYYYYMM={monthYYYYMM}
+        colors={colors}
+      />
+
     </ScrollView>
   )
 }

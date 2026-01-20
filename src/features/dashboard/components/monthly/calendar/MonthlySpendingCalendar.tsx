@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { daysInMonth, firstWeekdayIndex, parseYYYYMM } from './monthly.utils'
+import { daysInMonth, firstWeekdayIndex, parseYYYYMM } from '../monthly.utils'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const
 

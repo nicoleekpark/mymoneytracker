@@ -7,3 +7,4 @@ export type { AppConfig } from './app.config.types'
 export type { Currency, CurrencyCode, CurrencySymbol } from './currencies.types'
 export type { FeatureFlags } from './feature-flags.types'
 
+export { CATEGORIES } from './categories.config'
