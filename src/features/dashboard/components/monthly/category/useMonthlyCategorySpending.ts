@@ -1,6 +1,6 @@
 import type { CategoryRef } from '@/domain/category'
-import { resolveCategoryRefFromDbId } from '@/domain/category/category.repo'
 import type { UUID } from '@/domain/common/uuid'
+import { categoryRepository } from '@/infrastructure/repositories'
 import {
   getMonthlyExpenseByCategoryDollar,
   getMonthlySummaryDollar
@@ -41,7 +41,7 @@ export function useMonthlyCategorySpending(monthYYYYMM: string) {
           const totalDollar = Number(r?.totalDollar ?? 0)
 
           const categoryRef =
-            categoryId ? resolveCategoryRefFromDbId(categoryId) : undefined
+            categoryId ? categoryRepository.resolveCategoryRefFromDbId(categoryId) : undefined
 
           return { categoryId, categoryRef, totalDollar }
         })

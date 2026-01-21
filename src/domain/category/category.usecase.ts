@@ -1,11 +1,11 @@
 import type { UUID } from '@/domain/common/uuid'
-import { resolveCategoryId, resolveCategoryRefFromDbId } from './category.repo'
+import { categoryRepository } from '@/infrastructure/repositories'
 import type { CategoryRef } from './category.types'
 
 export async function getCategoryDbId(ref?: CategoryRef): Promise<UUID | null> {
-  return resolveCategoryId(ref)
+  return categoryRepository.resolveCategoryId(ref)
 }
 
 export async function getCategoryRefByDbId(id: UUID): Promise<CategoryRef> {
-  return resolveCategoryRefFromDbId(id)
+  return categoryRepository.resolveCategoryRefFromDbId(id)
 }

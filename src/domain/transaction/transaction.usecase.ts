@@ -5,19 +5,8 @@ import type { UUID } from '@/domain/common/uuid'
 
 import type { CategoryRef } from '@/domain/category'
 import { centsToDollars } from '@/domain/common/money'
+import { transactionRepository } from '@/infrastructure/repositories'
 import { createTransaction } from './transaction.model'
-import {
-  deleteTransaction,
-  getExpenseTotalForMonth,
-  getIncomeTotalForMonth,
-  insertTransaction,
-  listDailyExpenseTotalsForMonth,
-  listDailyFlowTotalsWithCountForMonth,
-  listMonthlyExpenseByCategory,
-  listMonthlyExpenseTotals,
-  listTransactions,
-  listTransfersForMonth
-} from './transaction.repo'
 import type { AddTransactionInput, Transaction, TransactionType } from './transaction.types'
 
 function currentMonthYYYYMM(d = new Date()): string {
@@ -92,21 +81,21 @@ export async function addTransaction(
           accountId: input.accountId,
         })
         
-  insertTransaction(tx)
+  transactionRepository.insert(tx)
   return tx
 }
 
 export async function getTransactions(limit = 200): Promise<Transaction[]> {
-  return listTransactions(limit)
+  return transactionRepository.list(limit)
 }
 
 export async function removeTransaction(id: UUID): Promise<void> {
-  deleteTransaction(id)
+  transactionRepository.delete(id)
 }
 
 export async function getThisMonthExpenseTotalDollar(now = new Date()): Promise<number> {
   const month = currentMonthYYYYMM(now)
-  const totalCents = getExpenseTotalForMonth(month)
+  const totalCents = transactionRepository.getExpenseTotalForMonth(month)
 
   return centsToDollars(totalCents)
 }
@@ -117,7 +106,7 @@ export type MonthlyExpenseTotalDollar = Readonly<{
 }>
 
 export async function getMonthlyExpenseTotalsDollar(limitMonths = 24): Promise<MonthlyExpenseTotalDollar[]> {
-  const totals = listMonthlyExpenseTotals(limitMonths)
+  const totals = transactionRepository.listMonthlyExpenseTotals(limitMonths)
   return totals.map((t) => ({
     month: t.month,
     totalDollar: centsToDollars(t.totalCents)
@@ -132,8 +121,8 @@ export type MonthlySummaryDollar = Readonly<{
 }>
 
 export async function getMonthlySummaryDollar(monthYYYYMM: string): Promise<MonthlySummaryDollar> {
-  const expenseCents = getExpenseTotalForMonth(monthYYYYMM)
-  const incomeCents = getIncomeTotalForMonth(monthYYYYMM)
+  const expenseCents = transactionRepository.getExpenseTotalForMonth(monthYYYYMM)
+  const incomeCents = transactionRepository.getIncomeTotalForMonth(monthYYYYMM)
 
   const expense = centsToDollars(expenseCents)
   const income = centsToDollars(incomeCents)
@@ -152,7 +141,7 @@ export type DailyExpenseTotalDollar = Readonly<{
 }>
 
 export async function getDailyExpenseTotalsDollarForMonth(monthYYYYMM: string): Promise<DailyExpenseTotalDollar[]> {
-  const rows = listDailyExpenseTotalsForMonth(monthYYYYMM)
+  const rows = transactionRepository.listDailyExpenseTotalsForMonth(monthYYYYMM)
   return rows.map((r) => ({
     day: r.day,
     totalDollar: centsToDollars(r.totalCents)
@@ -166,7 +155,7 @@ export type MonthlyExpenseByCategoryDollar = Readonly<{
 }>
 
 export async function getMonthlyExpenseByCategoryDollar(monthYYYYMM: string): Promise<MonthlyExpenseByCategoryDollar[]> {
-  const rows = listMonthlyExpenseByCategory(monthYYYYMM)
+  const rows = transactionRepository.listMonthlyExpenseByCategory(monthYYYYMM)
   return rows.map((r) => ({
     categoryId: r.categoryId,
     totalDollar: centsToDollars(r.totalCents)
@@ -175,7 +164,7 @@ export async function getMonthlyExpenseByCategoryDollar(monthYYYYMM: string): Pr
 
 
 export async function getTransfersForMonth(monthYYYYMM: string, limit = 500): Promise<Transaction[]> {
-  return listTransfersForMonth(monthYYYYMM, limit)
+  return transactionRepository.listTransfersForMonth(monthYYYYMM, limit)
 }
 
 export type DailyFlowDollar = Readonly<{
@@ -186,7 +175,7 @@ export type DailyFlowDollar = Readonly<{
 }>
 
 export async function getDailyFlowDollarForMonth(monthYYYYMM: string): Promise<DailyFlowDollar[]> {
-  const rows = listDailyFlowTotalsWithCountForMonth(monthYYYYMM)
+  const rows = transactionRepository.listDailyFlowTotalsWithCountForMonth(monthYYYYMM)
 
   const byDay = new Map<string, { income: number; expense: number; count: number }>()
   for (const r of rows) {

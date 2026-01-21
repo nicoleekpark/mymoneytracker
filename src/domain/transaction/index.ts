@@ -14,4 +14,4 @@ export {
 
 export type {
   MonthlyExpenseTotal
-} from './transaction.repo'
+} from './transaction.repository'
