@@ -1,5 +1,6 @@
 import { CATEGORIES } from '@/config/categories.config'
 import type { CategoryRef } from '@/domain/category'
+import { formatUsdInt } from '@/ui/format/currency'
 
 export type CategoryColors = Readonly<{
   palette: readonly string[]
@@ -15,10 +16,8 @@ export type CategorySlice = Readonly<{
   color: string
 }>
 
-export function formatUsdInt(amount: number) {
-  const v = Math.round(Math.abs(Number(amount) || 0))
-  return `$ ${v}`
-}
+// Re-export for backwards compatibility
+export { formatUsdInt }
 
 export function findCategoryName(ref?: CategoryRef): string {
   if (!ref) return 'Uncategorized'
