@@ -45,3 +45,6 @@ db_exports/
 *.db
 *.db-wal
 *.db-shm
+
+.claude/
+CLAUDE.md
