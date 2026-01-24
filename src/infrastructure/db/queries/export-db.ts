@@ -1,0 +1,43 @@
+import { getDbName } from '../config'
+import { exec, getMainDbFilePath } from '../sqlite'
+import { File, Paths } from 'expo-file-system'
+import * as Sharing from 'expo-sharing'
+
+function toFileUri(path: string): string {
+  return path.startsWith('file://') ? path : `file://${path}`
+}
+
+export async function exportDatabase(): Promise<void> {
+  // Merrge WAL into main DB
+  // TRUNCATE empties WAL file
+  exec('PRAGMA wal_checkpoint(TRUNCATE);')
+  const dbPath = getMainDbFilePath()
+  if (!dbPath) {
+    throw new Error('SQLite DB file path not found')
+  }
+
+  const sourceUri = toFileUri(dbPath)
+
+  const timestamp = new Date().toISOString().replaceAll(':', '-')
+  const dbName = getDbName()
+  const destFile = new File(Paths.cache, `${dbName}_${timestamp}.db`)
+
+  const sourceFile = new File(sourceUri)
+
+  try {
+    sourceFile.copy(destFile)
+  } catch (e) {
+    throw new Error('Failed to copy SQLite database file')
+  }
+
+  const ok = await Sharing.isAvailableAsync()
+  if (!ok) {
+    throw new Error('Sharing is not available on this device')
+  }
+
+  await Sharing.shareAsync(destFile.uri, {
+    mimeType: 'application/vnd.sqlite3',
+    dialogTitle: 'Export SQLite DB'
+  })
+
+}

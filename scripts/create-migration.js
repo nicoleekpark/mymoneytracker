@@ -5,7 +5,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const MIGRATIONS_DIR = path.join(process.cwd(), 'src', 'lib', 'db', 'migrations')
+const MIGRATIONS_DIR = path.join(process.cwd(), 'src', 'infrastructure', 'db', 'migrations')
 const TYPES_FILE = path.join(MIGRATIONS_DIR, 'types.ts')
 const INDEX_FILE = path.join(MIGRATIONS_DIR, 'index.ts')
 
@@ -71,7 +71,7 @@ function regenIndex() {
 `,
       'utf8'
     )
-    console.log('[migrations] created src/lib/db/migrations/types.ts')
+    console.log('[migrations] created src/infrastructure/db/migrations/types.ts')
   }
 
   const files = listMigrationFiles()
@@ -155,7 +155,7 @@ function createMigration(rawName) {
 
   const constName = toConstName(id, slug)
 
-  const template = `import { execMany } from '@/lib/db/sqlite'
+  const template = `import { execMany } from '../sqlite'
 import type { Migration } from './types'
 
 export const ${constName}: Migration = {

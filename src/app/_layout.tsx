@@ -3,29 +3,35 @@ import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
 
 import { HoHThemeProvider } from '@/providers'
 import { ScrollView, Text, View } from 'react-native'
 
-import { initDbPragmas, migrate, runSystemSeeds } from '@/lib/db'
+import { initDbPragmas, migrate, runSystemSeeds } from '@/infrastructure/db'
 
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
 
 export { ErrorBoundary } from 'expo-router'
 
+// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
 
+// render deciedes what to show, useEffect does the work after the screen is already decided
+// useEffect runs after render,so even if DB init takes time,
+// we can return null first and keep the splash screen visible to avoid showing a blank or frozen UI
 export default function RootLayout() {
+  // [variableName, functionToSetVariable] = useState(initialValueOfVariable)
   const [dbReady, setDbReady] = useState(false)
   const [dbError, setDbError] = useState<unknown>(null)
-
+  
   const [loaded, fontError] = useFonts({
     SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font
   })
-
+  
   useEffect(() => {
     if (fontError) throw fontError
   }, [fontError])
@@ -42,7 +48,7 @@ export default function RootLayout() {
       setDbReady(false)
     }
   }, [])
-
+  
   useEffect(() => {
     if (loaded && dbReady) {
       SplashScreen.hideAsync()
@@ -73,14 +79,16 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   return (
-    <HoHThemeProvider initialMode="dark">
-      <TamaguiProvider config={tamaguiConfig}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="settings" />
-          <Stack.Screen name="(modal)/add-transaction" options={{ presentation: 'modal', headerShown: false }} />
-        </Stack>
-      </TamaguiProvider>
-    </HoHThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <HoHThemeProvider initialMode="dark">
+        <TamaguiProvider config={tamaguiConfig}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="settings" />
+            <Stack.Screen name="(modal)/add-transaction" options={{ presentation: 'modal', headerShown: false }} />
+          </Stack>
+        </TamaguiProvider>
+      </HoHThemeProvider>
+    </GestureHandlerRootView>
   )
 }

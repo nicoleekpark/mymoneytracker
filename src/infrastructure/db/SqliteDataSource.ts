@@ -3,7 +3,7 @@ import {
   queryAll as sqliteQueryAll,
   queryFirst as sqliteQueryFirst,
   withTransaction as sqliteWithTransaction
-} from '@/lib/db/sqlite'
+} from './sqlite'
 
 import type { DataSource } from './DataSource'
 

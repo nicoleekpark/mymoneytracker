@@ -6,5 +6,8 @@ export const APP_CONFIG: AppConfig = {
   name: 'HoH Finance Tracker',
   version: '1.0.0',
   currency: CURRENCIES.USD,
-  featureFlags: FEATURE_FLAGS
+  featureFlags: FEATURE_FLAGS,
+  budget: {
+    defaultMonthlyBudgetDollar: 5000
+  }
 }

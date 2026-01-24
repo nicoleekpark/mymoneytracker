@@ -25,7 +25,7 @@ import { CATEGORIES } from '@/config/categories.config'
 import type { CategoryRef } from '@/domain/category'
 import type { UUID } from '@/domain/common/uuid'
 import type { TransactionType } from '@/domain/transaction'
-import { Screen } from '@/ui/layout/Screen'
+import { Screen } from '@/shared/layout/Screen'
 
 // Receipt picker (optional dependency)
 let ImagePicker: any = null

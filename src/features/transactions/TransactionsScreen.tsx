@@ -19,8 +19,8 @@ import {
   View
 } from 'react-native'
 
-import { formatCurrency } from '@/ui/format/currency'
-import { Screen } from '@/ui/layout/Screen'
+import { formatCurrency } from '@/shared/format/currency'
+import { Screen } from '@/shared/layout/Screen'
 
 type MonthSection = {
   key: string

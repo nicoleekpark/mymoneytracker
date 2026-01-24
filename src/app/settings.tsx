@@ -4,7 +4,7 @@ import { Text, View } from 'react-native'
 import { useHoHTheme } from '@/providers'
 import { useThemeStore } from '@/store'
 import type { ThemeMode } from '@/theme'
-import { SegmentedControl } from '@/ui/components/SegmentedControl'
+import { SegmentedControl } from '@/shared/components/SegmentedControl'
 
 type ThemeSelection = ThemeMode | 'system'
 

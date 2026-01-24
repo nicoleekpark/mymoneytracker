@@ -1,30 +1,23 @@
-import React, { useMemo, useReducer, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
-import { Screen } from '@/ui/layout/Screen'
+import { Screen } from '@/shared/layout/Screen'
 
-import { MODES, Period, Scope } from './dashboard.model'
-import {
-  createInitialDashboardState,
-  dashboardReducer,
-  selectCanNext,
-  selectCanPrev,
-  selectPeriodLabel
-} from './dashboard.state'
-import { createDashboardStyles } from './dashboard.styles'
+import type { Period } from './types'
+import { MODES } from './types'
+import { createDashboardStyles, useDashboardStore } from './store'
 
-import { DashboardModeTabs } from './components/DashboardModeTabs'
-import { DashboardPeriodNav } from './components/DashboardPeriodNav'
-import { DashboardPeriodPicker } from './components/DashboardPeriodPicker'
-import { DashboardScopeSegment } from './components/DashboardScopeSegment'
-import { MonthlyBody } from './components/monthly/MonthlyBody'
+import { DashboardModeTabs } from './shared/DashboardModeTabs'
+import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
+import { DashboardToolbar } from './shared/DashboardToolbar'
+import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
+import { MonthlyBody } from './monthly/MonthlyBody'
 
 function periodToMonthYYYYMM(p: Period): string {
   if ('month' in p) {
     return `${p.year}-${String(p.month).padStart(2, '0')}`
   }
-  // year only → 1월로 fallback (or 원하는 정책)
   return `${p.year}-01`
 }
 
@@ -32,83 +25,100 @@ export default function DashboardScreen() {
   const theme = useHoHTheme()
   const styles = useMemo(() => createDashboardStyles(theme), [theme])
 
-  const [state, dispatch] = useReducer(dashboardReducer, undefined, createInitialDashboardState)
+  const {
+    mode,
+    scope,
+    period,
+    setMode,
+    setScope,
+    shiftPeriod,
+    setPeriod,
+    resetToToday,
+    canPrev,
+    canNext
+  } = useDashboardStore()
+
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const [scope, setScope] = useState<Scope>('month')
-  const [period, setPeriod] = useState<Period>({ 
-    year: new Date().getFullYear(), 
-    month: new Date().getMonth() + 1 
-  })
+  const canGoPrev = canPrev()
+  const canGoNext = canNext()
 
-  const periodLabel = selectPeriodLabel(state)
-  const canPrev = selectCanPrev(state)
-  const canNext = selectCanNext(state)
-  
-  function openPeriodPicker() {
-    if (state.scope === 'all') return
+  function handleOpenPicker() {
+    if (scope === 'all') return
     setPickerOpen(true)
   }
 
+  function handleSwipeLeft() {
+    if (canGoNext) {
+      shiftPeriod(1)
+    }
+  }
+
+  function handleSwipeRight() {
+    if (canGoPrev) {
+      shiftPeriod(-1)
+    }
+  }
+
   const monthYYYYMM = periodToMonthYYYYMM(period)
-  
+
   return (
     <Screen topPadding>
       <DashboardModeTabs
         modes={MODES}
-        value={state.mode}
-        onChange={(mode) => dispatch({ type: 'SET_MODE', mode })}
+        value={mode}
+        onChange={setMode}
         styles={styles}
       />
 
-      <View style={styles.scopeRow}>
-        <DashboardScopeSegment
-          value={state.scope}
-          onChange={(scope) => dispatch({ type: 'SET_SCOPE', scope })}
-          styles={styles}
-        />
-
-        <DashboardPeriodNav
-          scope={state.scope}
-          label={periodLabel}
-          canPrev={canPrev}
-          canNext={canNext}
-          onPrev={() => dispatch({ type: 'SHIFT_PERIOD', delta: -1 })}
-          onNext={() => dispatch({ type: 'SHIFT_PERIOD', delta: 1 })}
-          onPick={openPeriodPicker}
-          styles={styles}
-        />
-      </View>
+      <DashboardToolbar
+        scope={scope}
+        period={period}
+        canPrev={canGoPrev}
+        canNext={canGoNext}
+        onPrev={() => shiftPeriod(-1)}
+        onNext={() => shiftPeriod(1)}
+        onOpenPicker={handleOpenPicker}
+        onScopeChange={setScope}
+        onToday={resetToToday}
+      />
 
       <View style={styles.divider} />
 
-      <View style={styles.body}>
-        {scope === 'month' ? (
-          <MonthlyBody
-            monthYYYYMM={monthYYYYMM}
-            colors={{
-              text: theme.semantic.text,
-              border: theme.semantic.border,
-              surface: theme.semantic.surface,
-              surfaceAlt: theme.semantic.surfaceAlt,
-              primary: theme.semantic.primary,
-              success: theme.semantic.success,
-              danger: theme.semantic.danger
-            }}
-          />
-          ) : null
-        }
-      </View>
+      <SwipeGestureWrapper
+        onSwipeLeft={handleSwipeLeft}
+        onSwipeRight={handleSwipeRight}
+        canSwipeLeft={canGoNext}
+        canSwipeRight={canGoPrev}
+        enabled={scope !== 'all'}
+      >
+        <View style={styles.body}>
+          {scope === 'month' ? (
+            <MonthlyBody
+              monthYYYYMM={monthYYYYMM}
+              colors={{
+                text: theme.semantic.text,
+                border: theme.semantic.border,
+                surface: theme.semantic.surface,
+                surfaceAlt: theme.semantic.surfaceAlt,
+                primary: theme.semantic.primary,
+                success: theme.semantic.success,
+                danger: theme.semantic.danger
+              }}
+            />
+          ) : null}
+        </View>
+      </SwipeGestureWrapper>
 
       <DashboardPeriodPicker
         visible={pickerOpen}
-        scope={state.scope}
+        scope={scope}
+        currentPeriod={period}
         onClose={() => setPickerOpen(false)}
         onSelect={(p) => {
-          dispatch({ type: 'SET_PERIOD', period: p })
+          setPeriod(p)
           setPickerOpen(false)
         }}
-        styles={styles}
       />
     </Screen>
   )

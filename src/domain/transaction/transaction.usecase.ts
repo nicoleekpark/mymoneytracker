@@ -1,5 +1,5 @@
 import type { CategoryIndex } from '@/config/categories.index'
-import { uuid } from '@/lib/platform/uuid'
+import { uuid } from '@/shared/utils/uuid'
 
 import type { UUID } from '@/domain/common/uuid'
 

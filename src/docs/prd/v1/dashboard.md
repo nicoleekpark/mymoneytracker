@@ -67,6 +67,22 @@ The Dashboard is the primary screen of the HoH Finance Tracker app. It provides 
 
 ## Recent Changes
 
+### January 2026 - Dashboard Folder Structure Refactoring
+
+**See detailed documentation:** [Dashboard Folder Structure Refactoring](./2026-01-23_dashboard-folder-structure-refactor.md)
+
+Completed a major architectural refactoring of the dashboard feature:
+- Migrated from `useReducer` to Zustand for state management
+- Reorganized flat component structure into domain-driven folders
+- Created `store/`, `types/`, `hooks/`, `shared/`, and `monthly/` subfolders
+- Consolidated `DashboardPeriodNav` + `DashboardScopeSegment` into unified `DashboardToolbar`
+- Established barrel export pattern for cleaner imports
+- Renamed hooks for better semantic clarity (`useDashboardBudget` → `useBudgetSummary`)
+
+This refactoring doesn't change any user-facing features but significantly improves code organization and scalability for future Year and All-time view implementations.
+
+---
+
 ### January 2026 - Infrastructure Refactoring
 
 A major architectural refactoring was completed to improve code organization and maintainability:
@@ -212,41 +228,63 @@ Users can swipe on the dashboard body to navigate periods:
 
 ## File Structure
 
+**Current structure (as of January 23, 2026):**
+
 ```
 src/features/dashboard/
 ├── DashboardScreen.tsx          # Main screen component
-├── dashboard.model.ts           # Types, constants, utilities
-├── dashboard.state.ts           # Reducer and state management
-├── dashboard.styles.ts          # Shared styles
-└── components/
-    ├── index.ts                 # Component exports
-    ├── DashboardModeTabs.tsx    # Mode selector (Overview, Cash Flow, etc.)
-    ├── DashboardToolbar.tsx     # Unified period nav + scope selector
-    ├── DashboardPeriodPicker.tsx # iOS scroll wheel picker
-    ├── ScopeChips.tsx           # Month | Year | All toggle
-    ├── SwipeGestureWrapper.tsx  # Gesture handler for swipe navigation
-    └── monthly/                 # Monthly view components
-        ├── MonthlyBody.tsx      # Main monthly view container
-        ├── monthly.utils.ts     # Date utilities (daysInMonth, etc.)
-        ├── budget/
-        │   ├── BudgetSummaryCard.tsx     # Budget progress card
-        │   ├── useDashboardBudget.ts     # Budget data hook
-        │   └── index.ts
-        ├── calendar/
-        │   ├── MonthlySpendingCalendar.tsx  # Daily cash flow grid
-        │   └── useMonthlyDailyFlow.ts       # Daily data hook
-        └── category/
-            ├── MonthlyCategorySection.tsx     # Category breakdown UI
-            ├── MonthlyCategoryDonut.tsx       # SVG donut chart
-            ├── useMonthlyCategorySpending.ts  # Category data hook
-            └── monthlyCategory.utils.ts       # Color/slice logic
+├── index.ts                     # Public API exports
+├── store/
+│   ├── dashboard.store.ts       # Zustand store (state + actions + selectors)
+│   ├── dashboard.styles.ts      # Shared styles
+│   └── index.ts
+├── types/
+│   ├── dashboard.types.ts       # Type definitions + utility functions
+│   └── index.ts
+├── hooks/
+│   ├── useDashboardMonthlyData.ts
+│   └── index.ts
+├── shared/                      # Components used across view modes
+│   ├── DashboardModeTabs.tsx    # Mode selector (Overview, Cash Flow, etc.)
+│   ├── DashboardToolbar.tsx     # Unified period nav + scope selector
+│   ├── DashboardPeriodPicker.tsx # iOS scroll wheel picker
+│   ├── ScopeChips.tsx           # Month | Year | All chips
+│   ├── SwipeGestureWrapper.tsx  # Gesture handler for swipe navigation
+│   └── index.ts
+└── monthly/                     # Monthly view components
+    ├── MonthlyBody.tsx          # Main monthly view container
+    ├── monthly.utils.ts         # Date utilities (daysInMonth, etc.)
+    ├── index.ts
+    ├── budget/
+    │   ├── BudgetSummaryCard.tsx      # Budget progress card
+    │   ├── useBudgetSummary.ts        # Budget data hook
+    │   └── index.ts
+    ├── calendar/
+    │   ├── MonthlySpendingCalendar.tsx   # Daily cash flow grid
+    │   ├── useMonthlyDailyFlow.ts        # Daily data hook
+    │   └── index.ts
+    └── category/
+        ├── MonthlyCategorySection.tsx      # Category breakdown UI
+        ├── MonthlyCategoryDonut.tsx        # SVG donut chart
+        ├── useMonthlyCategorySpending.ts   # Category data hook
+        ├── category.utils.ts               # Color/slice logic
+        └── index.ts
 ```
+
+**Key changes from previous structure:**
+- `dashboard.model.ts` → `types/dashboard.types.ts`
+- `dashboard.state.ts` → `store/dashboard.store.ts` (converted to Zustand)
+- Components organized into `shared/` and domain-specific folders
+- Barrel exports (`index.ts`) for clean imports
+- See [Dashboard Folder Structure Refactoring](./2026-01-23_dashboard-folder-structure-refactor.md) for details
 
 ---
 
 ## State Management
 
-Uses React's `useReducer` pattern for predictable state updates.
+**Current implementation:** Uses Zustand for centralized state management with actions and selectors.
+
+**Previous implementation:** Used React's `useReducer` pattern (migrated to Zustand in January 2026).
 
 ### State Shape
 
@@ -254,24 +292,52 @@ Uses React's `useReducer` pattern for predictable state updates.
 type DashboardState = {
   mode: 'overview' | 'cashflow' | 'accounts' | 'networth'
   scope: 'month' | 'year' | 'all'
-  period: { year: number; month?: number }
+  period: { year: number; month: number } | { year: number }
 }
 ```
 
 ### Actions
 
-| Action | Description |
-|--------|-------------|
-| `SET_MODE` | Change dashboard view mode |
-| `SET_SCOPE` | Change time scope (month/year/all) |
-| `SHIFT_PERIOD` | Move to next (-1) or previous (+1) period |
-| `SET_PERIOD` | Set specific period (from picker) |
-| `RESET_TO_TODAY` | Jump to current month/year |
+| Action | Signature | Description |
+|--------|-----------|-------------|
+| `setMode` | `(mode: DashboardMode) => void` | Change dashboard view mode |
+| `setScope` | `(scope: Scope) => void` | Change time scope (month/year/all) |
+| `shiftPeriod` | `(delta: -1 \| 1) => void` | Move to next (+1) or previous (-1) period |
+| `setPeriod` | `(period: Period) => void` | Set specific period (from picker) |
+| `resetToToday` | `() => void` | Jump to current month/year |
 
 ### Selectors
 
-- `selectCanPrev(state)` → Can navigate to previous period?
-- `selectCanNext(state)` → Can navigate to next period? (respects current date boundary)
+| Selector | Returns | Description |
+|----------|---------|-------------|
+| `getPeriodLabel` | `string` | Formatted period label (e.g., "January 2026", "2026", "All time") |
+| `canPrev` | `boolean` | Can navigate to previous period? |
+| `canNext` | `boolean` | Can navigate to next period? (respects current date boundary) |
+
+### Usage Example
+
+```typescript
+import { useDashboardStore } from './store'
+
+function Component() {
+  // Destructure what you need
+  const { mode, period, setMode, shiftPeriod } = useDashboardStore()
+
+  // Or use selectors
+  const canGoNext = useDashboardStore((s) => s.canNext())
+  const periodLabel = useDashboardStore((s) => s.getPeriodLabel())
+
+  return (
+    <View>
+      <Text>{periodLabel}</Text>
+      <Button onPress={() => setMode('overview')}>Overview</Button>
+      <Button onPress={() => shiftPeriod(1)} disabled={!canGoNext}>
+        Next
+      </Button>
+    </View>
+  )
+}
+```
 
 ---
 
@@ -331,16 +397,18 @@ Wraps content to enable horizontal swipe gestures.
 
 ## Utility Functions
 
-Located in `dashboard.model.ts`:
+Located in `types/dashboard.types.ts`:
 
-| Function | Description |
-|----------|-------------|
-| `getMonthNameShort(month)` | Returns "Jan", "Feb", etc. |
-| `getMonthNameFull(month)` | Returns "January", "February", etc. |
-| `formatPeriodLabelFull(scope, period)` | Returns "January 2026" or "2026" or "All time" |
-| `isCurrentPeriod(scope, period)` | Checks if viewing current month/year |
-| `getMaxYearMonth()` | Returns current year and month |
-| `ymIndex({ year, month })` | Converts to numeric index for comparison |
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `clampMonth(m)` | `(m: number) => number` | Clamps month to valid range (1-12) |
+| `getMonthNameShort(month)` | `(month: number) => string` | Returns "Jan", "Feb", etc. |
+| `getMonthNameFull(month)` | `(month: number) => string` | Returns "January", "February", etc. |
+| `formatPeriodLabel(scope, period)` | `(scope: Scope, period: Period) => string` | Returns "2026-01", "2026", or "All time" |
+| `formatPeriodLabelFull(scope, period)` | `(scope: Scope, period: Period) => string` | Returns "January 2026", "2026", or "All time" |
+| `isCurrentPeriod(scope, period, now?)` | `(scope: Scope, period: Period, now?: Date) => boolean` | Checks if viewing current month/year |
+| `getMaxYearMonth(now?)` | `(now?: Date) => { year: number; month: number }` | Returns current year and month |
+| `ymIndex({ year, month })` | `(x: { year: number; month: number }) => number` | Converts to numeric index for comparison |
 
 ---
 
@@ -768,11 +836,28 @@ graph TD
 **Main Screen:**
 - `/src/features/dashboard/DashboardScreen.tsx`
 
+**State & Types:**
+- `/src/features/dashboard/store/dashboard.store.ts` (Zustand store)
+- `/src/features/dashboard/types/dashboard.types.ts` (Type definitions + utilities)
+- `/src/features/dashboard/store/dashboard.styles.ts` (Shared styles)
+
+**Shared Components:**
+- `/src/features/dashboard/shared/DashboardModeTabs.tsx`
+- `/src/features/dashboard/shared/DashboardToolbar.tsx`
+- `/src/features/dashboard/shared/DashboardPeriodPicker.tsx`
+- `/src/features/dashboard/shared/ScopeChips.tsx`
+- `/src/features/dashboard/shared/SwipeGestureWrapper.tsx`
+
 **Monthly View:**
-- `/src/features/dashboard/components/monthly/MonthlyBody.tsx`
-- `/src/features/dashboard/components/monthly/budget/BudgetSummaryCard.tsx`
-- `/src/features/dashboard/components/monthly/calendar/MonthlySpendingCalendar.tsx`
-- `/src/features/dashboard/components/monthly/category/MonthlyCategorySection.tsx`
+- `/src/features/dashboard/monthly/MonthlyBody.tsx`
+- `/src/features/dashboard/monthly/budget/BudgetSummaryCard.tsx`
+- `/src/features/dashboard/monthly/budget/useBudgetSummary.ts`
+- `/src/features/dashboard/monthly/calendar/MonthlySpendingCalendar.tsx`
+- `/src/features/dashboard/monthly/calendar/useMonthlyDailyFlow.ts`
+- `/src/features/dashboard/monthly/category/MonthlyCategorySection.tsx`
+- `/src/features/dashboard/monthly/category/MonthlyCategoryDonut.tsx`
+- `/src/features/dashboard/monthly/category/useMonthlyCategorySpending.ts`
+- `/src/features/dashboard/monthly/category/category.utils.ts`
 
 **Infrastructure:**
 - `/src/infrastructure/repositories/SqliteTransactionRepository.ts`
@@ -807,7 +892,7 @@ export const APP_CONFIG = {
 }
 ```
 
-Category colors in `/src/features/dashboard/components/monthly/category/monthlyCategory.utils.ts`:
+Category colors in `/src/features/dashboard/monthly/category/category.utils.ts`:
 ```typescript
 colors: {
   palette: [
@@ -816,3 +901,9 @@ colors: {
   ]
 }
 ```
+
+---
+
+**Related Documentation:**
+- [Dashboard Folder Structure Refactoring](./2026-01-23_dashboard-folder-structure-refactor.md) - Detailed refactoring documentation
+- [PRD v1](./v1.md) - Product requirements for v1 MVP
