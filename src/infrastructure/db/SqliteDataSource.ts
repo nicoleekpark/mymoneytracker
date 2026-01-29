@@ -9,7 +9,7 @@ import type { DataSource } from './DataSource'
 
 /**
  * SQLite implementation of DataSource interface.
- * Wraps expo-sqlite operations from lib/db/sqlite.ts.
+ * Wraps expo-sqlite operations from infrastructure/db/sqlite.ts.
  */
 class SqliteDataSourceImpl implements DataSource {
   exec(sql: string, args: unknown[] = []): void {

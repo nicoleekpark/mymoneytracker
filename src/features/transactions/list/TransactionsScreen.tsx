@@ -1,12 +1,14 @@
 import { getActiveAccounts } from '@/domain/account'
 import type { Transaction } from '@/domain/transaction'
-import { getThisMonthExpenseTotalDollar, getTransactions, TransactionType } from '@/domain/transaction'
+import { isExpense, safeDate, TransactionType } from '@/domain/transaction'
 import { useHoHTheme } from '@/providers'
-import { PALETTE } from '@/theme'
+import { formatDayHeader, formatMonthSectionTitle, monthKey, ymd } from '@/shared/format/date'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFocusEffect } from '@react-navigation/native'
 import { useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { useTransactionsData } from './hooks/useTransactionsData'
 import {
   LayoutAnimation,
   Platform,
@@ -29,49 +31,8 @@ type MonthSection = {
   data: Transaction[]
 }
 
-function pad2(n: number) {
-  return n < 10 ? `0${n}` : `${n}`
-}
-
-function monthKey(d: Date) {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`
-}
-
-function monthTitle(d: Date) {
-  const month = d.toLocaleString(undefined, { month: 'long' }).toUpperCase()
-  return `${month} ${d.getFullYear()}`
-}
-
-function safeDate(tx: Transaction): Date {
-  const d = tx.occurredAt instanceof Date ? tx.occurredAt : new Date((tx as any).occurredAt)
-  return Number.isNaN(d.getTime()) ? new Date(0) : d
-}
-
-function ymd(d: Date): string {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
-}
-
-function isExpense(tx: Transaction): boolean {
-  const t = (tx as any).type
-  return typeof t === 'string' ? t === 'expense' : true
-}
-
-function isIncome(tx: Transaction): boolean {
-  const t = (tx as any).type
-  return typeof t === 'string' ? t === 'income' : false
-}
-
-function isTransfer(tx: Transaction): boolean {
-  const t = (tx as any).type
-  return typeof t === 'string' ? t === 'transfer' : false
-}
-
-function isSameMonth(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth()
-}
-
 function displayItem(tx: Transaction): string {
-  return (tx as any).item || (tx as any).note || (tx as any).memo || 'Untitled'
+  return tx.item || tx.note || 'Untitled'
 }
 
 function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
@@ -80,8 +41,8 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   const filtered = q
     ? all.filter((tx) => {
         const item = displayItem(tx).toLowerCase()
-        const note = String(((tx as any).note || (tx as any).memo || '')).toLowerCase()
-        const merchant = String(((tx as any).merchant || '')).toLowerCase()
+        const note = String(tx.note ?? '').toLowerCase()
+        const merchant = String(tx.merchant ?? '').toLowerCase()
         return item.includes(q) || note.includes(q) || merchant.includes(q)
       })
     : all
@@ -96,12 +57,12 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
       map.get(key) ??
       ({
         key,
-        title: monthTitle(d),
+        title: formatMonthSectionTitle(d),
         total: 0,
         data: []
       } satisfies MonthSection)
 
-    const amt = Number((tx as any).money?.amount ?? 0)
+    const amt = tx.money.amount
     if (Number.isFinite(amt) && isExpense(tx)) section.total += amt
 
     section.data.push(tx)
@@ -109,26 +70,6 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
   }
 
   return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1))
-}
-
-function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
-  let income = 0
-  let expense = 0
-
-  for (const tx of all) {
-    const d = safeDate(tx)
-    if (!isSameMonth(d, now)) continue
-
-    const amt = Number((tx as any).money?.amount ?? 0)
-    if (!Number.isFinite(amt) || amt <= 0) continue
-
-    if (isTransfer(tx)) continue
-
-    if (isIncome(tx)) income += amt
-    else if (isExpense(tx)) expense += amt
-  }
-
-  return { income, net: income - expense }
 }
 
 function findScrollTarget(sections: MonthSection[], focusDate?: string) {
@@ -146,13 +87,6 @@ function findScrollTarget(sections: MonthSection[], focusDate?: string) {
   return { sectionIndex, itemIndex, fallbackToHeader: false as const }
 }
 
-function formatDayHeader(d: Date) {
-  // ex: Tue, Jan 14
-  const weekday = d.toLocaleString(undefined, { weekday: 'short' })
-  const month = d.toLocaleString(undefined, { month: 'short' })
-  return `${weekday}, ${month} ${d.getDate()}`
-}
-
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
@@ -162,10 +96,8 @@ export default function TransactionsScreen() {
   const listRef = useRef<SectionList<Transaction, MonthSection>>(null)
   const didAutoScrollRef = useRef(false)
 
-  const [items, setItems] = useState<Transaction[]>([])
-  const [thisMonthExpense, setThisMonthExpense] = useState(0)
-  const [thisMonthIncome, setThisMonthIncome] = useState(0)
-  const [thisMonthNet, setThisMonthNet] = useState(0)
+  const { data, refetch } = useTransactionsData()
+  const { items, thisMonthExpense, thisMonthIncome, thisMonthNet } = data
 
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -227,68 +159,11 @@ export default function TransactionsScreen() {
     [theme.semantic]
   )
 
-  const stripColorByType = useCallback(
-    (t: TransactionType) => {
-      if (t === 'income') return (theme.semantic.success as any) ?? PALETTE.green[600]
-      if (t === 'transfer') return (theme.semantic.info as any) ?? PALETTE.blue[600]
-      return (theme.semantic.danger as any) ?? PALETTE.red[500]
-    },
-    [theme.semantic]
-  )
-
-  const load = useCallback(() => {
-    let alive = true
-
-    try {
-      const txsP = Promise.resolve(getTransactions(200) as any)
-      const expenseP = Promise.resolve(getThisMonthExpenseTotalDollar() as any)
-
-      Promise.all([txsP, expenseP])
-        .then(([txs, expense]) => {
-          if (!alive) return
-          const arr = Array.isArray(txs) ? txs : []
-          setItems(arr)
-
-          const expenseNum = Number(expense ?? 0)
-          setThisMonthExpense(expenseNum)
-
-          const { income, net } = sumThisMonthIncomeAndNet(arr, new Date())
-          setThisMonthIncome(income)
-          setThisMonthNet(net)
-
-          didAutoScrollRef.current = false
-        })
-        .catch((e) => {
-          console.error(e)
-          if (!alive) return
-          setItems([])
-          setThisMonthExpense(0)
-          setThisMonthIncome(0)
-          setThisMonthNet(0)
-          didAutoScrollRef.current = false
-        })
-    } catch (e) {
-      console.error(e)
-      if (!alive) return
-      setItems([])
-      setThisMonthExpense(0)
-      setThisMonthIncome(0)
-      setThisMonthNet(0)
-      didAutoScrollRef.current = false
-    }
-
-    return () => {
-      alive = false
-    }
-  }, [])
-
   useFocusEffect(
     useCallback(() => {
-      const cleanup = load()
-      return () => {
-        if (typeof cleanup === 'function') cleanup()
-      }
-    }, [load])
+      refetch()
+      didAutoScrollRef.current = false
+    }, [refetch])
   )
 
   const sections = useMemo(() => buildMonthSections(items, debouncedQuery), [items, debouncedQuery])
@@ -391,7 +266,7 @@ export default function TransactionsScreen() {
         ref={listRef}
         style={{ flex: 1 }}
         sections={sections}
-        keyExtractor={(it) => (it as any).id}
+        keyExtractor={(it) => it.id}
         stickySectionHeadersEnabled
         contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -420,24 +295,22 @@ export default function TransactionsScreen() {
         }}
 
         renderItem={({ item, index, section }) => {
-          const tx = item as any
-          const amt = Number(tx?.money?.amount ?? 0)
+          const amt = item.money.amount
 
-          const t = (String(tx?.type ?? 'expense') as TransactionType) || 'expense'
-          const itemText = String(tx?.item ?? tx?.note ?? tx?.memo ?? 'Untitled')
+          const t = item.type
+          const itemText = item.item || item.note || 'Untitled'
 
-          const merchantRaw = String(tx?.merchant ?? '').trim()
+          const merchantRaw = (item.merchant ?? '').trim()
           const merchantText = merchantRaw.length ? merchantRaw : null
 
           const d = safeDate(item)
           const dayText = Number.isFinite(d.getTime()) ? String(d.getDate()) : '--'
           const rowYmd = Number.isFinite(d.getTime()) ? ymd(d) : null
 
-          const accountId = String(tx?.accountId ?? '')
-          const accountName = accountNameById.get(accountId) ?? 'Account'
+          const accountId = item.accountId ?? ''
+          const accountName = accountNameById.get(accountId) || 'Account'
 
           const stripBg = stripBgByType(t)
-          const _stripColor = stripColorByType(t)
 
           const amountColor = t === 'income' ? (theme.semantic.success ?? theme.semantic.text) : theme.semantic.text
 

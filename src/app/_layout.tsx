@@ -16,12 +16,14 @@ import tamaguiConfig from '../../tamagui.config'
 
 export { ErrorBoundary } from 'expo-router'
 
-// Keep the splash screen visible while we fetch resources
+/**  Keep the splash screen visible while we fetch resources */
 SplashScreen.preventAutoHideAsync()
 
-// render deciedes what to show, useEffect does the work after the screen is already decided
-// useEffect runs after render,so even if DB init takes time,
-// we can return null first and keep the splash screen visible to avoid showing a blank or frozen UI
+/** Root layout component - initializes DB and sets up theming/navigation
+ * Render logic decides what to show, useEffect does the work after the screen is already decided
+ * useEffect runs after render, so even if DB init takes time,
+ * we can return null first and keep the splash screen visible to avoid showing a blank or frozen UI
+ */
 export default function RootLayout() {
   // [variableName, functionToSetVariable] = useState(initialValueOfVariable)
   const [dbReady, setDbReady] = useState(false)

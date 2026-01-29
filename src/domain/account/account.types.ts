@@ -13,8 +13,8 @@ export type AccountKind =
 
 export type Account = {
   id: UUID
-  key: string
-  name: string
+  key: string // ex. acct:cash_wallet
+  name: string // ex. "Cash Wallet"
 
   nature: 'asset' | 'liability'
   kind: AccountKind

@@ -1,0 +1,83 @@
+import { useCallback, useMemo, useState } from 'react'
+import { Keyboard } from 'react-native'
+
+function digitsOnly(s: string): string {
+  return s.replace(/[^\d]/g, '')
+}
+
+function formatCentsDisplay(centsText: string): string {
+  const digits = digitsOnly(centsText)
+  const cents = digits ? Number(digits) : 0
+  if (!Number.isFinite(cents) || cents < 0) return '0.00'
+  const dollars = cents / 100
+  return dollars.toFixed(2)
+}
+
+function centsNumber(centsText: string): number {
+  const digits = digitsOnly(centsText)
+  const n = digits ? Number(digits) : 0
+  return Number.isFinite(n) ? n : NaN
+}
+
+export type AmountKeypadState = Readonly<{
+  amountCentsText: string
+  amountCents: number
+  amountDisplay: string
+  amountDollars: number
+  showAmountKeypad: boolean
+  openAmountKeypad: () => void
+  closeAmountKeypad: () => void
+  appendAmountDigit: (d: string) => void
+  backspaceAmount: () => void
+  clearAmount: () => void
+}>
+
+export function useAmountKeypad(): AmountKeypadState {
+  const [amountCentsText, setAmountCentsText] = useState('')
+  const [showAmountKeypad, setShowAmountKeypad] = useState(false)
+
+  const amountCents = useMemo(() => centsNumber(amountCentsText), [amountCentsText])
+  const amountDisplay = useMemo(() => formatCentsDisplay(amountCentsText), [amountCentsText])
+
+  const amountDollars = useMemo(() => {
+    if (!Number.isFinite(amountCents) || amountCents < 0) return NaN
+    return amountCents / 100
+  }, [amountCents])
+
+  const openAmountKeypad = useCallback(() => {
+    Keyboard.dismiss()
+    setShowAmountKeypad(true)
+  }, [])
+
+  const closeAmountKeypad = useCallback(() => {
+    setShowAmountKeypad(false)
+  }, [])
+
+  const appendAmountDigit = useCallback((d: string) => {
+    setAmountCentsText((prev) => {
+      const next = digitsOnly(`${prev}${d}`)
+      return next.length > 12 ? next.slice(0, 12) : next
+    })
+  }, [])
+
+  const backspaceAmount = useCallback(() => {
+    setAmountCentsText((prev) => prev.slice(0, -1))
+  }, [])
+
+  const clearAmount = useCallback(() => {
+    setAmountCentsText('')
+  }, [])
+
+  return {
+    amountCentsText,
+    amountCents,
+    amountDisplay,
+    amountDollars,
+    showAmountKeypad,
+    openAmountKeypad,
+    closeAmountKeypad,
+    appendAmountDigit,
+    backspaceAmount,
+    clearAmount,
+  }
+}

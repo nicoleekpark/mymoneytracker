@@ -1,4 +1,4 @@
-import TransactionsScreen from '@/features/transactions/TransactionsScreen'
+import TransactionsScreen from '@/features/transactions/list/TransactionsScreen'
 
 export default function TransactionsRoute() {
   return <TransactionsScreen />

@@ -1,9 +1,16 @@
 import type { Account, AccountKind, AccountNature } from './account.types'
 
+/**
+ * Normalize account nature (안전한 타입 변환)
+ * 외부에서 들어온 string 값을 받아서 허용된 값인지 검증하고 유효하지 않으면 기본값('asset')을 반환
+ */
 export function normalizeAccountNature(raw: string): AccountNature {
   return raw === 'asset' || raw === 'liability' ? raw : 'asset'
 }
 
+/**
+ * Normalize account kind
+ */
 export function normalizeAccountKind(raw: string): AccountKind {
   switch (raw) {
     case 'cash':
@@ -53,7 +60,7 @@ export function accountKindSortRank(kind: AccountKind): number {
 }
 
 /**
- * Optional helpers (domain semantics)
+ * Helpers (domain semantics)
  */
 export function isAssetAccount(account: Account): boolean {
   return account.nature === 'asset'

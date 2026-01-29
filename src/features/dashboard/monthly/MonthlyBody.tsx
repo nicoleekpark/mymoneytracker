@@ -14,7 +14,7 @@ function buildMonthTitle(monthYYYYMM: string) {
   return `${names[Math.max(0, Math.min(11, month - 1))]} ${y}`
 }
 
-const TRANSACTIONS_ROUTE = '/transactions'
+const TRANSACTIONS_ROUTE = '/transactions' as const
 
 export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors }) {
   const { monthYYYYMM, colors } = props
@@ -31,7 +31,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
 
   function onPressDay(ymd: string) {
     router.push({
-      pathname: TRANSACTIONS_ROUTE as any,
+      pathname: TRANSACTIONS_ROUTE,
       params: { focusDate: ymd }
     })
   }

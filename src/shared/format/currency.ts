@@ -32,19 +32,3 @@ export function formatSignedUsdInt(amount: number): string {
   return v > 0 ? `+$ ${abs}` : `-$ ${abs}`
 }
 
-/**
- * Format an expense amount as an integer.
- * Expenses are shown without sign: $ 123
- */
-export function formatExpenseInt(amount: number): string {
-  return formatUsdInt(amount)
-}
-
-/**
- * Format an income amount as an integer.
- * Incomes are shown with a plus sign: +$ 123
- */
-export function formatIncomeInt(amount: number): string {
-  const v = Math.round(Math.abs(Number(amount) || 0))
-  return `+$ ${v}`
-}

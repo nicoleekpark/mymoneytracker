@@ -15,3 +15,11 @@ export {
 export type {
   MonthlyExpenseTotal
 } from './transaction.repository'
+
+export {
+  isExpense,
+  isIncome,
+  isTransfer,
+  safeDate,
+  transactionAmount
+} from './transaction.utils'

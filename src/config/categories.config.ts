@@ -416,3 +416,13 @@ export const CATEGORIES: CategoryMeta[] = Object.entries(CATEGORY_META).map(([ke
   type: meta.type,
   subCategories: SUBCATEGORIES[key] ?? []
 }))
+
+// Example category object:
+// {
+//   key: 'housing',
+//   name: 'Housing',
+//   icon: '🏡',
+//   color: '#F59E0B',
+//   type: 'expense',
+//   subCategories: ['property_tax', 'utilities', 'hoa', 'repairs', 'home_insurance']
+// }
