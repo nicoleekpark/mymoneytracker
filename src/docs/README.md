@@ -89,7 +89,7 @@
 
 ### 2. Product Requirements (01_prd/)
 
-**Purpose**: Define **what** we're building and **why**
+**Purpose**: Define **what** we're building and **why** - a contract
 
 **Contents**:
 - v1.en.md: MVP requirements (current development)
@@ -98,13 +98,19 @@
 
 **Key Characteristics**:
 - **Living Documents**: Updated as implementation evolves
+  - Goals / Non-goals
+  - Personas & Jobs-to-be-done
 - **User-Focused**: Written from user's perspective
+  - Must / Should / Could
 - **Version-Specific**: Each version has its own PRD
+- **Focums on user-visible outcomes, not internal mechanics**
 
 **When to Update**:
 - Feature scope changes
 - User stories added/removed
 - Success metrics defined
+- Data requirements (fields, accuracy, data retention)
+- Compliance/Security requirements (PII, encryption, audit logs)
 
 ---
 
@@ -202,9 +208,9 @@ Links to PRs, issues, ADRs
 **Purpose**: Track **releases and deployment**
 
 **Contents**:
-- changelog.md: Version history (developer-facing)
+- changelog.md: Version history (developer-facing) - Added/Changed/Fixed/Security/Breaking changes
 - rollout-plan.md: Deployment strategy, feature flags
-- release-notes/: User-facing release announcements
+- release-notes/: User-facing release announcements (`YYYY-MM-DD-vX.md` )
 
 **Key Characteristics**:
 - **Chronological**: Ordered by release date
