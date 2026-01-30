@@ -198,3 +198,62 @@ export async function getDailyFlowDollarForMonth(monthYYYYMM: string): Promise<D
       txCount: v.count
     }))
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Yearly aggregations
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type MonthlyFlowDollar = Readonly<{
+  month: string // YYYY-MM
+  incomeDollar: number
+  expenseDollar: number
+}>
+
+export async function getMonthlyFlowDollarForYear(year: number): Promise<MonthlyFlowDollar[]> {
+  const rows = transactionRepository.listMonthlyFlowTotalsForYear(year)
+
+  const byMonth = new Map<string, { income: number; expense: number }>()
+  for (const r of rows) {
+    const cur = byMonth.get(r.month) ?? { income: 0, expense: 0 }
+    const val = centsToDollars(r.totalCents)
+
+    if (r.type === 'income') cur.income = val
+    if (r.type === 'expense') cur.expense = val
+
+    byMonth.set(r.month, cur)
+  }
+
+  return Array.from(byMonth.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([month, v]) => ({
+      month,
+      incomeDollar: v.income,
+      expenseDollar: v.expense
+    }))
+}
+
+export type YearlyExpenseByCategoryDollar = Readonly<{
+  categoryId: UUID | null
+  totalDollar: number
+}>
+
+export async function getYearlyExpenseByCategoryDollar(year: number): Promise<YearlyExpenseByCategoryDollar[]> {
+  const rows = transactionRepository.listYearlyExpenseByCategory(year)
+  return rows.map((r) => ({
+    categoryId: r.categoryId,
+    totalDollar: centsToDollars(r.totalCents)
+  }))
+}
+
+export type YearlyIncomeByCategoryDollar = Readonly<{
+  categoryId: UUID | null
+  totalDollar: number
+}>
+
+export async function getYearlyIncomeByCategoryDollar(year: number): Promise<YearlyIncomeByCategoryDollar[]> {
+  const rows = transactionRepository.listYearlyIncomeByCategory(year)
+  return rows.map((r) => ({
+    categoryId: r.categoryId,
+    totalDollar: centsToDollars(r.totalCents)
+  }))
+}

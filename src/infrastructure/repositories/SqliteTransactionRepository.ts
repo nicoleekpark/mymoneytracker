@@ -6,7 +6,10 @@ import type {
   DailyFlowTotalWithCount,
   MonthlyExpenseByCategory,
   MonthlyExpenseTotal,
+  MonthlyFlowTotal,
   TransactionRepository,
+  YearlyExpenseByCategory,
+  YearlyIncomeByCategory,
 } from '@/domain/transaction/transaction.repository'
 import type { CategoryRepository } from '@/domain/category/category.repository'
 import type { DataSource } from '../db/DataSource'
@@ -262,6 +265,78 @@ export class SqliteTransactionRepository implements TransactionRepository {
       type: r.type,
       totalCents: Number(r.total_cents ?? 0),
       txCount: Number(r.tx_count ?? 0),
+    }))
+  }
+
+  listMonthlyFlowTotalsForYear(year: number): MonthlyFlowTotal[] {
+    const yearPrefix = String(year)
+    const rows = this.dataSource.queryAll<{
+      month: string
+      type: 'income' | 'expense'
+      total_cents: number
+    }>(
+      `
+      SELECT
+        substr(occurred_at, 1, 7) AS month,
+        type,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE (type = 'income' OR type = 'expense')
+        AND substr(occurred_at, 1, 4) = ?
+      GROUP BY month, type
+      ORDER BY month ASC;
+      `,
+      [yearPrefix]
+    )
+
+    return rows.map((r) => ({
+      month: r.month,
+      type: r.type,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
+  listYearlyExpenseByCategory(year: number): YearlyExpenseByCategory[] {
+    const yearPrefix = String(year)
+    const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
+      `
+      SELECT
+        category_id,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'expense'
+        AND substr(occurred_at, 1, 4) = ?
+      GROUP BY category_id
+      ORDER BY total_cents DESC;
+      `,
+      [yearPrefix]
+    )
+
+    return rows.map((r) => ({
+      categoryId: r.category_id ?? null,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
+  listYearlyIncomeByCategory(year: number): YearlyIncomeByCategory[] {
+    const yearPrefix = String(year)
+    const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
+      `
+      SELECT
+        category_id,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'income'
+        AND substr(occurred_at, 1, 4) = ?
+      GROUP BY category_id
+      ORDER BY total_cents DESC;
+      `,
+      [yearPrefix]
+    )
+
+    return rows.map((r) => ({
+      categoryId: r.category_id ?? null,
+      totalCents: Number(r.total_cents ?? 0),
     }))
   }
 }

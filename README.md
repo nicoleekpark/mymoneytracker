@@ -1,83 +1,13 @@
-# WIP
+# Project Overview
 
-## Table of Contents
-- [WIP](#wip)
-  - [Table of Contents](#table-of-contents)
-- [HoH Finance Tracker](#hoh-finance-tracker)
-  - [Overview](#overview)
-  - [Idea](#idea)
-  - [Breakdown](#breakdown)
-    - [Tabs](#tabs)
-      - [Dashboard](#dashboard)
-      - [Cashflow](#cashflow)
-      - [Accounts](#accounts)
-      - [Transactions](#transactions)
-      - [Add Transaction](#add-transaction)
-      - [Investments](#investments)
-      - [Assets (Net Worth)](#assets-net-worth)
-      - [Budget](#budget)
-      - [Reports](#reports)
-      - [Recurring](#recurring)
-      - [Goal](#goal)
-      - [Credit Score](#credit-score)
-  - [Developer Guide](#developer-guide)
-    - [Step 1. Developer Environment Setup](#step-1-developer-environment-setup)
-      - [1.1 Install required softwares](#11-install-required-softwares)
-      - [1.2 Mobile test](#12-mobile-test)
-    - [Step 2. Create a Project](#step-2-create-a-project)
-      - [2.1 In terminal](#21-in-terminal)
-      - [2.2 Run project](#22-run-project)
-      - [2.3 How to test](#23-how-to-test)
-    - [Step 3. Update Project Structure](#step-3-update-project-structure)
-    - [Step 4. Install TamaGUI](#step-4-install-tamagui)
-      - [Step 4. Install sqlite](#step-4-install-sqlite)
-      - [Step 5. Install dev client build (iOS)](#step-5-install-dev-client-build-ios)
-      - [Step 6. How to run](#step-6-how-to-run)
-      - [2.4 Database](#24-database)
+HoH Finance Tracker is a cross-platform personal finance app built with Expo/React Native and Tamagui. It supports iOS, Android, and web. The app uses expo-sqlite for local data persistence with a custom migration system.
 
-# HoH Finance Tracker
+# Developor Guide
 
-## Overview
-A cross platform application that provides flexible budget setting and tracking.
+## Step 1. Developer Environment Setup
 
-## Idea
-- manual type in transaction
-- every end of the day, it pulls daily cc usage from the bank and compare
-- calendar view of how much spent etc
-## Breakdown
-
-### Tabs
-
-#### Dashboard
-Aggregated view of everything
-- Current spend this month
-  - graph view
-  - compare to last month
-  - compare manual input vs. automated (sync with the bank)
-- Net worth
-  - graph view
-  - compare to last month
-- Accounts
-- Upcoming
-#### Cashflow
-#### Accounts
-#### Transactions
-#### Add Transaction
-- One click adding transactions
-#### Investments
-#### Assets (Net Worth)
-#### Budget
-#### Reports
-#### Recurring
-#### Goal
-#### Credit Score
-
-## Developer Guide
-
-### Step 1. Developer Environment Setup
-
-#### 1.1 Install required softwares
-```
+### Install required softwares
+```bash
 $ node --version
 v22.14.0
 
@@ -88,18 +18,10 @@ $ git --version
 git version 2.39.5 (Apple Git-154)
 ```
 
-#### 1.2 Mobile test
-- Method1: real phone
-    - iOS & Android: Install `Expo Go`
-- Method2: simulator
-    - iOS: Xcode
-    - Android: Android Studio
+## Step 2. Create a Project and Set Up
 
-### Step 2. Create a Project
-**npx command executes without installing**
-
-#### 2.1 In terminal
-```
+```bash
+# Create an expo app - npx command executes without installing
 $ npx create-expo-app@latest hoh_finance-tracker --template tabs
 
 Need to install the following packages:
@@ -126,78 +48,21 @@ found 0 vulnerabilities
 
 ✅ Your project is ready!
 
-To run your project, navigate to the directory and run one of the following npm commands.
+---
+# install Tamagui
+$ npm install tamagui @tamagui/config @tamagui/babel-plugin
 
-- cd hoh_finance-tracker
-- npm run android
-- npm run ios
-- npm run web
+---
+# Install sqlite
+$ npx expo install expo-sqlite
+
+# Install dev client build (iOS)
+$ eas build -p ios --profile development
 ```
 
-#### 2.2 Run project
-1. Method1
-```
-$ npm start
-$ npm run web
-$ npm ios
-```
-As seen in `scripts` in `package.json`
-
-2. Method2
-```
-$ npx expo
-$ npx expo start --clear # clear cache
-
-Starting project at /Users/parkhuynh/0_nicole/projects/hoh_finance-tracker
-Starting Metro Bundler
-
-[QR CODE]
-
-› Metro waiting on exp://xxx.xxx.x.xxx:8081
-› Scan the QR code above with Expo Go (Android) or the Camera app (iOS)
-
-› Web is waiting on http://localhost:8081
-
-› Using Expo Go
-› Press s │ switch to development build
-
-› Press a │ open Android
-› Press i │ open iOS simulator
-› Press w │ open web
-
-› Press j │ open debugger
-› Press r │ reload app
-› Press m │ toggle menu
-› shift+m │ more tools
-› Press o │ open project code in your editor
-
-› Press ? │ show all commands
-
-Logs for your project will appear below. Press Ctrl+C to exit.
-```
-
-#### 2.3 How to test
-- Web browser: w key
-- iOS simulator: i key (Xcode needed)
-- Android emulator: a key (Android Studio needed)
-- Real phone: Scan QR code using Expo Go app
-
-
-
-### Step 3. Update Project Structure
-
-Based on [Expo dev suggestion](https://expo.dev/blog/expo-app-folder-structure-best-practices):
-
-```
-$ mkdir src
-$ mv components src/
-$ mv constants src/
-$ mkdir src/lib src/store src/types src/utils
-```
-
-Update config so `@/` route points `src/ `
-```
-# in tsconfig.json
+### Update config so `@/` route points `src/` 
+```bash
+# In tsconfig.json
 
 "compilerOptions": {
     "strict": true,
@@ -209,9 +74,9 @@ Update config so `@/` route points `src/ `
 }
 ```
 
-Update necessary files pointing the right path
-```
-# in _layout.tsx
+### Update necessary files pointing the right path
+```bash
+# In _layout.tsx
 
 ../assets/fonts/ -> ../../assets/fonts/
 
@@ -221,77 +86,28 @@ const [loaded, error] = useFonts({
   });
 ```
 
-Run `npx expo start --clear` and `w` to see if works.
 
-### Step 4. Install TamaGUI
+## Commands
 
-```
-$ npm install tamagui @tamagui/config @tamagui/babel-plugin
-```
+```bash
+# Run on iOS simulator with Expo Go (fastest, UI-only)
+npm run start:ios
 
+# Run on iOS with dev-client (required for SQLite/native features)
+npm run start:dev:ios
 
-#### Step 4. Install sqlite
-```
-$ npx expo install expo-sqlite
-```
+# Rebuild native iOS (needed when adding/updating native modules)
+npm run ios:run && npm run start:dev:ios
 
-#### Step 5. Install dev client build (iOS)
-```
-$ eas build -p ios --profile development
-```
+# Create a new database migration
+npm run db:migration:new <migration_name>
 
-#### Step 6. How to run
-```
-# Fastest, UI focus - quick test on simulator with Expo Go
-$ npm run start:ios
+# Regenerate migrations index
+npm run db:migration:regen
 
-# SQLite + Native check - test on simulator with dev-client mode
-$ npm run start:dev:ios
+# Export simulator database for inspection
+npm run db:dev:pull
 
-# Big changes - need to rebuild native (add/update expo-sqlite, plugins change, iOS auth change, prebuild env change)
-$ npm run ios:run
-$ npm run start:dev:ios
-
-# server + simulator
-$ npm run start:dev:ios
-```
-
-#### JUST KNOW:
-```
-run app
-$ npm run ios:run && npm run start:dev:ios
-```
-
-#### DB
-
-This project uses a **safe SQLite snapshot mechanism** to export the
-iOS Simulator database for inspection (DBeaver, debugging, etc).
-
-### Prerequisites
-- App must be running on iOS Simulator
-- Node & bash available
-- sqlite3 installed (`brew install sqlite`)
-
-그냥
-```
-$ npm run db:dev:pull
-```
-
-<!-- ```
-// delete the app (reset the whole db)
+# Delete the app (reset the whole db)
 $ xcrun simctl uninstall booted com.houseofhuynh.finance
 ```
-
-```
-// in terminal 1 (always on)
-$ npm run db:dev:server
-```
-
-Expected output:
-```
-Dev server listening on http://127.0.0.1:3333
-```
-
-// in terminal 2 (whenever db export is needed)
-$ npm run db:dev:sync
-``` -->

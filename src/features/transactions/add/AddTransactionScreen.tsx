@@ -306,7 +306,9 @@ export default function AddTransactionScreen() {
           {/* Account */}
           <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
             <Pressable onPress={account.openAccount} style={styles.row}>
-              <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Paid with</Text>
+              <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>                                                
+                {type === 'expense' ? 'Paid with' : 'Account'}                   
+              </Text> 
               <Text
                 style={{
                   color: account.selectedAccount ? theme.semantic.text : theme.semantic.textSecondary,

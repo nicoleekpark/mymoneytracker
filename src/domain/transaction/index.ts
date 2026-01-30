@@ -7,9 +7,18 @@ export type {
 export {
   addTransaction,
   getMonthlyExpenseTotalsDollar,
+  getMonthlyFlowDollarForYear,
   getThisMonthExpenseTotalDollar,
   getTransactions,
+  getYearlyExpenseByCategoryDollar,
+  getYearlyIncomeByCategoryDollar,
   removeTransaction
+} from './transaction.usecase'
+
+export type {
+  MonthlyFlowDollar,
+  YearlyExpenseByCategoryDollar,
+  YearlyIncomeByCategoryDollar
 } from './transaction.usecase'
 
 export type {

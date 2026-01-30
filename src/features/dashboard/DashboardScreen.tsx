@@ -13,6 +13,7 @@ import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
 import { DashboardToolbar } from './shared/DashboardToolbar'
 import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
 import { MonthlyBody } from './monthly/MonthlyBody'
+import { YearlyBody } from './yearly'
 
 function periodToMonthYYYYMM(p: Period): string {
   if ('month' in p) {
@@ -98,6 +99,20 @@ export default function DashboardScreen() {
               monthYYYYMM={monthYYYYMM}
               colors={{
                 text: theme.semantic.text,
+                border: theme.semantic.border,
+                surface: theme.semantic.surface,
+                surfaceAlt: theme.semantic.surfaceAlt,
+                primary: theme.semantic.primary,
+                success: theme.semantic.success,
+                danger: theme.semantic.danger
+              }}
+            />
+          ) : scope === 'year' ? (
+            <YearlyBody
+              year={period.year}
+              colors={{
+                text: theme.semantic.text,
+                textSecondary: theme.semantic.textSecondary,
                 border: theme.semantic.border,
                 surface: theme.semantic.surface,
                 surfaceAlt: theme.semantic.surfaceAlt,

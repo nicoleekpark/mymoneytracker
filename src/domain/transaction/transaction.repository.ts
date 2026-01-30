@@ -32,6 +32,22 @@ export type DailyFlowTotalWithCount = Readonly<{
   txCount: number
 }>
 
+export type MonthlyFlowTotal = Readonly<{
+  month: string // YYYY-MM
+  type: 'income' | 'expense'
+  totalCents: number
+}>
+
+export type YearlyExpenseByCategory = Readonly<{
+  categoryId: UUID | null
+  totalCents: number
+}>
+
+export type YearlyIncomeByCategory = Readonly<{
+  categoryId: UUID | null
+  totalCents: number
+}>
+
 /**
  * TransactionRepository interface - defines data access contract for transactions.
  * Implementations handle persistence details (SQLite, etc.)
@@ -51,4 +67,9 @@ export interface TransactionRepository {
   listTransfersForMonth(monthYYYYMM: string, limit?: number): Transaction[]
   listDailyFlowTotalsForMonth(monthYYYYMM: string): DailyFlowTotal[]
   listDailyFlowTotalsWithCountForMonth(monthYYYYMM: string): DailyFlowTotalWithCount[]
+
+  // Yearly aggregations
+  listMonthlyFlowTotalsForYear(year: number): MonthlyFlowTotal[]
+  listYearlyExpenseByCategory(year: number): YearlyExpenseByCategory[]
+  listYearlyIncomeByCategory(year: number): YearlyIncomeByCategory[]
 }
