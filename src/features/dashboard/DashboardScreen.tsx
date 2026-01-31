@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
+import { Divider } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 
 import type { Period } from './types'
@@ -84,7 +85,7 @@ export default function DashboardScreen() {
         onToday={resetToToday}
       />
 
-      <View style={styles.divider} />
+      <Divider spacing='sm'/>
 
       <SwipeGestureWrapper
         onSwipeLeft={handleSwipeLeft}

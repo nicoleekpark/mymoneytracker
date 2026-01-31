@@ -1,3 +1,4 @@
+import { Header, Stack } from '@/shared/components'
 import React, { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
@@ -47,8 +48,8 @@ export function MonthlyCategorySection(props: SectionProps) {
   const hasData = slices.length > 0
 
   return (
-    <View style={{ gap: 12 }}>
-      <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>Monthly Spending by Category</Text>
+    <Stack gap="xl">
+      <Header variant="section" align="center">Monthly Spending by Category</Header>
 
       {loading ? <Text style={{ color: colors.text, opacity: 0.7 }}>Loading</Text> : null}
       {error ? <Text style={{ color: colors.text, opacity: 0.7 }}>{error}</Text> : null}
@@ -65,21 +66,21 @@ export function MonthlyCategorySection(props: SectionProps) {
             }}
           />
 
-          <View style={{ gap: 10 }}>
+          <Stack gap="sm">
             {slices.map((s) => (
               <CategoryRow
-                key={s.reactKey} // ✅ unique key
+                key={s.reactKey}
                 slice={s}
                 colors={colors}
                 onPress={() => props.onPressCategory?.(s.colorKey)}
               />
             ))}
-          </View>
+          </Stack>
         </>
       ) : !loading && !error ? (
         <Text style={{ color: colors.text, opacity: 0.7 }}>No spending yet</Text>
       ) : null}
-    </View>
+    </Stack>
   )
 }
 

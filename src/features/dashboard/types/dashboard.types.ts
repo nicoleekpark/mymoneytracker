@@ -1,4 +1,4 @@
-export type DashboardMode = 'overview' | 'cashflow' | 'accounts' | 'networth'
+export type DashboardMode = 'overview' | 'assets' | 'accounts' | 'insights'
 export type Scope = 'month' | 'year' | 'all'
 
 export type Period =
@@ -7,9 +7,9 @@ export type Period =
 
 export const MODES: ReadonlyArray<{ key: DashboardMode; label: string }> = [
   { key: 'overview', label: 'Overview' },
-  { key: 'cashflow', label: 'Cash Flow' },
+  { key: 'assets', label: 'Assets' },
   { key: 'accounts', label: 'Accounts' },
-  { key: 'networth', label: 'Net Worth' }
+  { key: 'insights', label: 'Insights' }
 ]
 
 export function clampMonth(m: number): number {
@@ -36,12 +36,12 @@ export function ymIndex(x: { year: number; month: number }): number {
   return x.year * 12 + (x.month - 1)
 }
 
-const MONTH_NAMES_SHORT = [
+export const MONTH_NAMES_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ] as const
 
-const MONTH_NAMES_FULL = [
+export const MONTH_NAMES_FULL = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ] as const

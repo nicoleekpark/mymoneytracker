@@ -2,32 +2,32 @@ import type { SemanticColors } from '../types'
 import { PALETTE } from './base'
 
 export const semanticLight: SemanticColors = {
-  // App background
-  background: '#F9F9FB',
-  backgroundAlt: PALETTE.gray[50],
+  // App background (warm stone tones)
+  background: PALETTE.zinc[50],
+  backgroundAlt: PALETTE.zinc[100],
 
   // Cards / surfaces
   surface: '#FFFFFF',
-  surfaceAlt: PALETTE.gray[100],
-  border: PALETTE.gray[200],
+  surfaceAlt: PALETTE.zinc[100],
+  border: PALETTE.zinc[200],
 
   // Text
-  text: PALETTE.gray[900],
-  textSecondary: PALETTE.gray[600],
+  text: PALETTE.zinc[900],
+  textSecondary: PALETTE.zinc[500],
 
-  // Brand (Orange)
-  primary: PALETTE.orange[500],        // action & select (add, confirm) etc
-  primarySoft: PALETTE.orange[50],     // 🔽 더 연하게 (badge, chart fill)
-  primaryStrong: PALETTE.orange[600],  // pressed (add, confirm) etc
+  // Brand (Warm Gray - Editorial)
+  primary: PALETTE.editorial.primary,
+  primarySoft: PALETTE.editorial.primarySoft,
+  primaryStrong: PALETTE.zinc[600],
 
-  // Status
-  success: PALETTE.green[600],
-  successSoft: PALETTE.green[50],
+  // Status (Forest + Terracotta)
+  success: PALETTE.editorial.forest,
+  successSoft: PALETTE.editorial.forestSoft,
 
-  warning: PALETTE.amber[500],
+  warning: PALETTE.editorial.gold,
 
-  danger: PALETTE.red[500],
-  dangerSoft: PALETTE.red[50],
+  danger: PALETTE.editorial.terracotta,
+  dangerSoft: PALETTE.editorial.terracottaSoft,
 
   info: PALETTE.blue[500],
   infoSoft: PALETTE.blue[50]
@@ -35,32 +35,32 @@ export const semanticLight: SemanticColors = {
 
 
 export const semanticDark: SemanticColors = {
-  // App background
-  background: PALETTE.gray[950],
-  backgroundAlt: PALETTE.gray[900],
+  // App background (warm stone tones)
+  background: PALETTE.zinc[950],
+  backgroundAlt: PALETTE.zinc[900],
 
   // Cards / surfaces
-  surface: PALETTE.gray[900],
-  surfaceAlt: PALETTE.gray[800],
-  border: PALETTE.gray[700],
+  surface: PALETTE.zinc[900],
+  surfaceAlt: PALETTE.zinc[800],
+  border: PALETTE.zinc[700],
 
   // Text
-  text: PALETTE.gray[50],
-  textSecondary: PALETTE.gray[400],
+  text: PALETTE.zinc[50],
+  textSecondary: PALETTE.zinc[400],
 
-  // Brand (Orange)
-  primary: PALETTE.orange[400],        // 🔽 약간 낮춰서 눈부심 감소
-  primarySoft: PALETTE.orange[900],    // 아주 어두운 tint
-  primaryStrong: PALETTE.orange[300],  // 강조용
+  // Brand (Warm Gray - Editorial, lighter for dark mode)
+  primary: PALETTE.editorial.primaryLight,
+  primarySoft: PALETTE.editorial.primarySoftDark,
+  primaryStrong: PALETTE.zinc[300],
 
-  // Status
-  success: PALETTE.green[400],
-  successSoft: PALETTE.green[900],
+  // Status (Forest + Terracotta, lighter for dark mode)
+  success: PALETTE.editorial.forestLight,
+  successSoft: PALETTE.editorial.forestSoftDark,
 
-  warning: PALETTE.amber[400],
+  warning: PALETTE.editorial.goldLight,
 
-  danger: PALETTE.red[400],
-  dangerSoft: PALETTE.red[900],
+  danger: PALETTE.editorial.terracottaLight,
+  dangerSoft: PALETTE.editorial.terracottaSoftDark,
 
   info: PALETTE.blue[400],
   infoSoft: PALETTE.blue[900]

@@ -8,58 +8,54 @@ export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHThem
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 8,
-      paddingHorizontal: 4
+      height: 40,
+      paddingHorizontal: 2
     },
     periodSection: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 2
+      height: 40,
+      gap: 0
     },
     chevronBtn: {
-      padding: 8,
-      borderRadius: 8
+      padding: 6,
+      borderRadius: 6
     },
     chevronBtnDisabled: {
       opacity: 0.3
     },
     chevronText: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '600',
       color: theme.semantic.text
     },
     periodBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 8,
-      paddingVertical: 6,
-      borderRadius: 8,
-      gap: 4
+      paddingHorizontal: 4,
+      paddingVertical: 4,
+      borderRadius: 6
     },
     periodText: {
-      fontSize: 17,
+      fontSize: 15,
       fontWeight: '600',
       color: theme.semantic.text
-    },
-    chevronDown: {
-      fontSize: 12,
-      color: theme.semantic.textSecondary
     },
     actions: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8
+      gap: 2
     },
     todayChip: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 16,
-      backgroundColor: theme.semantic.surfaceAlt
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent'
     },
     todayText: {
       fontSize: 13,
-      fontWeight: '600',
-      color: theme.semantic.text
+      fontWeight: '500',
+      color: theme.semantic.textSecondary
     }
   })
 }

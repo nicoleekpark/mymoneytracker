@@ -7,8 +7,8 @@ import type { Scope } from '../types'
 import { createScopeChipsStyles } from './ScopeChips.styles'
 
 const SCOPES: ReadonlyArray<{ key: Scope; label: string }> = [
-  { key: 'month', label: 'Month' },
-  { key: 'year', label: 'Year' },
+  { key: 'month', label: 'Monthly' },
+  { key: 'year', label: 'Yearly' },
   { key: 'all', label: 'All' }
 ]
 

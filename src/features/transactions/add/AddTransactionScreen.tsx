@@ -4,6 +4,7 @@ import type { UUID } from '@/domain/common/uuid'
 import type { TransactionType } from '@/domain/transaction'
 import { addTransaction } from '@/domain/transaction/transaction.usecase'
 import { useHoHTheme } from '@/providers'
+import { CategoryIcon, Divider, Stack } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 import { router } from 'expo-router'
 import React, { useMemo, useRef, useState } from 'react'
@@ -222,6 +223,7 @@ export default function AddTransactionScreen() {
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           showsVerticalScrollIndicator={false}
         >
+          <Stack gap="md">
           {/* Type Selector */}
           <View style={[styles.segmentWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
             {(['expense', 'income', 'transfer'] as TransactionType[]).map((t) => {
@@ -262,7 +264,7 @@ export default function AddTransactionScreen() {
               onSubmitEditing={() => merchantInputRef.current?.focus()}
             />
 
-            <View style={[styles.inlineDivider, { backgroundColor: theme.semantic.border }]} />
+            <Divider />
 
             <TextInput
               ref={merchantInputRef}
@@ -326,14 +328,16 @@ export default function AddTransactionScreen() {
               <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
                 <Pressable onPress={category.openCategory} style={styles.row}>
                   <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Category</Text>
-                  <Text
-                    style={{
-                      color: category.categoryRef ? theme.semantic.text : theme.semantic.textSecondary,
-                      fontWeight: '800',
-                    }}
-                  >
-                    {category.categoryRef ? category.categoryDisplay.split('›')[0].trim() : 'Select'}
-                  </Text>
+                  {category.selectedCategory ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <CategoryIcon name={category.selectedCategory.icon} size={16} color={category.selectedCategory.color} />
+                      <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>
+                        {category.selectedCategory.name}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Select</Text>
+                  )}
                 </Pressable>
               </View>
 
@@ -341,7 +345,20 @@ export default function AddTransactionScreen() {
                 <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
                   <Pressable onPress={category.openSubCategory} style={styles.row}>
                     <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Sub</Text>
-                    <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>{category.subCategoryDisplay}</Text>
+                    {(() => {
+                      const selectedSub = category.categoryRef?.subCategoryKey
+                        ? category.selectedCategory?.subCategories.find(s => s.key === category.categoryRef?.subCategoryKey)
+                        : null
+                      if (selectedSub) {
+                        return (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <CategoryIcon name={selectedSub.icon} size={14} color={selectedSub.color} />
+                            <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>{selectedSub.name}</Text>
+                          </View>
+                        )
+                      }
+                      return <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Select</Text>
+                    })()}
                   </Pressable>
                 </View>
               ) : null}
@@ -393,6 +410,7 @@ export default function AddTransactionScreen() {
           )}
 
           <View style={{ height: 28 }} />
+          </Stack>
         </ScrollView>
 
         {/* Modals */}
@@ -450,7 +468,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    gap: 12,
   },
   segmentWrap: {
     borderWidth: 1,
@@ -484,9 +501,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 12,
     paddingBottom: 12,
-  },
-  inlineDivider: {
-    height: StyleSheet.hairlineWidth,
   },
   card: {
     borderWidth: 1,

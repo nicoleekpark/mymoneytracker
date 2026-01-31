@@ -6,45 +6,39 @@ export function createDashboardStyles(theme: ReturnType<typeof useHoHTheme>) {
 
   return StyleSheet.create({
     modeRow: {
-      paddingBottom: 10
+      paddingBottom: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.semantic.border,
+      alignItems: 'center'
     },
 
-    // Mode tabs (Overview, Cash Flow, etc.)
-    pill: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 999,
-      borderWidth: 1,
-      marginRight: 8,
-      backgroundColor: theme.semantic.surface,
-      borderColor: theme.semantic.border
+    // Mode tabs - bookmark style (Overview, Assets, etc.)
+    tab: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      marginRight: 4,
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent'
     },
 
-    pillSelected: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 999,
-      borderWidth: 1,
-      marginRight: 8,
-      backgroundColor: theme.semantic.primary,
-      borderColor: theme.semantic.primary
+    tabSelected: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      marginRight: 4,
+      borderBottomWidth: 2,
+      borderBottomColor: theme.semantic.primary
     },
 
-    pillText: {
-      color: theme.semantic.text,
-      fontSize: 13,
+    tabText: {
+      color: theme.semantic.textSecondary,
+      fontSize: 14,
+      fontWeight: '500'
+    },
+
+    tabTextSelected: {
+      color: theme.semantic.primary,
+      fontSize: 14,
       fontWeight: '600'
-    },
-
-    pillTextSelected: {
-      color: onPrimary,
-      fontSize: 13,
-      fontWeight: '700'
-    },
-
-    divider: {
-      height: 1,
-      backgroundColor: theme.semantic.border
     },
 
     body: {

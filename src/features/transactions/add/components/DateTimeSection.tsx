@@ -1,4 +1,5 @@
 import { useHoHTheme } from '@/providers'
+import { Divider } from '@/shared/components'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 
@@ -30,7 +31,7 @@ export function DateTimeSection({ dateTime }: Props) {
         </View>
       )}
 
-      <View style={[styles.divider, { backgroundColor: theme.semantic.border }]} />
+      <Divider spacing="md" />
 
       <Pressable onPress={dateTime.openTimePicker} style={styles.row}>
         <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Time</Text>
@@ -66,10 +67,6 @@ const styles = StyleSheet.create({
   rowLabel: {
     width: 80,
     fontWeight: '800',
-  },
-  divider: {
-    height: 1,
-    marginVertical: 12,
   },
   pickerWrap: {
     marginTop: 10,

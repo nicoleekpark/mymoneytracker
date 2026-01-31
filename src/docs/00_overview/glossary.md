@@ -158,3 +158,5 @@ Mapper (row → entity)
 | `cat:*` | `cat:food:eating_out` | Category reference (type:key:subkey) |
 
 ---
+
+

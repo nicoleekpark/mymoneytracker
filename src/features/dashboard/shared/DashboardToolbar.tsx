@@ -64,7 +64,6 @@ export function DashboardToolbar(props: Props) {
           disabled={!showNav}
         >
           <Text style={styles.periodText}>{periodLabel}</Text>
-          {showNav && <Text style={styles.chevronDown}>{'▼'}</Text>}
         </Pressable>
 
         {showNav && (

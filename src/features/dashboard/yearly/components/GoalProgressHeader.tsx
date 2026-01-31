@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
 import { formatUsdInt, formatSignedUsdInt } from '@/shared/format/currency'
+import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -105,8 +106,6 @@ function VerticalMetric({ icon, value, label, subLabel, color, bgColor, colors }
   )
 }
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 function MonthlyRow({
   item,
   colors,
@@ -132,7 +131,7 @@ function MonthlyRow({
       }}
     >
       <Text style={{ width: 36, fontSize: 12, fontWeight: '600', color: colors.textSecondary }}>
-        {MONTH_NAMES[monthIndex]}
+        {MONTH_NAMES_SHORT[monthIndex]}
       </Text>
       <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: 16 }}>
         <Text style={{ fontSize: 12, fontWeight: '600', color: colors.success, minWidth: 55, textAlign: 'right' }}>

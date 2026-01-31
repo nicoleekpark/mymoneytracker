@@ -1,12 +1,11 @@
 import { CATEGORIES } from '@/config/categories.config'
 import type { CategoryRef } from '@/domain/category'
 import { useHoHTheme } from '@/providers'
+import { CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 import React from 'react'
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-
-import { buildCategoryLabel, buildSubLabel } from '../hooks/useCategoryPicker'
 
 type SubCategory = (typeof CATEGORIES)[number]['subCategories'][number]
 
@@ -62,9 +61,14 @@ export function SubCategorySelectionModal({
             style={[styles.topRow, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
           >
             <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Category</Text>
-            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>
-              {selectedCategory ? buildCategoryLabel(selectedCategory) : 'Select'}
-            </Text>
+            {selectedCategory ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <CategoryIcon name={selectedCategory.icon} size={16} color={selectedCategory.color} />
+                <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{selectedCategory.name}</Text>
+              </View>
+            ) : (
+              <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Select</Text>
+            )}
             <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }} />
           </Pressable>
         </View>
@@ -94,7 +98,12 @@ export function SubCategorySelectionModal({
 
             return (
               <Pressable onPress={() => onChoose(sc.key)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
-                <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{buildSubLabel(sc)}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={styles.iconContainer}>
+                    <CategoryIcon name={sc.icon} size={18} color={sc.color} />
+                  </View>
+                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{sc.name}</Text>
+                </View>
                 <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
                   {selected ? '✓' : ''}
                 </Text>
@@ -137,5 +146,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  iconContainer: {
+    width: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })

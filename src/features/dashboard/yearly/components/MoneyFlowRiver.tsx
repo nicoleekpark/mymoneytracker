@@ -31,12 +31,12 @@ type Props = {
 
 function getCategoryMeta(categoryRef?: CategoryRef) {
   if (!categoryRef) {
-    return { name: 'Other', icon: '📦', color: '#666' }
+    return { name: 'Other', icon: 'cube', color: '#666' }
   }
 
   const cat = CATEGORIES.find(c => c.key === categoryRef.categoryKey)
   if (!cat) {
-    return { name: categoryRef.categoryKey, icon: '📦', color: '#666' }
+    return { name: categoryRef.categoryKey, icon: 'cube', color: '#666' }
   }
 
   return { name: cat.name, icon: cat.icon, color: cat.color }

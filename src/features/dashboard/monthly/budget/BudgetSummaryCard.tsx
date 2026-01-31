@@ -1,6 +1,10 @@
-import React from 'react'
-import { Text, View } from 'react-native'
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import React, { useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
 
+import { useHoHTheme } from '@/providers'
+import { Stack } from '@/shared/components'
+import { getMonthNameShort } from '../../types/dashboard.types'
 import type { CalendarColors } from '../calendar'
 import type { BudgetData } from './useBudgetSummary'
 
@@ -23,12 +27,11 @@ function formatDollar(amount: number): string {
 function formatDate(ymd: string): string {
   // YYYY-MM-DD -> "Jan 24"
   const [, m, d] = ymd.split('-')
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const monthName = months[parseInt(m, 10) - 1] || m
-  return `${monthName} ${parseInt(d, 10)}`
+  return `${getMonthNameShort(parseInt(m, 10))} ${parseInt(d, 10)}`
 }
 
 export function BudgetSummaryCard({ data, colors }: Props) {
+  const theme = useHoHTheme()
   const {
     budgetDollar,
     spentDollar,
@@ -38,146 +41,146 @@ export function BudgetSummaryCard({ data, colors }: Props) {
     crossedOnDate
   } = data
 
+  const [showCrossedDate, setShowCrossedDate] = useState(false)
+
   // Clamp percent for progress bar (max 100%)
   const barPercent = Math.min(percentUsed, 100)
-  const statusColor = isOverBudget ? colors.danger : colors.success
+
+  // Status color: red (over), yellow (80-100%), green (under 80%)
+  const isWarning = !isOverBudget && percentUsed >= 80
+  const statusColor = isOverBudget ? colors.danger : isWarning ? theme.semantic.primary : colors.success
+
+  // Badge position: clamp between 15% and 85% to avoid edge overflow
+  const badgePercent = Math.max(15, Math.min(85, barPercent))
 
   return (
-    <View
+    <Stack
+      gap="md"
       style={{
         backgroundColor: colors.surface,
         borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
         padding: 16,
-        gap: 12
+        overflow: 'visible'
       }}
     >
-      {/* Header */}
-      <Text
-        style={{
-          fontSize: 13,
-          fontWeight: '800',
-          color: colors.text,
-          letterSpacing: 0.3,
-          textTransform: 'uppercase'
-        }}
-      >
-        Budget Summary
-      </Text>
-
-      {/* Main row: spent / budget + percentage */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'baseline',
-          justifyContent: 'space-between'
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-          <Text
-            style={{
-              fontSize: 22,
-              fontWeight: '900',
-              color: colors.text
-            }}
-          >
-            {formatDollar(spentDollar)}
-          </Text>
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: '700',
-              color: colors.text,
-              opacity: 0.6
-            }}
-          >
-            / {formatDollar(budgetDollar)}
-          </Text>
-        </View>
-
+      {/* Combined spent/budget line */}
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' }}>
         <Text
           style={{
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: '900',
-            color: statusColor
+            color: colors.text
           }}
         >
-          {Math.round(percentUsed)}%
+          {formatDollar(spentDollar)}
+        </Text>
+        <Text
+          style={{
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.text,
+            opacity: 0.5
+          }}
+        >
+          {' '}of {formatDollar(budgetDollar)} spent
         </Text>
       </View>
 
-      {/* Progress bar */}
-      <View
-        style={{
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: colors.surfaceAlt,
-          overflow: 'hidden'
-        }}
-      >
+      {/* Progress bar with percentage on bar */}
+      <View style={{ position: 'relative' }}>
         <View
           style={{
-            height: '100%',
-            width: `${barPercent}%`,
-            borderRadius: 4,
-            backgroundColor: statusColor
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: colors.surfaceAlt,
+            overflow: 'hidden'
           }}
-        />
-      </View>
-
-      {/* Bottom row: labels + remaining */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
-        <View style={{ flexDirection: 'row', gap: 24 }}>
-          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text, opacity: 0.6 }}>
-            Spent
-          </Text>
-          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text, opacity: 0.6 }}>
-            Budget
-          </Text>
+        >
+          <View
+            style={{
+              height: '100%',
+              width: `${barPercent}%`,
+              borderRadius: 12,
+              backgroundColor: statusColor
+            }}
+          />
         </View>
 
+        {/* Percentage on bar */}
+        <View
+          style={{
+            position: 'absolute',
+            left: `${badgePercent}%`,
+            top: 0,
+            bottom: 0,
+            transform: [{ translateX: -18 }],
+            justifyContent: 'center'
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '800',
+              color: '#FFFFFF',
+              minWidth: 36,
+              textAlign: 'center'
+            }}
+          >
+            {Math.round(percentUsed)}%
+          </Text>
+        </View>
+      </View>
+
+      {/* Status with icon */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <FontAwesome
+          name={isOverBudget || isWarning ? 'exclamation-triangle' : 'check-circle'}
+          size={16}
+          color={statusColor}
+        />
         <Text
           style={{
-            fontSize: 13,
+            fontSize: 16,
             fontWeight: '700',
             color: statusColor
           }}
         >
           {isOverBudget
-            ? `${formatDollar(Math.abs(remainingDollar))} over`
-            : `${formatDollar(remainingDollar)} left`}
+            ? `${formatDollar(Math.abs(remainingDollar))} over budget`
+            : `${formatDollar(remainingDollar)} left to spend`}
         </Text>
-      </View>
 
-      {/* Warning: budget crossed date */}
-      {crossedOnDate && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 4
-          }}
-        >
-          <Text style={{ fontSize: 14 }}>!</Text>
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '700',
-              color: colors.danger
-            }}
+        {/* Info icon */}
+        {crossedOnDate && (
+          <Pressable
+            onPress={() => setShowCrossedDate((v) => !v)}
+            hitSlop={8}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
           >
-            Budget crossed on {formatDate(crossedOnDate)}
-          </Text>
-        </View>
-      )}
-    </View>
+            <FontAwesome
+              name="info-circle"
+              size={14}
+              color={colors.danger}
+              style={{ opacity: 0.5 }}
+            />
+            {/* Inline bubble - shows when clicked */}
+            {showCrossedDate && (
+              <>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '600',
+                    color: colors.danger,
+                    marginLeft: 4
+                  }}
+                >
+                  Since {formatDate(crossedOnDate)}
+                </Text>
+              </>
+            )}
+          </Pressable>
+        )}
+      </View>
+    </Stack>
   )
 }

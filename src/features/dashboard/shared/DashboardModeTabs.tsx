@@ -14,18 +14,22 @@ export function DashboardModeTabs(props: {
 
   return (
     <View style={styles.modeRow}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+      >
         {modes.map((m) => {
           const selected = m.key === value
           return (
             <Pressable
               key={m.key}
               onPress={() => onChange(m.key)}
-              style={selected ? styles.pillSelected : styles.pill}
-              accessibilityRole="button"
+              style={selected ? styles.tabSelected : styles.tab}
+              accessibilityRole="tab"
               accessibilityState={{ selected }}
             >
-              <Text style={selected ? styles.pillTextSelected : styles.pillText}>{m.label}</Text>
+              <Text style={selected ? styles.tabTextSelected : styles.tabText}>{m.label}</Text>
             </Pressable>
           )
         })}

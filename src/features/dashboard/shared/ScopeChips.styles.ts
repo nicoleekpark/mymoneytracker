@@ -6,27 +6,23 @@ export function createScopeChipsStyles(theme: ReturnType<typeof useHoHTheme>) {
   return StyleSheet.create({
     container: {
       flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.semantic.surface,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: theme.semantic.border,
-      overflow: 'hidden'
+      alignItems: 'center'
     },
     chip: {
-      paddingHorizontal: 10,
-      paddingVertical: 6
+      paddingHorizontal: 8,
+      paddingVertical: 4
     },
-    chipActive: {
-      backgroundColor: theme.semantic.primary
-    },
+    chipActive: {},
     chipText: {
       fontSize: 13,
-      fontWeight: '600',
-      color: theme.semantic.text
+      fontWeight: '400',
+      color: theme.semantic.textSecondary,
+      opacity: 0.6
     },
     chipTextActive: {
-      color: '#FFFFFF'
+      color: theme.semantic.primary,
+      fontWeight: '600',
+      opacity: 1
     }
   })
 }

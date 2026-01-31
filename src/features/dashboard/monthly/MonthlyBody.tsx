@@ -1,17 +1,18 @@
+import { Divider, Header, Stack } from '@/shared/components'
 import { useRouter } from 'expo-router'
 import React, { useMemo, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 
 import { BudgetSummaryCard, useBudgetSummary } from './budget'
 import { MonthlySpendingCalendar, type CalendarColors } from './calendar'
 import { useMonthlyDailyFlow } from './calendar/useMonthlyDailyFlow'
 import { MonthlyCategorySection } from './category'
+import { getMonthNameShort } from '../types/dashboard.types'
 
 function buildMonthTitle(monthYYYYMM: string) {
   const [y, m] = monthYYYYMM.split('-')
   const month = Number(m)
-  const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  return `${names[Math.max(0, Math.min(11, month - 1))]} ${y}`
+  return `${getMonthNameShort(month)} ${y}`
 }
 
 const TRANSACTIONS_ROUTE = '/transactions' as const
@@ -54,29 +55,21 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   }
 
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-      {/* Budget Summary Card */}
+    <View style={{ flex: 1 }}>
+      {/* Budget Summary Card - Sticky at top */}
       {budgetData && (
-        <View style={{ marginBottom: 20 }}>
+        <View style={{ paddingBottom: 16 }}>
           <BudgetSummaryCard data={budgetData} colors={colors} />
         </View>
       )}
 
-      {/* Daily Cash Flow */}
-      <View style={{ gap: 20 }}>
-        {/* Title – centered */}
-        <View style={{ alignItems: 'center' }}>
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '800',
-              color: colors.text,
-              letterSpacing: 0.2
-            }}
-          >
-            Daily Cash Flow
-          </Text>
-        </View>
+      <Divider />
+
+      {/* Scrollable content */}
+      <Stack gap="xl" scroll style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 16 }}>
+        {/* Daily Cash Flow */}
+      <Stack gap="lg">
+        <Header variant="section" align="center">Daily Cash Flow</Header>
 
         <View
           style={{
@@ -97,7 +90,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           </Text>
 
           {/* Toggles */}
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>{/* Keep inline - horizontal */}
             <Pressable
               onPress={toggleExpense}
               style={{
@@ -148,11 +141,11 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
 
           </View>
         </View>
-      </View>
+      </Stack>
 
       {loading ? <Text style={{ color: colors.text, opacity: 0.7 }}>Loading</Text> : null}
       {error ? <Text style={{ color: colors.text, opacity: 0.7 }}>{error}</Text> : null}
-      <View style={{ height: 20 }} />
+
       <MonthlySpendingCalendar
         monthYYYYMM={monthYYYYMM}
         daily={daily}
@@ -162,9 +155,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         onPressDay={onPressDay}
       />
 
-      <View style={{ height: 14 }} />
-      <View style={{ height: 1, backgroundColor: colors.border, opacity: 0.6 }} />
-      <View style={{ height: 14 }} />
+      <Divider />
 
       {/* Monthly Spending by Category */}
       <MonthlyCategorySection
@@ -172,6 +163,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         colors={colors}
       />
 
-    </ScrollView>
+      </Stack>
+    </View>
   )
 }

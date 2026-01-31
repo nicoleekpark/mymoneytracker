@@ -1,12 +1,13 @@
 import { CATEGORIES } from '@/config/categories.config'
 import { useHoHTheme } from '@/providers'
+import { CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 import React from 'react'
 import type { TextInput } from 'react-native'
 import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput as RNTextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { buildCategoryLabel, buildSubLabel, type CategorySearchRow } from '../hooks/useCategoryPicker'
+import type { CategorySearchRow } from '../hooks/useCategoryPicker'
 
 type Props = Readonly<{
   visible: boolean
@@ -73,6 +74,7 @@ export function CategorySelectionModal({
               style={{ color: theme.semantic.text, fontWeight: '700' }}
               autoCorrect={false}
               autoCapitalize="none"
+              autoFocus={false}
               returnKeyType="search"
               blurOnSubmit={false}
             />
@@ -91,7 +93,12 @@ export function CategorySelectionModal({
               const cat = row.cat
               return (
                 <Pressable onPress={() => onChooseCategory(cat)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
-                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{buildCategoryLabel(cat)}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={styles.iconContainer}>
+                      <CategoryIcon name={cat.icon} size={18} color={cat.color} />
+                    </View>
+                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{cat.name}</Text>
+                  </View>
                   <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }}>
                     {cat.subCategories?.length ? '›' : ''}
                   </Text>
@@ -102,9 +109,12 @@ export function CategorySelectionModal({
             const { cat, sub } = row
             return (
               <Pressable onPress={() => onChooseSubFromSearch(cat, sub)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{buildSubLabel(sub)}</Text>
-                  <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: 12 }}>in {cat.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={styles.iconContainer}>
+                    <CategoryIcon name={sub.icon} size={18} color={sub.color} />
+                  </View>
+                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{sub.name}</Text>
+                  <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: 12, marginLeft: 6 }}>in {cat.name}</Text>
                 </View>
 
                 <Text style={{ color: theme.semantic.primary, fontWeight: '900' }}>✓</Text>
@@ -145,5 +155,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  iconContainer: {
+    width: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })

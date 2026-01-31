@@ -7,12 +7,12 @@ import type { CategoryRef } from '@/domain/category'
 import type { TransactionType } from '@/domain/transaction'
 import { normalizeForSearch, scoreText } from '@/shared/utils/search'
 
-function buildCategoryLabel(cat: { icon: string; name: string }): string {
-  return `${cat.icon} ${cat.name}`
+function buildCategoryLabel(cat: { name: string }): string {
+  return cat.name
 }
 
-function buildSubLabel(sc: { icon: string; name: string }): string {
-  return `${sc.icon} ${sc.name}`
+function buildSubLabel(sc: { name: string }): string {
+  return sc.name
 }
 
 export type CategorySearchRow =
@@ -136,7 +136,6 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
     setShowSubCategoryModal(false)
     setCategoryQuery('')
     setShowCategoryModal(true)
-    setTimeout(() => categorySearchRef.current?.focus(), 250)
   }, [])
 
   const closeCategory = useCallback(() => {
@@ -195,7 +194,6 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
     setCategoryQuery('')
     setTimeout(() => {
       setShowCategoryModal(true)
-      setTimeout(() => categorySearchRef.current?.focus(), 50)
     }, 200)
   }, [])
 

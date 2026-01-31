@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { CATEGORIES } from '@/config/categories.config'
+import { Stack } from '@/shared/components'
 
 import {
   GoalProgressHeader,
@@ -28,12 +29,12 @@ type Props = {
 
 function getCategoryMeta(categoryKey?: string) {
   if (!categoryKey) {
-    return { name: 'Uncategorized', icon: '📦', color: '#666' }
+    return { name: 'Uncategorized', icon: 'cube', color: '#666' }
   }
 
   const cat = CATEGORIES.find(c => c.key === categoryKey)
   if (!cat) {
-    return { name: categoryKey, icon: '📦', color: '#666' }
+    return { name: categoryKey, icon: 'cube', color: '#666' }
   }
 
   return { name: cat.name, icon: cat.icon, color: cat.color }
@@ -185,10 +186,7 @@ export function YearlyBody({ year, colors }: Props) {
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={{ paddingBottom: 30, gap: 24 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <Stack gap="xl" scroll>
       {/* Goal Progress Header */}
       <GoalProgressHeader
         year={year}
@@ -221,6 +219,6 @@ export function YearlyBody({ year, colors }: Props) {
           console.log('Category pressed:', key)
         }}
       />
-    </ScrollView>
+    </Stack>
   )
 }

@@ -1,3 +1,4 @@
+import { formatCompactUsd } from '@/shared/format/currency'
 import React, { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
@@ -45,9 +46,8 @@ export function MonthlySpendingCalendar(props: {
 
   const todayYMD = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
-  function fmtInt(n: number) {
-    const v = Math.round(Math.abs(n))
-    return v > 0 ? v : 0
+  function hasAmount(n: number) {
+    return Math.round(Math.abs(n)) > 0
   }
 
   // Google-calendar-ish sizing
@@ -111,12 +111,10 @@ export function MonthlySpendingCalendar(props: {
             const v = map.get(ymd) ?? { income: 0, expense: 0, count: 0 }
             const isToday = ymd === todayYMD
 
-            const expenseInt = fmtInt(v.expense)
-            const incomeInt = fmtInt(v.income)
-
             // show only what user toggled
-            const showExpenseLine = showExpense && expenseInt > 0
-            const showIncomeLine = showIncome && incomeInt > 0
+            const showExpenseAmt = showExpense && hasAmount(v.expense)
+            const showIncomeAmt = showIncome && hasAmount(v.income)
+            const hasAnyAmount = showExpenseAmt || showIncomeAmt
 
             return (
               <View
@@ -183,40 +181,32 @@ export function MonthlySpendingCalendar(props: {
                     )}
                   </View>
 
-                  {/* bottom lines: small "events" style */}
-                  <View style={{ marginTop: 6, gap: 2 }}>
-                    {showExpenseLine ? (
-                      <View
-                        style={{
-                          alignSelf: 'flex-start',
-                          paddingHorizontal: 6,
-                          paddingVertical: 2,
-                          borderRadius: 6,
-                          backgroundColor: 'rgba(211,47,47,0.10)'
-                        }}
-                      >
-                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.danger }}>
-                          ($ {expenseInt})
+                  {/* Compact stacked: income above, expense below, right-aligned */}
+                  {hasAnyAmount ? (
+                    <View
+                      style={{
+                        marginTop: 2,
+                        alignItems: 'flex-end'
+                      }}
+                    >
+                      {showIncomeAmt ? (
+                        <Text
+                          style={{ fontSize: 10, fontWeight: '800', color: colors.success }}
+                          numberOfLines={1}
+                        >
+                          +{formatCompactUsd(v.income)}
                         </Text>
-                      </View>
-                    ) : null}
-
-                    {showIncomeLine ? (
-                      <View
-                        style={{
-                          alignSelf: 'flex-start',
-                          paddingHorizontal: 6,
-                          paddingVertical: 2,
-                          borderRadius: 6,
-                          backgroundColor: 'rgba(46,125,50,0.10)'
-                        }}
-                      >
-                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.success }}>
-                          +$ {incomeInt}
+                      ) : null}
+                      {showExpenseAmt ? (
+                        <Text
+                          style={{ fontSize: 10, fontWeight: '800', color: colors.danger }}
+                          numberOfLines={1}
+                        >
+                          -{formatCompactUsd(v.expense)}
                         </Text>
-                      </View>
-                    ) : null}
-                  </View>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </Pressable>
               </View>
             )

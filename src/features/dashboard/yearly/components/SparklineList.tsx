@@ -3,6 +3,7 @@ import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'rea
 
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
+import { CategoryIcon } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
 // Enable LayoutAnimation on Android
@@ -47,12 +48,12 @@ type Props = {
 
 function getCategoryMeta(categoryRef?: CategoryRef) {
   if (!categoryRef) {
-    return { name: 'Other', icon: '📦', color: '#888' }
+    return { name: 'Other', icon: 'cube', color: '#888' }
   }
 
   const cat = CATEGORIES.find(c => c.key === categoryRef.categoryKey)
   if (!cat) {
-    return { name: categoryRef.categoryKey, icon: '📦', color: '#888' }
+    return { name: categoryRef.categoryKey, icon: 'cube', color: '#888' }
   }
 
   return { name: cat.name, icon: cat.icon, color: cat.color }
@@ -74,7 +75,7 @@ function SubcategoryRow({
       {/* Name and amount row */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 13 }}>{data.icon}</Text>
+          <CategoryIcon name={data.icon} size={13} color={data.color} />
           <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>
             {data.name}
           </Text>
@@ -203,7 +204,7 @@ function HorizontalBarRow({
                     justifyContent: 'center'
                   }}
                 >
-                  <Text style={{ fontSize: 12 }}>{icon}</Text>
+                  <CategoryIcon name={icon} size={12} color={color} />
                 </View>
               </View>
             </View>
