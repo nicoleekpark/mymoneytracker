@@ -27,7 +27,7 @@ function slugify(s: string): string {
 function buildTxKey(args: {
   occurredAt: Date
   type: TransactionType
-  item: string
+  item?: string
   merchant?: string
 }): string {
   const ts = args.occurredAt.toISOString() // includes milliseconds + Z

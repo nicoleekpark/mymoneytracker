@@ -12,7 +12,7 @@ export type TransactionRow = Readonly<{
   key: string
   occurred_at: string
   type: TransactionType
-  item: string
+  item: string | null
 
   amount_cents: number
   currency: string
@@ -45,7 +45,7 @@ export function rowToTransaction(
     key: row.key,
     occurredAt: new Date(row.occurred_at),
     type: row.type,
-    item: row.item,
+    item: row.item && row.item !== 'Not added' ? row.item : undefined,
     money: { amount: centsToDollars(row.amount_cents), currency: row.currency },
     category: row.category_id ? resolveCategoryRef(row.category_id) : undefined,
     merchant: row.merchant ?? undefined,
@@ -80,7 +80,7 @@ export function transactionToRow(
     key: tx.key,
     occurred_at: tx.occurredAt.toISOString(),
     type: tx.type,
-    item: tx.item,
+    item: tx.item ?? null,
     amount_cents: dollarsToCents(tx.money.amount),
     currency: tx.money.currency,
     category_id: resolveCategoryId(tx.category) ?? null,

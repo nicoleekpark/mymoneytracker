@@ -13,6 +13,9 @@ type Props<T extends string> = {
   options: ReadonlyArray<SegmentOption<T>>
 }
 
+/**
+ * Underline-style segmented control (matches dashboard tabs)
+ */
 export function SegmentedControl<T extends string>({ value, onChange, options }: Props<T>) {
   const theme = useHoHTheme()
 
@@ -20,14 +23,11 @@ export function SegmentedControl<T extends string>({ value, onChange, options }:
     <View
       style={{
         flexDirection: 'row',
-        borderWidth: 1,
-        borderColor: theme.semantic.border,
-        backgroundColor: theme.semantic.surface,
-        borderRadius: 12,
-        overflow: 'hidden'
+        borderBottomWidth: 1,
+        borderBottomColor: theme.semantic.border
       }}
     >
-      {options.map((opt, idx) => {
+      {options.map((opt) => {
         const selected = opt.value === value
 
         return (
@@ -35,21 +35,20 @@ export function SegmentedControl<T extends string>({ value, onChange, options }:
             key={opt.value}
             onPress={() => onChange(opt.value)}
             style={{
-              flex: 1,
-              paddingVertical: 10,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: selected ? theme.semantic.primarySoft : 'transparent',
-              borderRightWidth: idx === options.length - 1 ? 0 : 1,
-              borderRightColor: theme.semantic.border
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              borderBottomWidth: 2,
+              borderBottomColor: selected ? theme.semantic.primary : 'transparent',
+              marginBottom: -1
             }}
-            accessibilityRole="button"
+            accessibilityRole="tab"
             accessibilityState={{ selected }}
           >
             <Text
               style={{
-                color: selected ? theme.semantic.primaryStrong : theme.semantic.textSecondary,
-                fontWeight: selected ? '900' : '700'
+                fontSize: 14,
+                color: selected ? theme.semantic.primary : theme.semantic.textSecondary,
+                fontWeight: selected ? '600' : '500'
               }}
             >
               {opt.label}

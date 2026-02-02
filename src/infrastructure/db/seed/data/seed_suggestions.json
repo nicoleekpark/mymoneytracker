@@ -1,0 +1,28 @@
+{
+  "suggestions": {
+    "items": [
+      { "value": "Lunch", "frequency": 15 },
+      { "value": "Coffee", "frequency": 12 },
+      { "value": "Groceries", "frequency": 8 },
+      { "value": "Gas", "frequency": 6 },
+      { "value": "Dinner", "frequency": 5 },
+      { "value": "Breakfast", "frequency": 4 },
+      { "value": "Snacks", "frequency": 3 },
+      { "value": "Uber", "frequency": 3 },
+      { "value": "Parking", "frequency": 2 },
+      { "value": "Movie tickets", "frequency": 1 }
+    ],
+    "merchants": [
+      { "value": "Starbucks", "frequency": 10 },
+      { "value": "Trader Joe's", "frequency": 7 },
+      { "value": "Amazon", "frequency": 6 },
+      { "value": "Target", "frequency": 5 },
+      { "value": "Costco", "frequency": 4 },
+      { "value": "Whole Foods", "frequency": 3 },
+      { "value": "Chipotle", "frequency": 3 },
+      { "value": "Shell", "frequency": 2 },
+      { "value": "Uber Eats", "frequency": 2 },
+      { "value": "Netflix", "frequency": 1 }
+    ]
+  }
+}

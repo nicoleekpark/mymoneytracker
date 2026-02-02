@@ -10,6 +10,7 @@ export type AccountPickerState = Readonly<{
   showAccountModal: boolean
   accountQuery: string
   setAccountQuery: (q: string) => void
+  setAccountKey: (key: string) => void
   accounts: Account[]
   filteredAccounts: Account[]
   selectedAccount: Account | null
@@ -65,6 +66,7 @@ export function useAccountPicker(defaultKey = 'acct:cash_wallet'): AccountPicker
     showAccountModal,
     accountQuery,
     setAccountQuery,
+    setAccountKey,
     accounts,
     filteredAccounts,
     selectedAccount,

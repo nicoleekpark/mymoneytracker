@@ -33,7 +33,7 @@ export function resetDbDataOnly(opts?: { resetAutoIncrement?: boolean }): void {
       exec(`DELETE FROM "${t}"`)
     }
 
-    if (resetAutoIncrement) {
+    if (resetAutoIncrement && sqliteSequenceExists()) {
       exec(`DELETE FROM sqlite_sequence`)
     }
 

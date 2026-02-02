@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
-import { Divider } from '@/shared/components'
+import { AppBar, Divider } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 
 import type { Period } from './types'
@@ -66,6 +66,8 @@ export default function DashboardScreen() {
 
   return (
     <Screen topPadding>
+      <AppBar />
+
       <DashboardModeTabs
         modes={MODES}
         value={mode}

@@ -30,6 +30,7 @@ export type AmountKeypadState = Readonly<{
   appendAmountDigit: (d: string) => void
   backspaceAmount: () => void
   clearAmount: () => void
+  setAmountCents: (cents: number) => void
 }>
 
 export function useAmountKeypad(): AmountKeypadState {
@@ -68,6 +69,12 @@ export function useAmountKeypad(): AmountKeypadState {
     setAmountCentsText('')
   }, [])
 
+  const setAmountCents = useCallback((cents: number) => {
+    if (Number.isFinite(cents) && cents >= 0) {
+      setAmountCentsText(String(cents))
+    }
+  }, [])
+
   return {
     amountCentsText,
     amountCents,
@@ -79,5 +86,6 @@ export function useAmountKeypad(): AmountKeypadState {
     appendAmountDigit,
     backspaceAmount,
     clearAmount,
+    setAmountCents,
   }
 }

@@ -3,6 +3,7 @@ import { Keyboard } from 'react-native'
 
 export type DateTimeState = Readonly<{
   occurredAt: Date
+  setOccurredAt: (date: Date) => void
   dateDisplay: string
   timeDisplay: string
   showDatePicker: boolean
@@ -65,6 +66,7 @@ export function useDateTime(initialDate?: Date): DateTimeState {
 
   return {
     occurredAt,
+    setOccurredAt,
     dateDisplay,
     timeDisplay,
     showDatePicker,

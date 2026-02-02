@@ -14,7 +14,7 @@ type TransactionBase = Readonly<{
   occurredAt: Date
   type: TransactionType
 
-  item: string
+  item?: string
   money: Money
 
   category?: CategoryRef
@@ -45,7 +45,7 @@ export type AddTransactionInput =
       key?: string
       occurredAt?: Date
       type: 'income' | 'expense'
-      item: string
+      item?: string
       amount: number
       accountId: UUID
       category?: CategoryRef
@@ -56,7 +56,7 @@ export type AddTransactionInput =
       key?: string
       occurredAt?: Date
       type: 'transfer'
-      item: string
+      item?: string
       amount: number
       fromAccountId: UUID
       toAccountId: UUID

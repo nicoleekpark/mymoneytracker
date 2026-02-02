@@ -7,11 +7,40 @@ import type { DateTimeState } from '../hooks/useDateTime'
 
 type Props = {
   dateTime: DateTimeState
+  /** When true, renders only the pickers without the card wrapper */
+  embedded?: boolean
 }
 
-export function DateTimeSection({ dateTime }: Props) {
+export function DateTimeSection({ dateTime, embedded = false }: Props) {
   const theme = useHoHTheme()
 
+  // Embedded mode - just show pickers inline
+  if (embedded) {
+    return (
+      <View style={styles.embeddedWrap}>
+        {dateTime.showDatePicker && (
+          <DateTimePicker
+            value={dateTime.occurredAt}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'inline' : 'default'}
+            themeVariant={theme.mode}
+            onChange={(_event, date) => dateTime.onDateChange(date)}
+          />
+        )}
+        {dateTime.showTimePicker && (
+          <DateTimePicker
+            value={dateTime.occurredAt}
+            mode="time"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant={theme.mode}
+            onChange={(_event, date) => dateTime.onTimeChange(date)}
+          />
+        )}
+      </View>
+    )
+  }
+
+  // Full card mode (legacy)
   return (
     <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
       <Pressable onPress={dateTime.openDatePicker} style={styles.row}>
@@ -70,5 +99,9 @@ const styles = StyleSheet.create({
   },
   pickerWrap: {
     marginTop: 10,
+  },
+  embeddedWrap: {
+    marginTop: 8,
+    marginBottom: 8,
   },
 })

@@ -27,6 +27,7 @@ export type CategorySearchRow =
 
 export type CategoryPickerState = Readonly<{
   categoryRef: CategoryRef | null
+  setCategoryRef: (ref: CategoryRef | null) => void
   showCategoryModal: boolean
   categoryQuery: string
   setCategoryQuery: (q: string) => void
@@ -203,6 +204,7 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
 
   return {
     categoryRef,
+    setCategoryRef,
     showCategoryModal,
     categoryQuery,
     setCategoryQuery,

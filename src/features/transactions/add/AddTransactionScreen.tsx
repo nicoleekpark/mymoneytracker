@@ -4,12 +4,15 @@ import type { UUID } from '@/domain/common/uuid'
 import type { TransactionType } from '@/domain/transaction'
 import { addTransaction } from '@/domain/transaction/transaction.usecase'
 import { useHoHTheme } from '@/providers'
-import { CategoryIcon, Divider, Stack } from '@/shared/components'
+import { AutoSuggestInput, Button, CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
-import { router } from 'expo-router'
-import React, { useMemo, useRef, useState } from 'react'
+import { useDraftsStore, useSuggestionsStore } from '@/store'
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import { router, useLocalSearchParams } from 'expo-router'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -27,28 +30,26 @@ import {
   CategorySelectionModal,
   DateTimeSection,
   SubCategorySelectionModal,
+  TagSection,
 } from './components'
 import { useAccountPicker, useAmountKeypad, useCategoryPicker, useDateTime } from './hooks'
 
-// Receipt picker (optional dependency)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let ImagePicker: any = null
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  ImagePicker = require('expo-image-picker')
-} catch {
-  ImagePicker = null
-}
+const TRANSACTION_TYPES: { key: TransactionType; label: string }[] = [
+  { key: 'expense', label: 'Expense' },
+  { key: 'income', label: 'Income' },
+  { key: 'transfer', label: 'Transfer' },
+]
 
 export default function AddTransactionScreen() {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
+  const params = useLocalSearchParams<{ draftId?: string }>()
+  const editingDraftId = params.draftId
 
   const itemInputRef = useRef<TextInput>(null)
   const noteInputRef = useRef<TextInput>(null)
   const merchantInputRef = useRef<TextInput>(null)
   const scrollRef = useRef<ScrollView>(null)
-  const noteYRef = useRef<number>(0)
 
   // Transaction type
   const [type, setType] = useState<TransactionType>('expense')
@@ -58,6 +59,16 @@ export default function AddTransactionScreen() {
   const [merchant, setMerchant] = useState('')
   const [note, setNote] = useState('')
   const [receiptUri, setReceiptUri] = useState<string | null>(null)
+  const [tags, setTags] = useState<string[]>([])
+
+  // Draft store
+  const addDraft = useDraftsStore((s) => s.addDraft)
+  const updateDraft = useDraftsStore((s) => s.updateDraft)
+  const removeDraft = useDraftsStore((s) => s.removeDraft)
+  const getDraft = useDraftsStore((s) => s.getDraft)
+
+  // Suggestions store
+  const { getItemSuggestions, getMerchantSuggestions, recordItem, recordMerchant } = useSuggestionsStore()
 
   // Hooks for complex state
   const amount = useAmountKeypad()
@@ -65,23 +76,73 @@ export default function AddTransactionScreen() {
   const category = useCategoryPicker(type)
   const dateTime = useDateTime()
 
-  // Validation
+  // Load draft data if editing
+  useEffect(() => {
+    if (editingDraftId) {
+      const draft = getDraft(editingDraftId)
+      if (draft) {
+        setType(draft.type)
+        setItem(draft.item || '')
+        setMerchant(draft.merchant || '')
+        setNote(draft.note || '')
+        setReceiptUri(draft.receiptUri || null)
+        if (draft.amountCents) {
+          amount.setAmountCents(draft.amountCents)
+        }
+        if (draft.accountKey) {
+          account.setAccountKey(draft.accountKey)
+        }
+        if (draft.categoryRef) {
+          category.setCategoryRef(draft.categoryRef)
+        }
+        if (draft.occurredAt) {
+          dateTime.setOccurredAt(new Date(draft.occurredAt))
+        }
+      }
+    }
+  }, [editingDraftId])
+
+  // Validation - Required: amount, date, account, type
+  // Date, account, type have defaults so only amount needs explicit check
   const canSave = useMemo(() => {
     if (type === 'transfer') return false
     const hasAmount = Number.isFinite(amount.amountCents) && amount.amountCents > 0
+    return hasAmount
+  }, [type, amount.amountCents])
+
+  // Draft validation - more lenient (just need item OR amount)
+  const canSaveDraft = useMemo(() => {
+    if (type === 'transfer') return false
+    const hasAmount = Number.isFinite(amount.amountCents) && amount.amountCents > 0
     const hasItem = item.trim().length > 0
-    return hasAmount && hasItem
+    return hasAmount || hasItem
   }, [type, amount.amountCents, item])
 
-  const scrollToNote = () => {
-    const topPad = 14
-    const y = Math.max(0, noteYRef.current - topPad)
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ y, animated: true })
-    })
-  }
+  // Check if any data has been entered (for close prompt)
+  const hasAnyData = useMemo(() => {
+    const hasAmount = Number.isFinite(amount.amountCents) && amount.amountCents > 0
+    const hasItem = item.trim().length > 0
+    const hasMerchant = merchant.trim().length > 0
+    const hasNote = note.trim().length > 0
+    const hasCategory = !!category.categoryRef
+    const hasTags = tags.length > 0
+    return hasAmount || hasItem || hasMerchant || hasNote || hasCategory || hasTags
+  }, [amount.amountCents, item, merchant, note, category.categoryRef, tags])
 
-  const onCancel = () => router.back()
+  const onCancel = () => {
+    if (hasAnyData && type !== 'transfer') {
+      Alert.alert(
+        'Save as draft?',
+        undefined,
+        [
+          { text: 'Discard', style: 'destructive', onPress: () => router.back() },
+          { text: 'Save as draft', onPress: onSaveDraft },
+        ]
+      )
+    } else {
+      router.back()
+    }
+  }
 
   const onSave = async () => {
     if (type === 'transfer') {
@@ -92,32 +153,10 @@ export default function AddTransactionScreen() {
     const cleanedItem = item.trim()
     const cleanedNote = note.trim()
 
-    if (!cleanedItem) {
-      Alert.alert('Item required', 'Please enter an item')
-      return
-    }
-
+    // Required fields: amount, date, account, type
+    // Date has default (today), type has default (expense)
     if (!Number.isFinite(amount.amountCents) || amount.amountCents <= 0) {
-      Alert.alert('Invalid amount', 'Please enter an amount')
-      return
-    }
-
-    if (!Number.isFinite(amount.amountDollars) || amount.amountDollars <= 0) {
-      Alert.alert('Invalid amount', 'Please enter an amount')
-      return
-    }
-
-    if (!category.categoryRef) {
-      Alert.alert('Category required', 'Please select a category')
-      return
-    }
-
-    const typeMap = CATEGORIES_INDEX[category.categoryRef.type]
-    const subKeys = typeMap?.[category.categoryRef.categoryKey]
-    const ok = !!subKeys && (!category.categoryRef.subCategoryKey || subKeys.includes(category.categoryRef.subCategoryKey))
-
-    if (!ok) {
-      Alert.alert('Invalid category', 'Please re-select category')
+      Alert.alert('Amount required', 'Please enter an amount')
       return
     }
 
@@ -126,21 +165,46 @@ export default function AddTransactionScreen() {
       accountId = resolveAccountIdByKey(account.accountKey)
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Please select a payment method'
-      Alert.alert('Account missing', message)
+      Alert.alert('Account required', message)
       return
+    }
+
+    // Category validation (optional but must be valid if set)
+    if (category.categoryRef) {
+      const typeMap = CATEGORIES_INDEX[category.categoryRef.type]
+      const subKeys = typeMap?.[category.categoryRef.categoryKey]
+      const ok = !!subKeys && (!category.categoryRef.subCategoryKey || subKeys.includes(category.categoryRef.subCategoryKey))
+
+      if (!ok) {
+        Alert.alert('Invalid category', 'Please re-select category')
+        return
+      }
     }
 
     try {
       await addTransaction(CATEGORIES_INDEX, {
         type,
-        item: cleanedItem,
+        item: cleanedItem || undefined,
         amount: amount.amountDollars,
-        category: category.categoryRef,
+        category: category.categoryRef ?? undefined,
         accountId,
         occurredAt: dateTime.occurredAt,
         merchant: merchant.trim() || undefined,
         note: cleanedNote || undefined,
       })
+
+      // Record for auto-suggestions
+      if (cleanedItem) {
+        recordItem(cleanedItem)
+      }
+      if (merchant.trim()) {
+        recordMerchant(merchant.trim())
+      }
+
+      // Remove draft if we were editing one
+      if (editingDraftId) {
+        removeDraft(editingDraftId)
+      }
 
       router.replace({ pathname: '/(tabs)/transactions' } as Parameters<typeof router.replace>[0])
     } catch (e: unknown) {
@@ -150,10 +214,57 @@ export default function AddTransactionScreen() {
     }
   }
 
+  const onSaveDraft = () => {
+    if (type === 'transfer') {
+      Alert.alert('Transfer not ready', 'Transfer will be enabled after accounts are added')
+      return
+    }
+
+    const cleanedItem = item.trim()
+    const cleanedNote = note.trim()
+
+    if (!cleanedItem && (!Number.isFinite(amount.amountCents) || amount.amountCents <= 0)) {
+      Alert.alert('Add something', 'Please enter an item or amount to save as draft')
+      return
+    }
+
+    const draftData = {
+      type,
+      item: cleanedItem,
+      amountCents: amount.amountCents,
+      merchant: merchant.trim() || undefined,
+      note: cleanedNote || undefined,
+      categoryRef: category.categoryRef ?? undefined,
+      accountKey: account.accountKey ?? undefined,
+      occurredAt: dateTime.occurredAt.toISOString(),
+      receiptUri: receiptUri ?? undefined,
+    }
+
+    if (editingDraftId) {
+      // Update existing draft
+      updateDraft(editingDraftId, draftData)
+    } else {
+      // Create new draft
+      addDraft(draftData)
+    }
+
+    router.back()
+  }
+
   // Receipt handlers
+  const getImagePicker = () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      return require('expo-image-picker')
+    } catch {
+      return null
+    }
+  }
+
   const onPickReceipt = async () => {
+    const ImagePicker = getImagePicker()
     if (!ImagePicker) {
-      Alert.alert('Not set up', 'Install expo-image-picker to enable receipt import')
+      Alert.alert('Not available', 'Photo library is not available')
       return
     }
     const res = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -171,8 +282,9 @@ export default function AddTransactionScreen() {
   }
 
   const onTakeReceipt = async () => {
+    const ImagePicker = getImagePicker()
     if (!ImagePicker) {
-      Alert.alert('Not set up', 'Install expo-image-picker to enable camera')
+      Alert.alert('Not available', 'Camera is not available')
       return
     }
     const res = await ImagePicker.requestCameraPermissionsAsync()
@@ -186,6 +298,41 @@ export default function AddTransactionScreen() {
     }
   }
 
+  const onReceiptPress = () => {
+    if (receiptUri) {
+      // Show remove option
+      Alert.alert('Receipt', undefined, [
+        { text: 'Remove', style: 'destructive', onPress: () => setReceiptUri(null) },
+        { text: 'Cancel', style: 'cancel' },
+      ])
+    } else {
+      // Show add options (Apple-style action sheet)
+      Alert.alert('Add Receipt', undefined, [
+        { text: 'Take Photo', onPress: onTakeReceipt },
+        { text: 'Choose from Library', onPress: onPickReceipt },
+        { text: 'Cancel', style: 'cancel' },
+      ])
+    }
+  }
+
+  // Build category display
+  const categoryDisplay = useMemo(() => {
+    if (!category.selectedCategory) return null
+
+    const subKey = category.categoryRef?.subCategoryKey
+    const sub = subKey
+      ? category.selectedCategory.subCategories?.find(s => s.key === subKey)
+      : null
+
+    return {
+      icon: sub?.icon ?? category.selectedCategory.icon,
+      color: sub?.color ?? category.selectedCategory.color,
+      label: sub
+        ? `${category.selectedCategory.name} › ${sub.name}`
+        : category.selectedCategory.name
+    }
+  }, [category.selectedCategory, category.categoryRef])
+
   return (
     <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
       <KeyboardAvoidingView
@@ -193,225 +340,225 @@ export default function AddTransactionScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        {/* Header */}
-        <View
-          style={[
-            styles.topBar,
-            {
-              borderBottomColor: theme.semantic.border,
-              paddingTop: insets.top,
-              height: 52 + insets.top,
-            },
-          ]}
-        >
-          <Pressable onPress={onCancel} hitSlop={10}>
-            <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
-          </Pressable>
+        {/* Drag Handle */}
+        <View style={styles.dragHandleContainer}>
+          <View style={[styles.dragHandle, { backgroundColor: theme.semantic.border }]} />
+        </View>
 
-          <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: 16 }}>Add Transaction</Text>
-
-          <Pressable onPress={onSave} disabled={!canSave} hitSlop={10}>
-            <Text style={{ color: theme.semantic.primary, fontWeight: '900', opacity: canSave ? 1 : 0.35 }}>Save</Text>
+        {/* Header Add New */}
+        <View style={styles.header}>
+          <View style={styles.headerSpacer} />
+          <Pressable onPress={onCancel} hitSlop={10} style={styles.headerClose}>
+            <FontAwesome name="times" size={20} color={theme.semantic.textSecondary} />
           </Pressable>
+        </View>
+
+        {/* Type Tabs - Underline style */}
+        <View style={[styles.typeTabs, { borderBottomColor: theme.semantic.border }]}>
+          {TRANSACTION_TYPES.map((t) => {
+            const selected = t.key === type
+            return (
+              <Pressable
+                key={t.key}
+                onPress={() => {
+                  setType(t.key)
+                  category.resetCategory()
+                }}
+                style={[
+                  styles.typeTab,
+                  { borderBottomColor: selected ? theme.semantic.primary : 'transparent' }
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.typeTabText,
+                    {
+                      color: selected ? theme.semantic.text : theme.semantic.textSecondary,
+                      fontWeight: selected ? '700' : '500',
+                    }
+                  ]}
+                >
+                  {t.label}
+                </Text>
+              </Pressable>
+            )
+          })}
         </View>
 
         <ScrollView
           ref={scrollRef}
           style={{ flex: 1 }}
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
-          keyboardShouldPersistTaps="always"
-          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 200 }]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
-          <Stack gap="md">
-          {/* Type Selector */}
-          <View style={[styles.segmentWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-            {(['expense', 'income', 'transfer'] as TransactionType[]).map((t) => {
-              const selected = t === type
-              return (
-                <Pressable
-                  key={t}
-                  onPress={() => {
-                    setType(t)
-                    category.resetCategory()
-                  }}
-                  style={[styles.segmentBtn, selected && { backgroundColor: theme.semantic.primarySoft }]}
-                >
-                  <Text
-                    style={{
-                      color: selected ? theme.semantic.primaryStrong : theme.semantic.textSecondary,
-                      fontWeight: '900',
-                    }}
-                  >
-                    {t}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
-
-          {/* Item & Merchant */}
-          <View style={[styles.titleCard, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-            <TextInput
-              ref={itemInputRef}
+          {/* Group 1: Title + Merchant */}
+          <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt, overflow: 'visible', zIndex: 10 }]}>
+            <AutoSuggestInput
+              inputRef={itemInputRef}
               value={item}
               onChangeText={setItem}
-              placeholder="Add item"
-              placeholderTextColor={theme.semantic.textSecondary}
-              style={[styles.titleInput, { color: theme.semantic.text }]}
+              getSuggestions={getItemSuggestions}
+              placeholder="What's this for?"
+              style={styles.titleInput}
               returnKeyType="next"
-              blurOnSubmit={false}
               onSubmitEditing={() => merchantInputRef.current?.focus()}
             />
-
-            <Divider />
-
-            <TextInput
-              ref={merchantInputRef}
+            <AutoSuggestInput
+              inputRef={merchantInputRef}
               value={merchant}
               onChangeText={setMerchant}
-              placeholder="Merchant"
-              placeholderTextColor={theme.semantic.textSecondary}
-              style={[styles.subInput, { color: theme.semantic.text }]}
+              getSuggestions={getMerchantSuggestions}
+              placeholder="Who or where (optional)"
+              style={[styles.merchantInput, { color: merchant ? theme.semantic.text : theme.semantic.textSecondary }]}
               returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => noteInputRef.current?.focus()}
+              onSubmitEditing={() => amount.openAmountKeypad()}
               autoCorrect={false}
               autoCapitalize="words"
             />
           </View>
 
-          {/* Amount */}
+          {/* Group 2: Amount */}
           <Pressable
             onPress={amount.openAmountKeypad}
-            style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
+            style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}
           >
-            <Text style={{ color: theme.semantic.textSecondary, fontSize: 12 }}>Amount</Text>
-            <Text style={{ color: theme.semantic.text, fontSize: 44, fontWeight: '900', marginTop: 6 }}>
+            <Text style={[styles.amountValue, { color: theme.semantic.text }]}>
               ${amount.amountDisplay}
             </Text>
-            <Text style={{ color: theme.semantic.textSecondary, fontSize: 12, marginTop: 6 }}>Tap to enter amount</Text>
           </Pressable>
 
           {/* Transfer placeholder */}
           {type === 'transfer' && (
-            <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-              <Text style={{ color: theme.semantic.text, fontWeight: '900', marginBottom: 6 }}>Transfer</Text>
-              <Text style={{ color: theme.semantic.textSecondary }}>Accounts will be added next</Text>
-              <Text style={{ color: theme.semantic.textSecondary, marginTop: 6 }}>Save is disabled for now</Text>
+            <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}>
+              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '600', textAlign: 'center' }}>
+                Transfer feature coming soon
+              </Text>
             </View>
           )}
 
-          {/* Date & Time */}
-          <DateTimeSection dateTime={dateTime} />
-
-          {/* Account */}
-          <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-            <Pressable onPress={account.openAccount} style={styles.row}>
-              <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>                                                
-                {type === 'expense' ? 'Paid with' : 'Account'}                   
-              </Text> 
-              <Text
-                style={{
-                  color: account.selectedAccount ? theme.semantic.text : theme.semantic.textSecondary,
-                  fontWeight: '800',
-                }}
-              >
-                {account.accountDisplay}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Category & Subcategory */}
+          {/* Group 3: Date / Category / Paid with */}
           {type !== 'transfer' && (
-            <>
-              <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-                <Pressable onPress={category.openCategory} style={styles.row}>
-                  <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Category</Text>
-                  {category.selectedCategory ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <CategoryIcon name={category.selectedCategory.icon} size={16} color={category.selectedCategory.color} />
-                      <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>
-                        {category.selectedCategory.name}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Select</Text>
-                  )}
-                </Pressable>
-              </View>
-
-              {category.selectedCategory?.subCategories?.length ? (
-                <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-                  <Pressable onPress={category.openSubCategory} style={styles.row}>
-                    <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Sub</Text>
-                    {(() => {
-                      const selectedSub = category.categoryRef?.subCategoryKey
-                        ? category.selectedCategory?.subCategories.find(s => s.key === category.categoryRef?.subCategoryKey)
-                        : null
-                      if (selectedSub) {
-                        return (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <CategoryIcon name={selectedSub.icon} size={14} color={selectedSub.color} />
-                            <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>{selectedSub.name}</Text>
-                          </View>
-                        )
-                      }
-                      return <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Select</Text>
-                    })()}
+            <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}>
+              {/* Date */}
+              <View style={styles.metadataRow}>
+                <Text style={[styles.metadataLabel, { color: theme.semantic.text }]}>Date</Text>
+                <View style={styles.dateTimeValues}>
+                  <Pressable onPress={dateTime.openDatePicker} hitSlop={8}>
+                    <Text style={[styles.metadataValue, { color: theme.semantic.text }]}>
+                      {dateTime.dateDisplay}
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={dateTime.openTimePicker} hitSlop={8}>
+                    <Text style={[styles.metadataValue, { color: theme.semantic.text }]}>
+                      {dateTime.timeDisplay}
+                    </Text>
                   </Pressable>
                 </View>
-              ) : null}
-            </>
+              </View>
+
+              {dateTime.showDatePicker && (
+                <DateTimeSection dateTime={dateTime} embedded />
+              )}
+
+              {dateTime.showTimePicker && (
+                <DateTimeSection dateTime={dateTime} embedded />
+              )}
+
+              {/* Category */}
+              <Pressable onPress={category.openCategory} style={styles.metadataRow}>
+                <Text style={[styles.metadataLabel, { color: theme.semantic.text }]}>Category</Text>
+                {categoryDisplay ? (
+                  <View style={styles.categoryValue}>
+                    <CategoryIcon name={categoryDisplay.icon} size={16} color={categoryDisplay.color} />
+                    <Text style={[styles.metadataValue, { color: theme.semantic.text }]}>
+                      {categoryDisplay.label}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.metadataValue, { color: theme.semantic.textSecondary }]}>Select</Text>
+                )}
+              </Pressable>
+
+              {/* Account */}
+              <Pressable onPress={account.openAccount} style={styles.metadataRow}>
+                <Text style={[styles.metadataLabel, { color: theme.semantic.text }]}>
+                  {type === 'expense' ? 'Paid with' : 'Account'}
+                </Text>
+                <Text
+                  style={[
+                    styles.metadataValue,
+                    { color: account.selectedAccount ? theme.semantic.text : theme.semantic.textSecondary }
+                  ]}
+                >
+                  {account.accountDisplay}
+                </Text>
+              </Pressable>
+            </View>
           )}
 
-          {/* Note */}
-          <View
-            onLayout={(e) => {
-              noteYRef.current = e.nativeEvent.layout.y
-            }}
-            style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
-          >
+          {/* Group 4: Note */}
+          <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}>
+            <Text style={[styles.metadataLabel, { color: theme.semantic.text, marginBottom: 8 }]}>Note</Text>
             <TextInput
               ref={noteInputRef}
               value={note}
               onChangeText={setNote}
-              placeholder="Add note"
+              placeholder="Add a note..."
               placeholderTextColor={theme.semantic.textSecondary}
               multiline
-              textAlignVertical="top"
+              scrollEnabled={false}
               style={[styles.noteInput, { color: theme.semantic.text }]}
-              onFocus={() => {
-                scrollToNote()
-                setTimeout(scrollToNote, 250)
-              }}
             />
           </View>
 
-          {/* Receipt */}
+          {/* Group 5: Tags */}
           {type !== 'transfer' && (
-            <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-              <Text style={{ color: theme.semantic.textSecondary, marginBottom: 10 }}>Receipt</Text>
-
-              <View style={styles.receiptRow}>
-                <Pressable onPress={onTakeReceipt} style={[styles.receiptBtn, { borderColor: theme.semantic.border }]}>
-                  <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>Take photo</Text>
-                </Pressable>
-
-                <Pressable onPress={onPickReceipt} style={[styles.receiptBtn, { borderColor: theme.semantic.border }]}>
-                  <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>Choose</Text>
-                </Pressable>
-              </View>
-
-              <Text style={{ color: theme.semantic.textSecondary, marginTop: 10, fontSize: 12 }}>
-                {receiptUri ? `Attached: ${receiptUri.split('/').pop()}` : 'No receipt attached'}
-              </Text>
-            </View>
+            <TagSection selectedTags={tags} onTagsChange={setTags} />
           )}
 
-          <View style={{ height: 28 }} />
-          </Stack>
+          {/* Group 6: Receipt */}
+          {type !== 'transfer' && (
+            <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}>
+              <Pressable onPress={onReceiptPress} style={styles.receiptRow}>
+                <Text style={[styles.metadataLabel, { color: theme.semantic.text }]}>Receipt</Text>
+                <FontAwesome
+                  name={receiptUri ? 'check-circle' : 'camera'}
+                  size={20}
+                  color={receiptUri ? theme.semantic.success : theme.semantic.textSecondary}
+                />
+              </Pressable>
+              {receiptUri && (
+                <Pressable onPress={onReceiptPress} style={styles.receiptPreview}>
+                  <Image
+                    source={{ uri: receiptUri }}
+                    style={styles.receiptImage}
+                    resizeMode="cover"
+                  />
+                </Pressable>
+              )}
+            </View>
+          )}
         </ScrollView>
+
+        {/* Footer - Apple style */}
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+          <Button
+            onPress={onSave}
+            disabled={!canSave}
+          >
+            Add
+          </Button>
+
+          <Button
+            variant="text"
+            onPress={onSaveDraft}
+            disabled={!canSaveDraft}
+          >
+            Save as draft
+          </Button>
+        </View>
 
         {/* Modals */}
         <AmountKeypadModal
@@ -459,77 +606,123 @@ export default function AddTransactionScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
+  dragHandleContainer: {
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  dragHandle: {
+    width: 36,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  content: {
-    padding: 16,
+  headerSpacer: {
+    width: 28,
   },
-  segmentWrap: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 4,
-    flexDirection: 'row',
-    gap: 6,
-  },
-  segmentBtn: {
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
     flex: 1,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
+  },
+  headerClose: {
+    width: 28,
+    alignItems: 'flex-end',
+  },
+  typeTabs: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
     justifyContent: 'center',
   },
-  titleCard: {
-    borderWidth: 1,
-    borderRadius: 18,
-    overflow: 'hidden',
+  typeTab: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 2,
+    marginBottom: -1,
+  },
+  typeTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 12,
+  },
+  fieldGroup: {
+    borderRadius: 12,
+    padding: 16,
   },
   titleInput: {
-    fontSize: 30,
-    fontWeight: '900',
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 12,
+    fontSize: 20,
+    fontWeight: '600',
+    paddingVertical: 2,
   },
-  subInput: {
+  merchantInput: {
     fontSize: 14,
     fontWeight: '500',
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingVertical: 2,
+    marginTop: 8,
   },
-  card: {
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 14,
+  amountValue: {
+    fontSize: 32,
+    fontWeight: '700',
   },
-  row: {
+  metadataRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 10,
   },
-  rowLabel: {
-    width: 80,
-    fontWeight: '800',
+  metadataLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  metadataValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dateTimeValues: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  categoryValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   noteInput: {
-    minHeight: 120,
-    fontSize: 16,
+    fontSize: 14,
+    lineHeight: 20,
+    minHeight: 32,
   },
   receiptRow: {
     flexDirection: 'row',
-    gap: 10,
-  },
-  receiptBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+  },
+  receiptPreview: {
+    marginTop: 12,
+  },
+  receiptImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    alignItems: 'center',
+    gap: 8,
   },
 })

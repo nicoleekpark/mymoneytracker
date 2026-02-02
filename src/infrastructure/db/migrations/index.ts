@@ -9,6 +9,12 @@ import { m20260106123802_create_categories } from './20260106123802_create_categ
 import { m20260106123806_create_transactions } from './20260106123806_create_transactions'
 import { m20260112131153_add_system_columns } from './20260112131153_add_system_columns'
 import { m20260114121532_create_seed_runs } from './20260114121532_create_seed_runs'
+import { m20260131100000_create_notifications } from './20260131100000_create_notifications'
+import { m20260131100100_create_tags } from './20260131100100_create_tags'
+import { m20260131100200_create_suggestions } from './20260131100200_create_suggestions'
+import { m20260131100300_create_drafts } from './20260131100300_create_drafts'
+import { m20260201144839_allow_null_item } from './20260201144839_allow_null_item'
+import { m20260201171018_add_starred_to_drafts } from './20260201171018_add_starred_to_drafts'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
@@ -16,5 +22,11 @@ export const MIGRATIONS: Migration[] = [
   m20260106123802_create_categories,
   m20260106123806_create_transactions,
   m20260112131153_add_system_columns,
-  m20260114121532_create_seed_runs
+  m20260114121532_create_seed_runs,
+  m20260131100000_create_notifications,
+  m20260131100100_create_tags,
+  m20260131100200_create_suggestions,
+  m20260131100300_create_drafts,
+  m20260201144839_allow_null_item,
+  m20260201171018_add_starred_to_drafts
 ]

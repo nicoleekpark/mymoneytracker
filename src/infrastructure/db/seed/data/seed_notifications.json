@@ -1,0 +1,71 @@
+{
+  "notifications": [
+    {
+      "key": "dev:notif:system_maintenance",
+      "type": "system",
+      "title": "System",
+      "message": "Scheduled maintenance tonight at 12:00 AM",
+      "read": false,
+      "hoursAgo": 3
+    },
+    {
+      "key": "dev:notif:user_action_expense",
+      "type": "user_action",
+      "title": "Nicole",
+      "message": "Added \"Lunch at Panera\" – $15.50",
+      "read": false,
+      "hoursAgo": 1,
+      "senderName": "Nicole",
+      "senderAvatar": "N"
+    },
+    {
+      "key": "dev:notif:message_drake",
+      "type": "message",
+      "title": "Drake",
+      "message": "Can you add the grocery receipt?",
+      "read": true,
+      "hoursAgo": 24,
+      "senderName": "Drake",
+      "senderAvatar": "D"
+    },
+    {
+      "key": "dev:notif:reaction_love",
+      "type": "reaction",
+      "title": "Nicole",
+      "message": "❤️ liked \"Coffee at Starbucks\"",
+      "read": true,
+      "hoursAgo": 25,
+      "senderName": "Nicole",
+      "senderAvatar": "N",
+      "reactionType": "love"
+    },
+    {
+      "key": "dev:notif:group_expense",
+      "type": "group",
+      "title": "Family",
+      "message": "Drake added \"Gas\" – $45.00",
+      "read": true,
+      "hoursAgo": 120,
+      "groupName": "Family"
+    },
+    {
+      "key": "dev:notif:user_action_income",
+      "type": "user_action",
+      "title": "System",
+      "message": "Paycheck deposited – $2,500.00",
+      "read": false,
+      "hoursAgo": 2
+    },
+    {
+      "key": "dev:notif:reaction_question",
+      "type": "reaction",
+      "title": "Drake",
+      "message": "❓ questioned \"Mystery purchase\"",
+      "read": false,
+      "hoursAgo": 4,
+      "senderName": "Drake",
+      "senderAvatar": "D",
+      "reactionType": "question"
+    }
+  ]
+}
