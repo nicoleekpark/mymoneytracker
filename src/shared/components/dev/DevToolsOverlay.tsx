@@ -5,7 +5,7 @@ import {
 } from '@/infrastructure/db/queries/admin'
 import { migrate } from '@/infrastructure/db/migrate'
 import { exportDatabase } from '@/infrastructure/db/queries/export-db'
-import { runFixtures, seedNotificationsStandalone, clearNotificationsStandalone, seedDraftsStandalone, clearDraftsStandalone } from '@/infrastructure/db/seed'
+import { runFixtures, runSystemSeeds, seedNotificationsStandalone, clearNotificationsStandalone, seedDraftsStandalone, clearDraftsStandalone } from '@/infrastructure/db/seed'
 import { useDraftsStore } from '@/store'
 
 import { useHoHTheme } from '@/providers'
@@ -61,6 +61,7 @@ export function DevToolsOverlay() {
           try {
             resetDbHardDropAllTables()
             migrate()
+            runSystemSeeds() // Seed categories, accounts, tags
             Alert.alert('Done', 'DB reset & schema recreated')
           } catch (e: any) {
             Alert.alert('Failed', String(e?.message ?? e))
