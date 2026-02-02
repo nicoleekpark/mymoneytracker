@@ -13,6 +13,7 @@ import { DashboardModeTabs } from './shared/DashboardModeTabs'
 import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
 import { DashboardToolbar } from './shared/DashboardToolbar'
 import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
+import { AllBody } from './all'
 import { MonthlyBody } from './monthly/MonthlyBody'
 import { YearlyBody } from './yearly'
 
@@ -113,6 +114,19 @@ export default function DashboardScreen() {
           ) : scope === 'year' ? (
             <YearlyBody
               year={period.year}
+              colors={{
+                text: theme.semantic.text,
+                textSecondary: theme.semantic.textSecondary,
+                border: theme.semantic.border,
+                surface: theme.semantic.surface,
+                surfaceAlt: theme.semantic.surfaceAlt,
+                primary: theme.semantic.primary,
+                success: theme.semantic.success,
+                danger: theme.semantic.danger
+              }}
+            />
+          ) : scope === 'all' ? (
+            <AllBody
               colors={{
                 text: theme.semantic.text,
                 textSecondary: theme.semantic.textSecondary,

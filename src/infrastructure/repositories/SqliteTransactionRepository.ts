@@ -1,6 +1,8 @@
 import type { UUID } from '@/domain/common/uuid'
 import type { Transaction } from '@/domain/transaction/transaction.types'
 import type {
+  AllTimeExpenseByCategory,
+  AllTimeIncomeByCategory,
   DailyExpenseTotal,
   DailyFlowTotal,
   DailyFlowTotalWithCount,
@@ -9,6 +11,7 @@ import type {
   MonthlyFlowTotal,
   TransactionRepository,
   YearlyExpenseByCategory,
+  YearlyFlowTotal,
   YearlyIncomeByCategory,
 } from '@/domain/transaction/transaction.repository'
 import type { CategoryRepository } from '@/domain/category/category.repository'
@@ -336,6 +339,140 @@ export class SqliteTransactionRepository implements TransactionRepository {
 
     return rows.map((r) => ({
       categoryId: r.category_id ?? null,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
+  // All-time aggregations
+
+  getAllTimeExpenseTotal(): number {
+    const rows = this.dataSource.queryAll<{ total_cents: number }>(
+      `
+      SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'expense';
+      `
+    )
+    return Number(rows[0]?.total_cents ?? 0)
+  }
+
+  getAllTimeIncomeTotal(): number {
+    const rows = this.dataSource.queryAll<{ total_cents: number }>(
+      `
+      SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'income';
+      `
+    )
+    return Number(rows[0]?.total_cents ?? 0)
+  }
+
+  listAllTimeExpenseByCategory(): AllTimeExpenseByCategory[] {
+    const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
+      `
+      SELECT
+        category_id,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'expense'
+      GROUP BY category_id
+      ORDER BY total_cents DESC;
+      `
+    )
+
+    return rows.map((r) => ({
+      categoryId: r.category_id ?? null,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
+  listYearlyFlowTotals(): YearlyFlowTotal[] {
+    const rows = this.dataSource.queryAll<{
+      year: string
+      type: 'income' | 'expense'
+      total_cents: number
+    }>(
+      `
+      SELECT
+        substr(occurred_at, 1, 4) AS year,
+        type,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type IN ('income', 'expense')
+      GROUP BY year, type
+      ORDER BY year ASC;
+      `
+    )
+
+    return rows.map((r) => ({
+      year: Number(r.year),
+      type: r.type,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
+  listAllTimeIncomeByCategory(): AllTimeIncomeByCategory[] {
+    const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
+      `
+      SELECT
+        category_id,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'income'
+      GROUP BY category_id
+      ORDER BY total_cents DESC;
+      `
+    )
+
+    return rows.map((r) => ({
+      categoryId: r.category_id ?? null,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
+  getFirstTransactionDate(): string | null {
+    const rows = this.dataSource.queryAll<{ first_date: string | null }>(
+      `
+      SELECT MIN(occurred_at) AS first_date
+      FROM transactions
+      WHERE type IN ('income', 'expense');
+      `
+    )
+    return rows[0]?.first_date ?? null
+  }
+
+  countDistinctMonths(): number {
+    const rows = this.dataSource.queryAll<{ month_count: number }>(
+      `
+      SELECT COUNT(DISTINCT substr(occurred_at, 1, 7)) AS month_count
+      FROM transactions
+      WHERE type IN ('income', 'expense');
+      `
+    )
+    return Number(rows[0]?.month_count ?? 0)
+  }
+
+  listMonthlyNetTotals(): MonthlyFlowTotal[] {
+    const rows = this.dataSource.queryAll<{
+      month: string
+      type: 'income' | 'expense'
+      total_cents: number
+    }>(
+      `
+      SELECT
+        substr(occurred_at, 1, 7) AS month,
+        type,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type IN ('income', 'expense')
+      GROUP BY month, type
+      ORDER BY month ASC;
+      `
+    )
+
+    return rows.map((r) => ({
+      month: r.month,
+      type: r.type,
       totalCents: Number(r.total_cents ?? 0),
     }))
   }

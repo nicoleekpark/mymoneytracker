@@ -48,6 +48,22 @@ export type YearlyIncomeByCategory = Readonly<{
   totalCents: number
 }>
 
+export type AllTimeExpenseByCategory = Readonly<{
+  categoryId: UUID | null
+  totalCents: number
+}>
+
+export type AllTimeIncomeByCategory = Readonly<{
+  categoryId: UUID | null
+  totalCents: number
+}>
+
+export type YearlyFlowTotal = Readonly<{
+  year: number
+  type: 'income' | 'expense'
+  totalCents: number
+}>
+
 /**
  * TransactionRepository interface - defines data access contract for transactions.
  * Implementations handle persistence details (SQLite, etc.)
@@ -72,4 +88,16 @@ export interface TransactionRepository {
   listMonthlyFlowTotalsForYear(year: number): MonthlyFlowTotal[]
   listYearlyExpenseByCategory(year: number): YearlyExpenseByCategory[]
   listYearlyIncomeByCategory(year: number): YearlyIncomeByCategory[]
+
+  // All-time aggregations
+  getAllTimeExpenseTotal(): number
+  getAllTimeIncomeTotal(): number
+  listAllTimeExpenseByCategory(): AllTimeExpenseByCategory[]
+  listAllTimeIncomeByCategory(): AllTimeIncomeByCategory[]
+  listYearlyFlowTotals(): YearlyFlowTotal[]
+  getFirstTransactionDate(): string | null
+  countDistinctMonths(): number
+
+  // Personal bests
+  listMonthlyNetTotals(): MonthlyFlowTotal[]
 }

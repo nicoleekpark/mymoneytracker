@@ -257,3 +257,178 @@ export async function getYearlyIncomeByCategoryDollar(year: number): Promise<Yea
     totalDollar: centsToDollars(r.totalCents)
   }))
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// All-time aggregations
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type AllTimeSummaryDollar = Readonly<{
+  expenseTotalDollar: number
+  incomeTotalDollar: number
+  netCashFlowDollar: number
+}>
+
+export async function getAllTimeSummaryDollar(): Promise<AllTimeSummaryDollar> {
+  const expenseCents = transactionRepository.getAllTimeExpenseTotal()
+  const incomeCents = transactionRepository.getAllTimeIncomeTotal()
+
+  const expense = centsToDollars(expenseCents)
+  const income = centsToDollars(incomeCents)
+
+  return {
+    expenseTotalDollar: expense,
+    incomeTotalDollar: income,
+    netCashFlowDollar: income - expense,
+  }
+}
+
+export type AllTimeExpenseByCategoryDollar = Readonly<{
+  categoryId: UUID | null
+  totalDollar: number
+}>
+
+export async function getAllTimeExpenseByCategoryDollar(): Promise<AllTimeExpenseByCategoryDollar[]> {
+  const rows = transactionRepository.listAllTimeExpenseByCategory()
+  return rows.map((r) => ({
+    categoryId: r.categoryId,
+    totalDollar: centsToDollars(r.totalCents)
+  }))
+}
+
+export type AllTimeIncomeByCategoryDollar = Readonly<{
+  categoryId: UUID | null
+  totalDollar: number
+}>
+
+export async function getAllTimeIncomeByCategoryDollar(): Promise<AllTimeIncomeByCategoryDollar[]> {
+  const rows = transactionRepository.listAllTimeIncomeByCategory()
+  return rows.map((r) => ({
+    categoryId: r.categoryId,
+    totalDollar: centsToDollars(r.totalCents)
+  }))
+}
+
+export async function getFirstTransactionDate(): Promise<Date | null> {
+  const dateStr = transactionRepository.getFirstTransactionDate()
+  if (!dateStr) return null
+  return new Date(dateStr)
+}
+
+export async function getDistinctMonthCount(): Promise<number> {
+  return transactionRepository.countDistinctMonths()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Personal Bests
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type PersonalBests = Readonly<{
+  bestSavingsMonth: { month: string; netDollar: number } | null
+  bestSavingsYear: { year: number; netDollar: number } | null
+  peakExpenseMonth: { month: string; expenseDollar: number } | null
+  peakExpenseYear: { year: number; expenseDollar: number } | null
+}>
+
+export async function getPersonalBests(): Promise<PersonalBests> {
+  const monthlyFlows = transactionRepository.listMonthlyNetTotals()
+  const yearlyFlows = transactionRepository.listYearlyFlowTotals()
+
+  // Calculate monthly net and expense
+  const monthlyNet = new Map<string, number>()
+  const monthlyExpense = new Map<string, number>()
+  for (const flow of monthlyFlows) {
+    const value = centsToDollars(flow.totalCents)
+    if (flow.type === 'income') {
+      const current = monthlyNet.get(flow.month) ?? 0
+      monthlyNet.set(flow.month, current + value)
+    } else {
+      const currentNet = monthlyNet.get(flow.month) ?? 0
+      monthlyNet.set(flow.month, currentNet - value)
+      monthlyExpense.set(flow.month, value)
+    }
+  }
+
+  // Find best savings month
+  let bestMonth: { month: string; netDollar: number } | null = null
+  for (const [month, net] of monthlyNet.entries()) {
+    if (!bestMonth || net > bestMonth.netDollar) {
+      bestMonth = { month, netDollar: net }
+    }
+  }
+
+  // Find peak expense month
+  let peakExpenseMonth: { month: string; expenseDollar: number } | null = null
+  for (const [month, expense] of monthlyExpense.entries()) {
+    if (!peakExpenseMonth || expense > peakExpenseMonth.expenseDollar) {
+      peakExpenseMonth = { month, expenseDollar: expense }
+    }
+  }
+
+  // Calculate yearly net and expense
+  const yearlyNet = new Map<number, number>()
+  const yearlyExpense = new Map<number, number>()
+  for (const flow of yearlyFlows) {
+    const value = centsToDollars(flow.totalCents)
+    if (flow.type === 'income') {
+      const current = yearlyNet.get(flow.year) ?? 0
+      yearlyNet.set(flow.year, current + value)
+    } else {
+      const currentNet = yearlyNet.get(flow.year) ?? 0
+      yearlyNet.set(flow.year, currentNet - value)
+      yearlyExpense.set(flow.year, value)
+    }
+  }
+
+  // Find best year (exclude current year - it's incomplete)
+  const currentYear = new Date().getFullYear()
+  let bestYear: { year: number; netDollar: number } | null = null
+  for (const [year, net] of yearlyNet.entries()) {
+    if (year < currentYear && (!bestYear || net > bestYear.netDollar)) {
+      bestYear = { year, netDollar: net }
+    }
+  }
+
+  // Find peak expense year (exclude current year)
+  let peakExpenseYear: { year: number; expenseDollar: number } | null = null
+  for (const [year, expense] of yearlyExpense.entries()) {
+    if (year < currentYear && (!peakExpenseYear || expense > peakExpenseYear.expenseDollar)) {
+      peakExpenseYear = { year, expenseDollar: expense }
+    }
+  }
+
+  return {
+    bestSavingsMonth: bestMonth && bestMonth.netDollar > 0 ? bestMonth : null,
+    bestSavingsYear: bestYear && bestYear.netDollar > 0 ? bestYear : null,
+    peakExpenseMonth: peakExpenseMonth && peakExpenseMonth.expenseDollar > 0 ? peakExpenseMonth : null,
+    peakExpenseYear: peakExpenseYear && peakExpenseYear.expenseDollar > 0 ? peakExpenseYear : null
+  }
+}
+
+export type YearlyFlowDollar = Readonly<{
+  year: number
+  incomeDollar: number
+  expenseDollar: number
+}>
+
+export async function getYearlyFlowTotalsDollar(): Promise<YearlyFlowDollar[]> {
+  const rows = transactionRepository.listYearlyFlowTotals()
+
+  const byYear = new Map<number, { income: number; expense: number }>()
+  for (const r of rows) {
+    const cur = byYear.get(r.year) ?? { income: 0, expense: 0 }
+    const val = centsToDollars(r.totalCents)
+
+    if (r.type === 'income') cur.income = val
+    if (r.type === 'expense') cur.expense = val
+
+    byYear.set(r.year, cur)
+  }
+
+  return Array.from(byYear.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([year, v]) => ({
+      year,
+      incomeDollar: v.income,
+      expenseDollar: v.expense
+    }))
+}

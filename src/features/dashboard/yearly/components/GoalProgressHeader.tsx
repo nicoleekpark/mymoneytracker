@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
-import { formatUsdInt, formatSignedUsdInt } from '@/shared/format/currency'
+import { formatUsdInt } from '@/shared/format/currency'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
 
 // Enable LayoutAnimation on Android
@@ -27,349 +27,261 @@ type MonthlyDataItem = {
   netDollar: number
 }
 
-type VerticalMetricProps = {
-  icon: string
-  value: number
-  label: string
-  subLabel?: string
-  color: string
-  bgColor: string
-  colors: GoalProgressColors
-}
-
-function VerticalMetric({ icon, value, label, subLabel, color, bgColor, colors }: VerticalMetricProps) {
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        padding: 14,
-        borderWidth: 1,
-        borderColor: colors.border,
-        alignItems: 'center',
-        gap: 6
-      }}
-    >
-      {/* Icon Circle */}
-      <View
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: bgColor,
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        <Text style={{ fontSize: 18 }}>{icon}</Text>
-      </View>
-
-      {/* Value */}
-      <Text
-        style={{
-          fontSize: 18,
-          fontWeight: '800',
-          color: color
-        }}
-      >
-        {formatUsdInt(Math.abs(value))}
-      </Text>
-
-      {/* Label */}
-      <Text
-        style={{
-          fontSize: 11,
-          fontWeight: '600',
-          color: colors.textSecondary,
-          textTransform: 'uppercase',
-          letterSpacing: 0.5
-        }}
-      >
-        {label}
-      </Text>
-
-      {/* Sub Label */}
-      {subLabel && (
-        <Text
-          style={{
-            fontSize: 10,
-            fontWeight: '600',
-            color: color,
-            marginTop: -4
-          }}
-        >
-          {subLabel}
-        </Text>
-      )}
-    </View>
-  )
-}
-
-function MonthlyRow({
-  item,
-  colors,
-  isPastYear,
-  currentMonth
-}: {
-  item: MonthlyDataItem
-  colors: GoalProgressColors
-  isPastYear: boolean
-  currentMonth: number
-}) {
-  const monthIndex = parseInt(item.month.split('-')[1], 10) - 1
-  const isFuture = !isPastYear && monthIndex >= currentMonth
-
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        opacity: isFuture ? 0.4 : 1
-      }}
-    >
-      <Text style={{ width: 36, fontSize: 12, fontWeight: '600', color: colors.textSecondary }}>
-        {MONTH_NAMES_SHORT[monthIndex]}
-      </Text>
-      <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: 16 }}>
-        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.success, minWidth: 55, textAlign: 'right' }}>
-          {item.incomeDollar > 0 ? `+${formatUsdInt(item.incomeDollar).replace('$ ', '')}` : '-'}
-        </Text>
-        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.danger, minWidth: 55, textAlign: 'right' }}>
-          {item.expenseDollar > 0 ? `-${formatUsdInt(item.expenseDollar).replace('$ ', '')}` : '-'}
-        </Text>
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '700',
-            color: item.netDollar >= 0 ? colors.success : colors.danger,
-            minWidth: 55,
-            textAlign: 'right'
-          }}
-        >
-          {item.netDollar !== 0 ? formatSignedUsdInt(item.netDollar).replace('$ ', '') : '-'}
-        </Text>
-      </View>
-    </View>
-  )
-}
-
 type Props = {
   year: number
-  goalAmount: number
-  currentNetAsset: number
-  yearStartNetAsset: number
-  totalAsset: number
-  totalDebt: number
-  liquidAsset: number
   totalIncome: number
   totalExpense: number
   monthlyData: MonthlyDataItem[]
   colors: GoalProgressColors
 }
 
-export function GoalProgressHeader(props: Props) {
-  const {
-    year,
-    goalAmount,
-    currentNetAsset,
-    yearStartNetAsset,
-    totalIncome,
-    totalExpense,
-    monthlyData,
-    colors
-  } = props
+// Single month bar component
+function MonthBar({
+  monthIndex,
+  data,
+  maxAmount,
+  isFuture,
+  isSelected,
+  onPress,
+  colors
+}: {
+  monthIndex: number
+  data: MonthlyDataItem | undefined
+  maxAmount: number
+  isFuture: boolean
+  isSelected: boolean
+  onPress: () => void
+  colors: GoalProgressColors
+}) {
+  const income = data?.incomeDollar ?? 0
+  const expense = data?.expenseDollar ?? 0
+  const hasData = income > 0 || expense > 0
 
-  const [isMonthlyExpanded, setIsMonthlyExpanded] = useState(false)
+  // Calculate bar heights (max 40px)
+  const maxBarHeight = 40
+  const incomeHeight = maxAmount > 0 ? (income / maxAmount) * maxBarHeight : 0
+  const expenseHeight = maxAmount > 0 ? (expense / maxAmount) * maxBarHeight : 0
+
+  const barOpacity = isFuture ? 0.3 : 1
+
+  return (
+    <Pressable onPress={onPress} style={{ alignItems: 'center', flex: 1 }}>
+      {/* Bars container */}
+      <View
+        style={{
+          height: maxBarHeight + 4,
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: 2,
+          flexDirection: 'row'
+        }}
+      >
+        {/* Income bar (green) */}
+        <View
+          style={{
+            width: 6,
+            height: Math.max(hasData ? 4 : 2, incomeHeight),
+            backgroundColor: isFuture ? colors.surfaceAlt : colors.success,
+            borderRadius: 2,
+            opacity: barOpacity
+          }}
+        />
+        {/* Expense bar (red) */}
+        <View
+          style={{
+            width: 6,
+            height: Math.max(hasData ? 4 : 2, expenseHeight),
+            backgroundColor: isFuture ? colors.surfaceAlt : colors.danger,
+            borderRadius: 2,
+            opacity: barOpacity
+          }}
+        />
+      </View>
+
+      {/* Month label */}
+      <Text
+        style={{
+          fontSize: 9,
+          fontWeight: isSelected ? '800' : '600',
+          color: isSelected ? colors.text : colors.textSecondary,
+          marginTop: 4,
+          opacity: isFuture ? 0.4 : 1
+        }}
+      >
+        {MONTH_NAMES_SHORT[monthIndex].charAt(0)}
+      </Text>
+
+      {/* Selection indicator */}
+      {isSelected && (
+        <View
+          style={{
+            width: 4,
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: colors.primary,
+            marginTop: 2
+          }}
+        />
+      )}
+    </Pressable>
+  )
+}
+
+export function GoalProgressHeader(props: Props) {
+  const { year, totalIncome, totalExpense, monthlyData, colors } = props
+
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null)
 
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1
   const isPastYear = year < currentYear
+  const isFutureYear = year > currentYear
 
-  const yearChange = currentNetAsset - yearStartNetAsset
-  const progressPercent = goalAmount > 0 ? Math.min(100, (currentNetAsset / goalAmount) * 100) : 0
   const netCashFlow = totalIncome - totalExpense
 
-  const monthsForAvg = isPastYear ? 12 : currentMonth
+  // Find max amount for scaling bars
+  const maxAmount = Math.max(
+    ...monthlyData.map(m => Math.max(m.incomeDollar, m.expenseDollar)),
+    1
+  )
 
-  function toggleMonthly() {
+  // Find best month (highest net)
+  const bestMonth = monthlyData.reduce(
+    (best, m, idx) => {
+      const net = m.incomeDollar - m.expenseDollar
+      if (net > best.net) return { idx, net }
+      return best
+    },
+    { idx: -1, net: -Infinity }
+  )
+
+  function handleMonthPress(monthIndex: number) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setIsMonthlyExpanded(prev => !prev)
+    setSelectedMonth(prev => (prev === monthIndex ? null : monthIndex))
   }
 
+  const selectedData = selectedMonth !== null ? monthlyData[selectedMonth] : null
+
   return (
-    <View style={{ gap: 12 }}>
-      {/* Goal Progress Bar */}
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: 16,
-          padding: 16,
-          borderWidth: 1,
-          borderColor: colors.border
-        }}
-      >
-        {/* Header row */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <View>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary }}>
-              Goal
-            </Text>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text }}>
-              {formatUsdInt(goalAmount)}
-            </Text>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary }}>
-              {isPastYear ? 'Year Change' : 'YTD Change'}
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        gap: 16
+      }}
+    >
+      {/* Header row */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary }}>
+          {year} Overview
+        </Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text
+              style={{
+                fontSize: 20,
+                color: netCashFlow >= 0 ? colors.success : colors.danger
+              }}
+            >
+              {netCashFlow >= 0 ? '↑' : '↓'}
             </Text>
             <Text
               style={{
-                fontSize: 18,
-                fontWeight: '800',
-                color: yearChange >= 0 ? colors.success : colors.danger
+                fontSize: 24,
+                fontWeight: '900',
+                color: netCashFlow >= 0 ? colors.success : colors.danger
               }}
             >
-              {formatSignedUsdInt(yearChange)}
+              {formatUsdInt(Math.abs(netCashFlow))}
             </Text>
           </View>
+          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
+            net
+          </Text>
         </View>
+      </View>
 
-        {/* Progress bar */}
+      {/* Monthly bars */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 }}>
+        {Array.from({ length: 12 }).map((_, idx) => {
+          const monthData = monthlyData[idx]
+          const isFuture = !isPastYear && !isFutureYear && idx >= currentMonth
+          const isAllFuture = isFutureYear
+
+          return (
+            <MonthBar
+              key={idx}
+              monthIndex={idx}
+              data={monthData}
+              maxAmount={maxAmount}
+              isFuture={isFuture || isAllFuture}
+              isSelected={selectedMonth === idx}
+              onPress={() => handleMonthPress(idx)}
+              colors={colors}
+            />
+          )
+        })}
+      </View>
+
+      {/* Selected month details or best month hint */}
+      {selectedData ? (
         <View
           style={{
-            height: 10,
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 5,
-            overflow: 'hidden',
-            marginBottom: 8
+            borderRadius: 10,
+            padding: 12,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}
         >
-          <View
-            style={{
-              width: `${progressPercent}%`,
-              height: '100%',
-              backgroundColor: progressPercent >= 100 ? colors.success : colors.primary,
-              borderRadius: 5
-            }}
-          />
-        </View>
-
-        {/* Progress label */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-            {isPastYear ? 'Achieved' : 'Progress'}: {progressPercent.toFixed(0)}%
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
+            {MONTH_NAMES_SHORT[selectedMonth!]}
           </Text>
-          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary }}>
-            {isPastYear ? 'Year End' : 'Current'}: {formatUsdInt(currentNetAsset)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Vertical Metrics - Inflow / Outflow / Net */}
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <VerticalMetric
-          icon="↑"
-          value={totalIncome}
-          label="Inflow"
-          color={colors.success}
-          bgColor={`${colors.success}20`}
-          colors={colors}
-        />
-        <VerticalMetric
-          icon="↓"
-          value={totalExpense}
-          label="Outflow"
-          color={colors.danger}
-          bgColor={`${colors.danger}20`}
-          colors={colors}
-        />
-        <VerticalMetric
-          icon={netCashFlow >= 0 ? '✓' : '!'}
-          value={netCashFlow}
-          label="Net"
-          subLabel={netCashFlow >= 0 ? 'Surplus' : 'Deficit'}
-          color={netCashFlow >= 0 ? colors.success : colors.danger}
-          bgColor={netCashFlow >= 0 ? `${colors.success}20` : `${colors.danger}20`}
-          colors={colors}
-        />
-      </View>
-
-      {/* Monthly Average - Expandable */}
-      <Pressable onPress={toggleMonthly}>
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 12,
-            padding: 14,
-            borderWidth: 1,
-            borderColor: colors.border
-          }}
-        >
-          {/* Header */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: 14 }}>📊</Text>
-              <View>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>
-                  Monthly Average
-                </Text>
-                <Text style={{ fontSize: 10, color: colors.textSecondary }}>
-                  {isMonthlyExpanded ? 'tap to collapse' : 'tap to see monthly breakdown'}
-                </Text>
-              </View>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.success }}>
+                {formatUsdInt(selectedData.incomeDollar)}
+              </Text>
+              <Text style={{ fontSize: 9, color: colors.textSecondary }}>in</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.success }}>
-                  {formatUsdInt(totalIncome / monthsForAvg)}
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.danger }}>
+                {formatUsdInt(selectedData.expenseDollar)}
+              </Text>
+              <Text style={{ fontSize: 9, color: colors.textSecondary }}>out</Text>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <Text style={{ fontSize: 11, color: selectedData.netDollar >= 0 ? colors.success : colors.danger }}>
+                  {selectedData.netDollar >= 0 ? '↑' : '↓'}
                 </Text>
-                <Text style={{ fontSize: 9, color: colors.textSecondary }}>in</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.danger }}>
-                  {formatUsdInt(totalExpense / monthsForAvg)}
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '800',
+                    color: selectedData.netDollar >= 0 ? colors.success : colors.danger
+                  }}
+                >
+                  {formatUsdInt(Math.abs(selectedData.netDollar))}
                 </Text>
-                <Text style={{ fontSize: 9, color: colors.textSecondary }}>out</Text>
               </View>
+              <Text style={{ fontSize: 9, color: colors.textSecondary }}>net</Text>
             </View>
           </View>
-
-          {/* Expanded Monthly Data */}
-          {isMonthlyExpanded && (
-            <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 }}>
-              {/* Header */}
-              <View style={{ flexDirection: 'row', paddingVertical: 4, paddingHorizontal: 4 }}>
-                <Text style={{ width: 36, fontSize: 10, fontWeight: '600', color: colors.textSecondary }}></Text>
-                <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: 16 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, minWidth: 55, textAlign: 'right' }}>In</Text>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, minWidth: 55, textAlign: 'right' }}>Out</Text>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, minWidth: 55, textAlign: 'right' }}>Net</Text>
-                </View>
-              </View>
-
-              {/* Monthly rows */}
-              {monthlyData.map((item, idx) => (
-                <MonthlyRow
-                  key={item.month || idx}
-                  item={item}
-                  colors={colors}
-                  isPastYear={isPastYear}
-                  currentMonth={currentMonth}
-                />
-              ))}
-            </View>
-          )}
         </View>
-      </Pressable>
+      ) : bestMonth.idx >= 0 && bestMonth.net > 0 ? (
+        <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+          {MONTH_NAMES_SHORT[bestMonth.idx]}: ↑ {formatUsdInt(bestMonth.net)} (best month)
+        </Text>
+      ) : (
+        <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+          Tap a month to see details
+        </Text>
+      )}
     </View>
   )
 }

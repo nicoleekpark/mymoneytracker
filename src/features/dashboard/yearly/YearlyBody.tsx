@@ -5,11 +5,11 @@ import { CATEGORIES } from '@/config/categories.config'
 import { Stack } from '@/shared/components'
 
 import {
+  CategoryBreakdownList,
   GoalProgressHeader,
-  MoneyFlowRiver,
-  SparklineList
+  type CategoryItemData
 } from './components'
-import { useYearlyData, type CategoryBreakdown, type MonthData } from './hooks'
+import { useYearlyData, type CategoryBreakdown } from './hooks'
 
 export type YearlyColors = Readonly<{
   text: string
@@ -27,32 +27,20 @@ type Props = {
   colors: YearlyColors
 }
 
-function getCategoryMeta(categoryKey?: string) {
-  if (!categoryKey) {
-    return { name: 'Uncategorized', icon: 'cube', color: '#666' }
-  }
-
-  const cat = CATEGORIES.find(c => c.key === categoryKey)
-  if (!cat) {
-    return { name: categoryKey, icon: 'cube', color: '#666' }
-  }
-
-  return { name: cat.name, icon: cat.icon, color: cat.color }
-}
-
 type SubcategoryData = {
   name: string
   icon: string
   color: string
   total: number
-  average: number
 }
 
-function buildSparklineData(
+/**
+ * Build category list data with subcategories aggregated by parent
+ */
+function buildCategoryListData(
   categories: CategoryBreakdown[],
-  monthlyData: MonthData[]
-) {
-  // Aggregate by parent category (categoryKey) and collect subcategories
+  monthsElapsed: number
+): CategoryItemData[] {
   const byParentCategory = new Map<string, {
     totalDollar: number
     categoryRef?: CategoryBreakdown['categoryRef']
@@ -75,8 +63,7 @@ function buildSparklineData(
           name: subCat.name,
           icon: subCat.icon,
           color: subCat.color,
-          total: cat.totalDollar,
-          average: cat.totalDollar / 12
+          total: cat.totalDollar
         }
       }
     }
@@ -97,77 +84,36 @@ function buildSparklineData(
     }
   }
 
-  // Convert to array and create monthly amounts for sparklines
+  const avgDivisor = Math.max(monthsElapsed, 1)
+
   return Array.from(byParentCategory.values())
     .sort((a, b) => b.totalDollar - a.totalDollar)
-    .map(item => {
-      const monthlyAmounts = monthlyData.map(() => {
-        return item.totalDollar / 12
-      })
-
-      // Sort subcategories by total and take top 5
-      const topSubcategories = item.subcategories
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5)
-
-      return {
-        categoryRef: item.categoryRef,
-        monthlyAmounts,
-        total: item.totalDollar,
-        average: item.totalDollar / 12,
-        subcategories: topSubcategories
-      }
-    })
+    .map(item => ({
+      categoryRef: item.categoryRef,
+      total: item.totalDollar,
+      average: item.totalDollar / avgDivisor,
+      subcategories: item.subcategories.sort((a, b) => b.total - a.total).slice(0, 5)
+    }))
 }
-
 
 export function YearlyBody({ year, colors }: Props) {
   const { loading, error, data } = useYearlyData(year)
 
-  const sparklineData = useMemo(
-    () => buildSparklineData(data.expenseByCategory, data.monthlyData),
-    [data.expenseByCategory, data.monthlyData]
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+  const isPastYear = year < currentYear
+  const monthsElapsed = isPastYear ? 12 : currentMonth
+
+  // Build unified category data for both income and expense
+  const incomeCategories = useMemo(
+    () => buildCategoryListData(data.incomeByCategory, monthsElapsed),
+    [data.incomeByCategory, monthsElapsed]
   )
 
-  const incomeFlows = useMemo(() => {
-    // Aggregate by parent category
-    const byParent = new Map<string, { amount: number; categoryRef?: CategoryBreakdown['categoryRef'] }>()
-    for (const cat of data.incomeByCategory) {
-      const key = cat.categoryRef?.categoryKey ?? 'uncategorized'
-      const existing = byParent.get(key)
-      if (existing) {
-        existing.amount += cat.totalDollar
-      } else {
-        byParent.set(key, {
-          amount: cat.totalDollar,
-          categoryRef: cat.categoryRef
-            ? { type: cat.categoryRef.type, categoryKey: cat.categoryRef.categoryKey }
-            : undefined
-        })
-      }
-    }
-    return Array.from(byParent.values()).sort((a, b) => b.amount - a.amount)
-  }, [data.incomeByCategory])
-
-  const expenseFlows = useMemo(() => {
-    // Aggregate by parent category
-    const byParent = new Map<string, { amount: number; categoryRef?: CategoryBreakdown['categoryRef'] }>()
-    for (const cat of data.expenseByCategory) {
-      const key = cat.categoryRef?.categoryKey ?? 'uncategorized'
-      const existing = byParent.get(key)
-      if (existing) {
-        existing.amount += cat.totalDollar
-      } else {
-        byParent.set(key, {
-          amount: cat.totalDollar,
-          categoryRef: cat.categoryRef
-            ? { type: cat.categoryRef.type, categoryKey: cat.categoryRef.categoryKey }
-            : undefined
-        })
-      }
-    }
-    return Array.from(byParent.values()).sort((a, b) => b.amount - a.amount)
-  }, [data.expenseByCategory])
+  const expenseCategories = useMemo(
+    () => buildCategoryListData(data.expenseByCategory, monthsElapsed),
+    [data.expenseByCategory, monthsElapsed]
+  )
 
   if (loading) {
     return (
@@ -187,37 +133,31 @@ export function YearlyBody({ year, colors }: Props) {
 
   return (
     <Stack gap="xl" scroll>
-      {/* Goal Progress Header */}
+      {/* Year Overview with monthly bars */}
       <GoalProgressHeader
         year={year}
-        goalAmount={data.goalAmount}
-        currentNetAsset={data.currentNetAsset}
-        yearStartNetAsset={data.yearStartNetAsset}
-        totalAsset={data.totalAsset}
-        totalDebt={data.totalDebt}
-        liquidAsset={data.liquidAsset}
         totalIncome={data.totalIncome}
         totalExpense={data.totalExpense}
         monthlyData={data.monthlyData}
         colors={colors}
       />
 
-      {/* Money Flow River (Sankey) */}
-      <MoneyFlowRiver
-        incomeByCategory={incomeFlows}
-        expenseByCategory={expenseFlows}
-        netAmount={data.netAmount}
+      {/* Income by Source */}
+      <CategoryBreakdownList
+        title="Income by Source"
+        type="income"
+        categories={incomeCategories}
+        totalAmount={data.totalIncome}
         colors={colors}
       />
 
       {/* Spending by Category */}
-      <SparklineList
-        categories={sparklineData}
-        totalExpense={data.totalExpense}
+      <CategoryBreakdownList
+        title="Spending by Category"
+        type="expense"
+        categories={expenseCategories}
+        totalAmount={data.totalExpense}
         colors={colors}
-        onCategoryPress={(key) => {
-          console.log('Category pressed:', key)
-        }}
       />
     </Stack>
   )

@@ -1,24 +1,32 @@
 /**
+ * Format number with thousands separator (e.g., 200000 => 200,000)
+ */
+function withCommas(n: number): string {
+  return n.toLocaleString('en-US')
+}
+
+/**
  * Format a currency amount with 2 decimal places.
  * Negative amounts are shown in parentheses: ($ 123.45)
  */
 export function formatCurrency(amount: number): string {
   if (!Number.isFinite(amount)) return '$ 0.00'
 
-  const abs = Math.abs(amount).toFixed(2)
+  const abs = Math.abs(amount)
+  const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   if (amount < 0) {
-    return `($ ${abs})`
+    return `($ ${formatted})`
   }
-  return `$ ${abs}`
+  return `$ ${formatted}`
 }
 
 /**
  * Format a currency amount as an integer (rounded).
- * Always shows absolute value: $ 123
+ * Always shows absolute value: $ 123,456
  */
 export function formatUsdInt(amount: number): string {
   const v = Math.round(Math.abs(Number(amount) || 0))
-  return `$ ${v}`
+  return `$ ${withCommas(v)}`
 }
 
 /**
@@ -29,7 +37,7 @@ export function formatSignedUsdInt(amount: number): string {
   const v = Math.round(Number(amount) || 0)
   if (v === 0) return '$ 0'
   const abs = Math.abs(v)
-  return v > 0 ? `+$ ${abs}` : `-$ ${abs}`
+  return v > 0 ? `+$ ${withCommas(abs)}` : `-$ ${withCommas(abs)}`
 }
 
 /**
