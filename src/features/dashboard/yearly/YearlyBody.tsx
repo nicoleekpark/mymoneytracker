@@ -7,9 +7,10 @@ import { Stack } from '@/shared/components'
 import {
   CategoryBreakdownList,
   GoalProgressHeader,
+  YearlyProjectionCard,
   type CategoryItemData
 } from './components'
-import { useYearlyData, type CategoryBreakdown } from './hooks'
+import { useYearlyData, useYearlyProjection, type CategoryBreakdown } from './hooks'
 
 export type YearlyColors = Readonly<{
   text: string
@@ -98,6 +99,7 @@ function buildCategoryListData(
 
 export function YearlyBody({ year, colors }: Props) {
   const { loading, error, data } = useYearlyData(year)
+  const { data: projectionData } = useYearlyProjection(year)
 
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1
@@ -141,6 +143,15 @@ export function YearlyBody({ year, colors }: Props) {
         monthlyData={data.monthlyData}
         colors={colors}
       />
+
+      {/* Yearly Projection - Current year only */}
+      {projectionData.monthsElapsed > 0 && (
+        <YearlyProjectionCard
+          year={year}
+          data={projectionData}
+          colors={colors}
+        />
+      )}
 
       {/* Income by Source */}
       <CategoryBreakdownList

@@ -50,4 +50,6 @@ db_exports/
 CLAUDE.md
 PROMPTS.md
 prompt-ex/
-*.html
+
+# temporary
+docs/

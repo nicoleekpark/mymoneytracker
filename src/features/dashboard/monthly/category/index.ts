@@ -1,5 +1,5 @@
 export { MonthlyCategoryDonut, type DonutColors } from './MonthlyCategoryDonut'
-export { MonthlyCategorySection } from './MonthlyCategorySection'
+export { MonthlyCategorySection, MonthlyCategoryContent } from './MonthlyCategorySection'
 export { useMonthlyCategorySpending, type CategorySpendingRow } from './useMonthlyCategorySpending'
 export {
   buildCategorySlices,

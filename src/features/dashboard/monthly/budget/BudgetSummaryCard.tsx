@@ -11,6 +11,8 @@ import type { BudgetData } from './useBudgetSummary'
 type Props = {
   data: BudgetData
   colors: CalendarColors
+  /** When true, renders without card wrapper (for use inside AccordionCard) */
+  embedded?: boolean
 }
 
 function formatDollar(amount: number): string {
@@ -30,7 +32,7 @@ function formatDate(ymd: string): string {
   return `${getMonthNameShort(parseInt(m, 10))} ${parseInt(d, 10)}`
 }
 
-export function BudgetSummaryCard({ data, colors }: Props) {
+export function BudgetSummaryCard({ data, colors, embedded = false }: Props) {
   const theme = useHoHTheme()
   const {
     budgetDollar,
@@ -56,7 +58,7 @@ export function BudgetSummaryCard({ data, colors }: Props) {
   return (
     <Stack
       gap="md"
-      style={{
+      style={embedded ? { overflow: 'visible' } : {
         backgroundColor: colors.surface,
         borderRadius: 12,
         padding: 16,

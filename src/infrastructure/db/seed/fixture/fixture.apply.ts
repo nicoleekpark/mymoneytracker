@@ -68,7 +68,12 @@ function upsertFixtureTransaction(t: FixtureTransaction, now: string) {
   let fromId: string | null = null
   let toId: string | null = null
 
-  if (t.type === 'expense' || t.type === 'income') {
+  // Transaction types: income, expense, transfer
+  // - income/expense use accountKey
+  // - transfer uses fromAccountKey + toAccountKey
+  const isTransfer = t.type === 'transfer' || (t.fromAccountKey && t.toAccountKey)
+
+  if (!isTransfer) {
     if (!t.accountKey) throw new Error(`Fixture error: ${t.key} missing accountKey`)
     accountId = getAccountIdByKey(t.accountKey)
   } else {

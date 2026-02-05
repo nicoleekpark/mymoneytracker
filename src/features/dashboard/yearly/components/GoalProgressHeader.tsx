@@ -175,8 +175,8 @@ export function GoalProgressHeader(props: Props) {
     >
       {/* Header row */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary }}>
-          {year} Overview
+        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
+          {year} OVERVIEW
         </Text>
         <View style={{ alignItems: 'flex-end' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

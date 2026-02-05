@@ -432,3 +432,166 @@ export async function getYearlyFlowTotalsDollar(): Promise<YearlyFlowDollar[]> {
       expenseDollar: v.expense
     }))
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Projections
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type MonthlyProjection = Readonly<{
+  projectedExpense: number
+  projectedIncome: number
+  projectedSavings: number
+  projectedSavingsRate: number // 0-100
+  daysElapsed: number
+  daysInMonth: number
+  currentExpense: number
+  currentIncome: number
+}>
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate()
+}
+
+export async function getMonthlyProjection(now = new Date()): Promise<MonthlyProjection> {
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1 // 1-indexed
+  const monthYYYYMM = `${year}-${String(month).padStart(2, '0')}`
+
+  const daysElapsed = now.getDate()
+  const daysInMonth = getDaysInMonth(year, month)
+
+  const totals = transactionRepository.getMonthTotals(monthYYYYMM)
+  const currentExpense = centsToDollars(totals.expenseCents)
+  const currentIncome = centsToDollars(totals.incomeCents)
+
+  // Avoid division by zero
+  if (daysElapsed === 0) {
+    return {
+      projectedExpense: 0,
+      projectedIncome: 0,
+      projectedSavings: 0,
+      projectedSavingsRate: 0,
+      daysElapsed: 0,
+      daysInMonth,
+      currentExpense: 0,
+      currentIncome: 0,
+    }
+  }
+
+  const dailyAvgExpense = currentExpense / daysElapsed
+  const dailyAvgIncome = currentIncome / daysElapsed
+
+  const projectedExpense = Math.round(dailyAvgExpense * daysInMonth)
+  const projectedIncome = Math.round(dailyAvgIncome * daysInMonth)
+  const projectedSavings = projectedIncome - projectedExpense
+
+  const projectedSavingsRate = projectedIncome > 0
+    ? Math.round((projectedSavings / projectedIncome) * 100)
+    : 0
+
+  return {
+    projectedExpense,
+    projectedIncome,
+    projectedSavings,
+    projectedSavingsRate,
+    daysElapsed,
+    daysInMonth,
+    currentExpense,
+    currentIncome,
+  }
+}
+
+export type YearlyProjection = Readonly<{
+  projectedIncome: number
+  projectedExpense: number
+  projectedSavings: number
+  projectedSavingsRate: number // 0-100
+  monthsElapsed: number // decimal (e.g., 1.5)
+  currentIncome: number
+  currentExpense: number
+  avgMonthlyIncome: number
+  avgMonthlyExpense: number
+  vsLastYear: {
+    lastYearSavings: number
+    delta: number
+    isMoreSaved: boolean
+  } | null
+}>
+
+function getMonthsElapsed(now: Date): number {
+  const completedMonths = now.getMonth() // 0-indexed (Jan = 0)
+  const currentDay = now.getDate()
+  const daysInMonth = getDaysInMonth(now.getFullYear(), now.getMonth() + 1)
+  return completedMonths + (currentDay / daysInMonth)
+}
+
+export async function getYearlyProjection(year: number, now = new Date()): Promise<YearlyProjection> {
+  const currentYear = now.getFullYear()
+  const isCurrentYear = year === currentYear
+
+  // Get YTD or full year totals
+  const totals = transactionRepository.getYearTotals(year)
+  const currentIncome = centsToDollars(totals.incomeCents)
+  const currentExpense = centsToDollars(totals.expenseCents)
+
+  // Calculate months elapsed
+  const monthsElapsed = isCurrentYear ? getMonthsElapsed(now) : 12
+
+  // Avoid division by zero (early January)
+  if (monthsElapsed < 0.1) {
+    return {
+      projectedIncome: 0,
+      projectedExpense: 0,
+      projectedSavings: 0,
+      projectedSavingsRate: 0,
+      monthsElapsed: 0,
+      currentIncome,
+      currentExpense,
+      avgMonthlyIncome: 0,
+      avgMonthlyExpense: 0,
+      vsLastYear: null,
+    }
+  }
+
+  const avgMonthlyIncome = currentIncome / monthsElapsed
+  const avgMonthlyExpense = currentExpense / monthsElapsed
+
+  const projectedIncome = Math.round(avgMonthlyIncome * 12)
+  const projectedExpense = Math.round(avgMonthlyExpense * 12)
+  const projectedSavings = projectedIncome - projectedExpense
+
+  const projectedSavingsRate = projectedIncome > 0
+    ? Math.round((projectedSavings / projectedIncome) * 100)
+    : 0
+
+  // Get last year comparison
+  let vsLastYear: YearlyProjection['vsLastYear'] = null
+  const lastYear = year - 1
+  const lastYearTotals = transactionRepository.getYearTotals(lastYear)
+  const lastYearIncome = centsToDollars(lastYearTotals.incomeCents)
+  const lastYearExpense = centsToDollars(lastYearTotals.expenseCents)
+  const lastYearSavings = lastYearIncome - lastYearExpense
+
+  // Only show comparison if last year has data
+  if (lastYearIncome > 0 || lastYearExpense > 0) {
+    const delta = projectedSavings - lastYearSavings
+    vsLastYear = {
+      lastYearSavings,
+      delta: Math.abs(delta),
+      isMoreSaved: delta >= 0,
+    }
+  }
+
+  return {
+    projectedIncome,
+    projectedExpense,
+    projectedSavings,
+    projectedSavingsRate,
+    monthsElapsed: Math.round(monthsElapsed * 10) / 10, // 1 decimal
+    currentIncome,
+    currentExpense,
+    avgMonthlyIncome: Math.round(avgMonthlyIncome),
+    avgMonthlyExpense: Math.round(avgMonthlyExpense),
+    vsLastYear,
+  }
+}

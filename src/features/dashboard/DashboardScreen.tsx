@@ -103,6 +103,7 @@ export default function DashboardScreen() {
               monthYYYYMM={monthYYYYMM}
               colors={{
                 text: theme.semantic.text,
+                textMuted: theme.semantic.textSecondary,
                 border: theme.semantic.border,
                 surface: theme.semantic.surface,
                 surfaceAlt: theme.semantic.surfaceAlt,

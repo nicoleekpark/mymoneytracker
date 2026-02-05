@@ -13,6 +13,7 @@ import type {
   YearlyExpenseByCategory,
   YearlyFlowTotal,
   YearlyIncomeByCategory,
+  YearTotals,
 } from '@/domain/transaction/transaction.repository'
 import type { CategoryRepository } from '@/domain/category/category.repository'
 import type { DataSource } from '../db/DataSource'
@@ -475,5 +476,46 @@ export class SqliteTransactionRepository implements TransactionRepository {
       type: r.type,
       totalCents: Number(r.total_cents ?? 0),
     }))
+  }
+
+  getYearTotals(year: number): YearTotals {
+    const yearPrefix = String(year)
+    const rows = this.dataSource.queryAll<{
+      income_cents: number
+      expense_cents: number
+    }>(
+      `
+      SELECT
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents
+      FROM transactions
+      WHERE substr(occurred_at, 1, 4) = ?;
+      `,
+      [yearPrefix]
+    )
+    return {
+      incomeCents: Number(rows[0]?.income_cents ?? 0),
+      expenseCents: Number(rows[0]?.expense_cents ?? 0),
+    }
+  }
+
+  getMonthTotals(monthYYYYMM: string): YearTotals {
+    const rows = this.dataSource.queryAll<{
+      income_cents: number
+      expense_cents: number
+    }>(
+      `
+      SELECT
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents
+      FROM transactions
+      WHERE substr(occurred_at, 1, 7) = ?;
+      `,
+      [monthYYYYMM]
+    )
+    return {
+      incomeCents: Number(rows[0]?.income_cents ?? 0),
+      expenseCents: Number(rows[0]?.expense_cents ?? 0),
+    }
   }
 }

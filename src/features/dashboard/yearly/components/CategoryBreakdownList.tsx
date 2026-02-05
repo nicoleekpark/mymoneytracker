@@ -234,7 +234,7 @@ export function CategoryBreakdownList({
     >
       {/* Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+        <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
           {title}
         </Text>
         <Text style={{ fontSize: 13, fontWeight: '700', color: type === 'income' ? colors.success : colors.danger }}>

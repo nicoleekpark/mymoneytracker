@@ -64,6 +64,11 @@ export type YearlyFlowTotal = Readonly<{
   totalCents: number
 }>
 
+export type YearTotals = Readonly<{
+  incomeCents: number
+  expenseCents: number
+}>
+
 /**
  * TransactionRepository interface - defines data access contract for transactions.
  * Implementations handle persistence details (SQLite, etc.)
@@ -100,4 +105,8 @@ export interface TransactionRepository {
 
   // Personal bests
   listMonthlyNetTotals(): MonthlyFlowTotal[]
+
+  // Projections
+  getYearTotals(year: number): YearTotals
+  getMonthTotals(monthYYYYMM: string): YearTotals
 }

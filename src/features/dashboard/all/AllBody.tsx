@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
 import { CATEGORIES } from '@/config/categories.config'
 import { CategoryIcon, Stack } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
+import { getYearlyProjection, type YearlyProjection } from '@/domain/transaction/transaction.usecase'
 import { useAllTimeData, type CategoryBreakdown } from './hooks'
 
 // Enable LayoutAnimation on Android
@@ -417,6 +418,25 @@ export function AllBody({ colors }: Props) {
   const [expandedExpenseIndex, setExpandedExpenseIndex] = useState<number | null>(null)
   const [expandedIncomeIndex, setExpandedIncomeIndex] = useState<number | null>(null)
   const [showSavingsInfo, setShowSavingsInfo] = useState(false)
+  const [showProjectionInfo, setShowProjectionInfo] = useState(false)
+  const [projection, setProjection] = useState<YearlyProjection | null>(null)
+
+  // Fetch current year projection
+  useEffect(() => {
+    let alive = true
+    async function fetchProjection() {
+      try {
+        const proj = await getYearlyProjection(currentYear)
+        if (alive && proj.monthsElapsed > 0) {
+          setProjection(proj)
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
+    fetchProjection()
+    return () => { alive = false }
+  }, [currentYear])
 
   const topExpenseCategories = useMemo(
     () => aggregateCategories(data.expenseByCategory).slice(0, 6),
@@ -496,7 +516,7 @@ export function AllBody({ colors }: Props) {
       >
         {/* Header + Tracking since */}
         <View style={{ alignItems: 'center', gap: 2 }}>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
             All Time
           </Text>
           <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textSecondary }}>
@@ -724,6 +744,180 @@ export function AllBody({ colors }: Props) {
           </View>
         </View>
       )}
+
+      {/* Current Year Projection - Option C Simple style */}
+      {projection && projection.monthsElapsed > 0 && (
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: 20,
+            position: 'relative'
+          }}
+        >
+          {/* Info Button */}
+          <Pressable
+            onPress={() => setShowProjectionInfo(true)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              width: 18,
+              height: 18,
+              borderRadius: 9,
+              backgroundColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>i</Text>
+          </Pressable>
+
+          {/* Header */}
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
+              {currentYear} FORECAST
+            </Text>
+            <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
+              Month {Math.round(projection.monthsElapsed)} of 12
+            </Text>
+          </View>
+
+          {/* Main Savings Amount */}
+          <View style={{ alignItems: 'center', marginBottom: 20 }}>
+            <Text
+              style={{
+                fontSize: 36,
+                fontWeight: '900',
+                color: projection.projectedSavings >= 0 ? colors.success : colors.text,
+              }}
+            >
+              {projection.projectedSavings >= 0 ? '+' : ''}{formatUsdInt(projection.projectedSavings)}
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 4 }}>
+              projected savings this year
+            </Text>
+          </View>
+
+          {/* Detail Box with aligned numbers */}
+          <View
+            style={{
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: 10,
+              padding: 14,
+            }}
+          >
+            {/* Income row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: colors.textSecondary }}>Income</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, fontVariant: ['tabular-nums'] }}>
+                {'  '}${projection.projectedIncome.toLocaleString('en-US')}
+              </Text>
+            </View>
+
+            {/* Expense row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: colors.textSecondary }}>Expense</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, fontVariant: ['tabular-nums'] }}>
+                {'  '}${projection.projectedExpense.toLocaleString('en-US')}
+              </Text>
+            </View>
+
+            {/* Divider */}
+            <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginVertical: 6 }} />
+
+            {/* Savings row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>Savings</Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: projection.projectedSavings >= 0 ? colors.success : colors.text,
+                  fontVariant: ['tabular-nums']
+                }}
+              >
+                {projection.projectedSavings >= 0 ? '+ ' : '- '}${Math.abs(projection.projectedSavings).toLocaleString('en-US')}
+              </Text>
+            </View>
+
+            {/* vs Last Year row */}
+            {projection.vsLastYear && (
+              <>
+                <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginVertical: 6 }} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}>
+                  <Text style={{ fontSize: 13, color: colors.textSecondary }}>vs {currentYear - 1}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ color: projection.vsLastYear.isMoreSaved ? colors.success : colors.text }}>
+                      {projection.vsLastYear.isMoreSaved ? '↑' : '↓'}
+                    </Text>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, fontVariant: ['tabular-nums'] }}>
+                      {projection.vsLastYear.isMoreSaved ? '+ ' : '- '}${projection.vsLastYear.delta.toLocaleString('en-US')}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textSecondary }}>
+                      {projection.vsLastYear.isMoreSaved ? 'more' : 'less'}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Projection Info Modal */}
+      <Modal visible={showProjectionInfo} transparent animationType="fade" onRequestClose={() => setShowProjectionInfo(false)}>
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 32,
+          }}
+          onPress={() => setShowProjectionInfo(false)}
+        >
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              padding: 24,
+              width: '100%',
+              maxWidth: 320,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 16 }}>
+              How Projection Works
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
+              Formula: (year-to-date total / months elapsed) x 12
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
+              Your monthly averages are extrapolated to estimate year-end totals.
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
+              The more months of data, the more accurate the projection.
+            </Text>
+            <Pressable
+              onPress={() => setShowProjectionInfo(false)}
+              style={{
+                marginTop: 16,
+                backgroundColor: colors.text,
+                borderRadius: 8,
+                paddingVertical: 12,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.surface }}>Got it</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Yearly Trend with visual bars */}
       {data.yearlyData.length > 0 && (

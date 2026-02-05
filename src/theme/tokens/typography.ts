@@ -25,18 +25,29 @@ export const letterSpacing = {
   wide: 0.2,
 } as const
 
-// Pre-composed text styles (3 header variants)
+// Pre-composed text styles
 export const textStyles = {
+  // Screen-level header (tab titles, modal titles)
   screenHeader: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.black,
     letterSpacing: letterSpacing.normal,
   },
+  // Primary section header: Card/section titles (Title Case)
+  // Usage: "Highlights", "Daily Cash Flow", "Income by Source"
   sectionHeader: {
-    fontSize: fontSize.lg,
+    fontSize: 15,
     fontWeight: fontWeight.heavy,
     letterSpacing: letterSpacing.wide,
   },
+  // Accent header: Sub-labels within cards (UPPERCASE)
+  // Usage: "PROJECTION", "EXPENSE", "SAVINGS", "BEST SAVINGS"
+  accentHeader: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 0.5,
+  },
+  // Legacy: card header
   cardHeader: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,

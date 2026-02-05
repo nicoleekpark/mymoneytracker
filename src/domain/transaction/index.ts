@@ -8,17 +8,21 @@ export {
   addTransaction,
   getMonthlyExpenseTotalsDollar,
   getMonthlyFlowDollarForYear,
+  getMonthlyProjection,
   getThisMonthExpenseTotalDollar,
   getTransactions,
   getYearlyExpenseByCategoryDollar,
   getYearlyIncomeByCategoryDollar,
+  getYearlyProjection,
   removeTransaction
 } from './transaction.usecase'
 
 export type {
   MonthlyFlowDollar,
+  MonthlyProjection,
   YearlyExpenseByCategoryDollar,
-  YearlyIncomeByCategoryDollar
+  YearlyIncomeByCategoryDollar,
+  YearlyProjection
 } from './transaction.usecase'
 
 export type {
