@@ -77,6 +77,7 @@ export interface TransactionRepository {
   // CRUD
   insert(tx: Transaction): void
   list(limit?: number): Transaction[]
+  listForDate(dateYYYYMMDD: string, limit?: number): Transaction[]
   delete(id: UUID): void
 
   // Aggregations (return cents)

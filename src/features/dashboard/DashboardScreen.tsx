@@ -105,7 +105,7 @@ export default function DashboardScreen() {
                 text: theme.semantic.text,
                 textMuted: theme.semantic.textSecondary,
                 border: theme.semantic.border,
-                surface: theme.semantic.surface,
+                surface: theme.semantic.background,
                 surfaceAlt: theme.semantic.surfaceAlt,
                 primary: theme.semantic.primary,
                 success: theme.semantic.success,

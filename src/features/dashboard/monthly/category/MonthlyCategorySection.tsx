@@ -1,156 +1,71 @@
+import { CARD_SHADOW } from '@/theme/tokens'
 import React, { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
-import { AccordionCard } from '@/shared/components'
 import type { CalendarColors } from '../calendar'
-import { MonthlyCategoryDonut } from './MonthlyCategoryDonut'
 import { buildCategorySlices, formatUsdInt, type CategorySlice } from './category.utils'
 import { useMonthlyCategorySpending } from './useMonthlyCategorySpending'
-
-type AccordionColors = {
-  text: string
-  textSecondary: string
-  surface: string
-  surfaceAlt: string
-  border: string
-}
-
-type SectionProps = Readonly<{
-  monthYYYYMM: string
-  colors: CalendarColors
-  onPressCategory?: (colorKey: string) => void
-}>
 
 type ContentProps = Readonly<{
   monthYYYYMM: string
   colors: CalendarColors
-  accordionColors: AccordionColors
+  accordionColors?: any // kept for backward compatibility
   onPressCategory?: (colorKey: string) => void
 }>
 
 /**
- * Standalone card version (legacy)
+ * Category spending with horizontal bars
  */
-export function MonthlyCategorySection(props: SectionProps) {
+export function MonthlyCategoryContent(props: ContentProps) {
   const { monthYYYYMM, colors } = props
   const { loading, error, totalSpentDollar, rows } = useMonthlyCategorySpending(monthYYYYMM)
   const slices = useMemo(() => buildSlices(totalSpentDollar, rows, colors.border), [totalSpentDollar, rows, colors.border])
   const hasData = slices.length > 0
+  const maxAmount = hasData ? slices[0].totalDollar : 0
 
   return (
     <View
       style={{
         backgroundColor: colors.surface,
         borderRadius: 16,
-        borderWidth: 1,
-        borderColor: colors.border,
-        padding: 16,
-        gap: 16
+        padding: 20,
+        ...CARD_SHADOW
       }}
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+      {/* Header */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
           Spending by Category
         </Text>
         {hasData && (
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.danger }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.danger }}>
             {formatUsdInt(totalSpentDollar)}
           </Text>
         )}
       </View>
 
+      {/* Content */}
       {loading && <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>}
       {error && <Text style={{ color: colors.danger }}>{error}</Text>}
 
       {hasData ? (
-        <>
-          <MonthlyCategoryDonut
-            totalSpentDollar={totalSpentDollar}
-            slices={slices}
-            colors={{ text: colors.text, mutedText: colors.textMuted, track: colors.surfaceAlt }}
-          />
-          <CategoryList slices={slices} colors={colors} onPress={props.onPressCategory} />
-        </>
+        <CategoryBarList
+          slices={slices}
+          maxAmount={maxAmount}
+          colors={colors}
+          onPress={props.onPressCategory}
+        />
       ) : !loading && !error ? (
-        <Text style={{ color: colors.text, opacity: 0.7, textAlign: 'center' }}>No spending yet</Text>
+        <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
+          No spending yet
+        </Text>
       ) : null}
     </View>
   )
 }
 
-/**
- * Accordion version for progressive disclosure
- */
-export function MonthlyCategoryContent(props: ContentProps) {
-  const { monthYYYYMM, colors, accordionColors } = props
-  const { loading, error, totalSpentDollar, rows } = useMonthlyCategorySpending(monthYYYYMM)
-  const slices = useMemo(() => buildSlices(totalSpentDollar, rows, colors.border), [totalSpentDollar, rows, colors.border])
-  const hasData = slices.length > 0
-  const topCategory = slices[0]
-
-  return (
-    <AccordionCard
-      title="Spending by Category"
-      colors={accordionColors}
-      defaultExpanded={false}
-      headerRight={
-        hasData ? (
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.danger, marginLeft: 'auto' }}>
-            {formatUsdInt(totalSpentDollar)}
-          </Text>
-        ) : null
-      }
-      summary={
-        hasData ? (
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 2, backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 10 }}>
-              <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 4 }}>
-                Top Category
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: topCategory?.color }} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
-                  {topCategory?.label}
-                </Text>
-                <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                  {Math.round((topCategory?.percent || 0) * 100)}%
-                </Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 10, alignItems: 'center' }}>
-              <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 4 }}>
-                Categories
-              </Text>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>
-                {slices.length}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View style={{ backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 10 }}>
-            <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>
-              {loading ? 'Loading...' : 'No spending yet'}
-            </Text>
-          </View>
-        )
-      }
-    >
-      {loading && <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>}
-      {error && <Text style={{ color: colors.danger }}>{error}</Text>}
-
-      {hasData && (
-        <View style={{ gap: 16 }}>
-          <MonthlyCategoryDonut
-            totalSpentDollar={totalSpentDollar}
-            slices={slices}
-            colors={{ text: colors.text, mutedText: colors.textMuted, track: colors.surfaceAlt }}
-          />
-          <CategoryList slices={slices} colors={colors} onPress={props.onPressCategory} />
-        </View>
-      )}
-    </AccordionCard>
-  )
-}
+// Legacy export for backward compatibility
+export const MonthlyCategorySection = MonthlyCategoryContent
 
 // Helper to build slices
 function buildSlices(
@@ -173,32 +88,65 @@ function buildSlices(
   })
 }
 
-// Category list component
-function CategoryList({ slices, colors, onPress }: { slices: CategorySlice[]; colors: CalendarColors; onPress?: (key: string) => void }) {
+// Category list with horizontal bars
+function CategoryBarList({
+  slices,
+  maxAmount,
+  colors,
+  onPress
+}: {
+  slices: CategorySlice[]
+  maxAmount: number
+  colors: CalendarColors
+  onPress?: (key: string) => void
+}) {
   return (
-    <View>
-      {slices.map((s, idx) => (
-        <View
-          key={s.reactKey}
-          style={idx < slices.length - 1 ? { borderBottomWidth: 1, borderBottomColor: colors.border } : undefined}
-        >
+    <View style={{ gap: 12 }}>
+      {slices.map((s) => {
+        const barWidth = maxAmount > 0 ? (s.totalDollar / maxAmount) * 100 : 0
+
+        return (
           <Pressable
+            key={s.reactKey}
             onPress={() => onPress?.(s.colorKey)}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 }}
+            style={{ gap: 6 }}
           >
-            <View style={{ width: 10, height: 10, borderRadius: 999, backgroundColor: s.color }} />
-            <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: colors.text }} numberOfLines={1}>
-              {s.label}
-            </Text>
-            <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>
-              {formatUsdInt(s.totalDollar)}
-            </Text>
-            <Text style={{ width: 40, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
-              {Math.round(s.percent * 100)}%
-            </Text>
+            {/* Top row: dot + name + amount + percent */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: s.color }} />
+              <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                {s.label}
+              </Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                {formatUsdInt(s.totalDollar)}
+              </Text>
+              <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
+                {Math.round(s.percent * 100)}%
+              </Text>
+            </View>
+
+            {/* Bar */}
+            <View
+              style={{
+                height: 8,
+                backgroundColor: colors.surfaceAlt,
+                borderRadius: 4,
+                marginLeft: 18,
+                overflow: 'hidden'
+              }}
+            >
+              <View
+                style={{
+                  height: '100%',
+                  width: `${barWidth}%`,
+                  backgroundColor: s.color,
+                  borderRadius: 4
+                }}
+              />
+            </View>
           </Pressable>
-        </View>
-      ))}
+        )
+      })}
     </View>
   )
 }

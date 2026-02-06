@@ -184,13 +184,13 @@ export default function TransactionsScreen() {
           sectionIndex: target.sectionIndex,
           itemIndex: target.itemIndex,
           animated: true,
-          viewPosition: 0
+          viewPosition: 0.05 // Small offset to ensure day header is visible
         })
         didAutoScrollRef.current = true
       } catch (e) {
         console.error(e)
       }
-    }, 0)
+    }, 150) // Increased delay for proper layout measurement
   }, [focusDate, sections])
 
   return (

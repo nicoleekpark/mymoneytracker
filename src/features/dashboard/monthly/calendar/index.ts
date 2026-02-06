@@ -1,2 +1,3 @@
-export { MonthlySpendingCalendar, type CalendarColors, type DailyFlow } from './MonthlySpendingCalendar'
+export { MonthlyCalendar } from './MonthlyCalendar'
+export { type CalendarColors, type DailyFlow } from './calendar.types'
 export { useMonthlyDailyFlow } from './useMonthlyDailyFlow'

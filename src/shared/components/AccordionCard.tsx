@@ -17,7 +17,7 @@ type Colors = {
 type AccordionCardProps = {
   title: string
   colors: Colors
-  /** Summary content shown when collapsed (and when expanded) */
+  /** Summary content shown when collapsed (hidden when expanded if hideSummaryOnExpand is true) */
   summary?: React.ReactNode
   /** Expanded content shown below summary */
   children: React.ReactNode
@@ -25,6 +25,10 @@ type AccordionCardProps = {
   defaultExpanded?: boolean
   /** Right side of header (e.g., total amount) */
   headerRight?: React.ReactNode
+  /** Hide summary when expanded (default: false) */
+  hideSummaryOnExpand?: boolean
+  /** Text shown at bottom when collapsed (e.g., "Tap to expand full calendar") */
+  expandHintText?: string
 }
 
 export function AccordionCard({
@@ -34,6 +38,8 @@ export function AccordionCard({
   children,
   defaultExpanded = false,
   headerRight,
+  hideSummaryOnExpand = false,
+  expandHintText,
 }: AccordionCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
 
@@ -41,6 +47,8 @@ export function AccordionCard({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setExpanded((v) => !v)
   }
+
+  const showSummary = summary && (!expanded || !hideSummaryOnExpand)
 
   return (
     <View
@@ -60,6 +68,7 @@ export function AccordionCard({
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: 16,
+          paddingBottom: showSummary ? 12 : 16,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
@@ -68,25 +77,25 @@ export function AccordionCard({
           </Text>
           {headerRight}
         </View>
-        <View
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-            backgroundColor: colors.surfaceAlt,
-            borderRadius: 6,
-          }}
-        >
-          <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary }}>
-            {expanded ? 'Collapse ▲' : 'Expand ▼'}
-          </Text>
-        </View>
+        <Text style={{ fontSize: 14, color: colors.textSecondary }}>
+          {expanded ? '▲' : '▼'}
+        </Text>
       </Pressable>
 
-      {/* Summary - always visible if provided */}
-      {summary && (
-        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      {/* Summary - visible based on hideSummaryOnExpand setting */}
+      {showSummary && (
+        <Pressable onPress={toggle} style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
           {summary}
-        </View>
+        </Pressable>
+      )}
+
+      {/* Expand hint text at bottom when collapsed */}
+      {!expanded && expandHintText && (
+        <Pressable onPress={toggle} style={{ paddingBottom: 16 }}>
+          <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+            {expandHintText}
+          </Text>
+        </Pressable>
       )}
 
       {/* Expanded content */}

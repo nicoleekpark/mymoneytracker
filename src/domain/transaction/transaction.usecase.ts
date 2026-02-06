@@ -89,6 +89,10 @@ export async function getTransactions(limit = 200): Promise<Transaction[]> {
   return transactionRepository.list(limit)
 }
 
+export async function getTransactionsForDate(dateYYYYMMDD: string, limit = 50): Promise<Transaction[]> {
+  return transactionRepository.listForDate(dateYYYYMMDD, limit)
+}
+
 export async function removeTransaction(id: UUID): Promise<void> {
   transactionRepository.delete(id)
 }

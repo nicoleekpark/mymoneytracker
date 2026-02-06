@@ -7,6 +7,7 @@ import { formatUsdInt } from '@/shared/format/currency'
 
 import { getYearlyProjection, type YearlyProjection } from '@/domain/transaction/transaction.usecase'
 import { useAllTimeData, type CategoryBreakdown } from './hooks'
+import { MONTH_NAMES_SHORT } from '../types/dashboard.types'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -35,18 +36,16 @@ type AggregatedCategory = {
   subcategories: { name: string; icon: string; color: string; amount: number }[]
 }
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 function formatMonthYear(monthStr: string): string {
   // monthStr is YYYY-MM format
   const [year, month] = monthStr.split('-')
   const monthIndex = parseInt(month, 10) - 1
-  return `${MONTH_NAMES[monthIndex]} ${year}`
+  return `${MONTH_NAMES_SHORT[monthIndex]} ${year}`
 }
 
 function formatTrackingSince(date: Date | null): string {
   if (!date) return 'No data yet'
-  const month = MONTH_NAMES[date.getMonth()]
+  const month = MONTH_NAMES_SHORT[date.getMonth()]
   const year = date.getFullYear()
   return `Tracking since ${month} ${year}`
 }

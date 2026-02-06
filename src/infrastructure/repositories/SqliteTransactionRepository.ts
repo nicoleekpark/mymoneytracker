@@ -107,6 +107,26 @@ export class SqliteTransactionRepository implements TransactionRepository {
     )
   }
 
+  listForDate(dateYYYYMMDD: string, limit = 50): Transaction[] {
+    const rows = this.dataSource.queryAll<TransactionRow>(
+      `
+      SELECT
+        id, key, occurred_at, type, item, amount_cents, currency,
+        account_id, category_id, merchant, note,
+        from_account_id, to_account_id
+      FROM transactions
+      WHERE substr(occurred_at, 1, 10) = ?
+        AND type IN ('income', 'expense')
+      ORDER BY amount_cents DESC
+      LIMIT ?;
+      `,
+      [dateYYYYMMDD, limit]
+    )
+    return rows.map((r) =>
+      rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id))
+    )
+  }
+
   delete(id: UUID): void {
     this.dataSource.exec(`DELETE FROM transactions WHERE id = ?`, [id])
   }
