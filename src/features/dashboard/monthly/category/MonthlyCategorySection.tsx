@@ -1,60 +1,93 @@
 import { CARD_SHADOW } from '@/theme/tokens'
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import type { CalendarColors } from '../calendar'
 import { buildCategorySlices, formatUsdInt, type CategorySlice } from './category.utils'
 import { useMonthlyCategorySpending } from './useMonthlyCategorySpending'
 
+const TOP_N_COLLAPSED = 5
+
 type ContentProps = Readonly<{
   monthYYYYMM: string
   colors: CalendarColors
   accordionColors?: any // kept for backward compatibility
   onPressCategory?: (colorKey: string) => void
+  hideHeader?: boolean
 }>
 
 /**
  * Category spending with horizontal bars
+ * Shows top 5 by default, expandable to show all
  */
 export function MonthlyCategoryContent(props: ContentProps) {
-  const { monthYYYYMM, colors } = props
+  const { monthYYYYMM, colors, hideHeader } = props
   const { loading, error, totalSpentDollar, rows } = useMonthlyCategorySpending(monthYYYYMM)
-  const slices = useMemo(() => buildSlices(totalSpentDollar, rows, colors.border), [totalSpentDollar, rows, colors.border])
-  const hasData = slices.length > 0
-  const maxAmount = hasData ? slices[0].totalDollar : 0
+  const [expanded, setExpanded] = useState(false)
 
-  return (
-    <View
-      style={{
+  // Build all slices (no limit)
+  const allSlices = useMemo(
+    () => buildSlices(totalSpentDollar, rows, colors.border, undefined),
+    [totalSpentDollar, rows, colors.border]
+  )
+
+  // Slices to display based on expanded state
+  const displaySlices = expanded ? allSlices : allSlices.slice(0, TOP_N_COLLAPSED)
+  const hasMore = allSlices.length > TOP_N_COLLAPSED
+  const hasData = allSlices.length > 0
+  const maxAmount = hasData ? allSlices[0].totalDollar : 0
+
+  // When embedded (hideHeader), no card styling
+  const containerStyle = hideHeader
+    ? {}
+    : {
         backgroundColor: colors.surface,
         borderRadius: 16,
         padding: 20,
         ...CARD_SHADOW
-      }}
-    >
-      {/* Header */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
-          Spending by Category
-        </Text>
-        {hasData && (
-          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.danger }}>
-            {formatUsdInt(totalSpentDollar)}
+      }
+
+  return (
+    <View style={containerStyle}>
+      {/* Header - only show if not hidden */}
+      {!hideHeader && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+            Spending by Category
           </Text>
-        )}
-      </View>
+          {hasData && (
+            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.danger }}>
+              {formatUsdInt(totalSpentDollar)}
+            </Text>
+          )}
+        </View>
+      )}
 
       {/* Content */}
       {loading && <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>}
       {error && <Text style={{ color: colors.danger }}>{error}</Text>}
 
       {hasData ? (
-        <CategoryBarList
-          slices={slices}
-          maxAmount={maxAmount}
-          colors={colors}
-          onPress={props.onPressCategory}
-        />
+        <>
+          <CategoryBarList
+            slices={displaySlices}
+            maxAmount={maxAmount}
+            colors={colors}
+            onPress={props.onPressCategory}
+          />
+
+          {/* Expand/Collapse button */}
+          {hasMore && (
+            <Pressable
+              onPress={() => setExpanded(!expanded)}
+              style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+                {expanded ? 'Show less' : `Show all ${allSlices.length} categories`}
+              </Text>
+            </Pressable>
+          )}
+        </>
       ) : !loading && !error ? (
         <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
           No spending yet
@@ -71,7 +104,8 @@ export const MonthlyCategorySection = MonthlyCategoryContent
 function buildSlices(
   totalSpentDollar: number,
   rows: ReadonlyArray<{ categoryId: string | null; categoryRef?: any; totalDollar: number }>,
-  borderColor: string
+  borderColor: string,
+  topN?: number
 ) {
   return buildCategorySlices({
     totalSpentDollar,
@@ -80,7 +114,7 @@ function buildSlices(
       categoryRef: r.categoryRef,
       totalDollar: r.totalDollar
     })),
-    topN: 5,
+    topN,
     colors: {
       palette: ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC'],
       others: borderColor

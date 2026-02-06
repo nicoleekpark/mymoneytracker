@@ -8,7 +8,7 @@ import { daysInMonth, firstWeekdayIndex, parseYYYYMM } from '../monthly.utils'
 import type { CalendarColors, DailyFlow } from './calendar.types'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
 
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const
+const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
 // Cell height - fixed size showing amounts
 const CELL_HEIGHT = 56
@@ -96,8 +96,8 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
   // Color calculations - Robinhood style (no background for inactive days)
   const getNetColor = (net: number, hasActivity: boolean) => {
     if (!hasActivity) return 'transparent'
-    if (net > 0) return colors.success + '20' // positive = subtle green
-    if (net < 0) return colors.danger + '20' // negative = subtle red
+    if (net > 0) return colors.success + '40' // positive = subtle green
+    if (net < 0) return colors.danger + '40' // negative = subtle red
     return 'transparent' // neutral (income = expense)
   }
 
@@ -244,7 +244,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
       <View style={{ flexDirection: 'row' }}>
         {WEEKDAYS.map((w, i) => (
           <View key={`wd-${i}`} style={{ flex: 1, marginHorizontal: CELL_MARGIN, alignItems: 'center', paddingVertical: 4 }}>
-            <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textMuted, opacity: 0.7 }}>{w}</Text>
+            <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text }}>{w}</Text>
           </View>
         ))}
       </View>
@@ -256,15 +256,15 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
         </View>
       ))}
 
-      {/* Legend */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 8 }}>
+      {/* Legend - conversational */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: colors.success + '20' }} />
-          <Text style={{ fontSize: 10, color: colors.textMuted }}>Surplus</Text>
+          <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.success + '40' }} />
+          <Text style={{ fontSize: 10, color: colors.textMuted }}>More in</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: colors.danger + '20' }} />
-          <Text style={{ fontSize: 10, color: colors.textMuted }}>Deficit</Text>
+          <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.danger + '40' }} />
+          <Text style={{ fontSize: 10, color: colors.textMuted }}>More out</Text>
         </View>
       </View>
 
@@ -337,38 +337,41 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                     alignItems: 'flex-start',
                     justifyContent: 'space-between',
                     marginBottom: 16,
-                    paddingHorizontal: 4
+                    padding: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 10
                   }}
                 >
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
                       Inflow
                     </Text>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: selectedDay.income > 0 ? colors.success : colors.textMuted }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: selectedDay.income > 0 ? colors.success : colors.textMuted }}>
                       {formatUsdInt(selectedDay.income)}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: '400', color: colors.textMuted, marginTop: 12 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '400', color: colors.textMuted, marginTop: 14 }}>
                     −
                   </Text>
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
                       Outflow
                     </Text>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: selectedDay.expense > 0 ? colors.danger : colors.textMuted }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: selectedDay.expense > 0 ? colors.danger : colors.textMuted }}>
                       {formatUsdInt(selectedDay.expense)}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: '400', color: colors.textMuted, marginTop: 12 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '400', color: colors.textMuted, marginTop: 14 }}>
                     =
                   </Text>
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
                       Net
                     </Text>
                     <Text
                       style={{
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: '700',
                         color: selectedDay.net >= 0 ? colors.success : colors.danger
                       }}

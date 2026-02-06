@@ -1,9 +1,7 @@
-import { Stack } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
-import { CARD_SHADOW } from '@/theme/tokens'
 import { useRouter } from 'expo-router'
 import React, { useMemo } from 'react'
-import { Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { useBudgetSummary } from './budget'
 import { MonthlyCalendar, type CalendarColors, type DailyFlow } from './calendar'
@@ -20,6 +18,47 @@ function buildMonthTitle(monthYYYYMM: string) {
 }
 
 const TRANSACTIONS_ROUTE = '/transactions' as const
+
+// Section gap for combined style
+const SECTION_GAP = 40
+
+// Accent line colors
+const ACCENT_COLORS = {
+  green: '#4ade80',
+  blue: '#60a5fa',
+  red: '#f87171',
+}
+
+/**
+ * Section header with accent line - stronger styling
+ */
+function SectionHeader({
+  title,
+  accentColor,
+  rightText,
+  rightColor,
+  colors
+}: {
+  title: string
+  accentColor: string
+  rightText?: string
+  rightColor?: string
+  colors: CalendarColors
+}) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+      <View style={{ width: 3, height: 20, borderRadius: 2, backgroundColor: accentColor }} />
+      <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
+        {title}
+      </Text>
+      {rightText && (
+        <Text style={{ marginLeft: 'auto', fontSize: 14, fontWeight: '700', color: rightColor || colors.text }}>
+          {rightText}
+        </Text>
+      )}
+    </View>
+  )
+}
 
 export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors }) {
   const { monthYYYYMM, colors } = props
@@ -39,22 +78,18 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
     })
   }
 
-  const accordionColors = {
-    text: colors.text,
-    textSecondary: colors.textMuted,
-    surface: colors.surface,
-    surfaceAlt: colors.surfaceAlt,
-    border: colors.border
-  }
-
   // Calculate totals from summary data (works for all months)
   const totalExpense = summaryData.expenseTotalDollar
   const totalIncome = summaryData.incomeTotalDollar
   const savings = summaryData.netCashFlowDollar
-  const projectedSavings = projectionData.projectedSavings || savings
 
   // Savings rate calculation
   const savingsRate = totalIncome > 0 ? Math.round((savings / totalIncome) * 100) : 0
+
+  // Check if viewing current month or past
+  const now = new Date()
+  const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const isCurrentMonth = monthYYYYMM === currentYYYYMM
 
   // Budget calculations
   const budgetBarWidth = budgetData
@@ -62,57 +97,105 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
     : 0
 
   return (
-    <Stack gap="lg" scroll>
-      {/* Card 1: Overview - Hero savings rate */}
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: 16,
-          padding: 20,
-          ...CARD_SHADOW
-        }}
-      >
-        {/* Month header */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
-            {title}
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Section 1: Hero - Month Overview */}
+      <View style={{ marginBottom: SECTION_GAP }}>
+        {/* Day indicator (month title removed - duplicate with date picker) */}
+        {projectionData.daysElapsed > 0 && (
+          <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted, textAlign: 'right', marginBottom: 4 }}>
+            Day {projectionData.daysElapsed} of {projectionData.daysInMonth}
           </Text>
-          {projectionData.daysElapsed > 0 && (
-            <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted }}>
-              Day {projectionData.daysElapsed} of {projectionData.daysInMonth}
-            </Text>
-          )}
-        </View>
+        )}
 
         {/* Hero savings rate */}
         <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-          <Text style={{ fontSize: 48, fontWeight: '800', color: savingsRate >= 0 ? colors.success : colors.danger }}>
-            {savingsRate}%
-          </Text>
-          <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
-            savings rate
-          </Text>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: savingsRate >= 0 ? colors.success : colors.danger, marginTop: 8 }}>
-            {savings >= 0 ? '+' : ''}{formatUsdInt(savings)} saved
-          </Text>
+          {totalIncome > 0 ? (
+            savings > 0 ? (
+              // Positive savings
+              <>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                  {isCurrentMonth ? "You're saving" : 'You saved'}
+                </Text>
+                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
+                  {savingsRate}%
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+                  of income
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{formatUsdInt(savings)}</Text>
+                </Text>
+              </>
+            ) : savings < 0 ? (
+              // Overspent
+              <>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                  {isCurrentMonth ? "You're overspending" : 'You overspent'}
+                </Text>
+                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
+                  {Math.abs(savingsRate)}%
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+                  of income
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text>
+                </Text>
+              </>
+            ) : (
+              // Broke even (savings = 0)
+              <>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                  {isCurrentMonth ? "You're breaking even" : 'You broke even'}
+                </Text>
+                <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                  {formatUsdInt(0)}
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
+                  saved
+                </Text>
+              </>
+            )
+          ) : (
+            // No income
+            <>
+              <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                Savings
+              </Text>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                {isCurrentMonth ? 'No income yet' : 'No income'}
+              </Text>
+              {savings < 0 && (
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
+                </Text>
+              )}
+            </>
+          )}
         </View>
 
         {/* Income / Expense row */}
-        <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
           <View
             style={{
-              flex: 1,
-              backgroundColor: colors.surfaceAlt,
-              borderRadius: 12,
-              padding: 16,
-              alignItems: 'center'
+              flex: 1,                                               
+              backgroundColor: 'transparent',                        
+              borderWidth: 1,                                        
+              borderColor: colors.border, // or colors.surfaceAlt    
+              borderRadius: 12,                                      
+              padding: 16,                                           
+              alignItems: 'center' 
             }}
           >
             <Text
               style={{
                 fontSize: 10,
                 fontWeight: '600',
-                color: colors.textMuted,
+                color: colors.text,
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
                 marginBottom: 4
@@ -126,18 +209,20 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           </View>
           <View
             style={{
-              flex: 1,
-              backgroundColor: colors.surfaceAlt,
-              borderRadius: 12,
-              padding: 16,
-              alignItems: 'center'
+              flex: 1,                                             
+              backgroundColor: 'transparent',                        
+              borderWidth: 1,                                        
+              borderColor: colors.border, // or colors.surfaceAlt    
+              borderRadius: 12,                                      
+              padding: 16,                                           
+              alignItems: 'center' 
             }}
           >
             <Text
               style={{
                 fontSize: 10,
                 fontWeight: '600',
-                color: colors.textMuted,
+                color: colors.text,
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
                 marginBottom: 4
@@ -152,24 +237,34 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         </View>
       </View>
 
-      {/* Card 2: Budget + Projection */}
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: 16,
-          padding: 20,
-          gap: 16,
-          ...CARD_SHADOW
-        }}
-      >
-        {/* Budget section */}
-        {budgetData && (
-          <View>
+      {/* Section 2: Budget */}
+      {budgetData && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Budget"
+            accentColor={ACCENT_COLORS.green}
+            rightText={formatUsdInt(budgetData.budgetDollar)}
+            rightColor={colors.text}
+            colors={colors}
+          />
+          {/* Progress row: spent | bar | left */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            {/* Spent amount */}
+            <View>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>
+                {formatUsdInt(budgetData.spentDollar)}
+              </Text>
+              <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textMuted, marginTop: 2 }}>
+                spent
+              </Text>
+            </View>
+            {/* Progress bar */}
             <View
               style={{
-                height: 10,
+                flex: 1,
+                height: 8,
                 backgroundColor: colors.surfaceAlt,
-                borderRadius: 5,
+                borderRadius: 4,
                 overflow: 'hidden'
               }}
             >
@@ -178,123 +273,63 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                   height: '100%',
                   width: `${budgetBarWidth}%`,
                   backgroundColor: budgetData.remainingDollar >= 0 ? colors.success : colors.danger,
-                  borderRadius: 5
+                  borderRadius: 4
                 }}
               />
             </View>
-            <View
-              style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}
-            >
-              <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                Budget: {formatUsdInt(budgetData.spentDollar)} / {formatUsdInt(budgetData.budgetDollar)}
-              </Text>
+            {/* Remaining amount */}
+            <View style={{ alignItems: 'flex-end' }}>
               <Text
                 style={{
-                  fontSize: 12,
-                  fontWeight: '600',
+                  fontSize: 15,
+                  fontWeight: '700',
                   color: budgetData.remainingDollar >= 0 ? colors.success : colors.danger
                 }}
               >
-                {formatUsdInt(Math.abs(budgetData.remainingDollar))}{' '}
+                {formatUsdInt(Math.abs(budgetData.remainingDollar))}
+              </Text>
+              <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textMuted, marginTop: 2 }}>
                 {budgetData.remainingDollar >= 0 ? 'left' : 'over'}
               </Text>
             </View>
           </View>
-        )}
+        </View>
+      )}
 
-        {/* Divider */}
-        {budgetData && projectionData.daysElapsed > 0 && (
-          <View style={{ height: 1, backgroundColor: colors.border, opacity: 0.5 }} />
-        )}
-
-        {/* Projection section */}
-        {projectionData.daysElapsed > 0 && (
-          <View style={{ gap: 8 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 13, color: colors.textMuted }}>Projected month-end</Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: projectedSavings >= 0 ? colors.success : colors.danger
-                }}
-              >
-                {projectedSavings >= 0 ? '+' : ''}
-                {formatUsdInt(projectedSavings)}
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 13, color: colors.textMuted }}>Projected savings rate</Text>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
-                {projectionData.projectedSavingsRate}%
-              </Text>
-            </View>
-          </View>
+      {/* Section 3: Daily Cash Flow */}
+      <View style={{ marginBottom: SECTION_GAP }}>
+        <SectionHeader
+          title="Daily activity"
+          accentColor={ACCENT_COLORS.blue}
+          colors={colors}
+        />
+        {loading && <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>}
+        {error && <Text style={{ color: colors.danger }}>{error}</Text>}
+        {!loading && !error && (
+          <MonthlyCalendar
+            monthYYYYMM={monthYYYYMM}
+            daily={daily}
+            colors={colors}
+            onPressDay={onPressDay}
+          />
         )}
       </View>
 
-      {/* Card 3: Daily Cash Flow - Seamless expandable calendar */}
-      <DailyCashFlowCard
-        monthYYYYMM={monthYYYYMM}
-        daily={daily}
-        colors={colors}
-        loading={loading}
-        error={error}
-        onPressDay={onPressDay}
-      />
-
-      {/* Card 4: Spending by Category - Accordion */}
-      <MonthlyCategoryContent monthYYYYMM={monthYYYYMM} colors={colors} accordionColors={accordionColors} />
-    </Stack>
-  )
-}
-
-/**
- * Daily Cash Flow calendar card
- * Always shows amounts - tap a day to see transaction details
- */
-function DailyCashFlowCard({
-  monthYYYYMM,
-  daily,
-  colors,
-  loading,
-  error,
-  onPressDay
-}: {
-  monthYYYYMM: string
-  daily: DailyFlow[]
-  colors: CalendarColors
-  loading: boolean
-  error: string | null
-  onPressDay: (ymd: string) => void
-}) {
-  return (
-    <View
-      style={{
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        padding: 20,
-        gap: 14,
-        ...CARD_SHADOW
-      }}
-    >
-      {/* Header */}
-      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
-        Daily Cash Flow
-      </Text>
-
-      {/* Calendar content */}
-      {loading && <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>}
-      {error && <Text style={{ color: colors.danger }}>{error}</Text>}
-
-      {!loading && !error && (
-        <MonthlyCalendar
-          monthYYYYMM={monthYYYYMM}
-          daily={daily}
+      {/* Section 4: Spending by Category */}
+      <View style={{ marginBottom: SECTION_GAP }}>
+        <SectionHeader
+          title="Where it went"
+          accentColor={ACCENT_COLORS.red}
+          rightText={totalExpense > 0 ? formatUsdInt(totalExpense) : undefined}
+          rightColor={colors.danger}
           colors={colors}
-          onPressDay={onPressDay}
         />
-      )}
-    </View>
+        <MonthlyCategoryContent
+          monthYYYYMM={monthYYYYMM}
+          colors={colors}
+          hideHeader
+        />
+      </View>
+    </ScrollView>
   )
 }
