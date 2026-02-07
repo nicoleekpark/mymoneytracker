@@ -166,6 +166,19 @@ export async function getMonthlyExpenseByCategoryDollar(monthYYYYMM: string): Pr
   }))
 }
 
+export type MonthlyIncomeByCategoryDollar = Readonly<{
+  categoryId: UUID | null
+  category?: CategoryRef
+  totalDollar: number
+}>
+
+export async function getMonthlyIncomeByCategoryDollar(monthYYYYMM: string): Promise<MonthlyIncomeByCategoryDollar[]> {
+  const rows = transactionRepository.listMonthlyIncomeByCategory(monthYYYYMM)
+  return rows.map((r) => ({
+    categoryId: r.categoryId,
+    totalDollar: centsToDollars(r.totalCents)
+  }))
+}
 
 export async function getTransfersForMonth(monthYYYYMM: string, limit = 500): Promise<Transaction[]> {
   return transactionRepository.listTransfersForMonth(monthYYYYMM, limit)

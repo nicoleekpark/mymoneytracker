@@ -9,7 +9,7 @@ export type DailyFlow = Readonly<{
 }>
 
 export function useMonthlyDailyFlow(monthYYYYMM: string) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [daily, setDaily] = useState<DailyFlow[]>([])
 

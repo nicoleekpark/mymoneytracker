@@ -2,7 +2,7 @@ import type { CategoryRef } from '@/domain/category'
 import type { UUID } from '@/domain/common/uuid'
 import { categoryRepository } from '@/infrastructure/repositories'
 import {
-  getMonthlyExpenseByCategoryDollar,
+  getMonthlyIncomeByCategoryDollar,
   getMonthlySummaryDollar
 } from '@/domain/transaction/transaction.usecase'
 import { useEffect, useState } from 'react'
@@ -12,7 +12,7 @@ export type SubCategoryBreakdown = Readonly<{
   totalDollar: number
 }>
 
-export type CategorySpendingRow = Readonly<{
+export type IncomeSpendingRow = Readonly<{
   categoryId: UUID | null
   categoryRef?: CategoryRef
   totalDollar: number
@@ -25,7 +25,7 @@ export type CategorySpendingRow = Readonly<{
  */
 function aggregateByParentCategory(
   rawData: Array<{ categoryId: UUID | null; totalDollar: number }>
-): CategorySpendingRow[] {
+): IncomeSpendingRow[] {
   const byKey = new Map<
     string,
     {
@@ -44,7 +44,7 @@ function aggregateByParentCategory(
       } else {
         byKey.set('__uncategorized__', {
           totalDollar: row.totalDollar,
-          categoryRef: { type: 'expense', categoryKey: 'uncategorized' },
+          categoryRef: { type: 'income', categoryKey: 'uncategorized' },
           subcategories: new Map()
         })
       }
@@ -88,11 +88,11 @@ function aggregateByParentCategory(
     .sort((a, b) => b.totalDollar - a.totalDollar)
 }
 
-export function useMonthlyCategorySpending(monthYYYYMM: string) {
+export function useMonthlyIncomeByCategory(monthYYYYMM: string) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [totalSpentDollar, setTotalSpentDollar] = useState(0)
-  const [rows, setRows] = useState<CategorySpendingRow[]>([])
+  const [totalIncomeDollar, setTotalIncomeDollar] = useState(0)
+  const [rows, setRows] = useState<IncomeSpendingRow[]>([])
 
   useEffect(() => {
     let alive = true
@@ -104,12 +104,12 @@ export function useMonthlyCategorySpending(monthYYYYMM: string) {
       try {
         const [summary, byCat] = await Promise.all([
           getMonthlySummaryDollar(monthYYYYMM),
-          getMonthlyExpenseByCategoryDollar(monthYYYYMM)
+          getMonthlyIncomeByCategoryDollar(monthYYYYMM)
         ])
 
         if (!alive) return
 
-        setTotalSpentDollar(Number(summary?.expenseTotalDollar ?? 0))
+        setTotalIncomeDollar(Number(summary?.incomeTotalDollar ?? 0))
 
         // Aggregate by parent category to avoid duplicates
         const aggregated = aggregateByParentCategory(
@@ -123,7 +123,7 @@ export function useMonthlyCategorySpending(monthYYYYMM: string) {
       } catch (e) {
         if (!alive) return
         setError(e instanceof Error ? e.message : 'Unknown error')
-        setTotalSpentDollar(0)
+        setTotalIncomeDollar(0)
         setRows([])
       } finally {
         if (!alive) return
@@ -137,5 +137,5 @@ export function useMonthlyCategorySpending(monthYYYYMM: string) {
     }
   }, [monthYYYYMM])
 
-  return { loading, error, totalSpentDollar, rows }
+  return { loading, error, totalIncomeDollar, rows }
 }

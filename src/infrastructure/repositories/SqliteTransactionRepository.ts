@@ -220,6 +220,27 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }))
   }
 
+  listMonthlyIncomeByCategory(monthYYYYMM: string): MonthlyExpenseByCategory[] {
+    const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
+      `
+      SELECT
+        category_id,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'income'
+        AND substr(occurred_at, 1, 7) = ?
+      GROUP BY category_id
+      ORDER BY total_cents DESC;
+      `,
+      [monthYYYYMM]
+    )
+
+    return rows.map((r) => ({
+      categoryId: r.category_id ?? null,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
   listTransfersForMonth(monthYYYYMM: string, limit = 500): Transaction[] {
     const rows = this.dataSource.queryAll<TransactionRow>(
       `

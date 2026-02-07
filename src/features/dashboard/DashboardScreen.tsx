@@ -98,35 +98,44 @@ export default function DashboardScreen() {
         enabled={scope !== 'all'}
       >
         <View style={styles.body}>
-          {scope === 'month' ? (
-            <MonthlyBody
-              monthYYYYMM={monthYYYYMM}
-              colors={{
-                text: theme.semantic.text,
-                textMuted: theme.semantic.textSecondary,
-                border: theme.semantic.border,
-                surface: theme.semantic.background,
-                surfaceAlt: theme.semantic.surfaceAlt,
-                primary: theme.semantic.primary,
-                success: theme.semantic.success,
-                danger: theme.semantic.danger
-              }}
-            />
-          ) : scope === 'year' ? (
-            <YearlyBody
-              year={period.year}
-              colors={{
-                text: theme.semantic.text,
-                textSecondary: theme.semantic.textSecondary,
-                border: theme.semantic.border,
-                surface: theme.semantic.surface,
-                surfaceAlt: theme.semantic.surfaceAlt,
-                primary: theme.semantic.primary,
-                success: theme.semantic.success,
-                danger: theme.semantic.danger
-              }}
-            />
-          ) : scope === 'all' ? (
+          {/* Monthly - always mounted when scope is month or year for smooth transitions */}
+          {(scope === 'month' || scope === 'year') && (
+            <View style={scope === 'month' ? { flex: 1 } : { display: 'none' }}>
+              <MonthlyBody
+                monthYYYYMM={monthYYYYMM}
+                colors={{
+                  text: theme.semantic.text,
+                  textMuted: theme.semantic.textSecondary,
+                  border: theme.semantic.border,
+                  surface: theme.semantic.background,
+                  surfaceAlt: theme.semantic.surfaceAlt,
+                  primary: theme.semantic.primary,
+                  success: theme.semantic.success,
+                  danger: theme.semantic.danger
+                }}
+              />
+            </View>
+          )}
+          {/* Yearly - always mounted when scope is month or year for smooth transitions */}
+          {(scope === 'month' || scope === 'year') && (
+            <View style={scope === 'year' ? { flex: 1 } : { display: 'none' }}>
+              <YearlyBody
+                year={period.year}
+                colors={{
+                  text: theme.semantic.text,
+                  textMuted: theme.semantic.textSecondary,
+                  border: theme.semantic.border,
+                  surface: theme.semantic.background,
+                  surfaceAlt: theme.semantic.surfaceAlt,
+                  primary: theme.semantic.primary,
+                  success: theme.semantic.success,
+                  danger: theme.semantic.danger
+                }}
+              />
+            </View>
+          )}
+          {/* All - only mounted when needed */}
+          {scope === 'all' && (
             <AllBody
               colors={{
                 text: theme.semantic.text,
@@ -139,7 +148,7 @@ export default function DashboardScreen() {
                 danger: theme.semantic.danger
               }}
             />
-          ) : null}
+          )}
         </View>
       </SwipeGestureWrapper>
 

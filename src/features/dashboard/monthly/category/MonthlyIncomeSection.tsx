@@ -7,7 +7,7 @@ import { CARD_SHADOW } from '@/theme/tokens'
 
 import type { CalendarColors } from '../calendar'
 import { formatUsdInt } from './category.utils'
-import { useMonthlyCategorySpending, type CategorySpendingRow } from './useMonthlyCategorySpending'
+import { useMonthlyIncomeByCategory } from './useMonthlyIncomeByCategory'
 
 const TOP_N_COLLAPSED = 5
 
@@ -47,18 +47,16 @@ function getSubcategoryMeta(categoryKey: string, subCategoryKey: string) {
 type ContentProps = Readonly<{
   monthYYYYMM: string
   colors: CalendarColors
-  accordionColors?: any // kept for backward compatibility
-  onPressCategory?: (colorKey: string) => void
   hideHeader?: boolean
 }>
 
 /**
- * Category spending with horizontal bars and expandable subcategories
+ * Income by category with horizontal bars and expandable subcategories
  * Shows top 5 by default, expandable to show all
  */
-export function MonthlyCategoryContent(props: ContentProps) {
+export function MonthlyIncomeContent(props: ContentProps) {
   const { monthYYYYMM, colors, hideHeader } = props
-  const { loading, error, totalSpentDollar, rows } = useMonthlyCategorySpending(monthYYYYMM)
+  const { loading, error, totalIncomeDollar, rows } = useMonthlyIncomeByCategory(monthYYYYMM)
   const [showAll, setShowAll] = useState(false)
 
   // Auto-expand the largest category with subcategories
@@ -114,11 +112,11 @@ export function MonthlyCategoryContent(props: ContentProps) {
       {!hideHeader && (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
-            Spending by Category
+            Income by Category
           </Text>
           {hasData && (
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.danger }}>
-              {formatUsdInt(totalSpentDollar)}
+            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.success }}>
+              {formatUsdInt(totalIncomeDollar)}
             </Text>
           )}
         </View>
@@ -132,7 +130,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
         <>
           <View style={{ gap: 12 }}>
             {displayRows.map((cat, idx) => {
-              const percent = totalSpentDollar > 0 ? (cat.totalDollar / totalSpentDollar) * 100 : 0
+              const percent = totalIncomeDollar > 0 ? (cat.totalDollar / totalIncomeDollar) * 100 : 0
               const barWidth = maxAmount > 0 ? (cat.totalDollar / maxAmount) * 100 : 0
               const categoryKey = cat.categoryRef?.categoryKey ?? 'uncategorized'
               const catMeta = getCategoryMeta(cat.categoryRef)
@@ -253,7 +251,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
         </>
       ) : !loading && !error ? (
         <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
-          No spending yet
+          No income yet
         </Text>
       ) : null}
     </View>
@@ -261,4 +259,4 @@ export function MonthlyCategoryContent(props: ContentProps) {
 }
 
 // Legacy export for backward compatibility
-export const MonthlyCategorySection = MonthlyCategoryContent
+export const MonthlyIncomeSection = MonthlyIncomeContent

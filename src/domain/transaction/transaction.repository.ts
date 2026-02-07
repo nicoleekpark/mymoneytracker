@@ -86,6 +86,7 @@ export interface TransactionRepository {
   listMonthlyExpenseTotals(limitMonths?: number): MonthlyExpenseTotal[]
   listDailyExpenseTotalsForMonth(monthYYYYMM: string): DailyExpenseTotal[]
   listMonthlyExpenseByCategory(monthYYYYMM: string): MonthlyExpenseByCategory[]
+  listMonthlyIncomeByCategory(monthYYYYMM: string): MonthlyExpenseByCategory[]
   listTransfersForMonth(monthYYYYMM: string, limit?: number): Transaction[]
   listDailyFlowTotalsForMonth(monthYYYYMM: string): DailyFlowTotal[]
   listDailyFlowTotalsWithCountForMonth(monthYYYYMM: string): DailyFlowTotalWithCount[]

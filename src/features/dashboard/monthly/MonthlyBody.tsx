@@ -6,7 +6,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { useBudgetSummary } from './budget'
 import { MonthlyCalendar, type CalendarColors, type DailyFlow } from './calendar'
 import { useMonthlyDailyFlow } from './calendar/useMonthlyDailyFlow'
-import { MonthlyCategoryContent } from './category'
+import { MonthlyCategoryContent, MonthlyIncomeContent } from './category'
 import { useMonthlyProjection } from './projection'
 import { useMonthlySummary } from './useMonthlySummary'
 import { getMonthNameShort } from '../types/dashboard.types'
@@ -303,9 +303,8 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           accentColor={ACCENT_COLORS.blue}
           colors={colors}
         />
-        {loading && <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>}
         {error && <Text style={{ color: colors.danger }}>{error}</Text>}
-        {!loading && !error && (
+        {!error && (
           <MonthlyCalendar
             monthYYYYMM={monthYYYYMM}
             daily={daily}
@@ -330,6 +329,24 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           hideHeader
         />
       </View>
+
+      {/* Section 5: Income by Category */}
+      {totalIncome > 0 && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Where it came from"
+            accentColor={ACCENT_COLORS.green}
+            rightText={formatUsdInt(totalIncome)}
+            rightColor={colors.success}
+            colors={colors}
+          />
+          <MonthlyIncomeContent
+            monthYYYYMM={monthYYYYMM}
+            colors={colors}
+            hideHeader
+          />
+        </View>
+      )}
     </ScrollView>
   )
 }
