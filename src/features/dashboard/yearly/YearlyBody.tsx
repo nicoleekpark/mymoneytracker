@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { formatUsdInt } from '@/shared/format/currency'
+import { getYearlyProjection, type YearlyProjection } from '@/domain/transaction/transaction.usecase'
 
 import { MonthlyCashflowChart } from './components'
 
@@ -50,6 +51,7 @@ export type YearlyColors = Readonly<{
   primary: string
   success: string
   danger: string
+  warning: string
 }>
 
 type Props = {
@@ -62,6 +64,7 @@ const SECTION_GAP = 40
 
 // Accent line colors (matching Monthly)
 const ACCENT_COLORS = {
+  green: '#4ade80',
   blue: '#60a5fa',
   red: '#f87171',
 }
@@ -123,6 +126,8 @@ export function YearlyBody({ year, colors }: Props) {
 
   const [expandedExpenseCategories, setExpandedExpenseCategories] = useState<Set<string>>(new Set())
   const [expandedIncomeCategories, setExpandedIncomeCategories] = useState<Set<string>>(new Set())
+  const [showAllExpense, setShowAllExpense] = useState(false)
+  const [showAllIncome, setShowAllIncome] = useState(false)
 
   // Sync with default when data changes
   const [hasExpenseInitialized, setHasExpenseInitialized] = useState(false)
@@ -137,8 +142,33 @@ export function YearlyBody({ year, colors }: Props) {
     setHasIncomeInitialized(true)
   }
 
+  // Projection data (only for current year)
+  const [projection, setProjection] = useState<YearlyProjection | null>(null)
+
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1
+
+  // Fetch projection for current year
+  useEffect(() => {
+    if (year !== currentYear) {
+      setProjection(null)
+      return
+    }
+
+    let alive = true
+    async function fetchProjection() {
+      try {
+        const proj = await getYearlyProjection(year)
+        if (alive && proj.monthsElapsed > 0) {
+          setProjection(proj)
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
+    fetchProjection()
+    return () => { alive = false }
+  }, [year, currentYear])
   const isPastYear = year < currentYear
   const isCurrentYear = year === currentYear
 
@@ -148,23 +178,27 @@ export function YearlyBody({ year, colors }: Props) {
   const savings = totalIncome - totalExpense
   const savingsRate = totalIncome > 0 ? Math.round((savings / totalIncome) * 100) : 0
 
-  // Top expense categories
-  const topExpenseCategories = useMemo(() => {
-    return data.expenseByCategory
-      .sort((a, b) => b.totalDollar - a.totalDollar)
-      .slice(0, TOP_N_CATEGORIES)
+  // Expense categories - sorted, with optional limit
+  const allExpenseCategories = useMemo(() => {
+    return data.expenseByCategory.sort((a, b) => b.totalDollar - a.totalDollar)
   }, [data.expenseByCategory])
+  const displayExpenseCategories = showAllExpense
+    ? allExpenseCategories
+    : allExpenseCategories.slice(0, TOP_N_CATEGORIES)
+  const hasMoreExpense = allExpenseCategories.length > TOP_N_CATEGORIES
 
-  // Top income categories
-  const topIncomeCategories = useMemo(() => {
-    return data.incomeByCategory
-      .sort((a, b) => b.totalDollar - a.totalDollar)
-      .slice(0, TOP_N_CATEGORIES)
+  // Income categories - sorted, with optional limit
+  const allIncomeCategories = useMemo(() => {
+    return data.incomeByCategory.sort((a, b) => b.totalDollar - a.totalDollar)
   }, [data.incomeByCategory])
+  const displayIncomeCategories = showAllIncome
+    ? allIncomeCategories
+    : allIncomeCategories.slice(0, TOP_N_CATEGORIES)
+  const hasMoreIncome = allIncomeCategories.length > TOP_N_CATEGORIES
 
-  // Calculate max for category bars
-  const maxExpenseAmount = topExpenseCategories.length > 0 ? topExpenseCategories[0].totalDollar : 0
-  const maxIncomeAmount = topIncomeCategories.length > 0 ? topIncomeCategories[0].totalDollar : 0
+  // Calculate max for category bars (use first item since sorted desc)
+  const maxExpenseAmount = allExpenseCategories.length > 0 ? allExpenseCategories[0].totalDollar : 0
+  const maxIncomeAmount = allIncomeCategories.length > 0 ? allIncomeCategories[0].totalDollar : 0
 
   // Toggle category expansion for expenses
   const toggleExpenseCategory = (categoryKey: string) => {
@@ -283,120 +317,365 @@ export function YearlyBody({ year, colors }: Props) {
           )}
         </View>
 
-        {/* Income / Expense row */}
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 12,
-              padding: 16,
-              alignItems: 'center'
-            }}
-          >
-            <Text
+        {/* 2x2 Stats Grid */}
+        <View style={{ gap: 12 }}>
+          {/* Row 1: Income / Expense */}
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View
               style={{
-                fontSize: 10,
-                fontWeight: '600',
-                color: colors.text,
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-                marginBottom: 4
+                flex: 1,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center'
               }}
             >
-              Income
-            </Text>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
-              {formatUsdInt(totalIncome)}
-            </Text>
-            {/* YoY Badge */}
-            {data.yoy.hasLastYearData && (
-              <View
+              <Text
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 2,
-                  marginTop: 6,
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  borderRadius: 4,
-                  backgroundColor: data.yoy.incomeChangePercent >= 0
-                    ? 'rgba(74, 222, 128, 0.15)'
-                    : 'rgba(248, 113, 113, 0.15)'
+                  fontSize: 10,
+                  fontWeight: '600',
+                  color: colors.text,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  marginBottom: 4
                 }}
               >
-                <Text
+                Total Income
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+                {formatUsdInt(totalIncome)}
+              </Text>
+              {/* YoY Badge */}
+              {data.yoy.hasLastYearData && (
+                <View
                   style={{
-                    fontSize: 9,
-                    fontWeight: '600',
-                    color: data.yoy.incomeChangePercent >= 0 ? '#4ade80' : '#f87171'
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 2,
+                    marginTop: 6,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    backgroundColor: data.yoy.incomeChangePercent >= 0
+                      ? 'rgba(74, 222, 128, 0.15)'
+                      : 'rgba(248, 113, 113, 0.15)'
                   }}
                 >
-                  {data.yoy.incomeChangePercent >= 0 ? '▲' : '▼'} {Math.abs(data.yoy.incomeChangePercent)}% vs last year
-                </Text>
-              </View>
-            )}
+                  <Text
+                    style={{
+                      fontSize: 9,
+                      fontWeight: '600',
+                      color: data.yoy.incomeChangePercent >= 0 ? '#4ade80' : '#f87171'
+                    }}
+                  >
+                    {data.yoy.incomeChangePercent >= 0 ? '▲' : '▼'} {Math.abs(data.yoy.incomeChangePercent)}%
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center'
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '600',
+                  color: colors.text,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  marginBottom: 4
+                }}
+              >
+                Total Expense
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger }}>
+                {formatUsdInt(totalExpense)}
+              </Text>
+              {/* YoY Badge - for expense, up is bad (red), down is good (green) */}
+              {data.yoy.hasLastYearData && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 2,
+                    marginTop: 6,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    backgroundColor: data.yoy.expenseChangePercent <= 0
+                      ? 'rgba(74, 222, 128, 0.15)'
+                      : 'rgba(248, 113, 113, 0.15)'
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 9,
+                      fontWeight: '600',
+                      color: data.yoy.expenseChangePercent <= 0 ? '#4ade80' : '#f87171'
+                    }}
+                  >
+                    {data.yoy.expenseChangePercent >= 0 ? '▲' : '▼'} {Math.abs(data.yoy.expenseChangePercent)}%
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 12,
-              padding: 16,
-              alignItems: 'center'
-            }}
-          >
-            <Text
+
+          {/* Row 2: Total Net / Avg Net per Month */}
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View
               style={{
-                fontSize: 10,
-                fontWeight: '600',
-                color: colors.text,
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-                marginBottom: 4
+                flex: 1,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center'
               }}
             >
-              Expense
-            </Text>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger }}>
-              {formatUsdInt(totalExpense)}
-            </Text>
-            {/* YoY Badge - for expense, up is bad (red), down is good (green) */}
-            {data.yoy.hasLastYearData && (
-              <View
+              <Text
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 2,
-                  marginTop: 6,
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  borderRadius: 4,
-                  backgroundColor: data.yoy.expenseChangePercent <= 0
-                    ? 'rgba(74, 222, 128, 0.15)'
-                    : 'rgba(248, 113, 113, 0.15)'
+                  fontSize: 10,
+                  fontWeight: '600',
+                  color: colors.text,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  marginBottom: 4
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 9,
-                    fontWeight: '600',
-                    color: data.yoy.expenseChangePercent <= 0 ? '#4ade80' : '#f87171'
-                  }}
-                >
-                  {data.yoy.expenseChangePercent >= 0 ? '▲' : '▼'} {Math.abs(data.yoy.expenseChangePercent)}% vs last year
-                </Text>
-              </View>
-            )}
+                Total Net
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: savings >= 0 ? colors.success : colors.danger }}>
+                {formatUsdInt(savings)}
+              </Text>
+            </View>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center'
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '600',
+                  color: colors.text,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  marginBottom: 4
+                }}
+              >
+                Avg Net / Month
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: (data.monthlyAverageIncome - data.monthlyAverageExpense) >= 0 ? colors.success : colors.danger }}>
+                {formatUsdInt(data.monthlyAverageIncome - data.monthlyAverageExpense)}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
 
-      {/* Section 2: Monthly Cashflow */}
+      {/* Section 2: Projection (current year only) */}
+      {projection && isCurrentYear && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          {/* Month indicator */}
+          <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted, textAlign: 'right', marginBottom: 4 }}>
+            Month {Math.round(projection.monthsElapsed)} of 12
+          </Text>
+
+          {/* Hero projection - same style as Section 1 */}
+          <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+            {projection.projectedIncome > 0 ? (
+              projection.projectedSavings > 0 ? (
+                // Positive projection
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                    At this rate, you'll save
+                  </Text>
+                  <Text style={{ fontSize: 42, fontWeight: '800', color: colors.success }}>
+                    {formatUsdInt(projection.projectedSavings)}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+                    by year-end
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                    That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{projection.projectedSavingsRate}%</Text> of income
+                  </Text>
+                </>
+              ) : projection.projectedSavings < 0 ? (
+                // Negative projection (overspending)
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                    At this rate, you'll overspend
+                  </Text>
+                  <Text style={{ fontSize: 42, fontWeight: '800', color: colors.danger }}>
+                    {formatUsdInt(Math.abs(projection.projectedSavings))}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+                    by year-end
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                    That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{Math.abs(projection.projectedSavingsRate)}%</Text> over income
+                  </Text>
+                </>
+              ) : (
+                // Break even projection
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                    At this rate, you'll break even
+                  </Text>
+                  <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                    {formatUsdInt(0)}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
+                    by year-end
+                  </Text>
+                </>
+              )
+            ) : (
+              // No income projection
+              <>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                  Year-end projection
+                </Text>
+                <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                  No income yet
+                </Text>
+              </>
+            )}
+          </View>
+
+          {/* Projected Income / Expense row - outline style with YoY badges */}
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center'
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '600',
+                  color: colors.text,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  marginBottom: 4
+                }}
+              >
+                Income
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+                {formatUsdInt(projection.projectedIncome)}
+              </Text>
+              {/* YoY Badge */}
+              {projection.vsLastYear && projection.vsLastYear.lastYearIncome > 0 && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 2,
+                    marginTop: 6,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    backgroundColor: projection.vsLastYear.incomeChangePercent >= 0
+                      ? 'rgba(74, 222, 128, 0.15)'
+                      : 'rgba(248, 113, 113, 0.15)'
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 9,
+                      fontWeight: '600',
+                      color: projection.vsLastYear.incomeChangePercent >= 0 ? '#4ade80' : '#f87171'
+                    }}
+                  >
+                    {projection.vsLastYear.incomeChangePercent >= 0 ? '▲' : '▼'} {Math.abs(projection.vsLastYear.incomeChangePercent)}% vs last year
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center'
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '600',
+                  color: colors.text,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  marginBottom: 4
+                }}
+              >
+                Expense
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger }}>
+                {formatUsdInt(projection.projectedExpense)}
+              </Text>
+              {/* YoY Badge - for expense, up is bad (red), down is good (green) */}
+              {projection.vsLastYear && projection.vsLastYear.lastYearExpense > 0 && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 2,
+                    marginTop: 6,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    backgroundColor: projection.vsLastYear.expenseChangePercent <= 0
+                      ? 'rgba(74, 222, 128, 0.15)'
+                      : 'rgba(248, 113, 113, 0.15)'
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 9,
+                      fontWeight: '600',
+                      color: projection.vsLastYear.expenseChangePercent <= 0 ? '#4ade80' : '#f87171'
+                    }}
+                  >
+                    {projection.vsLastYear.expenseChangePercent >= 0 ? '▲' : '▼'} {Math.abs(projection.vsLastYear.expenseChangePercent)}% vs last year
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Section 3: Monthly Cashflow */}
       <View style={{ marginBottom: SECTION_GAP }}>
         <SectionHeader
           title="Monthly cashflow"
@@ -416,7 +695,8 @@ export function YearlyBody({ year, colors }: Props) {
             surfaceAlt: colors.surfaceAlt,
             success: colors.success,
             danger: colors.danger,
-            primary: colors.primary
+            primary: colors.primary,
+            warning: colors.warning
           }}
         />
       </View>
@@ -431,9 +711,10 @@ export function YearlyBody({ year, colors }: Props) {
           colors={colors}
         />
 
-        {topExpenseCategories.length > 0 ? (
+        {displayExpenseCategories.length > 0 ? (
+          <>
           <View style={{ gap: 12 }}>
-            {topExpenseCategories.map((cat, idx) => {
+            {displayExpenseCategories.map((cat, idx) => {
               const percent = totalExpense > 0 ? (cat.totalDollar / totalExpense) * 100 : 0
               const barWidth = maxExpenseAmount > 0 ? (cat.totalDollar / maxExpenseAmount) * 100 : 0
               const categoryKey = cat.categoryRef?.categoryKey ?? 'uncategorized'
@@ -459,12 +740,14 @@ export function YearlyBody({ year, colors }: Props) {
                     <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
                       {Math.round(percent)}%
                     </Text>
-                    {/* Chevron indicator */}
-                    {hasSubcategories && (
-                      <Text style={{ fontSize: 10, color: colors.textMuted, marginLeft: 4 }}>
-                        {isExpanded ? '▼' : '▶'}
-                      </Text>
-                    )}
+                    {/* Chevron indicator - fixed width container for alignment */}
+                    <View style={{ width: 20, alignItems: 'center' }}>
+                      {hasSubcategories && (
+                        <Text style={{ fontSize: 10, color: colors.textMuted }}>
+                          {isExpanded ? '▼' : '▶'}
+                        </Text>
+                      )}
+                    </View>
                   </Pressable>
 
                   {/* Bar */}
@@ -510,6 +793,8 @@ export function YearlyBody({ year, colors }: Props) {
                               <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textMuted }}>
                                 {Math.round(subPercent)}%
                               </Text>
+                              {/* Spacer for alignment with parent rows */}
+                              <View style={{ width: 20 }} />
                             </View>
                             {/* Subcategory bar */}
                             <View
@@ -540,6 +825,19 @@ export function YearlyBody({ year, colors }: Props) {
               )
             })}
           </View>
+
+          {/* Expand/Collapse button */}
+          {hasMoreExpense && (
+            <Pressable
+              onPress={() => setShowAllExpense(!showAllExpense)}
+              style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+                {showAllExpense ? 'Show less' : `Show all ${allExpenseCategories.length} categories`}
+              </Text>
+            </Pressable>
+          )}
+          </>
         ) : (
           <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
             No spending yet
@@ -552,15 +850,16 @@ export function YearlyBody({ year, colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Where it came from"
-            accentColor={ACCENT_COLORS.blue}
+            accentColor={ACCENT_COLORS.green}
             rightText={formatUsdInt(totalIncome)}
             rightColor={colors.success}
             colors={colors}
           />
 
-          {topIncomeCategories.length > 0 ? (
+          {displayIncomeCategories.length > 0 ? (
+            <>
             <View style={{ gap: 12 }}>
-              {topIncomeCategories.map((cat, idx) => {
+              {displayIncomeCategories.map((cat, idx) => {
                 const percent = totalIncome > 0 ? (cat.totalDollar / totalIncome) * 100 : 0
                 const barWidth = maxIncomeAmount > 0 ? (cat.totalDollar / maxIncomeAmount) * 100 : 0
                 const categoryKey = cat.categoryRef?.categoryKey ?? 'uncategorized'
@@ -586,12 +885,14 @@ export function YearlyBody({ year, colors }: Props) {
                       <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
                         {Math.round(percent)}%
                       </Text>
-                      {/* Chevron indicator */}
-                      {hasSubcategories && (
-                        <Text style={{ fontSize: 10, color: colors.textMuted, marginLeft: 4 }}>
-                          {isExpanded ? '▼' : '▶'}
-                        </Text>
-                      )}
+                      {/* Chevron indicator - fixed width container for alignment */}
+                      <View style={{ width: 20, alignItems: 'center' }}>
+                        {hasSubcategories && (
+                          <Text style={{ fontSize: 10, color: colors.textMuted }}>
+                            {isExpanded ? '▼' : '▶'}
+                          </Text>
+                        )}
+                      </View>
                     </Pressable>
 
                     {/* Bar */}
@@ -637,6 +938,8 @@ export function YearlyBody({ year, colors }: Props) {
                                 <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textMuted }}>
                                   {Math.round(subPercent)}%
                                 </Text>
+                                {/* Spacer for alignment with parent rows */}
+                                <View style={{ width: 20 }} />
                               </View>
                               {/* Subcategory bar */}
                               <View
@@ -667,6 +970,19 @@ export function YearlyBody({ year, colors }: Props) {
                 )
               })}
             </View>
+
+            {/* Expand/Collapse button */}
+            {hasMoreIncome && (
+              <Pressable
+                onPress={() => setShowAllIncome(!showAllIncome)}
+                style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+                  {showAllIncome ? 'Show less' : `Show all ${allIncomeCategories.length} categories`}
+                </Text>
+              </Pressable>
+            )}
+            </>
           ) : (
             <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
               No income yet

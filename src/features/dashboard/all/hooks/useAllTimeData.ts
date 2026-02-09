@@ -10,8 +10,10 @@ import {
   getFirstTransactionDate,
   getDistinctMonthCount,
   getPersonalBests,
+  getCumulativeNetData,
   type YearlyFlowDollar,
-  type PersonalBests
+  type PersonalBests,
+  type CumulativeNetData
 } from '@/domain/transaction/transaction.usecase'
 import { categoryRepository } from '@/infrastructure/repositories'
 
@@ -36,6 +38,9 @@ export type AllTimeData = Readonly<{
   // Yearly breakdown (for trend chart)
   yearlyData: YearlyFlowDollar[]
 
+  // Cumulative net (for line chart)
+  cumulativeData: CumulativeNetData[]
+
   // Date range
   firstYear: number | null
   lastYear: number | null
@@ -55,11 +60,12 @@ const DEFAULT_DATA: AllTimeData = {
   expenseByCategory: [],
   incomeByCategory: [],
   yearlyData: [],
+  cumulativeData: [],
   firstYear: null,
   lastYear: null,
   firstTransactionDate: null,
   monthsTracked: 0,
-  personalBests: { bestSavingsMonth: null, bestSavingsYear: null, peakExpenseMonth: null, peakExpenseYear: null }
+  personalBests: { bestSavingsMonth: null, bestSavingsYear: null, peakExpenseMonth: null, peakExpenseYear: null, worstMonth: null, positiveStreak: 0, currentStreak: { months: 0, isPositive: true } }
 }
 
 export function useAllTimeData() {
@@ -75,14 +81,15 @@ export function useAllTimeData() {
       setError(null)
 
       try {
-        const [summary, expenseByCat, incomeByCat, yearlyFlow, firstDate, monthCount, personalBests] = await Promise.all([
+        const [summary, expenseByCat, incomeByCat, yearlyFlow, firstDate, monthCount, personalBests, cumulativeData] = await Promise.all([
           getAllTimeSummaryDollar(),
           getAllTimeExpenseByCategoryDollar(),
           getAllTimeIncomeByCategoryDollar(),
           getYearlyFlowTotalsDollar(),
           getFirstTransactionDate(),
           getDistinctMonthCount(),
-          getPersonalBests()
+          getPersonalBests(),
+          getCumulativeNetData()
         ])
 
         if (!alive) return
@@ -129,6 +136,7 @@ export function useAllTimeData() {
           expenseByCategory,
           incomeByCategory,
           yearlyData: yearlyFlow,
+          cumulativeData,
           firstYear,
           lastYear,
           firstTransactionDate: firstDate,

@@ -129,7 +129,8 @@ export default function DashboardScreen() {
                   surfaceAlt: theme.semantic.surfaceAlt,
                   primary: theme.semantic.primary,
                   success: theme.semantic.success,
-                  danger: theme.semantic.danger
+                  danger: theme.semantic.danger,
+                  warning: theme.semantic.warning
                 }}
               />
             </View>

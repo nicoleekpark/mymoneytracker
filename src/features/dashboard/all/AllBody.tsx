@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
 import { CATEGORIES } from '@/config/categories.config'
 import { CategoryIcon, Stack } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
-import { getYearlyProjection, type YearlyProjection } from '@/domain/transaction/transaction.usecase'
 import { useAllTimeData, type CategoryBreakdown } from './hooks'
+import { CumulativeNetChart } from './components'
 import { MONTH_NAMES_SHORT } from '../types/dashboard.types'
 
 // Enable LayoutAnimation on Android
@@ -78,6 +78,48 @@ function getSubcategoryMeta(parentKey: string, subKey: string): { name: string; 
   return { name: sub.name, icon: sub.icon, color: sub.color }
 }
 
+// Section gap for combined style (matching Monthly/Yearly)
+const SECTION_GAP = 40
+
+// Accent line colors (matching Monthly/Yearly)
+const ACCENT_COLORS = {
+  green: '#4ade80',
+  blue: '#60a5fa',
+  red: '#f87171',
+  purple: '#a78bfa',
+}
+
+/**
+ * Section header with accent line - matching Monthly/Yearly style
+ */
+function SectionHeader({
+  title,
+  accentColor,
+  rightText,
+  rightColor,
+  colors
+}: {
+  title: string
+  accentColor: string
+  rightText?: string
+  rightColor?: string
+  colors: AllColors
+}) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+      <View style={{ width: 3, height: 20, borderRadius: 2, backgroundColor: accentColor }} />
+      <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
+        {title}
+      </Text>
+      {rightText && (
+        <Text style={{ marginLeft: 'auto', fontSize: 14, fontWeight: '700', color: rightColor || colors.text }}>
+          {rightText}
+        </Text>
+      )}
+    </View>
+  )
+}
+
 function aggregateCategories(categories: CategoryBreakdown[]): AggregatedCategory[] {
   const byParent = new Map<string, AggregatedCategory>()
 
@@ -121,175 +163,6 @@ function aggregateCategories(categories: CategoryBreakdown[]): AggregatedCategor
   return Array.from(byParent.values()).sort((a, b) => b.amount - a.amount)
 }
 
-function CategoryRow({
-  item,
-  index,
-  totalAmount,
-  totalIncome,
-  isExpanded,
-  onPress,
-  colors
-}: {
-  item: AggregatedCategory
-  index: number
-  totalAmount: number
-  totalIncome: number
-  isExpanded: boolean
-  onPress: () => void
-  colors: AllColors
-}) {
-  const meta = getCategoryMeta(item.categoryRef)
-  const percentage = totalAmount > 0 ? (item.amount / totalAmount) * 100 : 0
-  const incomePercentage = totalIncome > 0 ? (item.amount / totalIncome) * 100 : 0
-  const isTop = index === 0
-  const hasSubcategories = item.subcategories.length > 0
-
-  return (
-    <Pressable onPress={onPress}>
-      <View style={{ paddingVertical: 10 }}>
-        {/* Main row */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              backgroundColor: `${meta.color}20`,
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <CategoryIcon name={meta.icon} size={14} color={meta.color} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {isTop && <Text style={{ fontSize: 11 }}>👑</Text>}
-              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
-                {meta.name}
-              </Text>
-            </View>
-            {hasSubcategories && !isExpanded && (
-              <Text style={{ fontSize: 9, color: colors.textSecondary, marginTop: 1 }}>
-                tap for details
-              </Text>
-            )}
-          </View>
-          <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>
-            {formatUsdInt(item.amount)}
-          </Text>
-          <Text style={{ width: 36, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
-            {percentage.toFixed(0)}%
-          </Text>
-        </View>
-
-        {/* Expanded content */}
-        {isExpanded && (
-          <View
-            style={{
-              marginTop: 10,
-              marginLeft: 38,
-              backgroundColor: colors.surfaceAlt,
-              borderRadius: 10,
-              padding: 12,
-              gap: 10
-            }}
-          >
-            {/* Subcategories */}
-            {hasSubcategories && (
-              <View style={{ gap: 8 }}>
-                {item.subcategories.map((sub, idx) => {
-                  const subPct = item.amount > 0 ? (sub.amount / item.amount) * 100 : 0
-                  return (
-                    <View
-                      key={`${sub.name}-${idx}`}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-                    >
-                      <CategoryIcon name={sub.icon} size={12} color={sub.color} />
-                      <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: colors.text }}>
-                        {sub.name}
-                      </Text>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-                        {formatUsdInt(sub.amount)}
-                      </Text>
-                      <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, width: 32, textAlign: 'right' }}>
-                        {subPct.toFixed(0)}%
-                      </Text>
-                    </View>
-                  )
-                })}
-              </View>
-            )}
-
-            {/* Insights */}
-            <View
-              style={{
-                borderTopWidth: hasSubcategories ? 1 : 0,
-                borderTopColor: colors.border,
-                paddingTop: hasSubcategories ? 8 : 0,
-                gap: 4
-              }}
-            >
-              <Text style={{ fontSize: 11, color: colors.textSecondary }}>
-                Takes <Text style={{ fontWeight: '700', color: colors.text }}>{incomePercentage.toFixed(1)}%</Text> of total income
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
-    </Pressable>
-  )
-}
-
-function YearlyTrendBar({
-  year,
-  net,
-  maxNet,
-  isBest,
-  isYTD,
-  colors
-}: {
-  year: number
-  net: number
-  maxNet: number
-  isBest: boolean
-  isYTD: boolean
-  colors: AllColors
-}) {
-  const barWidth = maxNet > 0 ? Math.max(8, (Math.abs(net) / maxNet) * 100) : 0
-  const isPositive = net >= 0
-
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <Text style={{ width: 44, fontSize: 13, fontWeight: '700', color: colors.text }}>
-        {year}
-      </Text>
-      <View style={{ flex: 1, height: 20, justifyContent: 'center' }}>
-        <View
-          style={{
-            height: 14,
-            width: `${barWidth}%`,
-            backgroundColor: isPositive ? colors.success : colors.danger,
-            borderRadius: 4,
-            opacity: 0.8
-          }}
-        />
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 90 }}>
-        <Text style={{ fontSize: 11, color: isPositive ? colors.success : colors.danger }}>
-          {isPositive ? '↑' : '↓'}
-        </Text>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: isPositive ? colors.success : colors.danger }}>
-          {formatCompactAmount(net)}
-        </Text>
-        {isBest && <Text style={{ fontSize: 10 }}>🏆</Text>}
-        {isYTD && (
-          <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textSecondary }}>(YTD)</Text>
-        )}
-      </View>
-    </View>
-  )
-}
-
 function InfoTooltip({
   visible,
   onClose,
@@ -331,7 +204,7 @@ function InfoTooltip({
             The percentage of income you kept after expenses.
           </Text>
 
-          {/* Formula - Fraction style */}
+          {/* Formula - Fraction style in one line */}
           <View
             style={{
               backgroundColor: colors.surfaceAlt,
@@ -341,25 +214,27 @@ function InfoTooltip({
               marginBottom: 16
             }}
           >
-            <View style={{ alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>
+                  Income − Expense
+                </Text>
+                <View
+                  style={{
+                    width: 120,
+                    height: 1,
+                    backgroundColor: colors.text,
+                    marginVertical: 4
+                  }}
+                />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>
+                  Income
+                </Text>
+              </View>
               <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>
-                Income − Expense
-              </Text>
-              <View
-                style={{
-                  width: 140,
-                  height: 1,
-                  backgroundColor: colors.text,
-                  marginVertical: 6
-                }}
-              />
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>
-                Income
+                × 100
               </Text>
             </View>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, marginTop: 8 }}>
-              × 100
-            </Text>
           </View>
 
           {/* Benchmark */}
@@ -412,69 +287,62 @@ function InfoTooltip({
 export function AllBody({ colors }: Props) {
   const { loading, error, data } = useAllTimeData()
 
-  const currentYear = new Date().getFullYear()
-
-  const [expandedExpenseIndex, setExpandedExpenseIndex] = useState<number | null>(null)
-  const [expandedIncomeIndex, setExpandedIncomeIndex] = useState<number | null>(null)
+  const [expandedExpenseCategories, setExpandedExpenseCategories] = useState<Set<string>>(new Set())
+  const [expandedIncomeCategories, setExpandedIncomeCategories] = useState<Set<string>>(new Set())
+  const [showAllExpense, setShowAllExpense] = useState(false)
+  const [showAllIncome, setShowAllIncome] = useState(false)
   const [showSavingsInfo, setShowSavingsInfo] = useState(false)
-  const [showProjectionInfo, setShowProjectionInfo] = useState(false)
-  const [projection, setProjection] = useState<YearlyProjection | null>(null)
 
-  // Fetch current year projection
-  useEffect(() => {
-    let alive = true
-    async function fetchProjection() {
-      try {
-        const proj = await getYearlyProjection(currentYear)
-        if (alive && proj.monthsElapsed > 0) {
-          setProjection(proj)
-        }
-      } catch {
-        // Ignore errors
-      }
-    }
-    fetchProjection()
-    return () => { alive = false }
-  }, [currentYear])
+  const TOP_N_CATEGORIES = 5
 
-  const topExpenseCategories = useMemo(
-    () => aggregateCategories(data.expenseByCategory).slice(0, 6),
+  // All categories sorted by amount
+  const allExpenseCategories = useMemo(
+    () => aggregateCategories(data.expenseByCategory),
     [data.expenseByCategory]
   )
-
-  const topIncomeCategories = useMemo(
-    () => aggregateCategories(data.incomeByCategory).slice(0, 5),
+  const allIncomeCategories = useMemo(
+    () => aggregateCategories(data.incomeByCategory),
     [data.incomeByCategory]
   )
 
-  // Find best year and max net for scaling
-  const yearlyStats = useMemo(() => {
-    if (data.yearlyData.length === 0) return { bestYear: null, maxNet: 0 }
-    let bestYear = data.yearlyData[0].year
-    let bestNet = data.yearlyData[0].incomeDollar - data.yearlyData[0].expenseDollar
-    let maxNet = Math.abs(bestNet)
+  // Display categories based on showAll state
+  const displayExpenseCategories = showAllExpense
+    ? allExpenseCategories
+    : allExpenseCategories.slice(0, TOP_N_CATEGORIES)
+  const displayIncomeCategories = showAllIncome
+    ? allIncomeCategories
+    : allIncomeCategories.slice(0, TOP_N_CATEGORIES)
+  const hasMoreExpense = allExpenseCategories.length > TOP_N_CATEGORIES
+  const hasMoreIncome = allIncomeCategories.length > TOP_N_CATEGORIES
 
-    for (const y of data.yearlyData) {
-      const net = y.incomeDollar - y.expenseDollar
-      const absNet = Math.abs(net)
-      if (absNet > maxNet) maxNet = absNet
-      // Only consider completed years for "best" (not current year)
-      if (y.year < currentYear && net > bestNet) {
-        bestNet = net
-        bestYear = y.year
-      }
-    }
-    return { bestYear, maxNet }
-  }, [data.yearlyData, currentYear])
+  // Max amounts for category bars
+  const maxExpenseAmount = allExpenseCategories.length > 0 ? allExpenseCategories[0].amount : 0
+  const maxIncomeAmount = allIncomeCategories.length > 0 ? allIncomeCategories[0].amount : 0
 
-  function handleExpensePress(index: number) {
+  function toggleExpenseCategory(categoryKey: string) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setExpandedExpenseIndex(prev => (prev === index ? null : index))
+    setExpandedExpenseCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(categoryKey)) {
+        next.delete(categoryKey)
+      } else {
+        next.add(categoryKey)
+      }
+      return next
+    })
   }
 
-  function handleIncomePress(index: number) {
+  function toggleIncomeCategory(categoryKey: string) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setExpandedIncomeIndex(prev => (prev === index ? null : index))
+    setExpandedIncomeCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(categoryKey)) {
+        next.delete(categoryKey)
+      } else {
+        next.add(categoryKey)
+      }
+      return next
+    })
   }
 
   if (loading) {
@@ -494,7 +362,7 @@ export function AllBody({ colors }: Props) {
   }
 
   return (
-    <Stack gap="xl" scroll>
+    <Stack gap="xl" scroll contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
       {/* Savings Rate Info Modal */}
       <InfoTooltip
         visible={showSavingsInfo}
@@ -502,533 +370,609 @@ export function AllBody({ colors }: Props) {
         colors={colors}
       />
 
-      {/* All-Time Summary Card */}
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: colors.border,
-          padding: 20,
-          gap: 16
-        }}
-      >
-        {/* Header + Tracking since */}
-        <View style={{ alignItems: 'center', gap: 2 }}>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
-            All Time
-          </Text>
-          <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textSecondary }}>
-            {formatTrackingSince(data.firstTransactionDate)}
-          </Text>
-        </View>
+      {/* Section 1: All-Time Overview */}
+      <View style={{ marginBottom: SECTION_GAP }}>
+        {/* Tracking since subtitle */}
+        <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textSecondary, textAlign: 'right', marginBottom: 4 }}>
+          {formatTrackingSince(data.firstTransactionDate)}
+        </Text>
 
-        {/* Net amount with arrow */}
-        <View style={{ alignItems: 'center', gap: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 22,
-                color: data.netAmount >= 0 ? colors.success : colors.danger
-              }}
-            >
-              {data.netAmount >= 0 ? '↑' : '↓'}
-            </Text>
-            <Text
-              style={{
-                fontSize: 28,
-                fontWeight: '900',
-                color: data.netAmount >= 0 ? colors.success : colors.danger
-              }}
-            >
-              {formatUsdInt(Math.abs(data.netAmount))}
-            </Text>
-          </View>
-          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
-            net
-          </Text>
+        {/* Hero savings rate */}
+        <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+          {data.totalIncome > 0 ? (
+            data.netAmount > 0 ? (
+              // Positive savings
+              <>
+                <Pressable
+                  onPress={() => setShowSavingsInfo(true)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
+                >
+                  <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                    Lifetime savings rate
+                  </Text>
+                  <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
+                </Pressable>
+                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
+                  {data.savingsRate.toFixed(0)}%
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
+                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{formatUsdInt(data.netAmount)}</Text> saved
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+                  (+{formatUsdInt(data.avgMonthlySaved)}/mo on average)
+                </Text>
+              </>
+            ) : data.netAmount < 0 ? (
+              // Negative (overspent)
+              <>
+                <Pressable
+                  onPress={() => setShowSavingsInfo(true)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
+                >
+                  <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                    Lifetime savings rate
+                  </Text>
+                  <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
+                </Pressable>
+                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
+                  {Math.abs(data.savingsRate).toFixed(0)}%
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
+                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(data.netAmount))}</Text> overspent
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+                  ({formatUsdInt(Math.abs(data.avgMonthlySaved))}/mo on average)
+                </Text>
+              </>
+            ) : (
+              // Broke even
+              <>
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+                  Lifetime result
+                </Text>
+                <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
+                  {formatUsdInt(0)}
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 4 }}>
+                  broke even
+                </Text>
+              </>
+            )
+          ) : (
+            // No income
+            <>
+              <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+                Lifetime
+              </Text>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
+                No income yet
+              </Text>
+              {data.totalExpense > 0 && (
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(data.totalExpense)}</Text> spent
+                </Text>
+              )}
+            </>
+          )}
         </View>
 
         {/* Income / Expense row */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 24 }}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary }}>
-            <Text style={{ color: colors.success, fontWeight: '700' }}>{formatCompactAmount(data.totalIncome)}</Text>
-            {' '}income
-          </Text>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary }}>
-            <Text style={{ color: colors.danger, fontWeight: '700' }}>{formatCompactAmount(data.totalExpense)}</Text>
-            {' '}expense
-          </Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: 12,
+              padding: 16,
+              alignItems: 'center'
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: '600',
+                color: colors.text,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+                marginBottom: 4
+              }}
+            >
+              Income
+            </Text>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+              {formatUsdInt(data.totalIncome)}
+            </Text>
+          </View>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: 12,
+              padding: 16,
+              alignItems: 'center'
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: '600',
+                color: colors.text,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+                marginBottom: 4
+              }}
+            >
+              Expense
+            </Text>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger }}>
+              {formatUsdInt(data.totalExpense)}
+            </Text>
+          </View>
         </View>
 
-        {/* Savings rate + Avg monthly */}
-        <View
-          style={{
-            backgroundColor: colors.surfaceAlt,
-            borderRadius: 10,
-            padding: 12,
-            flexDirection: 'row',
-            justifyContent: 'space-around'
-          }}
-        >
-          <View style={{ alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text }}>
-                {data.savingsRate.toFixed(0)}%
-              </Text>
-              <Pressable
-                onPress={() => setShowSavingsInfo(true)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={{ marginLeft: 2, marginTop: -2 }}
-              >
-                <View
-                  style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: 7,
-                    backgroundColor: colors.border,
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textSecondary }}>i</Text>
-                </View>
-              </Pressable>
-            </View>
-            <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary }}>
-              savings rate
-            </Text>
-          </View>
-          <View style={{ width: 1, backgroundColor: colors.border }} />
-          <View style={{ alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Text style={{ fontSize: 13, color: data.avgMonthlySaved >= 0 ? colors.success : colors.danger }}>
-                {data.avgMonthlySaved >= 0 ? '↑' : '↓'}
-              </Text>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text }}>
-                {formatUsdInt(Math.abs(data.avgMonthlySaved))}
-              </Text>
-            </View>
-            <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary }}>
-              avg/mo saved
-            </Text>
-          </View>
-        </View>
       </View>
 
-      {/* Highlights - Bento 4-tile layout */}
-      {(data.personalBests.bestSavingsMonth || data.personalBests.peakExpenseMonth) && (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 16,
-            gap: 12
-          }}
-        >
-          {/* Header */}
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>
-            Highlights
-          </Text>
+      {/* Section 2: Personal Bests (2x2 Grid) */}
+      {(data.personalBests.bestSavingsMonth || data.personalBests.worstMonth) && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Personal bests"
+            accentColor={ACCENT_COLORS.purple}
+            colors={colors}
+          />
 
-          {/* Bento Grid */}
-          <View style={{ gap: 10 }}>
-            {/* Row 1: Monthly */}
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              {/* Best Savings Month */}
+          {/* 2x2 Grid */}
+          <View style={{ gap: 12 }}>
+            {/* Row 1: Best Month / Worst Month */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              {/* Best Month */}
               {data.personalBests.bestSavingsMonth && (
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surfaceAlt,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: colors.border,
                     borderRadius: 12,
-                    padding: 12,
-                    gap: 4
+                    padding: 14
                   }}
                 >
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Best Savings
-                  </Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-                    {formatMonthYear(data.personalBests.bestSavingsMonth.month)}
-                  </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4 }}>
-                    <Text style={{ fontSize: 12, color: colors.success }}>↑</Text>
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: colors.success }}>
-                      {formatUsdInt(data.personalBests.bestSavingsMonth.netDollar)}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        backgroundColor: `${colors.success}20`,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <CategoryIcon name="star" size={11} color={colors.success} />
+                    </View>
+                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Best Month
                     </Text>
                   </View>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 }}>
+                    {formatMonthYear(data.personalBests.bestSavingsMonth.month)}
+                  </Text>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+                    {formatUsdInt(data.personalBests.bestSavingsMonth.netDollar)}
+                  </Text>
                 </View>
               )}
 
-              {/* Most Spent Month */}
-              {data.personalBests.peakExpenseMonth && (
+              {/* Worst Month */}
+              {data.personalBests.worstMonth && (
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surfaceAlt,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: colors.border,
                     borderRadius: 12,
-                    padding: 12,
-                    gap: 4
+                    padding: 14
                   }}
                 >
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Most Spent
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        backgroundColor: `${colors.danger}20`,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <CategoryIcon name="fire" size={11} color={colors.danger} />
+                    </View>
+                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Worst Month
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 }}>
+                    {formatMonthYear(data.personalBests.worstMonth.month)}
                   </Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-                    {formatMonthYear(data.personalBests.peakExpenseMonth.month)}
-                  </Text>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, marginTop: 4 }}>
-                    {formatUsdInt(data.personalBests.peakExpenseMonth.expenseDollar)}
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: data.personalBests.worstMonth.netDollar >= 0 ? colors.success : colors.danger }}>
+                    {formatUsdInt(data.personalBests.worstMonth.netDollar)}
                   </Text>
                 </View>
               )}
             </View>
 
-            {/* Row 2: Yearly */}
-            {(data.personalBests.bestSavingsYear || data.personalBests.peakExpenseYear) && (
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {/* Best Year */}
-                {data.personalBests.bestSavingsYear && (
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: colors.surfaceAlt,
-                      borderRadius: 12,
-                      padding: 12,
-                      gap: 4
-                    }}
-                  >
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Best Year
-                    </Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-                      {data.personalBests.bestSavingsYear.year}
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4 }}>
-                      <Text style={{ fontSize: 12, color: colors.success }}>↑</Text>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.success }}>
-                        {formatUsdInt(data.personalBests.bestSavingsYear.netDollar)}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-
-                {/* Spent Most Year */}
-                {data.personalBests.peakExpenseYear && (
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: colors.surfaceAlt,
-                      borderRadius: 12,
-                      padding: 12,
-                      gap: 4
-                    }}
-                  >
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Spent Most
-                    </Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-                      {data.personalBests.peakExpenseYear.year}
-                    </Text>
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, marginTop: 4 }}>
-                      {formatUsdInt(data.personalBests.peakExpenseYear.expenseDollar)}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        </View>
-      )}
-
-      {/* Current Year Projection - Option C Simple style */}
-      {projection && projection.monthsElapsed > 0 && (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 20,
-            position: 'relative'
-          }}
-        >
-          {/* Info Button */}
-          <Pressable
-            onPress={() => setShowProjectionInfo(true)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              width: 18,
-              height: 18,
-              borderRadius: 9,
-              backgroundColor: colors.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>i</Text>
-          </Pressable>
-
-          {/* Header */}
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
-              {currentYear} FORECAST
-            </Text>
-            <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
-              Month {Math.round(projection.monthsElapsed)} of 12
-            </Text>
-          </View>
-
-          {/* Main Savings Amount */}
-          <View style={{ alignItems: 'center', marginBottom: 20 }}>
-            <Text
-              style={{
-                fontSize: 36,
-                fontWeight: '900',
-                color: projection.projectedSavings >= 0 ? colors.success : colors.text,
-              }}
-            >
-              {projection.projectedSavings >= 0 ? '+' : ''}{formatUsdInt(projection.projectedSavings)}
-            </Text>
-            <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 4 }}>
-              projected savings this year
-            </Text>
-          </View>
-
-          {/* Detail Box with aligned numbers */}
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              borderRadius: 10,
-              padding: 14,
-            }}
-          >
-            {/* Income row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
-              <Text style={{ fontSize: 13, color: colors.textSecondary }}>Income</Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, fontVariant: ['tabular-nums'] }}>
-                {'  '}${projection.projectedIncome.toLocaleString('en-US')}
-              </Text>
-            </View>
-
-            {/* Expense row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
-              <Text style={{ fontSize: 13, color: colors.textSecondary }}>Expense</Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, fontVariant: ['tabular-nums'] }}>
-                {'  '}${projection.projectedExpense.toLocaleString('en-US')}
-              </Text>
-            </View>
-
-            {/* Divider */}
-            <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginVertical: 6 }} />
-
-            {/* Savings row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>Savings</Text>
-              <Text
+            {/* Row 2: Positive Streak / Current Streak */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              {/* Positive Streak */}
+              <View
                 style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: projection.projectedSavings >= 0 ? colors.success : colors.text,
-                  fontVariant: ['tabular-nums']
+                  flex: 1,
+                  backgroundColor: 'transparent',
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 12,
+                  padding: 14
                 }}
               >
-                {projection.projectedSavings >= 0 ? '+ ' : '- '}${Math.abs(projection.projectedSavings).toLocaleString('en-US')}
-              </Text>
-            </View>
-
-            {/* vs Last Year row */}
-            {projection.vsLastYear && (
-              <>
-                <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginVertical: 6 }} />
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary }}>vs {currentYear - 1}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ color: projection.vsLastYear.isMoreSaved ? colors.success : colors.text }}>
-                      {projection.vsLastYear.isMoreSaved ? '↑' : '↓'}
-                    </Text>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, fontVariant: ['tabular-nums'] }}>
-                      {projection.vsLastYear.isMoreSaved ? '+ ' : '- '}${projection.vsLastYear.delta.toLocaleString('en-US')}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: colors.textSecondary }}>
-                      {projection.vsLastYear.isMoreSaved ? 'more' : 'less'}
-                    </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: `${colors.success}20`,
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <CategoryIcon name="trophy" size={11} color={colors.success} />
                   </View>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Best Streak
+                  </Text>
                 </View>
-              </>
-            )}
+                <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+                  {data.personalBests.positiveStreak} months
+                </Text>
+                <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textSecondary, marginTop: 2 }}>
+                  consecutive profit
+                </Text>
+              </View>
+
+              {/* Current Streak */}
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: 'transparent',
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 12,
+                  padding: 14
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: data.personalBests.currentStreak.isPositive ? `${colors.success}20` : `${colors.danger}20`,
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <CategoryIcon name="line-chart" size={11} color={data.personalBests.currentStreak.isPositive ? colors.success : colors.danger} />
+                  </View>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Current Streak
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: data.personalBests.currentStreak.isPositive ? colors.success : colors.danger }}>
+                  {data.personalBests.currentStreak.months} months
+                </Text>
+                <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textSecondary, marginTop: 2 }}>
+                  {data.personalBests.currentStreak.isPositive ? 'in profit' : 'in loss'}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       )}
 
-      {/* Projection Info Modal */}
-      <Modal visible={showProjectionInfo} transparent animationType="fade" onRequestClose={() => setShowProjectionInfo(false)}>
-        <Pressable
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 32,
-          }}
-          onPress={() => setShowProjectionInfo(false)}
-        >
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              borderRadius: 16,
-              padding: 24,
-              width: '100%',
-              maxWidth: 320,
-              borderWidth: 1,
-              borderColor: colors.border,
+      {/* Cumulative Net Chart */}
+      {data.cumulativeData.length > 0 && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Cumulative net"
+            accentColor={ACCENT_COLORS.blue}
+            colors={colors}
+          />
+          <CumulativeNetChart
+            data={data.cumulativeData}
+            colors={{
+              text: colors.text,
+              textSecondary: colors.textSecondary,
+              surface: colors.surface,
+              surfaceAlt: colors.surfaceAlt,
+              success: colors.success,
+              danger: colors.danger
             }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 16 }}>
-              How Projection Works
-            </Text>
-            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
-              Formula: (year-to-date total / months elapsed) x 12
-            </Text>
-            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
-              Your monthly averages are extrapolated to estimate year-end totals.
-            </Text>
-            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
-              The more months of data, the more accurate the projection.
-            </Text>
-            <Pressable
-              onPress={() => setShowProjectionInfo(false)}
-              style={{
-                marginTop: 16,
-                backgroundColor: colors.text,
-                borderRadius: 8,
-                paddingVertical: 12,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.surface }}>Got it</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+          />
+        </View>
+      )}
 
-      {/* Yearly Trend with visual bars */}
-      {data.yearlyData.length > 0 && (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 16,
-            gap: 12
-          }}
-        >
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>
-            Yearly Trend
-          </Text>
-          <View style={{ gap: 8 }}>
-            {data.yearlyData.map((y) => {
-              const net = y.incomeDollar - y.expenseDollar
+      {/* Where it went (Expense) */}
+      {displayExpenseCategories.length > 0 && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Where it went"
+            accentColor={ACCENT_COLORS.red}
+            rightText={formatUsdInt(data.totalExpense)}
+            rightColor={colors.danger}
+            colors={colors}
+          />
+          <View style={{ gap: 12 }}>
+            {displayExpenseCategories.map((cat) => {
+              const percent = data.totalExpense > 0 ? (cat.amount / data.totalExpense) * 100 : 0
+              const barWidth = maxExpenseAmount > 0 ? (cat.amount / maxExpenseAmount) * 100 : 0
+              const categoryKey = cat.categoryKey
+              const catMeta = getCategoryMeta(cat.categoryRef)
+              const hasSubcategories = cat.subcategories.length > 0
+              const isExpanded = expandedExpenseCategories.has(categoryKey)
+
               return (
-                <YearlyTrendBar
-                  key={y.year}
-                  year={y.year}
-                  net={net}
-                  maxNet={yearlyStats.maxNet}
-                  isBest={y.year === yearlyStats.bestYear && y.year < currentYear}
-                  isYTD={y.year === currentYear}
-                  colors={colors}
-                />
+                <View key={categoryKey} style={{ gap: 6 }}>
+                  {/* Top row: dot + name + amount + percent */}
+                  <Pressable
+                    onPress={() => hasSubcategories && toggleExpenseCategory(categoryKey)}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                    disabled={!hasSubcategories}
+                  >
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: catMeta.color }} />
+                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                      {catMeta.name}
+                    </Text>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                      {formatUsdInt(cat.amount)}
+                    </Text>
+                    <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
+                      {Math.round(percent)}%
+                    </Text>
+                    {/* Chevron indicator - fixed width container for alignment */}
+                    <View style={{ width: 20, alignItems: 'center' }}>
+                      {hasSubcategories && (
+                        <Text style={{ fontSize: 10, color: colors.textSecondary }}>
+                          {isExpanded ? '▼' : '▶'}
+                        </Text>
+                      )}
+                    </View>
+                  </Pressable>
+
+                  {/* Bar */}
+                  <View
+                    style={{
+                      height: 8,
+                      backgroundColor: colors.surfaceAlt,
+                      borderRadius: 4,
+                      marginLeft: 18,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: '100%',
+                        width: `${barWidth}%`,
+                        backgroundColor: catMeta.color,
+                        borderRadius: 4
+                      }}
+                    />
+                  </View>
+
+                  {/* Subcategories (accordion) */}
+                  {isExpanded && hasSubcategories && (
+                    <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                      {cat.subcategories.map((sub, subIdx) => {
+                        const subPercent = cat.amount > 0 ? (sub.amount / cat.amount) * 100 : 0
+                        const subBarWidth = cat.subcategories[0].amount > 0
+                          ? (sub.amount / cat.subcategories[0].amount) * 100
+                          : 0
+                        return (
+                          <View key={`${sub.name}-${subIdx}`} style={{ gap: 4 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sub.color }} />
+                              <Text style={{ flex: 1, fontSize: 12, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
+                                {sub.name}
+                              </Text>
+                              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                                {formatUsdInt(sub.amount)}
+                              </Text>
+                              <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textSecondary }}>
+                                {Math.round(subPercent)}%
+                              </Text>
+                              {/* Spacer for alignment with parent rows */}
+                              <View style={{ width: 20 }} />
+                            </View>
+                            <View
+                              style={{
+                                height: 4,
+                                backgroundColor: colors.surfaceAlt,
+                                borderRadius: 2,
+                                marginLeft: 12,
+                                overflow: 'hidden'
+                              }}
+                            >
+                              <View
+                                style={{
+                                  height: '100%',
+                                  width: `${subBarWidth}%`,
+                                  backgroundColor: sub.color,
+                                  opacity: 0.7,
+                                  borderRadius: 2
+                                }}
+                              />
+                            </View>
+                          </View>
+                        )
+                      })}
+                    </View>
+                  )}
+                </View>
               )
             })}
           </View>
+
+          {/* Show all button */}
+          {hasMoreExpense && (
+            <Pressable
+              onPress={() => setShowAllExpense(!showAllExpense)}
+              style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+                {showAllExpense ? 'Show less' : `Show all ${allExpenseCategories.length} categories`}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
 
-      {/* Income by Source */}
-      {topIncomeCategories.length > 0 && (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 16
-          }}
-        >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>
-              Income by Source
-            </Text>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.success }}>
-              {formatUsdInt(data.totalIncome)}
-            </Text>
-          </View>
-          <View>
-            {topIncomeCategories.map((cat, idx) => (
-              <View
-                key={cat.categoryKey}
-                style={idx < topIncomeCategories.length - 1 ? { borderBottomWidth: 1, borderBottomColor: colors.border } : undefined}
-              >
-                <CategoryRow
-                  item={cat}
-                  index={idx}
-                  totalAmount={data.totalIncome}
-                  totalIncome={data.totalIncome}
-                  isExpanded={expandedIncomeIndex === idx}
-                  onPress={() => handleIncomePress(idx)}
-                  colors={colors}
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
+      {/* Where it came from (Income) - Second */}
+      {displayIncomeCategories.length > 0 && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Where it came from"
+            accentColor={ACCENT_COLORS.green}
+            rightText={formatUsdInt(data.totalIncome)}
+            rightColor={colors.success}
+            colors={colors}
+          />
+          <View style={{ gap: 12 }}>
+            {displayIncomeCategories.map((cat) => {
+              const percent = data.totalIncome > 0 ? (cat.amount / data.totalIncome) * 100 : 0
+              const barWidth = maxIncomeAmount > 0 ? (cat.amount / maxIncomeAmount) * 100 : 0
+              const categoryKey = cat.categoryKey
+              const catMeta = getCategoryMeta(cat.categoryRef)
+              const hasSubcategories = cat.subcategories.length > 0
+              const isExpanded = expandedIncomeCategories.has(categoryKey)
 
-      {/* Spending by Category */}
-      {topExpenseCategories.length > 0 && (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 16
-          }}
-        >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>
-              Spending by Category
-            </Text>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.danger }}>
-              {formatUsdInt(data.totalExpense)}
-            </Text>
+              return (
+                <View key={categoryKey} style={{ gap: 6 }}>
+                  {/* Top row: dot + name + amount + percent */}
+                  <Pressable
+                    onPress={() => hasSubcategories && toggleIncomeCategory(categoryKey)}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                    disabled={!hasSubcategories}
+                  >
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: catMeta.color }} />
+                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                      {catMeta.name}
+                    </Text>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                      {formatUsdInt(cat.amount)}
+                    </Text>
+                    <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
+                      {Math.round(percent)}%
+                    </Text>
+                    {/* Chevron indicator - fixed width container for alignment */}
+                    <View style={{ width: 20, alignItems: 'center' }}>
+                      {hasSubcategories && (
+                        <Text style={{ fontSize: 10, color: colors.textSecondary }}>
+                          {isExpanded ? '▼' : '▶'}
+                        </Text>
+                      )}
+                    </View>
+                  </Pressable>
+
+                  {/* Bar */}
+                  <View
+                    style={{
+                      height: 8,
+                      backgroundColor: colors.surfaceAlt,
+                      borderRadius: 4,
+                      marginLeft: 18,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: '100%',
+                        width: `${barWidth}%`,
+                        backgroundColor: catMeta.color,
+                        borderRadius: 4
+                      }}
+                    />
+                  </View>
+
+                  {/* Subcategories (accordion) */}
+                  {isExpanded && hasSubcategories && (
+                    <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                      {cat.subcategories.map((sub, subIdx) => {
+                        const subPercent = cat.amount > 0 ? (sub.amount / cat.amount) * 100 : 0
+                        const subBarWidth = cat.subcategories[0].amount > 0
+                          ? (sub.amount / cat.subcategories[0].amount) * 100
+                          : 0
+                        return (
+                          <View key={`${sub.name}-${subIdx}`} style={{ gap: 4 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sub.color }} />
+                              <Text style={{ flex: 1, fontSize: 12, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
+                                {sub.name}
+                              </Text>
+                              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                                {formatUsdInt(sub.amount)}
+                              </Text>
+                              <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textSecondary }}>
+                                {Math.round(subPercent)}%
+                              </Text>
+                              {/* Spacer for alignment with parent rows */}
+                              <View style={{ width: 20 }} />
+                            </View>
+                            <View
+                              style={{
+                                height: 4,
+                                backgroundColor: colors.surfaceAlt,
+                                borderRadius: 2,
+                                marginLeft: 12,
+                                overflow: 'hidden'
+                              }}
+                            >
+                              <View
+                                style={{
+                                  height: '100%',
+                                  width: `${subBarWidth}%`,
+                                  backgroundColor: sub.color,
+                                  opacity: 0.7,
+                                  borderRadius: 2
+                                }}
+                              />
+                            </View>
+                          </View>
+                        )
+                      })}
+                    </View>
+                  )}
+                </View>
+              )
+            })}
           </View>
-          <View>
-            {topExpenseCategories.map((cat, idx) => (
-              <View
-                key={cat.categoryKey}
-                style={idx < topExpenseCategories.length - 1 ? { borderBottomWidth: 1, borderBottomColor: colors.border } : undefined}
-              >
-                <CategoryRow
-                  item={cat}
-                  index={idx}
-                  totalAmount={data.totalExpense}
-                  totalIncome={data.totalIncome}
-                  isExpanded={expandedExpenseIndex === idx}
-                  onPress={() => handleExpensePress(idx)}
-                  colors={colors}
-                />
-              </View>
-            ))}
-          </View>
+
+          {/* Show all button */}
+          {hasMoreIncome && (
+            <Pressable
+              onPress={() => setShowAllIncome(!showAllIncome)}
+              style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+                {showAllIncome ? 'Show less' : `Show all ${allIncomeCategories.length} categories`}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
     </Stack>

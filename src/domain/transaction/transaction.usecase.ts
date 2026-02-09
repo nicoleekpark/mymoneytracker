@@ -344,6 +344,10 @@ export type PersonalBests = Readonly<{
   bestSavingsYear: { year: number; netDollar: number } | null
   peakExpenseMonth: { month: string; expenseDollar: number } | null
   peakExpenseYear: { year: number; expenseDollar: number } | null
+  // New metrics
+  worstMonth: { month: string; netDollar: number } | null
+  positiveStreak: number // longest consecutive positive-net months
+  currentStreak: { months: number; isPositive: boolean } // ongoing streak
 }>
 
 export async function getPersonalBests(): Promise<PersonalBests> {
@@ -365,11 +369,15 @@ export async function getPersonalBests(): Promise<PersonalBests> {
     }
   }
 
-  // Find best savings month
+  // Find best savings month and worst month
   let bestMonth: { month: string; netDollar: number } | null = null
+  let worstMonth: { month: string; netDollar: number } | null = null
   for (const [month, net] of monthlyNet.entries()) {
     if (!bestMonth || net > bestMonth.netDollar) {
       bestMonth = { month, netDollar: net }
+    }
+    if (!worstMonth || net < worstMonth.netDollar) {
+      worstMonth = { month, netDollar: net }
     }
   }
 
@@ -379,6 +387,37 @@ export async function getPersonalBests(): Promise<PersonalBests> {
     if (!peakExpenseMonth || expense > peakExpenseMonth.expenseDollar) {
       peakExpenseMonth = { month, expenseDollar: expense }
     }
+  }
+
+  // Calculate streaks (positive net months)
+  // Sort months chronologically
+  const sortedMonths = Array.from(monthlyNet.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+
+  let positiveStreak = 0
+  let currentPositiveStreak = 0
+  let currentNegativeStreak = 0
+  let lastWasPositive = true
+
+  for (const [_month, net] of sortedMonths) {
+    if (net >= 0) {
+      currentPositiveStreak++
+      currentNegativeStreak = 0
+      lastWasPositive = true
+      if (currentPositiveStreak > positiveStreak) {
+        positiveStreak = currentPositiveStreak
+      }
+    } else {
+      currentNegativeStreak++
+      currentPositiveStreak = 0
+      lastWasPositive = false
+    }
+  }
+
+  // Current streak is the ongoing one at the end
+  const currentStreak = {
+    months: lastWasPositive ? currentPositiveStreak : currentNegativeStreak,
+    isPositive: lastWasPositive
   }
 
   // Calculate yearly net and expense
@@ -417,7 +456,10 @@ export async function getPersonalBests(): Promise<PersonalBests> {
     bestSavingsMonth: bestMonth && bestMonth.netDollar > 0 ? bestMonth : null,
     bestSavingsYear: bestYear && bestYear.netDollar > 0 ? bestYear : null,
     peakExpenseMonth: peakExpenseMonth && peakExpenseMonth.expenseDollar > 0 ? peakExpenseMonth : null,
-    peakExpenseYear: peakExpenseYear && peakExpenseYear.expenseDollar > 0 ? peakExpenseYear : null
+    peakExpenseYear: peakExpenseYear && peakExpenseYear.expenseDollar > 0 ? peakExpenseYear : null,
+    worstMonth,
+    positiveStreak,
+    currentStreak
   }
 }
 
@@ -448,6 +490,50 @@ export async function getYearlyFlowTotalsDollar(): Promise<YearlyFlowDollar[]> {
       incomeDollar: v.income,
       expenseDollar: v.expense
     }))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cumulative Net (for All-time chart)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type CumulativeNetData = Readonly<{
+  month: string // YYYY-MM
+  netDollar: number // monthly net
+  cumulativeDollar: number // running total
+}>
+
+export async function getCumulativeNetData(): Promise<CumulativeNetData[]> {
+  const monthlyFlows = transactionRepository.listMonthlyNetTotals()
+
+  // Build monthly net by month
+  const monthlyNet = new Map<string, number>()
+  for (const flow of monthlyFlows) {
+    const value = centsToDollars(flow.totalCents)
+    const current = monthlyNet.get(flow.month) ?? 0
+    if (flow.type === 'income') {
+      monthlyNet.set(flow.month, current + value)
+    } else {
+      monthlyNet.set(flow.month, current - value)
+    }
+  }
+
+  // Sort by month and calculate cumulative
+  const sortedMonths = Array.from(monthlyNet.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+
+  let cumulative = 0
+  const result: CumulativeNetData[] = []
+
+  for (const [month, net] of sortedMonths) {
+    cumulative += net
+    result.push({
+      month,
+      netDollar: net,
+      cumulativeDollar: cumulative
+    })
+  }
+
+  return result
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -530,8 +616,12 @@ export type YearlyProjection = Readonly<{
   avgMonthlyExpense: number
   vsLastYear: {
     lastYearSavings: number
+    lastYearIncome: number
+    lastYearExpense: number
     delta: number
     isMoreSaved: boolean
+    incomeChangePercent: number // positive = increase
+    expenseChangePercent: number // positive = increase
   } | null
 }>
 
@@ -592,10 +682,20 @@ export async function getYearlyProjection(year: number, now = new Date()): Promi
   // Only show comparison if last year has data
   if (lastYearIncome > 0 || lastYearExpense > 0) {
     const delta = projectedSavings - lastYearSavings
+    const incomeChangePercent = lastYearIncome > 0
+      ? Math.round(((projectedIncome - lastYearIncome) / lastYearIncome) * 1000) / 10
+      : 0
+    const expenseChangePercent = lastYearExpense > 0
+      ? Math.round(((projectedExpense - lastYearExpense) / lastYearExpense) * 1000) / 10
+      : 0
     vsLastYear = {
       lastYearSavings,
+      lastYearIncome,
+      lastYearExpense,
       delta: Math.abs(delta),
       isMoreSaved: delta >= 0,
+      incomeChangePercent,
+      expenseChangePercent,
     }
   }
 

@@ -157,12 +157,14 @@ export function MonthlyCategoryContent(props: ContentProps) {
                     <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
                       {Math.round(percent)}%
                     </Text>
-                    {/* Chevron indicator */}
-                    {hasSubcategories && (
-                      <Text style={{ fontSize: 10, color: colors.textMuted, marginLeft: 4 }}>
-                        {isExpanded ? '▼' : '▶'}
-                      </Text>
-                    )}
+                    {/* Chevron indicator - fixed width container for alignment */}
+                    <View style={{ width: 20, alignItems: 'center' }}>
+                      {hasSubcategories && (
+                        <Text style={{ fontSize: 10, color: colors.textMuted }}>
+                          {isExpanded ? '▼' : '▶'}
+                        </Text>
+                      )}
+                    </View>
                   </Pressable>
 
                   {/* Bar */}
@@ -208,6 +210,8 @@ export function MonthlyCategoryContent(props: ContentProps) {
                               <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textMuted }}>
                                 {Math.round(subPercent)}%
                               </Text>
+                              {/* Spacer for alignment with parent rows */}
+                              <View style={{ width: 20 }} />
                             </View>
                             {/* Subcategory bar */}
                             <View

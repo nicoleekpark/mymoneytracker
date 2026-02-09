@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { LayoutChangeEvent, PanResponder, Text, View } from 'react-native'
-import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
+import Svg, { Path, Circle, Line } from 'react-native-svg'
 
 import { formatUsdInt } from '@/shared/format/currency'
 
@@ -15,6 +15,7 @@ export type MonthlyCashflowColors = Readonly<{
   success: string
   danger: string
   primary: string
+  warning: string // For net line (orange)
 }>
 
 type Props = {
@@ -25,120 +26,14 @@ type Props = {
   colors: MonthlyCashflowColors
 }
 
-const BAR_HEIGHT = 44
-const SPARKLINE_HEIGHT = 32
+const CHART_HEIGHT = 120
 const CHART_PADDING_H = 8
+const BAR_WIDTH = 14
 
 /**
- * Sparkline component showing net flow trend
+ * Combo chart with income bars up, expense bars down, and net line overlay
  */
-function Sparkline({
-  data,
-  width,
-  height,
-  currentMonth,
-  isCurrentYear,
-  colors,
-  selectedIndex
-}: {
-  data: MonthData[]
-  width: number
-  height: number
-  currentMonth: number
-  isCurrentYear: boolean
-  colors: MonthlyCashflowColors
-  selectedIndex: number | null
-}) {
-  if (width <= 0 || data.length === 0) return null
-
-  // Calculate min/max for scaling
-  const netValues = data.map(d => d.netDollar)
-  const minNet = Math.min(...netValues, 0)
-  const maxNet = Math.max(...netValues, 0)
-  const range = maxNet - minNet || 1
-
-  // Padding for the sparkline
-  const padY = 6
-  const effectiveHeight = height - padY * 2
-  const monthWidth = width / 12
-
-  // Generate path points - center each point in its month column
-  const points = data.map((d, i) => {
-    const x = monthWidth * i + monthWidth / 2
-    const y = padY + effectiveHeight - ((d.netDollar - minNet) / range) * effectiveHeight
-    return { x, y, net: d.netDollar }
-  })
-
-  // Create SVG path
-  const linePath = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`)
-    .join(' ')
-
-  // Area path (for gradient fill)
-  const areaPath = `${linePath} L${points[points.length - 1].x},${height} L${points[0].x},${height} Z`
-
-  return (
-    <Svg width={width} height={height}>
-      <Defs>
-        <LinearGradient id="sparkGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <Stop offset="0%" stopColor={colors.primary} stopOpacity={0.25} />
-          <Stop offset="100%" stopColor={colors.primary} stopOpacity={0} />
-        </LinearGradient>
-      </Defs>
-
-      {/* Area fill */}
-      <Path d={areaPath} fill="url(#sparkGradient)" />
-
-      {/* Line */}
-      <Path
-        d={linePath}
-        fill="none"
-        stroke={colors.primary}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Month dots - green for positive, red for negative */}
-      {points.map((p, i) => {
-        const isFuture = isCurrentYear && i >= currentMonth
-        if (isFuture) return null
-        return (
-          <Circle
-            key={i}
-            cx={p.x}
-            cy={p.y}
-            r={3}
-            fill={p.net >= 0 ? colors.success : colors.danger}
-          />
-        )
-      })}
-
-      {/* Selected month indicator */}
-      {selectedIndex !== null && points[selectedIndex] && (
-        <>
-          <Circle
-            cx={points[selectedIndex].x}
-            cy={points[selectedIndex].y}
-            r={5}
-            fill={points[selectedIndex].net >= 0 ? colors.primary : colors.danger}
-          />
-          <Circle
-            cx={points[selectedIndex].x}
-            cy={points[selectedIndex].y}
-            r={3}
-            fill={colors.surface}
-          />
-        </>
-      )}
-    </Svg>
-  )
-}
-
-/**
- * Bar chart with paired income/expense bars
- */
-function BarChart({
+function ComboChart({
   data,
   width,
   currentMonth,
@@ -157,96 +52,195 @@ function BarChart({
 }) {
   if (width <= 0) return null
 
-  // Find max for scaling
-  const maxAmount = Math.max(
-    ...data.map(d => Math.max(d.incomeDollar, d.expenseDollar)),
-    1
-  )
+  // Find max for scaling (use same scale for both income and expense)
+  const maxIncome = Math.max(...data.map(d => d.incomeDollar), 1)
+  const maxExpense = Math.max(...data.map(d => d.expenseDollar), 1)
+  const maxAmount = Math.max(maxIncome, maxExpense)
 
+  // Height allocation: top half for income bars, bottom half for expense bars
+  const halfHeight = CHART_HEIGHT / 2
   const monthWidth = width / 12
-  const barWidth = 6
-  const barGap = 2
+
+  // Calculate net line points - only for past/current months
+  const lastValidMonth = isPastYear ? 12 : (isCurrentYear ? currentMonth : 12)
+  const validData = data.slice(0, lastValidMonth)
+
+  const netValues = validData.map(d => d.netDollar)
+  const minNet = Math.min(...netValues, 0)
+  const maxNet = Math.max(...netValues, 0)
+  const netRange = maxNet - minNet || 1
+
+  const netPoints = validData.map((d, i) => {
+    const x = monthWidth * i + monthWidth / 2
+    // Map net value to chart height: positive above center, negative below
+    const normalizedNet = (d.netDollar - minNet) / netRange
+    const y = CHART_HEIGHT - normalizedNet * CHART_HEIGHT * 0.85 - CHART_HEIGHT * 0.075
+    return { x, y, net: d.netDollar, index: i }
+  })
+
+  // Create SVG path for net line
+  const netLinePath = netPoints
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`)
+    .join(' ')
 
   return (
-    <View style={{ flexDirection: 'row', height: BAR_HEIGHT + 20 }}>
-      {data.map((month, idx) => {
-        const isFuture = !isPastYear && isCurrentYear && idx >= currentMonth
-        const isSelected = selectedIndex === idx
+    <View style={{ height: CHART_HEIGHT + 24, position: 'relative' }}>
+      {/* Bars layer */}
+      <View style={{ flexDirection: 'row', height: CHART_HEIGHT }}>
+        {data.map((month, idx) => {
+          const isFuture = !isPastYear && isCurrentYear && idx >= currentMonth
+          const isSelected = selectedIndex === idx
 
-        const incomeHeight = (month.incomeDollar / maxAmount) * BAR_HEIGHT
-        const expenseHeight = (month.expenseDollar / maxAmount) * BAR_HEIGHT
+          const incomeHeight = (month.incomeDollar / maxAmount) * halfHeight * 0.9
+          const expenseHeight = (month.expenseDollar / maxAmount) * halfHeight * 0.9
 
-        return (
-          <View
-            key={idx}
-            style={{
-              width: monthWidth,
-              alignItems: 'center'
-            }}
-          >
-            {/* Bars */}
+          return (
             <View
+              key={idx}
               style={{
-                height: BAR_HEIGHT,
-                flexDirection: 'row',
-                alignItems: 'flex-end',
-                gap: barGap
+                width: monthWidth,
+                height: CHART_HEIGHT,
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
+              {/* Income bar (grows upward from center) */}
               <View
                 style={{
-                  width: barWidth,
-                  height: Math.max(4, incomeHeight),
+                  position: 'absolute',
+                  bottom: halfHeight,
+                  width: BAR_WIDTH,
+                  height: Math.max(2, incomeHeight),
                   backgroundColor: isFuture ? colors.surfaceAlt : colors.success,
-                  borderRadius: 3,
-                  opacity: isFuture ? 0.4 : isSelected ? 1 : 0.85
+                  borderTopLeftRadius: 3,
+                  borderTopRightRadius: 3,
+                  opacity: isFuture ? 0.4 : isSelected ? 1 : 0.8
                 }}
               />
+
+              {/* Expense bar (grows downward from center) */}
               <View
                 style={{
-                  width: barWidth,
-                  height: Math.max(4, expenseHeight),
+                  position: 'absolute',
+                  top: halfHeight,
+                  width: BAR_WIDTH,
+                  height: Math.max(2, expenseHeight),
                   backgroundColor: isFuture ? colors.surfaceAlt : colors.danger,
-                  borderRadius: 3,
-                  opacity: isFuture ? 0.4 : isSelected ? 1 : 0.85
+                  borderBottomLeftRadius: 3,
+                  borderBottomRightRadius: 3,
+                  opacity: isFuture ? 0.4 : isSelected ? 1 : 0.8
                 }}
               />
             </View>
+          )
+        })}
+      </View>
 
-            {/* Month label */}
-            <Text
-              style={{
-                fontSize: 9,
-                fontWeight: isSelected ? '800' : '600',
-                color: isSelected ? colors.text : colors.textMuted,
-                marginTop: 6,
-                opacity: isFuture ? 0.4 : 1
-              }}
-            >
-              {MONTH_NAMES_SHORT[idx].toUpperCase()}
-            </Text>
+      {/* Center line (zero line) */}
+      <View
+        style={{
+          position: 'absolute',
+          top: halfHeight,
+          left: 0,
+          right: 0,
+          height: 1,
+          backgroundColor: colors.surfaceAlt
+        }}
+      />
 
-            {/* Selection dot */}
-            {isSelected && (
-              <View
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: colors.primary,
-                  marginTop: 2
-                }}
+      {/* Net line overlay (SVG) */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 24 }}>
+        <Svg width={width} height={CHART_HEIGHT}>
+          {/* Net trend line */}
+          <Path
+            d={netLinePath}
+            fill="none"
+            stroke={colors.warning}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Dots on the net line */}
+          {netPoints.map((p) => (
+            <Circle
+              key={p.index}
+              cx={p.x}
+              cy={p.y}
+              r={selectedIndex === p.index ? 5 : 3}
+              fill={colors.warning}
+              opacity={selectedIndex === p.index ? 1 : 0.8}
+            />
+          ))}
+
+          {/* Selected dot highlight */}
+          {selectedIndex !== null && (() => {
+            const selectedPoint = netPoints.find(p => p.index === selectedIndex)
+            return selectedPoint ? (
+              <Circle
+                cx={selectedPoint.x}
+                cy={selectedPoint.y}
+                r={3}
+                fill={colors.surface}
               />
-            )}
-          </View>
-        )
-      })}
+            ) : null
+          })()}
+
+          {/* Vertical guide line when selected */}
+          {selectedIndex !== null && (
+            <Line
+              x1={monthWidth * selectedIndex + monthWidth / 2}
+              y1={0}
+              x2={monthWidth * selectedIndex + monthWidth / 2}
+              y2={CHART_HEIGHT}
+              stroke={colors.textMuted}
+              strokeWidth={1}
+              strokeDasharray="4,4"
+              opacity={0.5}
+            />
+          )}
+        </Svg>
+      </View>
+
+      {/* Month labels */}
+      <View style={{ flexDirection: 'row', marginTop: 4 }}>
+        {data.map((_, idx) => {
+          const isFuture = !isPastYear && isCurrentYear && idx >= currentMonth
+          const isSelected = selectedIndex === idx
+
+          return (
+            <View key={idx} style={{ width: monthWidth, alignItems: 'center' }}>
+              <Text
+                style={{
+                  fontSize: 9,
+                  fontWeight: isSelected ? '800' : '600',
+                  color: isSelected ? colors.text : colors.textMuted,
+                  opacity: isFuture ? 0.4 : 1
+                }}
+              >
+                {MONTH_NAMES_SHORT[idx].toUpperCase()}
+              </Text>
+              {isSelected && (
+                <View
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 2,
+                    backgroundColor: colors.warning,
+                    marginTop: 2
+                  }}
+                />
+              )}
+            </View>
+          )
+        })}
+      </View>
     </View>
   )
 }
 
 /**
- * Monthly cashflow chart with sparkline and Robinhood-style drag interaction
+ * Monthly cashflow chart with ygraph-style combo chart and drag interaction
  */
 export function MonthlyCashflowChart({
   monthlyData,
@@ -312,40 +306,13 @@ export function MonthlyCashflowChart({
 
   return (
     <View onLayout={handleLayout}>
-      {/* Draggable area containing sparkline + bar chart */}
+      {/* Draggable area containing combo chart */}
       <View
         {...panResponder.panHandlers}
         style={{ paddingHorizontal: CHART_PADDING_H }}
       >
-        {/* Sparkline label */}
-        <Text
-          style={{
-            fontSize: 9,
-            fontWeight: '600',
-            color: colors.primary,
-            textAlign: 'right',
-            marginBottom: 4,
-            opacity: 0.8
-          }}
-        >
-          NET TREND
-        </Text>
-
-        {/* Sparkline */}
-        <View style={{ height: SPARKLINE_HEIGHT, marginBottom: 12 }}>
-          <Sparkline
-            data={monthlyData}
-            width={chartWidth}
-            height={SPARKLINE_HEIGHT}
-            currentMonth={currentMonth}
-            isCurrentYear={isCurrentYear}
-            colors={colors}
-            selectedIndex={selectedIndex}
-          />
-        </View>
-
-        {/* Bar chart */}
-        <BarChart
+        {/* Combo chart */}
+        <ComboChart
           data={monthlyData}
           width={chartWidth}
           currentMonth={currentMonth}
@@ -495,8 +462,8 @@ export function MonthlyCashflowChart({
             style={{
               width: 8,
               height: 8,
-              borderRadius: 2,
-              backgroundColor: colors.primary
+              borderRadius: 4,
+              backgroundColor: colors.warning
             }}
           />
           <Text style={{ fontSize: 10, color: colors.textMuted }}>Net</Text>
