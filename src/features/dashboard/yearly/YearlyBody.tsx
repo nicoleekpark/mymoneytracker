@@ -3,10 +3,12 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
+import { FEATURE_FLAGS } from '@/config'
 import { formatUsdInt } from '@/shared/format/currency'
 import { getYearlyProjection, type YearlyProjection } from '@/domain/transaction/transaction.usecase'
 
 import { MonthlyCashflowChart } from './components'
+import { useYearlyHeroData } from './hooks'
 
 /**
  * Get category display info (name, color) from categoryRef
@@ -105,6 +107,10 @@ function SectionHeader({
 
 export function YearlyBody({ year, colors }: Props) {
   const { loading, error, data } = useYearlyData(year)
+  const { data: heroData } = useYearlyHeroData(year)
+
+  // Feature flag for hero variant
+  const useOptionAHero = FEATURE_FLAGS.heroVariant === 'optionA'
 
   // Auto-expand the largest expense category with subcategories (Option B)
   const defaultExpenseExpanded = useMemo(() => {
@@ -250,72 +256,108 @@ export function YearlyBody({ year, colors }: Props) {
     >
       {/* Section 1: Hero - Year Overview */}
       <View style={{ marginBottom: SECTION_GAP }}>
-        {/* Hero savings rate */}
-        <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-          {totalIncome > 0 ? (
-            savings > 0 ? (
-              // Positive savings
-              <>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                  {isCurrentYear ? "You're saving" : 'You saved'}
-                </Text>
-                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
-                  {savingsRate}%
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                  of income
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
-                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{formatUsdInt(savings)}</Text>
-                </Text>
-              </>
-            ) : savings < 0 ? (
-              // Overspent
-              <>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                  {isCurrentYear ? "You're overspending" : 'You overspent'}
-                </Text>
-                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
-                  {Math.abs(savingsRate)}%
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                  of income
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
-                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text>
-                </Text>
-              </>
+        {/* Option A Hero: Net Outcome */}
+        {useOptionAHero ? (
+          <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+            {/* Title line */}
+            <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+              Net
+            </Text>
+
+            {/* Primary: Net amount */}
+            <Text
+              style={{
+                fontSize: 48,
+                fontWeight: '800',
+                color: heroData.netDollar >= 0 ? colors.success : colors.danger
+              }}
+            >
+              {heroData.netDollar >= 0 ? '+' : ''}{formatUsdInt(heroData.netDollar)}
+            </Text>
+
+            {/* Comparison with last year */}
+            {heroData.hasLastYearData && heroData.netChangeDollar !== null && (
+              <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                {heroData.netChangeDollar >= 0 ? 'Ahead of' : 'Behind'} last year by {formatUsdInt(Math.abs(heroData.netChangeDollar))}
+              </Text>
+            )}
+
+            {/* Supporting: Average monthly net */}
+            {heroData.monthsElapsed > 0 && (
+              <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 12, opacity: 0.8 }}>
+                Average monthly net: {heroData.avgMonthlyNetDollar >= 0 ? '+' : ''}{formatUsdInt(heroData.avgMonthlyNetDollar)}
+              </Text>
+            )}
+
+            {/* Nudge */}
+            {heroData.netDollar > 0 && heroData.isCurrentYear && (
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 8, opacity: 0.6, fontStyle: 'italic' }}>
+                Stay on track, small wins add up
+              </Text>
+            )}
+          </View>
+        ) : (
+          /* Current Hero: $ Saved (absolute first, % as supporting) */
+          <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+            {totalIncome > 0 ? (
+              savings > 0 ? (
+                // Positive savings - dollar amount primary, % supporting
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                    Saved
+                  </Text>
+                  <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
+                    {formatUsdInt(savings)}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                    That's <Text style={{ fontWeight: '600', color: colors.success }}>{savingsRate}%</Text> of income
+                  </Text>
+                </>
+              ) : savings < 0 ? (
+                // Spending exceeds income
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                    Spending exceeds income by
+                  </Text>
+                  <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
+                    {formatUsdInt(Math.abs(savings))}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                    That's <Text style={{ fontWeight: '600', color: colors.danger }}>{Math.abs(savingsRate)}%</Text> of income
+                  </Text>
+                </>
+              ) : (
+                // Broke even
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                    Breaking even
+                  </Text>
+                  <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                    {formatUsdInt(0)}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
+                    net
+                  </Text>
+                </>
+              )
             ) : (
-              // Broke even
+              // No income
               <>
                 <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                  {isCurrentYear ? "You're breaking even" : 'You broke even'}
+                  Net
                 </Text>
-                <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
-                  {formatUsdInt(0)}
+                <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                  No income recorded
                 </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
-                  saved
-                </Text>
+                {savings < 0 && (
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
+                  </Text>
+                )}
               </>
-            )
-          ) : (
-            // No income
-            <>
-              <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                Savings
-              </Text>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
-                {isCurrentYear ? 'No income yet' : 'No income'}
-              </Text>
-              {savings < 0 && (
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
-                </Text>
-              )}
-            </>
-          )}
-        </View>
+            )}
+          </View>
+        )}
 
         {/* 2x2 Stats Grid */}
         <View style={{ gap: 12 }}>
@@ -347,33 +389,6 @@ export function YearlyBody({ year, colors }: Props) {
               <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
                 {formatUsdInt(totalIncome)}
               </Text>
-              {/* YoY Badge */}
-              {data.yoy.hasLastYearData && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 2,
-                    marginTop: 6,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    backgroundColor: data.yoy.incomeChangePercent >= 0
-                      ? 'rgba(74, 222, 128, 0.15)'
-                      : 'rgba(248, 113, 113, 0.15)'
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: data.yoy.incomeChangePercent >= 0 ? '#4ade80' : '#f87171'
-                    }}
-                  >
-                    {data.yoy.incomeChangePercent >= 0 ? '▲' : '▼'} {Math.abs(data.yoy.incomeChangePercent)}%
-                  </Text>
-                </View>
-              )}
             </View>
             <View
               style={{
@@ -401,33 +416,6 @@ export function YearlyBody({ year, colors }: Props) {
               <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger }}>
                 {formatUsdInt(totalExpense)}
               </Text>
-              {/* YoY Badge - for expense, up is bad (red), down is good (green) */}
-              {data.yoy.hasLastYearData && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 2,
-                    marginTop: 6,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    backgroundColor: data.yoy.expenseChangePercent <= 0
-                      ? 'rgba(74, 222, 128, 0.15)'
-                      : 'rgba(248, 113, 113, 0.15)'
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: data.yoy.expenseChangePercent <= 0 ? '#4ade80' : '#f87171'
-                    }}
-                  >
-                    {data.yoy.expenseChangePercent >= 0 ? '▲' : '▼'} {Math.abs(data.yoy.expenseChangePercent)}%
-                  </Text>
-                </View>
-              )}
             </View>
           </View>
 
@@ -519,19 +507,16 @@ export function YearlyBody({ year, colors }: Props) {
                   </Text>
                 </>
               ) : projection.projectedSavings < 0 ? (
-                // Negative projection (overspending)
+                // Negative projection (spending exceeds income)
                 <>
                   <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                    At this rate, you'll overspend
+                    At this rate, spending will exceed income by
                   </Text>
                   <Text style={{ fontSize: 42, fontWeight: '800', color: colors.danger }}>
                     {formatUsdInt(Math.abs(projection.projectedSavings))}
                   </Text>
                   <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
                     by year-end
-                  </Text>
-                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
-                    That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{Math.abs(projection.projectedSavingsRate)}%</Text> over income
                   </Text>
                 </>
               ) : (
@@ -589,33 +574,6 @@ export function YearlyBody({ year, colors }: Props) {
               <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
                 {formatUsdInt(projection.projectedIncome)}
               </Text>
-              {/* YoY Badge */}
-              {projection.vsLastYear && projection.vsLastYear.lastYearIncome > 0 && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 2,
-                    marginTop: 6,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    backgroundColor: projection.vsLastYear.incomeChangePercent >= 0
-                      ? 'rgba(74, 222, 128, 0.15)'
-                      : 'rgba(248, 113, 113, 0.15)'
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: projection.vsLastYear.incomeChangePercent >= 0 ? '#4ade80' : '#f87171'
-                    }}
-                  >
-                    {projection.vsLastYear.incomeChangePercent >= 0 ? '▲' : '▼'} {Math.abs(projection.vsLastYear.incomeChangePercent)}% vs last year
-                  </Text>
-                </View>
-              )}
             </View>
             <View
               style={{
@@ -643,33 +601,6 @@ export function YearlyBody({ year, colors }: Props) {
               <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger }}>
                 {formatUsdInt(projection.projectedExpense)}
               </Text>
-              {/* YoY Badge - for expense, up is bad (red), down is good (green) */}
-              {projection.vsLastYear && projection.vsLastYear.lastYearExpense > 0 && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 2,
-                    marginTop: 6,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    backgroundColor: projection.vsLastYear.expenseChangePercent <= 0
-                      ? 'rgba(74, 222, 128, 0.15)'
-                      : 'rgba(248, 113, 113, 0.15)'
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: projection.vsLastYear.expenseChangePercent <= 0 ? '#4ade80' : '#f87171'
-                    }}
-                  >
-                    {projection.vsLastYear.expenseChangePercent >= 0 ? '▲' : '▼'} {Math.abs(projection.vsLastYear.expenseChangePercent)}% vs last year
-                  </Text>
-                </View>
-              )}
             </View>
           </View>
         </View>

@@ -313,6 +313,34 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }))
   }
 
+  listDailyVariableExpenseForMonth(monthYYYYMM: string, fixedCategoryKeys: string[]): DailyExpenseTotal[] {
+    // If no fixed categories, return empty (shouldn't happen but be safe)
+    if (fixedCategoryKeys.length === 0) {
+      return this.listDailyExpenseTotalsForMonth(monthYYYYMM)
+    }
+
+    const placeholders = fixedCategoryKeys.map(() => '?').join(', ')
+    const rows = this.dataSource.queryAll<{ day: string; total_cents: number }>(
+      `
+      SELECT
+        substr(occurred_at, 1, 10) AS day,
+        COALESCE(SUM(amount_cents), 0) AS total_cents
+      FROM transactions
+      WHERE type = 'expense'
+        AND substr(occurred_at, 1, 7) = ?
+        AND (category_id IS NULL OR category_id NOT IN (${placeholders}))
+      GROUP BY day
+      ORDER BY day ASC;
+      `,
+      [monthYYYYMM, ...fixedCategoryKeys]
+    )
+
+    return rows.map((r) => ({
+      day: r.day,
+      totalCents: Number(r.total_cents ?? 0),
+    }))
+  }
+
   listMonthlyFlowTotalsForYear(year: number): MonthlyFlowTotal[] {
     const yearPrefix = String(year)
     const rows = this.dataSource.queryAll<{

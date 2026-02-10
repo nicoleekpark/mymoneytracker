@@ -1,3 +1,5 @@
+export type HeroVariant = 'current' | 'optionA'
+
 export type FeatureFlags = Readonly<{
   // Core features
   familySharing: boolean
@@ -9,6 +11,9 @@ export type FeatureFlags = Readonly<{
   budgeting: boolean
   reports: boolean
   widget: boolean
+
+  // A/B testing
+  heroVariant: HeroVariant  // Dashboard hero style: 'current' (% saved) vs 'optionA' (net outcome)
 
   // Developer tools
   devTools: boolean

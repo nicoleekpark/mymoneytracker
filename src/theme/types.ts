@@ -24,6 +24,9 @@ export type SemanticColors = {
 
   info: string
   infoSoft: string
+
+  highlight: string // Lavender - for achievements, milestones, special days
+  highlightSoft: string
 }
 
 export type FinanceColors = {

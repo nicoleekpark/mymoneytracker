@@ -19,6 +19,9 @@ const MAX_TX_IN_POPUP = 3
 // Gap between cells
 const GAP = 4
 
+// Low variable spending threshold (dollars) - days under this get highlighted
+const LOW_VARIABLE_SPEND_THRESHOLD = 20
+
 type Props = Readonly<{
   monthYYYYMM: string
   daily: DailyFlow[]
@@ -48,16 +51,33 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
   const [loadingTx, setLoadingTx] = useState(false)
 
   const map = useMemo(() => {
-    const m = new Map<string, { income: number; expense: number; net: number; hasIncome: boolean; hasExpense: boolean; txCount: number }>()
+    const m = new Map<string, {
+      income: number
+      expense: number
+      variableExpense: number
+      net: number
+      hasIncome: boolean
+      hasExpense: boolean
+      txCount: number
+      isLowVariableSpend: boolean
+      isZeroSpend: boolean
+    }>()
     for (const r of daily) {
       const net = r.incomeDollar - r.expenseDollar
+      const hasIncome = r.incomeDollar > 0
+      const hasExpense = r.expenseDollar > 0
       m.set(r.day, {
         income: r.incomeDollar,
         expense: r.expenseDollar,
+        variableExpense: r.variableExpenseDollar,
         net,
-        hasIncome: r.incomeDollar > 0,
-        hasExpense: r.expenseDollar > 0,
-        txCount: r.txCount
+        hasIncome,
+        hasExpense,
+        txCount: r.txCount,
+        // Low variable spend: has expense but variable expense under threshold
+        isLowVariableSpend: hasExpense && r.variableExpenseDollar < LOW_VARIABLE_SPEND_THRESHOLD,
+        // Zero spend: has income but no expense
+        isZeroSpend: hasIncome && !hasExpense
       })
     }
     return m
@@ -93,12 +113,10 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
     return () => { alive = false }
   }, [selectedDay?.ymd])
 
-  // Color calculations - Robinhood style (no background for inactive days)
-  const getNetColor = (net: number, hasActivity: boolean) => {
+  // Color calculations - neutral background for all activity
+  const getBgColor = (hasActivity: boolean) => {
     if (!hasActivity) return 'transparent'
-    if (net > 0) return colors.success + '40' // positive = subtle green
-    if (net < 0) return colors.danger + '40' // negative = subtle red
-    return 'transparent' // neutral (income = expense)
+    return colors.textMuted + '15' // neutral gray
   }
 
   function handleDayPress(ymd: string, dayNum: number) {
@@ -191,8 +209,11 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
     const isToday = ymd === todayYMD
     const isSelected = selectedDay?.ymd === ymd
     const hasActivity = v !== undefined && (v.hasIncome || v.hasExpense)
-    const net = v?.net ?? 0
-    const bgColor = getNetColor(net, hasActivity)
+    const hasIncome = v?.hasIncome ?? false
+    const hasExpense = v?.hasExpense ?? false
+    const isLowVariableSpend = v?.isLowVariableSpend ?? false
+    const isZeroSpend = v?.isZeroSpend ?? false
+    const bgColor = getBgColor(hasActivity)
 
     return (
       <View key={cellKey} style={wrapperStyle}>
@@ -202,33 +223,84 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
             height: CELL_HEIGHT,
             backgroundColor: bgColor,
             borderRadius: 8,
-            borderWidth: isToday ? 2 : isSelected ? 2 : 0,
-            borderColor: isToday ? colors.primary : isSelected ? colors.primary : 'transparent',
+            borderWidth: isSelected ? 2 : 0,
+            borderColor: isSelected ? colors.primary : 'transparent',
             paddingTop: 6,
             paddingHorizontal: 2,
             alignItems: 'center'
           }}
         >
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: '700',
-            color: hasActivity ? colors.text : colors.textMuted
-          }}
-        >
-          {dayNum}
-        </Text>
+        {/* Day number row with optional spend dot */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Today: filled circle background */}
+          <View
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 11,
+              backgroundColor: isToday ? colors.primary : 'transparent',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '700',
+                color: isToday ? '#fff' : hasActivity ? colors.text : colors.textMuted
+              }}
+            >
+              {dayNum}
+            </Text>
+          </View>
+          {/* Dot indicator: single dot for low-spend, concentric circles for zero-spend */}
+          {isZeroSpend ? (
+            /* Concentric circles for zero-spend (more special) */
+            <View
+              style={{
+                width: 9,
+                height: 9,
+                borderRadius: 4.5,
+                borderWidth: 1.5,
+                borderColor: colors.highlight,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: 2
+              }}
+            >
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: colors.highlight
+                }}
+              />
+            </View>
+          ) : isLowVariableSpend ? (
+            /* Single dot for low-spend */
+            <View
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 2.5,
+                backgroundColor: colors.highlight,
+                marginLeft: 2
+              }}
+            />
+          ) : null}
+        </View>
 
         {hasActivity && (
-          <View style={{ alignItems: 'center', marginTop: 5 }}>
-            {v?.hasIncome && (
+          <View style={{ alignItems: 'center', marginTop: 3 }}>
+            {hasIncome && (
               <Text style={{ fontSize: 10, fontWeight: '700', color: colors.success }}>
-                +{formatCompactUsd(v.income)}
+                +{formatCompactUsd(v!.income)}
               </Text>
             )}
-            {v?.hasExpense && (
+            {hasExpense && (
               <Text style={{ fontSize: 10, fontWeight: '700', color: colors.danger }}>
-                -{formatCompactUsd(v.expense)}
+                -{formatCompactUsd(v!.expense)}
               </Text>
             )}
           </View>
@@ -256,17 +328,6 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
         </View>
       ))}
 
-      {/* Legend - conversational */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.success + '40' }} />
-          <Text style={{ fontSize: 10, color: colors.textMuted }}>More in</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.danger + '40' }} />
-          <Text style={{ fontSize: 10, color: colors.textMuted }}>More out</Text>
-        </View>
-      </View>
 
       {/* Tooltip Popup Modal */}
       <Modal

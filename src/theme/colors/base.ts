@@ -53,7 +53,13 @@ export const editorial = {
   gold: '#c9a227',
   goldLight: '#dbb84a',
   goldSoft: '#fdfaf0',
-  goldSoftDark: '#2e2810'
+  goldSoftDark: '#2e2810',
+
+  // Highlight/Achievement - Lavender (for special days, milestones)
+  lavender: '#a78bfa',
+  lavenderLight: '#c4b5fd',
+  lavenderSoft: '#f5f3ff',
+  lavenderSoftDark: '#2e1f3d'
 } as const
 
 export const PALETTE = {

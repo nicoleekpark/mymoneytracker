@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
 import { CATEGORIES } from '@/config/categories.config'
+import { FEATURE_FLAGS } from '@/config'
 import { CategoryIcon, Stack } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
@@ -287,6 +288,9 @@ function InfoTooltip({
 export function AllBody({ colors }: Props) {
   const { loading, error, data } = useAllTimeData()
 
+  // Feature flag for hero variant
+  const useOptionAHero = FEATURE_FLAGS.heroVariant === 'optionA'
+
   const [expandedExpenseCategories, setExpandedExpenseCategories] = useState<Set<string>>(new Set())
   const [expandedIncomeCategories, setExpandedIncomeCategories] = useState<Set<string>>(new Set())
   const [showAllExpense, setShowAllExpense] = useState(false)
@@ -377,86 +381,122 @@ export function AllBody({ colors }: Props) {
           {formatTrackingSince(data.firstTransactionDate)}
         </Text>
 
-        {/* Hero savings rate */}
-        <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-          {data.totalIncome > 0 ? (
-            data.netAmount > 0 ? (
-              // Positive savings
-              <>
-                <Pressable
-                  onPress={() => setShowSavingsInfo(true)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
-                >
-                  <Text style={{ fontSize: 13, color: colors.textSecondary }}>
-                    Lifetime savings rate
+        {/* Hero */}
+        {useOptionAHero ? (
+          /* Option A Hero: Net Outcome */
+          <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+            {/* Title line */}
+            <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+              Net
+            </Text>
+
+            {/* Primary: Net amount */}
+            <Text
+              style={{
+                fontSize: 48,
+                fontWeight: '800',
+                color: data.netAmount >= 0 ? colors.success : colors.danger
+              }}
+            >
+              {data.netAmount >= 0 ? '+' : ''}{formatUsdInt(data.netAmount)}
+            </Text>
+
+            {/* Supporting: Current streak (only if positive streak) */}
+            {data.personalBests.currentStreak.isPositive && data.personalBests.currentStreak.months > 0 && (
+              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 12, opacity: 0.8 }}>
+                {data.personalBests.currentStreak.months} positive-net {data.personalBests.currentStreak.months === 1 ? 'month' : 'months'} in a row
+              </Text>
+            )}
+
+            {/* Nudge for long-term consistency */}
+            {data.personalBests.currentStreak.isPositive && data.personalBests.currentStreak.months >= 3 && (
+              <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4, opacity: 0.6, fontStyle: 'italic' }}>
+                Stay consistent, noise matters less now
+              </Text>
+            )}
+          </View>
+        ) : (
+          /* Current Hero: % Saved */
+          <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+            {data.totalIncome > 0 ? (
+              data.netAmount > 0 ? (
+                // Positive savings
+                <>
+                  <Pressable
+                    onPress={() => setShowSavingsInfo(true)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
+                  >
+                    <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                      Lifetime savings rate
+                    </Text>
+                    <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
+                  </Pressable>
+                  <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
+                    {data.savingsRate.toFixed(0)}%
                   </Text>
-                  <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
-                </Pressable>
-                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
-                  {data.savingsRate.toFixed(0)}%
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
-                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{formatUsdInt(data.netAmount)}</Text> saved
-                </Text>
-                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
-                  (+{formatUsdInt(data.avgMonthlySaved)}/mo on average)
-                </Text>
-              </>
-            ) : data.netAmount < 0 ? (
-              // Negative (overspent)
-              <>
-                <Pressable
-                  onPress={() => setShowSavingsInfo(true)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
-                >
-                  <Text style={{ fontSize: 13, color: colors.textSecondary }}>
-                    Lifetime savings rate
+                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
+                    That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{formatUsdInt(data.netAmount)}</Text> saved
                   </Text>
-                  <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
-                </Pressable>
-                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
-                  {Math.abs(data.savingsRate).toFixed(0)}%
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
-                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(data.netAmount))}</Text> overspent
-                </Text>
-                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
-                  ({formatUsdInt(Math.abs(data.avgMonthlySaved))}/mo on average)
-                </Text>
-              </>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+                    (+{formatUsdInt(data.avgMonthlySaved)}/mo on average)
+                  </Text>
+                </>
+              ) : data.netAmount < 0 ? (
+                // Negative (overspent)
+                <>
+                  <Pressable
+                    onPress={() => setShowSavingsInfo(true)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
+                  >
+                    <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                      Lifetime savings rate
+                    </Text>
+                    <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
+                  </Pressable>
+                  <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
+                    {Math.abs(data.savingsRate).toFixed(0)}%
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
+                    That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(data.netAmount))}</Text> overspent
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+                    ({formatUsdInt(Math.abs(data.avgMonthlySaved))}/mo on average)
+                  </Text>
+                </>
+              ) : (
+                // Broke even
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+                    Lifetime result
+                  </Text>
+                  <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
+                    {formatUsdInt(0)}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 4 }}>
+                    broke even
+                  </Text>
+                </>
+              )
             ) : (
-              // Broke even
+              // No income
               <>
                 <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
-                  Lifetime result
+                  Lifetime
                 </Text>
-                <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
-                  {formatUsdInt(0)}
+                <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
+                  No income yet
                 </Text>
-                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 4 }}>
-                  broke even
-                </Text>
+                {data.totalExpense > 0 && (
+                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(data.totalExpense)}</Text> spent
+                  </Text>
+                )}
               </>
-            )
-          ) : (
-            // No income
-            <>
-              <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
-                Lifetime
-              </Text>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
-                No income yet
-              </Text>
-              {data.totalExpense > 0 && (
-                <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(data.totalExpense)}</Text> spent
-                </Text>
-              )}
-            </>
-          )}
-        </View>
+            )}
+          </View>
+        )}
 
         {/* Income / Expense row */}
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -569,7 +609,7 @@ export function AllBody({ colors }: Props) {
                 </View>
               )}
 
-              {/* Worst Month */}
+              {/* Lowest Month */}
               {data.personalBests.worstMonth && (
                 <View
                   style={{
@@ -595,7 +635,7 @@ export function AllBody({ colors }: Props) {
                       <CategoryIcon name="fire" size={11} color={colors.danger} />
                     </View>
                     <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Worst Month
+                      Lowest Month
                     </Text>
                   </View>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 }}>

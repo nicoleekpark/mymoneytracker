@@ -5,6 +5,7 @@ export type DailyFlow = Readonly<{
   day: string
   incomeDollar: number
   expenseDollar: number
+  variableExpenseDollar: number
   txCount: number
 }>
 

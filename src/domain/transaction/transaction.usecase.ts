@@ -1,4 +1,5 @@
 import type { CategoryIndex } from '@/config/categories.index'
+import { FIXED_CATEGORY_KEYS } from '@/config/categories.config'
 import { uuid } from '@/shared/utils/uuid'
 
 import type { UUID } from '@/domain/common/uuid'
@@ -188,19 +189,30 @@ export type DailyFlowDollar = Readonly<{
   day: string
   incomeDollar: number
   expenseDollar: number
+  variableExpenseDollar: number // Expense excluding fixed costs (housing, subscriptions, etc.)
   txCount: number // income+expense 합산 건수
 }>
 
 export async function getDailyFlowDollarForMonth(monthYYYYMM: string): Promise<DailyFlowDollar[]> {
   const rows = transactionRepository.listDailyFlowTotalsWithCountForMonth(monthYYYYMM)
+  const variableRows = transactionRepository.listDailyVariableExpenseForMonth(monthYYYYMM, FIXED_CATEGORY_KEYS)
 
-  const byDay = new Map<string, { income: number; expense: number; count: number }>()
+  // Build variable expense map
+  const variableByDay = new Map<string, number>()
+  for (const r of variableRows) {
+    variableByDay.set(r.day, centsToDollars(r.totalCents))
+  }
+
+  const byDay = new Map<string, { income: number; expense: number; variable: number; count: number }>()
   for (const r of rows) {
-    const cur = byDay.get(r.day) ?? { income: 0, expense: 0, count: 0 }
+    const cur = byDay.get(r.day) ?? { income: 0, expense: 0, variable: 0, count: 0 }
     const val = centsToDollars(r.totalCents)
 
     if (r.type === 'income') cur.income = val
-    if (r.type === 'expense') cur.expense = val
+    if (r.type === 'expense') {
+      cur.expense = val
+      cur.variable = variableByDay.get(r.day) ?? 0
+    }
 
     cur.count += r.txCount
     byDay.set(r.day, cur)
@@ -212,6 +224,7 @@ export async function getDailyFlowDollarForMonth(monthYYYYMM: string): Promise<D
       day,
       incomeDollar: v.income,
       expenseDollar: v.expense,
+      variableExpenseDollar: v.variable,
       txCount: v.count
     }))
 }

@@ -1,3 +1,4 @@
+import { FEATURE_FLAGS } from '@/config'
 import { formatUsdInt } from '@/shared/format/currency'
 import { useRouter } from 'expo-router'
 import React, { useMemo } from 'react'
@@ -9,6 +10,7 @@ import { useMonthlyDailyFlow } from './calendar/useMonthlyDailyFlow'
 import { MonthlyCategoryContent, MonthlyIncomeContent } from './category'
 import { useMonthlyProjection } from './projection'
 import { useMonthlySummary } from './useMonthlySummary'
+import { useMonthlyHeroData } from './useMonthlyHeroData'
 import { getMonthNameShort } from '../types/dashboard.types'
 
 function buildMonthTitle(monthYYYYMM: string) {
@@ -68,6 +70,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   const { data: budgetData } = useBudgetSummary(monthYYYYMM)
   const { data: projectionData } = useMonthlyProjection(monthYYYYMM)
   const { data: summaryData } = useMonthlySummary(monthYYYYMM)
+  const { data: heroData } = useMonthlyHeroData(monthYYYYMM)
 
   const title = useMemo(() => buildMonthTitle(monthYYYYMM), [monthYYYYMM])
 
@@ -86,15 +89,24 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   // Savings rate calculation
   const savingsRate = totalIncome > 0 ? Math.round((savings / totalIncome) * 100) : 0
 
-  // Check if viewing current month or past
-  const now = new Date()
-  const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const isCurrentMonth = monthYYYYMM === currentYYYYMM
 
   // Budget calculations
   const budgetBarWidth = budgetData
     ? Math.min((budgetData.spentDollar / budgetData.budgetDollar) * 100, 100)
     : 0
+
+  // Zero-spend days: days with income but no expense
+  const zeroSpendDays = useMemo(() => {
+    return daily.filter(d => d.incomeDollar > 0 && d.expenseDollar === 0).length
+  }, [daily])
+
+  // Low variable spend days: days with expense but variable expense < $20
+  const lowSpendDays = useMemo(() => {
+    return daily.filter(d => d.expenseDollar > 0 && d.variableExpenseDollar < 20).length
+  }, [daily])
+
+  // Feature flag for hero variant
+  const useOptionAHero = FEATURE_FLAGS.heroVariant === 'optionA'
 
   return (
     <ScrollView
@@ -104,79 +116,128 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
     >
       {/* Section 1: Hero - Month Overview */}
       <View style={{ marginBottom: SECTION_GAP }}>
-        {/* Day indicator (month title removed - duplicate with date picker) */}
-        {projectionData.daysElapsed > 0 && (
-          <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted, textAlign: 'right', marginBottom: 4 }}>
-            Day {projectionData.daysElapsed} of {projectionData.daysInMonth}
-          </Text>
-        )}
+        {/* Option A Hero: Net Outcome */}
+        {useOptionAHero ? (
+          <>
+            {/* Day indicator for current month */}
+            {heroData.isCurrentMonth && heroData.daysElapsed > 0 && (
+              <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted, textAlign: 'right', marginBottom: 4 }}>
+                Day {heroData.daysElapsed} of {heroData.daysInMonth}
+              </Text>
+            )}
 
-        {/* Hero savings rate */}
-        <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-          {totalIncome > 0 ? (
-            savings > 0 ? (
-              // Positive savings
-              <>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                  {isCurrentMonth ? "You're saving" : 'You saved'}
-                </Text>
-                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
-                  {savingsRate}%
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                  of income
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
-                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{formatUsdInt(savings)}</Text>
-                </Text>
-              </>
-            ) : savings < 0 ? (
-              // Overspent
-              <>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                  {isCurrentMonth ? "You're overspending" : 'You overspent'}
-                </Text>
-                <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
-                  {Math.abs(savingsRate)}%
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                  of income
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
-                  That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text>
-                </Text>
-              </>
-            ) : (
-              // Broke even (savings = 0)
-              <>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                  {isCurrentMonth ? "You're breaking even" : 'You broke even'}
-                </Text>
-                <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
-                  {formatUsdInt(0)}
-                </Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
-                  saved
-                </Text>
-              </>
-            )
-          ) : (
-            // No income
-            <>
+            {/* Hero: Net outcome */}
+            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+              {/* Title line */}
               <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                Savings
+                Net
               </Text>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
-                {isCurrentMonth ? 'No income yet' : 'No income'}
+
+              {/* Primary: Net amount */}
+              <Text
+                style={{
+                  fontSize: 48,
+                  fontWeight: '800',
+                  color: heroData.netDollar >= 0 ? colors.success : colors.danger
+                }}
+              >
+                {heroData.netDollar >= 0 ? '+' : ''}{formatUsdInt(heroData.netDollar)}
               </Text>
-              {savings < 0 && (
+
+              {/* Comparison with last month */}
+              {heroData.hasLastMonthData && heroData.netChangeDollar !== null && (
                 <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
+                  {heroData.netChangeDollar >= 0 ? 'Up' : 'Down'} {formatUsdInt(Math.abs(heroData.netChangeDollar))} vs {heroData.lastMonthName}
                 </Text>
               )}
-            </>
-          )}
-        </View>
+
+              {/* Supporting: Savings rate (only if positive income) */}
+              {heroData.incomeDollar > 0 && (
+                <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 12, opacity: 0.8 }}>
+                  {heroData.savingsRate >= 0 ? 'Saved' : 'Overspent'} {Math.abs(heroData.savingsRate)}% of income
+                </Text>
+              )}
+
+              {/* Nudge */}
+              {heroData.netDollar > 0 && heroData.isCurrentMonth && (
+                <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 8, opacity: 0.6, fontStyle: 'italic' }}>
+                  Keep this pace for the rest of the month
+                </Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Current Hero: % Saved */}
+            {/* Day indicator (month title removed - duplicate with date picker) */}
+            {projectionData.daysElapsed > 0 && (
+              <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted, textAlign: 'right', marginBottom: 4 }}>
+                Day {projectionData.daysElapsed} of {projectionData.daysInMonth}
+              </Text>
+            )}
+
+            {/* Hero: $ saved (absolute first, % as supporting) */}
+            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+              {totalIncome > 0 ? (
+                savings > 0 ? (
+                  // Positive savings - dollar amount primary, % supporting
+                  <>
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                      Saved
+                    </Text>
+                    <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
+                      {formatUsdInt(savings)}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                      That's <Text style={{ fontWeight: '600', color: colors.success }}>{savingsRate}%</Text> of income
+                    </Text>
+                  </>
+                ) : savings < 0 ? (
+                  // Spending exceeds income
+                  <>
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                      Spending exceeds income by
+                    </Text>
+                    <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
+                      {formatUsdInt(Math.abs(savings))}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                      That's <Text style={{ fontWeight: '600', color: colors.danger }}>{Math.abs(savingsRate)}%</Text> of income
+                    </Text>
+                  </>
+                ) : (
+                  // Broke even (savings = 0)
+                  <>
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                      Breaking even
+                    </Text>
+                    <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                      {formatUsdInt(0)}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
+                      net
+                    </Text>
+                  </>
+                )
+              ) : (
+                // No income
+                <>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                    Net
+                  </Text>
+                  <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                    No income recorded
+                  </Text>
+                  {savings < 0 && (
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
+                    </Text>
+                  )}
+                </>
+              )}
+            </View>
+          </>
+        )}
 
         {/* Income / Expense row */}
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -289,7 +350,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 {formatUsdInt(Math.abs(budgetData.remainingDollar))}
               </Text>
               <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textMuted, marginTop: 2 }}>
-                {budgetData.remainingDollar >= 0 ? 'left' : 'over'}
+                {budgetData.remainingDollar >= 0 ? 'available' : 'over'}
               </Text>
             </View>
           </View>
@@ -305,12 +366,63 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         />
         {error && <Text style={{ color: colors.danger }}>{error}</Text>}
         {!error && (
-          <MonthlyCalendar
-            monthYYYYMM={monthYYYYMM}
-            daily={daily}
-            colors={colors}
-            onPressDay={onPressDay}
-          />
+          <>
+            {/* Summary stats above calendar with dot indicators */}
+            {(zeroSpendDays > 0 || lowSpendDays > 0) && (
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 16, marginBottom: 8 }}>
+                {lowSpendDays > 0 && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    {/* Single dot for low-spend */}
+                    <View
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: 2.5,
+                        backgroundColor: colors.highlight
+                      }}
+                    />
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {lowSpendDays} low-spend
+                    </Text>
+                  </View>
+                )}
+                {zeroSpendDays > 0 && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    {/* Concentric circles for zero-spend (more special) */}
+                    <View
+                      style={{
+                        width: 9,
+                        height: 9,
+                        borderRadius: 4.5,
+                        borderWidth: 1.5,
+                        borderColor: colors.highlight,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: 2,
+                          backgroundColor: colors.highlight
+                        }}
+                      />
+                    </View>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {zeroSpendDays} zero-spend
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+            <MonthlyCalendar
+              monthYYYYMM={monthYYYYMM}
+              daily={daily}
+              colors={colors}
+              onPressDay={onPressDay}
+            />
+          </>
         )}
       </View>
 

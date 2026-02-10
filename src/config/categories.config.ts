@@ -18,115 +18,134 @@ const CATEGORY_META = {
     name: 'Housing',
     icon: 'home',
     color: '#d4a373',  // terracotta
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: true  // rent, mortgage, HOA
   },
   food: {
     name: 'Food',
     icon: 'cutlery',
     color: '#e9c46a',  // honey gold
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   lifestyle: {
     name: 'Lifestyle',
     icon: 'star',
     color: '#e76f51',  // burnt sienna
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   health: {
     name: 'Health',
     icon: 'heartbeat',
     color: '#f4a261',  // apricot
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   family: {
     name: 'Family & Children',
     icon: 'child',
     color: '#dda15e',  // amber
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   pets: {
     name: 'Pets',
     icon: 'paw',
     color: '#606c38',  // olive green
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   social: {
     name: 'Social & Entertainment',
     icon: 'users',
     color: '#9b5de5',  // violet
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   gifts: {
     name: 'Gifts & Occasions',
     icon: 'gift',
     color: '#f72585',  // magenta pink
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   transport: {
     name: 'Transportation',
     icon: 'car',
     color: '#2a9d8f',  // teal
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   communication: {
     name: 'Communication',
     icon: 'mobile',
     color: '#00b4d8',  // cyan
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: true  // internet, mobile plans
   },
   subscriptions: {
     name: 'Subscriptions',
     icon: 'television',
     color: '#457b9d',  // steel blue
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: true  // recurring subscriptions
   },
   travel: {
     name: 'Travel',
     icon: 'plane',
     color: '#3a86ff',  // bright blue
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   insurance: {
     name: 'Insurance',
     icon: 'shield',
     color: '#8d99ae',  // cool gray
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: true  // insurance premiums
   },
   donations: {
     name: 'Donations',
     icon: 'heart',
     color: '#e63946',  // coral red
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   taxes: {
     name: 'Taxes',
     icon: 'calculator',
     color: '#6c757d',  // neutral gray
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: true  // tax payments
   },
   debt: {
     name: 'Debt & Loans',
     icon: 'file-text',
     color: '#adb5bd',  // light gray
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: true  // loan payments
   },
   fees: {
     name: 'Fees & Charges',
     icon: 'bank',
     color: '#868e96',  // medium gray
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   education: {
     name: 'Education',
     icon: 'graduation-cap',
     color: '#ffd166',  // bright yellow
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
   business: {
     name: 'Business & Work',
     icon: 'briefcase',
     color: '#495057',  // dark gray
-    type: 'expense' as const satisfies CategoryType
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
   },
 
   // -------------------------
@@ -136,7 +155,8 @@ const CATEGORY_META = {
     name: 'Income',
     icon: 'dollar',
     color: '#52b788',  // emerald
-    type: 'income' as const satisfies CategoryType
+    type: 'income' as const satisfies CategoryType,
+    isFixed: false
   },
 
   // -------------------------
@@ -146,13 +166,15 @@ const CATEGORY_META = {
     name: 'Transfers',
     icon: 'exchange',
     color: '#4895ef',  // sky blue
-    type: 'transfer' as const satisfies CategoryType
+    type: 'transfer' as const satisfies CategoryType,
+    isFixed: false
   },
   savings: {
     name: 'Savings & Investment',
     icon: 'money',
     color: '#40916c',  // forest green
-    type: 'transfer' as const satisfies CategoryType
+    type: 'transfer' as const satisfies CategoryType,
+    isFixed: false
   }
 } as const
 
@@ -408,8 +430,14 @@ export const CATEGORIES: CategoryMeta[] = Object.entries(CATEGORY_META).map(([ke
   icon: meta.icon,
   color: meta.color,
   type: meta.type,
+  isFixed: meta.isFixed,
   subCategories: SUBCATEGORIES[key] ?? []
 }))
+
+// Helper: Get fixed category keys for queries
+export const FIXED_CATEGORY_KEYS = CATEGORIES
+  .filter(c => c.isFixed && c.type === 'expense')
+  .map(c => c.key)
 
 // Example category object:
 // {

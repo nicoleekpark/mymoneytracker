@@ -14,6 +14,7 @@ export type CategoryMeta = Readonly<{
   icon: string
   color: string
   type: CategoryType
+  isFixed: boolean // Fixed costs (housing, utilities, insurance) vs variable (food, shopping)
   subCategories: ReadonlyArray<SubCategoryMeta>
 }>
 

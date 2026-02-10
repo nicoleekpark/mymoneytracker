@@ -30,7 +30,11 @@ export const semanticLight: SemanticColors = {
   dangerSoft: PALETTE.editorial.terracottaSoft,
 
   info: PALETTE.blue[500],
-  infoSoft: PALETTE.blue[50]
+  infoSoft: PALETTE.blue[50],
+
+  // Highlight/Achievement - Lavender (special days, milestones)
+  highlight: PALETTE.editorial.lavender,
+  highlightSoft: PALETTE.editorial.lavenderSoft
 }
 
 
@@ -63,6 +67,10 @@ export const semanticDark: SemanticColors = {
   dangerSoft: PALETTE.editorial.terracottaSoftDark,
 
   info: PALETTE.blue[400],
-  infoSoft: PALETTE.blue[900]
+  infoSoft: PALETTE.blue[900],
+
+  // Highlight/Achievement - Lavender (special days, milestones)
+  highlight: PALETTE.editorial.lavenderLight,
+  highlightSoft: PALETTE.editorial.lavenderSoftDark
 }
 

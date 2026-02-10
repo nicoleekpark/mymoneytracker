@@ -116,6 +116,9 @@ export function MonthlyCategoryContent(props: ContentProps) {
           <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
             Spending by Category
           </Text>
+          <Text style={{ fontSize: 10, color: colors.textMuted, marginLeft: 4 }}>
+            % of total
+          </Text>
           {hasData && (
             <Text style={{ fontSize: 14, fontWeight: '700', color: colors.danger }}>
               {formatUsdInt(totalSpentDollar)}
@@ -190,6 +193,10 @@ export function MonthlyCategoryContent(props: ContentProps) {
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
                     <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                      {/* Subcategory header showing % is of parent */}
+                      <Text style={{ fontSize: 9, color: colors.textMuted, marginBottom: 2 }}>
+                        % of {catMeta.name}
+                      </Text>
                       {cat.subcategories.map((sub, subIdx) => {
                         const subPercent = cat.totalDollar > 0 ? (sub.totalDollar / cat.totalDollar) * 100 : 0
                         const subBarWidth = cat.subcategories[0].totalDollar > 0

@@ -14,6 +14,9 @@ export const FEATURE_FLAGS: FeatureFlags = {
   reports: false,
   widget: false,
 
+  // A/B testing
+  heroVariant: 'optionA',  // 'current' = % saved hero, 'optionA' = net outcome hero
+
   // Developer tools
   devTools: isDev,
   devSeedNotifications: isDev,  // Auto-seed mock notifications in dev
