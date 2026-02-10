@@ -14,6 +14,7 @@ import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
 import { DashboardToolbar } from './shared/DashboardToolbar'
 import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
 import { AllBody } from './all'
+import { InsightsBody } from './insights'
 import { MonthlyBody } from './monthly/MonthlyBody'
 import { YearlyBody } from './yearly'
 
@@ -76,83 +77,109 @@ export default function DashboardScreen() {
         styles={styles}
       />
 
-      <DashboardToolbar
-        scope={scope}
-        period={period}
-        canPrev={canGoPrev}
-        canNext={canGoNext}
-        onPrev={() => shiftPeriod(-1)}
-        onNext={() => shiftPeriod(1)}
-        onOpenPicker={handleOpenPicker}
-        onScopeChange={setScope}
-        onToday={resetToToday}
-      />
+      {/* Toolbar - only show for overview mode */}
+      {mode === 'overview' && (
+        <>
+          <DashboardToolbar
+            scope={scope}
+            period={period}
+            canPrev={canGoPrev}
+            canNext={canGoNext}
+            onPrev={() => shiftPeriod(-1)}
+            onNext={() => shiftPeriod(1)}
+            onOpenPicker={handleOpenPicker}
+            onScopeChange={setScope}
+            onToday={resetToToday}
+          />
+          <Divider spacing='sm'/>
+        </>
+      )}
 
-      <Divider spacing='sm'/>
-
-      <SwipeGestureWrapper
-        onSwipeLeft={handleSwipeLeft}
-        onSwipeRight={handleSwipeRight}
-        canSwipeLeft={canGoNext}
-        canSwipeRight={canGoPrev}
-        enabled={scope !== 'all'}
-      >
+      {/* Insights mode - Monthly only, no scope selector */}
+      {mode === 'insights' && (
         <View style={styles.body}>
-          {/* Monthly - always mounted when scope is month or year for smooth transitions */}
-          {(scope === 'month' || scope === 'year') && (
-            <View style={scope === 'month' ? { flex: 1 } : { display: 'none' }}>
-              <MonthlyBody
-                monthYYYYMM={monthYYYYMM}
-                colors={{
-                  text: theme.semantic.text,
-                  textMuted: theme.semantic.textSecondary,
-                  border: theme.semantic.border,
-                  surface: theme.semantic.background,
-                  surfaceAlt: theme.semantic.surfaceAlt,
-                  primary: theme.semantic.primary,
-                  success: theme.semantic.success,
-                  danger: theme.semantic.danger,
-                  highlight: theme.semantic.highlight
-                }}
-              />
-            </View>
-          )}
-          {/* Yearly - always mounted when scope is month or year for smooth transitions */}
-          {(scope === 'month' || scope === 'year') && (
-            <View style={scope === 'year' ? { flex: 1 } : { display: 'none' }}>
-              <YearlyBody
-                year={period.year}
-                colors={{
-                  text: theme.semantic.text,
-                  textMuted: theme.semantic.textSecondary,
-                  border: theme.semantic.border,
-                  surface: theme.semantic.background,
-                  surfaceAlt: theme.semantic.surfaceAlt,
-                  primary: theme.semantic.primary,
-                  success: theme.semantic.success,
-                  danger: theme.semantic.danger,
-                  warning: theme.semantic.warning
-                }}
-              />
-            </View>
-          )}
-          {/* All - only mounted when needed */}
-          {scope === 'all' && (
-            <AllBody
-              colors={{
-                text: theme.semantic.text,
-                textSecondary: theme.semantic.textSecondary,
-                border: theme.semantic.border,
-                surface: theme.semantic.surface,
-                surfaceAlt: theme.semantic.surfaceAlt,
-                primary: theme.semantic.primary,
-                success: theme.semantic.success,
-                danger: theme.semantic.danger
-              }}
-            />
-          )}
+          <InsightsBody
+            monthYYYYMM={monthYYYYMM}
+            colors={{
+              text: theme.semantic.text,
+              textMuted: theme.semantic.textSecondary,
+              border: theme.semantic.border,
+              surface: theme.semantic.surface,
+              surfaceAlt: theme.semantic.surfaceAlt,
+              primary: theme.semantic.primary,
+              success: theme.semantic.success,
+              danger: theme.semantic.danger
+            }}
+          />
         </View>
-      </SwipeGestureWrapper>
+      )}
+
+      {/* Overview mode - scope-based content */}
+      {mode === 'overview' && (
+        <SwipeGestureWrapper
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          canSwipeLeft={canGoNext}
+          canSwipeRight={canGoPrev}
+          enabled={scope !== 'all'}
+        >
+          <View style={styles.body}>
+            {/* Monthly - always mounted when scope is month or year for smooth transitions */}
+            {(scope === 'month' || scope === 'year') && (
+              <View style={scope === 'month' ? { flex: 1 } : { display: 'none' }}>
+                <MonthlyBody
+                  monthYYYYMM={monthYYYYMM}
+                  colors={{
+                    text: theme.semantic.text,
+                    textMuted: theme.semantic.textSecondary,
+                    border: theme.semantic.border,
+                    surface: theme.semantic.background,
+                    surfaceAlt: theme.semantic.surfaceAlt,
+                    primary: theme.semantic.primary,
+                    success: theme.semantic.success,
+                    danger: theme.semantic.danger,
+                    highlight: theme.semantic.highlight
+                  }}
+                />
+              </View>
+            )}
+            {/* Yearly - always mounted when scope is month or year for smooth transitions */}
+            {(scope === 'month' || scope === 'year') && (
+              <View style={scope === 'year' ? { flex: 1 } : { display: 'none' }}>
+                <YearlyBody
+                  year={period.year}
+                  colors={{
+                    text: theme.semantic.text,
+                    textMuted: theme.semantic.textSecondary,
+                    border: theme.semantic.border,
+                    surface: theme.semantic.background,
+                    surfaceAlt: theme.semantic.surfaceAlt,
+                    primary: theme.semantic.primary,
+                    success: theme.semantic.success,
+                    danger: theme.semantic.danger,
+                    warning: theme.semantic.warning
+                  }}
+                />
+              </View>
+            )}
+            {/* All - only mounted when needed */}
+            {scope === 'all' && (
+              <AllBody
+                colors={{
+                  text: theme.semantic.text,
+                  textSecondary: theme.semantic.textSecondary,
+                  border: theme.semantic.border,
+                  surface: theme.semantic.surface,
+                  surfaceAlt: theme.semantic.surfaceAlt,
+                  primary: theme.semantic.primary,
+                  success: theme.semantic.success,
+                  danger: theme.semantic.danger
+                }}
+              />
+            )}
+          </View>
+        </SwipeGestureWrapper>
+      )}
 
       <DashboardPeriodPicker
         visible={pickerOpen}
