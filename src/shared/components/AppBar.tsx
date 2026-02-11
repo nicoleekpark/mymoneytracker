@@ -6,7 +6,8 @@ import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
 import { useDevStore, useDraftsStore, useNotificationsStore } from '@/store'
-import { textStyles } from '@/theme/tokens/typography'
+import { fontSize, textStyles } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 type AppBarProps = {
   /** User initials to display in avatar */
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: radius.xl,
     position: 'relative',
   },
   dot: {
@@ -235,19 +236,19 @@ const styles = StyleSheet.create({
     right: 8,
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: radius.sm,
   },
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 4,
   },
   avatarText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   overlay: {
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
     top: 60,
     right: 20,
     width: 200,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     borderWidth: 1,
     padding: 8,
     shadowColor: '#000',
@@ -278,24 +279,24 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: radius.md,
   },
   menuItemLabel: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
     flex: 1,
   },
   menuItemBadge: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '500',
   },
   menuBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: radius.md,
   },
   menuBadgeText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
     color: '#fff',
   },

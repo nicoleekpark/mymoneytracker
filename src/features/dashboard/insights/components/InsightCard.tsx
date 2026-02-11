@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 import type { InsightCardData, InsightsColors } from '../insights.types'
 
@@ -18,7 +20,7 @@ function ColorizedBody({ text, colors }: { text: string; colors: InsightsColors 
   const parts = text.split(regex)
 
   return (
-    <Text style={{ fontSize: 15, fontWeight: '500', color: colors.text, lineHeight: 24 }}>
+    <Text style={{ fontSize: fontSize.lg, fontWeight: '500', color: colors.text, lineHeight: 24 }}>
       {parts.map((part, i) => {
         if (!part) return null
         // Check if this part is a value (matches our pattern)
@@ -68,24 +70,24 @@ function ExplainBottomSheet({
           onPress={(e) => e.stopPropagation()}
           style={{
             backgroundColor: colors.surface,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
+            borderTopLeftRadius: radius.xl,
+            borderTopRightRadius: radius.xl,
             padding: 24,
             paddingBottom: 40,
             maxHeight: '50%'
           }}
         >
           {/* Header */}
-          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 20 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: 20 }}>
             Why you're seeing this
           </Text>
 
           {/* Section A: How this is calculated (common) */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
               How this is calculated
             </Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 19 }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
               Based on your last 6 months of transactions.{'\n'}
               {card.explanation?.calculation || 'We compare this month to your typical baseline.'}
             </Text>
@@ -94,10 +96,10 @@ function ExplainBottomSheet({
           {/* Section B: What matters here (card-specific) */}
           {card.explanation?.whatMatters && (
             <View style={{ marginBottom: 20 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+              <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
                 What matters here
               </Text>
-              <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 19 }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
                 {card.explanation.whatMatters}
               </Text>
             </View>
@@ -105,10 +107,10 @@ function ExplainBottomSheet({
 
           {/* Section C: What this is not (common) */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
               What this is not
             </Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 19 }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
               This isn't a warning or a prediction.{'\n'}
               It's a summary of recent patterns.
             </Text>
@@ -119,12 +121,12 @@ function ExplainBottomSheet({
             onPress={onClose}
             style={{
               backgroundColor: colors.surfaceAlt,
-              borderRadius: 10,
+              borderRadius: radius.md,
               paddingVertical: 14,
               alignItems: 'center'
             }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>Got it</Text>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: '600', color: colors.text }}>Got it</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -140,7 +142,7 @@ export function InsightCard({ card, colors }: Props) {
       <View style={{ paddingVertical: 8 }}>
         {/* Header row: title + info icon */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, flex: 1 }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, flex: 1 }}>
             {card.title}
           </Text>
           {card.explanation && (
@@ -150,7 +152,7 @@ export function InsightCard({ card, colors }: Props) {
               style={{
                 width: 16,
                 height: 16,
-                borderRadius: 8,
+                borderRadius: radius.md,
                 borderWidth: 1,
                 borderColor: colors.textMuted,
                 alignItems: 'center',
@@ -159,7 +161,7 @@ export function InsightCard({ card, colors }: Props) {
                 marginLeft: 8
               }}
             >
-              <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}>i</Text>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted }}>i</Text>
             </Pressable>
           )}
         </View>

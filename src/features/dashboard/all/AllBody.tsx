@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from 'react-native'
+import { fontSize, displaySize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 import { CATEGORIES } from '@/config/categories.config'
 import { FEATURE_FLAGS } from '@/config'
@@ -82,12 +84,12 @@ function getSubcategoryMeta(parentKey: string, subKey: string): { name: string; 
 // Section gap for combined style (matching Monthly/Yearly)
 const SECTION_GAP = 40
 
-// Accent line colors (matching Monthly/Yearly)
+// Accent line colors (neon palette)
 const ACCENT_COLORS = {
-  green: '#4ade80',
-  blue: '#60a5fa',
-  red: '#f87171',
-  purple: '#a78bfa',
+  green: '#00ffa3',   // neon mint
+  blue: '#00d4ff',    // neon cyan
+  red: '#ff6b00',     // neon orange
+  purple: '#bf00ff',  // electric purple
 }
 
 /**
@@ -108,12 +110,12 @@ function SectionHeader({
 }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-      <View style={{ width: 3, height: 20, borderRadius: 2, backgroundColor: accentColor }} />
-      <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
+      <View style={{ width: 3, height: 20, borderRadius: radius.xs, backgroundColor: accentColor }} />
+      <Text style={{ fontSize: fontSize['2xl'], fontWeight: '700', color: colors.text }}>
         {title}
       </Text>
       {rightText && (
-        <Text style={{ marginLeft: 'auto', fontSize: 14, fontWeight: '700', color: rightColor || colors.text }}>
+        <Text style={{ marginLeft: 'auto', fontSize: fontSize.md, fontWeight: '700', color: rightColor || colors.text }}>
           {rightText}
         </Text>
       )}
@@ -187,7 +189,7 @@ function InfoTooltip({
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: 16,
+            borderRadius: radius.xl,
             padding: 24,
             marginHorizontal: 32,
             maxWidth: 320,
@@ -196,12 +198,12 @@ function InfoTooltip({
           }}
         >
           {/* Header */}
-          <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text, marginBottom: 12 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text, marginBottom: 12 }}>
             Savings Rate
           </Text>
 
           {/* Description */}
-          <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 16 }}>
+          <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 20, marginBottom: 16 }}>
             The percentage of income you kept after expenses.
           </Text>
 
@@ -209,7 +211,7 @@ function InfoTooltip({
           <View
             style={{
               backgroundColor: colors.surfaceAlt,
-              borderRadius: 12,
+              borderRadius: radius.lg,
               padding: 16,
               alignItems: 'center',
               marginBottom: 16
@@ -217,7 +219,7 @@ function InfoTooltip({
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>
+                <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}>
                   Income − Expense
                 </Text>
                 <View
@@ -228,11 +230,11 @@ function InfoTooltip({
                     marginVertical: 4
                   }}
                 />
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>
+                <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}>
                   Income
                 </Text>
               </View>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>
+              <Text style={{ fontSize: fontSize.md, fontWeight: '600', color: colors.text }}>
                 × 100
               </Text>
             </View>
@@ -251,18 +253,18 @@ function InfoTooltip({
               style={{
                 width: 6,
                 height: 6,
-                borderRadius: 3,
+                borderRadius: radius.full,
                 backgroundColor: colors.success
               }}
             />
-            <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
               <Text style={{ fontWeight: '700', color: colors.text }}>20%+</Text>
               {' '}is a common healthy target
             </Text>
           </View>
 
           {/* Context */}
-          <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18 }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, lineHeight: 18 }}>
             Based on the 50/30/20 rule: 50% needs, 30% wants, 20% savings. Your ideal rate depends on your goals.
           </Text>
 
@@ -272,12 +274,12 @@ function InfoTooltip({
             style={{
               marginTop: 20,
               backgroundColor: colors.primary,
-              borderRadius: 10,
+              borderRadius: radius.md,
               paddingVertical: 12,
               alignItems: 'center'
             }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Got it</Text>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: '#fff' }}>Got it</Text>
           </Pressable>
         </View>
       </Pressable>
@@ -377,7 +379,7 @@ export function AllBody({ colors }: Props) {
       {/* Section 1: All-Time Overview */}
       <View style={{ marginBottom: SECTION_GAP }}>
         {/* Tracking since subtitle */}
-        <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textSecondary, textAlign: 'right', marginBottom: 4 }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: '500', color: colors.textSecondary, textAlign: 'right', marginBottom: 4 }}>
           {formatTrackingSince(data.firstTransactionDate)}
         </Text>
 
@@ -386,14 +388,14 @@ export function AllBody({ colors }: Props) {
           /* Option A Hero: Net Outcome */
           <View style={{ alignItems: 'center', paddingVertical: 20 }}>
             {/* Title line */}
-            <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: 4 }}>
               Net
             </Text>
 
             {/* Primary: Net amount */}
             <Text
               style={{
-                fontSize: 48,
+                fontSize: displaySize.xl,
                 fontWeight: '800',
                 color: data.netAmount >= 0 ? colors.success : colors.danger
               }}
@@ -403,14 +405,14 @@ export function AllBody({ colors }: Props) {
 
             {/* Supporting: Current streak (only if positive streak) */}
             {data.personalBests.currentStreak.isPositive && data.personalBests.currentStreak.months > 0 && (
-              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 12, opacity: 0.8 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 12, opacity: 0.8 }}>
                 {data.personalBests.currentStreak.months} positive-net {data.personalBests.currentStreak.months === 1 ? 'month' : 'months'} in a row
               </Text>
             )}
 
             {/* Nudge for long-term consistency */}
             {data.personalBests.currentStreak.isPositive && data.personalBests.currentStreak.months >= 3 && (
-              <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4, opacity: 0.6, fontStyle: 'italic' }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 4, opacity: 0.6, fontStyle: 'italic' }}>
                 Stay consistent, noise matters less now
               </Text>
             )}
@@ -427,18 +429,18 @@ export function AllBody({ colors }: Props) {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
                   >
-                    <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
                       Lifetime savings rate
                     </Text>
                     <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
                   </Pressable>
-                  <Text style={{ fontSize: 52, fontWeight: '800', color: colors.success }}>
+                  <Text style={{ fontSize: displaySize.xl, fontWeight: '800', color: colors.success }}>
                     {data.savingsRate.toFixed(0)}%
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
-                    That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.success }}>{formatUsdInt(data.netAmount)}</Text> saved
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 8 }}>
+                    That's <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.success }}>{formatUsdInt(data.netAmount)}</Text> saved
                   </Text>
-                  <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 4 }}>
                     (+{formatUsdInt(data.avgMonthlySaved)}/mo on average)
                   </Text>
                 </>
@@ -450,31 +452,31 @@ export function AllBody({ colors }: Props) {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}
                   >
-                    <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
                       Lifetime savings rate
                     </Text>
                     <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
                   </Pressable>
-                  <Text style={{ fontSize: 52, fontWeight: '800', color: colors.danger }}>
+                  <Text style={{ fontSize: displaySize.xl, fontWeight: '800', color: colors.danger }}>
                     {Math.abs(data.savingsRate).toFixed(0)}%
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
-                    That's <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(data.netAmount))}</Text> overspent
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 8 }}>
+                    That's <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(data.netAmount))}</Text> overspent
                   </Text>
-                  <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 4 }}>
                     ({formatUsdInt(Math.abs(data.avgMonthlySaved))}/mo on average)
                   </Text>
                 </>
               ) : (
                 // Broke even
                 <>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: 4 }}>
                     Lifetime result
                   </Text>
-                  <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
+                  <Text style={{ fontSize: displaySize.md, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
                     {formatUsdInt(0)}
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 4 }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 4 }}>
                     broke even
                   </Text>
                 </>
@@ -482,15 +484,15 @@ export function AllBody({ colors }: Props) {
             ) : (
               // No income
               <>
-                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+                <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: 4 }}>
                   Lifetime
                 </Text>
-                <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
+                <Text style={{ fontSize: displaySize.sm, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>
                   No income yet
                 </Text>
                 {data.totalExpense > 0 && (
-                  <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 8 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.danger }}>{formatUsdInt(data.totalExpense)}</Text> spent
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 8 }}>
+                    <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.danger }}>{formatUsdInt(data.totalExpense)}</Text> spent
                   </Text>
                 )}
               </>
@@ -506,14 +508,14 @@ export function AllBody({ colors }: Props) {
               backgroundColor: 'transparent',
               borderWidth: 1,
               borderColor: colors.border,
-              borderRadius: 12,
+              borderRadius: radius.lg,
               padding: 16,
               alignItems: 'center'
             }}
           >
             <Text
               style={{
-                fontSize: 10,
+                fontSize: fontSize.xs,
                 fontWeight: '600',
                 color: colors.text,
                 textTransform: 'uppercase',
@@ -523,7 +525,7 @@ export function AllBody({ colors }: Props) {
             >
               Income
             </Text>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.success }}>
               {formatUsdInt(data.totalIncome)}
             </Text>
           </View>
@@ -533,14 +535,14 @@ export function AllBody({ colors }: Props) {
               backgroundColor: 'transparent',
               borderWidth: 1,
               borderColor: colors.border,
-              borderRadius: 12,
+              borderRadius: radius.lg,
               padding: 16,
               alignItems: 'center'
             }}
           >
             <Text
               style={{
-                fontSize: 10,
+                fontSize: fontSize.xs,
                 fontWeight: '600',
                 color: colors.text,
                 textTransform: 'uppercase',
@@ -550,7 +552,7 @@ export function AllBody({ colors }: Props) {
             >
               Expense
             </Text>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.danger }}>
               {formatUsdInt(data.totalExpense)}
             </Text>
           </View>
@@ -579,7 +581,7 @@ export function AllBody({ colors }: Props) {
                     backgroundColor: 'transparent',
                     borderWidth: 1,
                     borderColor: colors.border,
-                    borderRadius: 12,
+                    borderRadius: radius.lg,
                     padding: 14
                   }}
                 >
@@ -588,7 +590,7 @@ export function AllBody({ colors }: Props) {
                       style={{
                         width: 24,
                         height: 24,
-                        borderRadius: 12,
+                        borderRadius: radius.lg,
                         backgroundColor: `${colors.success}20`,
                         alignItems: 'center',
                         justifyContent: 'center'
@@ -596,14 +598,14 @@ export function AllBody({ colors }: Props) {
                     >
                       <CategoryIcon name="star" size={11} color={colors.success} />
                     </View>
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                       Best Month
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 }}>
+                  <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 }}>
                     {formatMonthYear(data.personalBests.bestSavingsMonth.month)}
                   </Text>
-                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+                  <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.success }}>
                     {formatUsdInt(data.personalBests.bestSavingsMonth.netDollar)}
                   </Text>
                 </View>
@@ -617,7 +619,7 @@ export function AllBody({ colors }: Props) {
                     backgroundColor: 'transparent',
                     borderWidth: 1,
                     borderColor: colors.border,
-                    borderRadius: 12,
+                    borderRadius: radius.lg,
                     padding: 14
                   }}
                 >
@@ -626,7 +628,7 @@ export function AllBody({ colors }: Props) {
                       style={{
                         width: 24,
                         height: 24,
-                        borderRadius: 12,
+                        borderRadius: radius.lg,
                         backgroundColor: `${colors.danger}20`,
                         alignItems: 'center',
                         justifyContent: 'center'
@@ -634,14 +636,14 @@ export function AllBody({ colors }: Props) {
                     >
                       <CategoryIcon name="fire" size={11} color={colors.danger} />
                     </View>
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                       Lowest Month
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 }}>
+                  <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.textSecondary, marginBottom: 2 }}>
                     {formatMonthYear(data.personalBests.worstMonth.month)}
                   </Text>
-                  <Text style={{ fontSize: 18, fontWeight: '800', color: data.personalBests.worstMonth.netDollar >= 0 ? colors.success : colors.danger }}>
+                  <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: data.personalBests.worstMonth.netDollar >= 0 ? colors.success : colors.danger }}>
                     {formatUsdInt(data.personalBests.worstMonth.netDollar)}
                   </Text>
                 </View>
@@ -657,7 +659,7 @@ export function AllBody({ colors }: Props) {
                   backgroundColor: 'transparent',
                   borderWidth: 1,
                   borderColor: colors.border,
-                  borderRadius: 12,
+                  borderRadius: radius.lg,
                   padding: 14
                 }}
               >
@@ -666,7 +668,7 @@ export function AllBody({ colors }: Props) {
                     style={{
                       width: 24,
                       height: 24,
-                      borderRadius: 12,
+                      borderRadius: radius.lg,
                       backgroundColor: `${colors.success}20`,
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -674,14 +676,14 @@ export function AllBody({ colors }: Props) {
                   >
                     <CategoryIcon name="trophy" size={11} color={colors.success} />
                   </View>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     Best Streak
                   </Text>
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success }}>
+                <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.success }}>
                   {data.personalBests.positiveStreak} months
                 </Text>
-                <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textSecondary, marginTop: 2 }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: '500', color: colors.textSecondary, marginTop: 2 }}>
                   consecutive profit
                 </Text>
               </View>
@@ -693,7 +695,7 @@ export function AllBody({ colors }: Props) {
                   backgroundColor: 'transparent',
                   borderWidth: 1,
                   borderColor: colors.border,
-                  borderRadius: 12,
+                  borderRadius: radius.lg,
                   padding: 14
                 }}
               >
@@ -702,7 +704,7 @@ export function AllBody({ colors }: Props) {
                     style={{
                       width: 24,
                       height: 24,
-                      borderRadius: 12,
+                      borderRadius: radius.lg,
                       backgroundColor: data.personalBests.currentStreak.isPositive ? `${colors.success}20` : `${colors.danger}20`,
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -710,14 +712,14 @@ export function AllBody({ colors }: Props) {
                   >
                     <CategoryIcon name="line-chart" size={11} color={data.personalBests.currentStreak.isPositive ? colors.success : colors.danger} />
                   </View>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     Current Streak
                   </Text>
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: '800', color: data.personalBests.currentStreak.isPositive ? colors.success : colors.danger }}>
+                <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: data.personalBests.currentStreak.isPositive ? colors.success : colors.danger }}>
                   {data.personalBests.currentStreak.months} months
                 </Text>
-                <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textSecondary, marginTop: 2 }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: '500', color: colors.textSecondary, marginTop: 2 }}>
                   {data.personalBests.currentStreak.isPositive ? 'in profit' : 'in loss'}
                 </Text>
               </View>
@@ -775,20 +777,20 @@ export function AllBody({ colors }: Props) {
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
                     disabled={!hasSubcategories}
                   >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: catMeta.color }} />
-                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                    <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: catMeta.color }} />
+                    <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text }} numberOfLines={1}>
                       {catMeta.name}
                     </Text>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                    <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
                       {formatUsdInt(cat.amount)}
                     </Text>
-                    <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
+                    <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
                       {Math.round(percent)}%
                     </Text>
                     {/* Chevron indicator - fixed width container for alignment */}
                     <View style={{ width: 20, alignItems: 'center' }}>
                       {hasSubcategories && (
-                        <Text style={{ fontSize: 10, color: colors.textSecondary }}>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
                           {isExpanded ? '▼' : '▶'}
                         </Text>
                       )}
@@ -800,7 +802,7 @@ export function AllBody({ colors }: Props) {
                     style={{
                       height: 8,
                       backgroundColor: colors.surfaceAlt,
-                      borderRadius: 4,
+                      borderRadius: radius.sm,
                       marginLeft: 18,
                       overflow: 'hidden'
                     }}
@@ -810,7 +812,7 @@ export function AllBody({ colors }: Props) {
                         height: '100%',
                         width: `${barWidth}%`,
                         backgroundColor: catMeta.color,
-                        borderRadius: 4
+                        borderRadius: radius.sm
                       }}
                     />
                   </View>
@@ -818,6 +820,10 @@ export function AllBody({ colors }: Props) {
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
                     <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                      {/* Subcategory header showing % is of parent */}
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
+                        % of {catMeta.name}
+                      </Text>
                       {cat.subcategories.map((sub, subIdx) => {
                         const subPercent = cat.amount > 0 ? (sub.amount / cat.amount) * 100 : 0
                         const subBarWidth = cat.subcategories[0].amount > 0
@@ -826,14 +832,14 @@ export function AllBody({ colors }: Props) {
                         return (
                           <View key={`${sub.name}-${subIdx}`} style={{ gap: 4 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sub.color }} />
-                              <Text style={{ flex: 1, fontSize: 12, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
+                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: sub.color }} />
+                              <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {sub.name}
                               </Text>
-                              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.amount)}
                               </Text>
-                              <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textSecondary }}>
+                              <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
                                 {Math.round(subPercent)}%
                               </Text>
                               {/* Spacer for alignment with parent rows */}
@@ -843,7 +849,7 @@ export function AllBody({ colors }: Props) {
                               style={{
                                 height: 4,
                                 backgroundColor: colors.surfaceAlt,
-                                borderRadius: 2,
+                                borderRadius: radius.xs,
                                 marginLeft: 12,
                                 overflow: 'hidden'
                               }}
@@ -854,7 +860,7 @@ export function AllBody({ colors }: Props) {
                                   width: `${subBarWidth}%`,
                                   backgroundColor: sub.color,
                                   opacity: 0.7,
-                                  borderRadius: 2
+                                  borderRadius: radius.xs
                                 }}
                               />
                             </View>
@@ -874,7 +880,7 @@ export function AllBody({ colors }: Props) {
               onPress={() => setShowAllExpense(!showAllExpense)}
               style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
                 {showAllExpense ? 'Show less' : `Show all ${allExpenseCategories.length} categories`}
               </Text>
             </Pressable>
@@ -909,20 +915,20 @@ export function AllBody({ colors }: Props) {
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
                     disabled={!hasSubcategories}
                   >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: catMeta.color }} />
-                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                    <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: catMeta.color }} />
+                    <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text }} numberOfLines={1}>
                       {catMeta.name}
                     </Text>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                    <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
                       {formatUsdInt(cat.amount)}
                     </Text>
-                    <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
+                    <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
                       {Math.round(percent)}%
                     </Text>
                     {/* Chevron indicator - fixed width container for alignment */}
                     <View style={{ width: 20, alignItems: 'center' }}>
                       {hasSubcategories && (
-                        <Text style={{ fontSize: 10, color: colors.textSecondary }}>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
                           {isExpanded ? '▼' : '▶'}
                         </Text>
                       )}
@@ -934,7 +940,7 @@ export function AllBody({ colors }: Props) {
                     style={{
                       height: 8,
                       backgroundColor: colors.surfaceAlt,
-                      borderRadius: 4,
+                      borderRadius: radius.sm,
                       marginLeft: 18,
                       overflow: 'hidden'
                     }}
@@ -944,7 +950,7 @@ export function AllBody({ colors }: Props) {
                         height: '100%',
                         width: `${barWidth}%`,
                         backgroundColor: catMeta.color,
-                        borderRadius: 4
+                        borderRadius: radius.sm
                       }}
                     />
                   </View>
@@ -952,6 +958,10 @@ export function AllBody({ colors }: Props) {
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
                     <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                      {/* Subcategory header showing % is of parent */}
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
+                        % of {catMeta.name}
+                      </Text>
                       {cat.subcategories.map((sub, subIdx) => {
                         const subPercent = cat.amount > 0 ? (sub.amount / cat.amount) * 100 : 0
                         const subBarWidth = cat.subcategories[0].amount > 0
@@ -960,14 +970,14 @@ export function AllBody({ colors }: Props) {
                         return (
                           <View key={`${sub.name}-${subIdx}`} style={{ gap: 4 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sub.color }} />
-                              <Text style={{ flex: 1, fontSize: 12, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
+                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: sub.color }} />
+                              <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {sub.name}
                               </Text>
-                              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.amount)}
                               </Text>
-                              <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textSecondary }}>
+                              <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
                                 {Math.round(subPercent)}%
                               </Text>
                               {/* Spacer for alignment with parent rows */}
@@ -977,7 +987,7 @@ export function AllBody({ colors }: Props) {
                               style={{
                                 height: 4,
                                 backgroundColor: colors.surfaceAlt,
-                                borderRadius: 2,
+                                borderRadius: radius.xs,
                                 marginLeft: 12,
                                 overflow: 'hidden'
                               }}
@@ -988,7 +998,7 @@ export function AllBody({ colors }: Props) {
                                   width: `${subBarWidth}%`,
                                   backgroundColor: sub.color,
                                   opacity: 0.7,
-                                  borderRadius: 2
+                                  borderRadius: radius.xs
                                 }}
                               />
                             </View>
@@ -1008,7 +1018,7 @@ export function AllBody({ colors }: Props) {
               onPress={() => setShowAllIncome(!showAllIncome)}
               style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
                 {showAllIncome ? 'Show less' : `Show all ${allIncomeCategories.length} categories`}
               </Text>
             </Pressable>

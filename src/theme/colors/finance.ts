@@ -1,10 +1,20 @@
 import type { FinanceColors } from '../types'
 import { PALETTE } from './base'
 
-export const financeColors: FinanceColors = {
-  income: PALETTE.editorial.forest,
-  expense: PALETTE.editorial.terracotta,
-  transfer: PALETTE.zinc[500],
-  gain: PALETTE.editorial.forest,
-  loss: PALETTE.editorial.terracotta
+// Finance colors need mode-specific variants for proper contrast
+
+export const financeColorsLight: FinanceColors = {
+  income: PALETTE.income.light,
+  expense: PALETTE.expense.light,
+  transfer: PALETTE.neutral.light,
+  gain: PALETTE.income.light,
+  loss: PALETTE.expense.light,
+}
+
+export const financeColorsDark: FinanceColors = {
+  income: PALETTE.income.dark,
+  expense: PALETTE.expense.dark,
+  transfer: PALETTE.neutral.dark,
+  gain: PALETTE.income.dark,
+  loss: PALETTE.expense.dark,
 }

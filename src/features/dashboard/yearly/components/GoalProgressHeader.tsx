@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
 import { formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
 
 // Enable LayoutAnimation on Android
@@ -82,7 +84,7 @@ function MonthBar({
             width: 6,
             height: Math.max(hasData ? 4 : 2, incomeHeight),
             backgroundColor: isFuture ? colors.surfaceAlt : colors.success,
-            borderRadius: 2,
+            borderRadius: radius.xs,
             opacity: barOpacity
           }}
         />
@@ -92,7 +94,7 @@ function MonthBar({
             width: 6,
             height: Math.max(hasData ? 4 : 2, expenseHeight),
             backgroundColor: isFuture ? colors.surfaceAlt : colors.danger,
-            borderRadius: 2,
+            borderRadius: radius.xs,
             opacity: barOpacity
           }}
         />
@@ -101,7 +103,7 @@ function MonthBar({
       {/* Month label */}
       <Text
         style={{
-          fontSize: 9,
+          fontSize: fontSize.xs,
           fontWeight: isSelected ? '800' : '600',
           color: isSelected ? colors.text : colors.textSecondary,
           marginTop: 4,
@@ -117,7 +119,7 @@ function MonthBar({
           style={{
             width: 4,
             height: 4,
-            borderRadius: 2,
+            borderRadius: radius.full,
             backgroundColor: colors.primary,
             marginTop: 2
           }}
@@ -166,7 +168,7 @@ export function GoalProgressHeader(props: Props) {
     <View
       style={{
         backgroundColor: colors.surface,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         padding: 16,
         borderWidth: 1,
         borderColor: colors.border,
@@ -175,14 +177,14 @@ export function GoalProgressHeader(props: Props) {
     >
       {/* Header row */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
           {year} OVERVIEW
         </Text>
         <View style={{ alignItems: 'flex-end' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text
               style={{
-                fontSize: 20,
+                fontSize: fontSize['2xl'],
                 color: netCashFlow >= 0 ? colors.success : colors.danger
               }}
             >
@@ -190,7 +192,7 @@ export function GoalProgressHeader(props: Props) {
             </Text>
             <Text
               style={{
-                fontSize: 24,
+                fontSize: fontSize['3xl'],
                 fontWeight: '900',
                 color: netCashFlow >= 0 ? colors.success : colors.danger
               }}
@@ -198,7 +200,7 @@ export function GoalProgressHeader(props: Props) {
               {formatUsdInt(Math.abs(netCashFlow))}
             </Text>
           </View>
-          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
             net
           </Text>
         </View>
@@ -231,37 +233,37 @@ export function GoalProgressHeader(props: Props) {
         <View
           style={{
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 10,
+            borderRadius: radius.md,
             padding: 12,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.text }}>
             {MONTH_NAMES_SHORT[selectedMonth!]}
           </Text>
           <View style={{ flexDirection: 'row', gap: 16 }}>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.success }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '800', color: colors.success }}>
                 {formatUsdInt(selectedData.incomeDollar)}
               </Text>
-              <Text style={{ fontSize: 9, color: colors.textSecondary }}>in</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>in</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.danger }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '800', color: colors.danger }}>
                 {formatUsdInt(selectedData.expenseDollar)}
               </Text>
-              <Text style={{ fontSize: 9, color: colors.textSecondary }}>out</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>out</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                <Text style={{ fontSize: 11, color: selectedData.netDollar >= 0 ? colors.success : colors.danger }}>
+                <Text style={{ fontSize: fontSize.xs, color: selectedData.netDollar >= 0 ? colors.success : colors.danger }}>
                   {selectedData.netDollar >= 0 ? '↑' : '↓'}
                 </Text>
                 <Text
                   style={{
-                    fontSize: 13,
+                    fontSize: fontSize.sm,
                     fontWeight: '800',
                     color: selectedData.netDollar >= 0 ? colors.success : colors.danger
                   }}
@@ -269,16 +271,16 @@ export function GoalProgressHeader(props: Props) {
                   {formatUsdInt(Math.abs(selectedData.netDollar))}
                 </Text>
               </View>
-              <Text style={{ fontSize: 9, color: colors.textSecondary }}>net</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>net</Text>
             </View>
           </View>
         </View>
       ) : bestMonth.idx >= 0 && bestMonth.net > 0 ? (
-        <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, textAlign: 'center' }}>
           {MONTH_NAMES_SHORT[bestMonth.idx]}: ↑ {formatUsdInt(bestMonth.net)} (best month)
         </Text>
       ) : (
-        <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, textAlign: 'center' }}>
           Tap a month to see details
         </Text>
       )}

@@ -1,6 +1,8 @@
 import type { Account } from '@/domain/account'
 import { useHoHTheme } from '@/providers'
 import { Screen } from '@/shared/layout/Screen'
+import { radius } from '@/theme/tokens/radius'
+import { fontSize } from '@/theme/tokens/typography'
 import React from 'react'
 import {
   FlatList,
@@ -99,7 +101,7 @@ export function AccountSelectionModal({
                 <Pressable onPress={() => onChoose(a.key)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{a.name}</Text>
-                    <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: 12 }}>{badge}</Text>
+                    <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: fontSize.xs }}>{badge}</Text>
                   </View>
 
                   <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
@@ -127,7 +129,7 @@ const styles = StyleSheet.create({
   },
   searchBox: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 8,

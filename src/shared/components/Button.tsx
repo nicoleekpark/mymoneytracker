@@ -35,6 +35,8 @@
  */
 
 import { useHoHTheme } from '@/providers'
+import { radius } from '@/theme/tokens/radius'
+import { fontSize } from '@/theme/tokens/typography'
 import React from 'react'
 import {
   Pressable,
@@ -74,23 +76,23 @@ export type ButtonProps = {
 const SIZE_CONFIG = {
   large: {
     height: 50,
-    fontSize: 17,
+    fontSize: fontSize.lg,
     fontWeight: '600' as const,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     paddingHorizontal: 24,
   },
   medium: {
     height: 44,
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '600' as const,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     paddingHorizontal: 20,
   },
   small: {
     height: 36,
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500' as const,
-    borderRadius: 10,
+    borderRadius: radius.md,
     paddingHorizontal: 16,
   },
 } as const

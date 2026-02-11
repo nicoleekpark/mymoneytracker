@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -54,7 +56,7 @@ export function AccordionCard({
     <View
       style={{
         backgroundColor: colors.surface,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         borderWidth: 1,
         borderColor: colors.border,
         overflow: 'hidden',
@@ -72,12 +74,12 @@ export function AccordionCard({
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
             {title}
           </Text>
           {headerRight}
         </View>
-        <Text style={{ fontSize: 14, color: colors.textSecondary }}>
+        <Text style={{ fontSize: fontSize.md, color: colors.textSecondary }}>
           {expanded ? '▲' : '▼'}
         </Text>
       </Pressable>
@@ -92,7 +94,7 @@ export function AccordionCard({
       {/* Expand hint text at bottom when collapsed */}
       {!expanded && expandHintText && (
         <Pressable onPress={toggle} style={{ paddingBottom: 16 }}>
-          <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, textAlign: 'center' }}>
             {expandHintText}
           </Text>
         </Pressable>
@@ -136,14 +138,14 @@ export function AccordionSummaryRow({ items, colors }: SummaryRowProps) {
           style={{
             flex: 1,
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 10,
+            borderRadius: radius.md,
             padding: 10,
             alignItems: 'center',
           }}
         >
           <Text
             style={{
-              fontSize: 9,
+              fontSize: fontSize.xs,
               fontWeight: '600',
               color: colors.textSecondary,
               textTransform: 'uppercase',
@@ -155,7 +157,7 @@ export function AccordionSummaryRow({ items, colors }: SummaryRowProps) {
           </Text>
           <Text
             style={{
-              fontSize: 15,
+              fontSize: fontSize.lg,
               fontWeight: '800',
               color: item.color || colors.text,
             }}

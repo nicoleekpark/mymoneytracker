@@ -1,5 +1,6 @@
 import type { useHoHTheme } from '@/providers'
 import { StyleSheet } from 'react-native'
+import { fontSize } from '@/theme/tokens/typography'
 
 export function createDashboardStyles(theme: ReturnType<typeof useHoHTheme>) {
   const onPrimary = '#FFFFFF'
@@ -26,18 +27,18 @@ export function createDashboardStyles(theme: ReturnType<typeof useHoHTheme>) {
       paddingVertical: 12,
       marginRight: 4,
       borderBottomWidth: 2,
-      borderBottomColor: theme.semantic.primary
+      borderBottomColor: theme.semantic.text // White underline
     },
 
     tabText: {
       color: theme.semantic.textSecondary,
-      fontSize: 14,
+      fontSize: fontSize.md,
       fontWeight: '500'
     },
 
     tabTextSelected: {
-      color: theme.semantic.primary,
-      fontSize: 14,
+      color: theme.semantic.text, // White for selected tab
+      fontSize: fontSize.md,
       fontWeight: '600'
     },
 

@@ -8,6 +8,8 @@
 import type { Tag } from '@/domain/tag'
 import { useHoHTheme } from '@/providers'
 import { useTagsStore } from '@/store'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useState } from 'react'
 import {
@@ -205,7 +207,7 @@ function TagChip({ tag, selected, onPress, theme }: TagChipProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   header: {
@@ -215,7 +217,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   label: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   headerRight: {
@@ -226,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   preview: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     maxWidth: 180,
   },
   content: {
@@ -238,7 +240,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -251,7 +253,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -260,20 +262,20 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '500',
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: fontSize.md,
     padding: 0,
   },
 })

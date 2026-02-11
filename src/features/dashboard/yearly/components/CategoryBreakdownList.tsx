@@ -5,6 +5,8 @@ import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { CategoryIcon } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -88,7 +90,7 @@ function CategoryRow({
             style={{
               width: 32,
               height: 32,
-              borderRadius: 8,
+              borderRadius: radius.md,
               backgroundColor: `${meta.color}20`,
               alignItems: 'center',
               justifyContent: 'center'
@@ -100,13 +102,13 @@ function CategoryRow({
           {/* Name + hint */}
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {isTop && <Text style={{ fontSize: 12 }}>👑</Text>}
-              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+              {isTop && <Text style={{ fontSize: fontSize.xs }}>👑</Text>}
+              <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
                 {meta.name}
               </Text>
             </View>
             {hasSubcategories && !isExpanded && (
-              <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 2 }}>
                 tap for details
               </Text>
             )}
@@ -114,10 +116,10 @@ function CategoryRow({
 
           {/* Amount + percentage */}
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text }}>
               {formatUsdInt(item.total)}
             </Text>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
               {percentage.toFixed(0)}%
             </Text>
           </View>
@@ -130,7 +132,7 @@ function CategoryRow({
               marginTop: 12,
               marginLeft: 42,
               backgroundColor: colors.surfaceAlt,
-              borderRadius: 10,
+              borderRadius: radius.md,
               padding: 12,
               gap: 10
             }}
@@ -144,13 +146,13 @@ function CategoryRow({
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
                 >
                   <CategoryIcon name={sub.icon} size={12} color={sub.color} />
-                  <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: colors.text }}>
+                  <Text style={{ flex: 1, fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>
                     {sub.name}
                   </Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.text }}>
                     {formatUsdInt(sub.total)}
                   </Text>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textSecondary, width: 32, textAlign: 'right' }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary, width: 32, textAlign: 'right' }}>
                     {subPct.toFixed(0)}%
                   </Text>
                 </View>
@@ -166,7 +168,7 @@ function CategoryRow({
                 marginTop: 4
               }}
             >
-              <Text style={{ fontSize: 11, color: colors.textSecondary }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
                 Avg: {formatUsdInt(item.average)}/mo
               </Text>
             </View>
@@ -176,7 +178,7 @@ function CategoryRow({
         {/* Expanded but no subcategories: just show average */}
         {isExpanded && !hasSubcategories && (
           <View style={{ marginTop: 8, marginLeft: 42 }}>
-            <Text style={{ fontSize: 11, color: colors.textSecondary }}>
+            <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
               Avg: {formatUsdInt(item.average)}/mo
             </Text>
           </View>
@@ -208,14 +210,14 @@ export function CategoryBreakdownList({
       <View
         style={{
           backgroundColor: colors.surface,
-          borderRadius: 16,
+          borderRadius: radius.xl,
           padding: 20,
           borderWidth: 1,
           borderColor: colors.border,
           alignItems: 'center'
         }}
       >
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
           No {type} data
         </Text>
       </View>
@@ -226,7 +228,7 @@ export function CategoryBreakdownList({
     <View
       style={{
         backgroundColor: colors.surface,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         padding: 16,
         borderWidth: 1,
         borderColor: colors.border
@@ -234,10 +236,10 @@ export function CategoryBreakdownList({
     >
       {/* Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
           {title}
         </Text>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: type === 'income' ? colors.success : colors.danger }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: type === 'income' ? colors.success : colors.danger }}>
           {formatUsdInt(totalAmount)}
         </Text>
       </View>
@@ -271,7 +273,7 @@ export function CategoryBreakdownList({
             alignItems: 'center'
           }}
         >
-          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.primary }}>
             See all {categories.length} categories →
           </Text>
         </Pressable>

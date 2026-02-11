@@ -1,4 +1,5 @@
 import { useHoHTheme } from '@/providers'
+import { fontSize } from '@/theme/tokens/typography'
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 
@@ -46,7 +47,7 @@ export function SegmentedControl<T extends string>({ value, onChange, options }:
           >
             <Text
               style={{
-                fontSize: 14,
+                fontSize: fontSize.md,
                 color: selected ? theme.semantic.primary : theme.semantic.textSecondary,
                 fontWeight: selected ? '600' : '500'
               }}

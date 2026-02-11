@@ -1,4 +1,6 @@
 import { useHoHTheme } from '@/providers'
+import { displaySize, fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import React from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -40,7 +42,7 @@ export function AmountKeypadModal({
         </View>
 
         <View style={[styles.preview, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-          <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: 36 }}>${amountDisplay}</Text>
+          <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: displaySize.md }}>${amountDisplay}</Text>
         </View>
 
         <View style={styles.grid}>
@@ -50,7 +52,7 @@ export function AmountKeypadModal({
               onPress={() => onAppendDigit(d)}
               style={[styles.key, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
             >
-              <Text style={{ color: theme.semantic.text, fontSize: 26, fontWeight: '900' }}>{d}</Text>
+              <Text style={{ color: theme.semantic.text, fontSize: fontSize['3xl'], fontWeight: '900' }}>{d}</Text>
             </Pressable>
           ))}
 
@@ -60,14 +62,14 @@ export function AmountKeypadModal({
             onPress={() => onAppendDigit('0')}
             style={[styles.key, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
           >
-            <Text style={{ color: theme.semantic.text, fontSize: 26, fontWeight: '900' }}>0</Text>
+            <Text style={{ color: theme.semantic.text, fontSize: fontSize['3xl'], fontWeight: '900' }}>0</Text>
           </Pressable>
 
           <Pressable
             onPress={onBackspace}
             style={[styles.key, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
           >
-            <Text style={{ color: theme.semantic.text, fontSize: 18, fontWeight: '900' }}>⌫</Text>
+            <Text style={{ color: theme.semantic.text, fontSize: fontSize.xl, fontWeight: '900' }}>⌫</Text>
           </Pressable>
         </View>
 
@@ -75,7 +77,7 @@ export function AmountKeypadModal({
           onPress={onClose}
           style={[styles.doneBtn, { backgroundColor: theme.semantic.primarySoft, borderColor: theme.semantic.primarySoft }]}
         >
-          <Text style={{ color: theme.semantic.primaryStrong, fontSize: 18, fontWeight: '900' }}>Done</Text>
+          <Text style={{ color: theme.semantic.primaryStrong, fontSize: fontSize.xl, fontWeight: '900' }}>Done</Text>
         </Pressable>
       </View>
     </Modal>
@@ -101,7 +103,7 @@ const styles = StyleSheet.create({
   },
   preview: {
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     padding: 14,
     marginBottom: 12,
   },
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
     width: '31.5%',
     height: 58,
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -127,7 +129,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 58,
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,

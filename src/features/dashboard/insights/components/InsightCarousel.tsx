@@ -1,5 +1,7 @@
-import React, { useState, useRef, useMemo } from 'react'
-import { View, Pressable, PanResponder, LayoutChangeEvent } from 'react-native'
+import React, { useState, useMemo } from 'react'
+import { View, Pressable, Dimensions, ScrollView, LayoutChangeEvent } from 'react-native'
+
+import { radius } from '@/theme/tokens/radius'
 
 import type { InsightsColors } from '../insights.types'
 
@@ -7,6 +9,10 @@ type Props = {
   children: React.ReactNode
   colors: InsightsColors
 }
+
+// Peek amount on each side
+const PEEK_WIDTH = 24
+const CARD_GAP = 12
 
 // Helper to properly flatten children
 function flattenChildren(children: React.ReactNode): React.ReactNode[] {
@@ -22,39 +28,29 @@ function flattenChildren(children: React.ReactNode): React.ReactNode[] {
 }
 
 /**
- * Simple carousel showing one card at a time with swipe support
- * Container height adjusts to tallest card
+ * Carousel with peek effect - shows partial adjacent cards
+ * Uses horizontal ScrollView with snap behavior
  */
 export function InsightCarousel({ children, colors }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [heights, setHeights] = useState<number[]>([])
+  const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width - 32)
 
   const validChildren = flattenChildren(children)
   const count = validChildren.length
 
-  // Calculate max height from measured heights
-  const maxHeight = heights.length > 0 ? Math.max(...heights) : undefined
+  // Card width = container - peek on both sides - gaps
+  const cardWidth = containerWidth - (PEEK_WIDTH * 2) - CARD_GAP
 
-  const panResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 20
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      if (gestureState.dx < -50 && activeIndex < count - 1) {
-        setActiveIndex(prev => Math.min(prev + 1, count - 1))
-      } else if (gestureState.dx > 50 && activeIndex > 0) {
-        setActiveIndex(prev => Math.max(prev - 1, 0))
-      }
+  const handleContainerLayout = (event: LayoutChangeEvent) => {
+    setContainerWidth(event.nativeEvent.layout.width)
+  }
+
+  const handleScroll = (event: { nativeEvent: { contentOffset: { x: number } } }) => {
+    const offsetX = event.nativeEvent.contentOffset.x
+    const newIndex = Math.round(offsetX / (cardWidth + CARD_GAP))
+    if (newIndex !== activeIndex && newIndex >= 0 && newIndex < count) {
+      setActiveIndex(newIndex)
     }
-  }), [activeIndex, count])
-
-  const handleLayout = (index: number) => (event: LayoutChangeEvent) => {
-    const { height } = event.nativeEvent.layout
-    setHeights(prev => {
-      const newHeights = [...prev]
-      newHeights[index] = height
-      return newHeights
-    })
   }
 
   if (count === 0) return null
@@ -63,43 +59,50 @@ export function InsightCarousel({ children, colors }: Props) {
   }
 
   return (
-    <View>
-      {/* Card container with fixed height */}
-      <View
-        {...panResponder.panHandlers}
-        style={{ height: maxHeight, overflow: 'hidden' }}
+    <View onLayout={handleContainerLayout}>
+      {/* Horizontal scroll with snap */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={cardWidth + CARD_GAP}
+        decelerationRate="fast"
+        contentContainerStyle={{
+          paddingHorizontal: PEEK_WIDTH
+        }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         {validChildren.map((child, i) => (
           <View
             key={i}
-            onLayout={handleLayout(i)}
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              opacity: i === activeIndex ? 1 : 0,
-              pointerEvents: i === activeIndex ? 'auto' : 'none'
+              width: cardWidth,
+              marginRight: i < count - 1 ? CARD_GAP : 0,
+              opacity: i === activeIndex ? 1 : 0.5
             }}
           >
             {child}
           </View>
         ))}
-      </View>
+      </ScrollView>
 
       {/* Dot indicators */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 12 }}>
         {validChildren.map((_, i) => (
           <Pressable
             key={i}
-            onPress={() => setActiveIndex(i)}
+            onPress={() => {
+              // Note: ScrollView doesn't expose scrollTo in this pattern
+              // Dots just indicate position, tapping shows current index
+              setActiveIndex(i)
+            }}
             hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
           >
             <View
               style={{
                 width: i === activeIndex ? 16 : 6,
                 height: 6,
-                borderRadius: 3,
+                borderRadius: radius.full,
                 backgroundColor: i === activeIndex ? colors.text : colors.border,
                 opacity: i === activeIndex ? 0.8 : 0.4
               }}

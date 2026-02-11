@@ -2,6 +2,8 @@ import { CATEGORIES } from '@/config/categories.config'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
+import { radius } from '@/theme/tokens/radius'
+import { fontSize } from '@/theme/tokens/typography'
 import React from 'react'
 import type { TextInput } from 'react-native'
 import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput as RNTextInput, View } from 'react-native'
@@ -114,7 +116,7 @@ export function CategorySelectionModal({
                     <CategoryIcon name={sub.icon} size={18} color={sub.color} />
                   </View>
                   <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{sub.name}</Text>
-                  <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: 12, marginLeft: 6 }}>in {cat.name}</Text>
+                  <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: fontSize.xs, marginLeft: 6 }}>in {cat.name}</Text>
                 </View>
 
                 <Text style={{ color: theme.semantic.primary, fontWeight: '900' }}>✓</Text>
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
   },
   searchBox: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 8,

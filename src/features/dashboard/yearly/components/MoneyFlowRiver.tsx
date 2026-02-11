@@ -5,6 +5,8 @@ import Svg, { Defs, LinearGradient, Path, Stop, Text as SvgText } from 'react-na
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 export type MoneyFlowColors = Readonly<{
   text: string
@@ -136,14 +138,14 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
       <View
         style={{
           backgroundColor: colors.surface,
-          borderRadius: 16,
+          borderRadius: radius.xl,
           padding: 24,
           borderWidth: 1,
           borderColor: colors.border,
           alignItems: 'center'
         }}
       >
-        <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: fontSize.md }}>
           No cash flow data for this year
         </Text>
       </View>
@@ -154,7 +156,7 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
     <View
       style={{
         backgroundColor: colors.surface,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         padding: 16,
         borderWidth: 1,
         borderColor: colors.border
@@ -162,7 +164,7 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
     >
       <Text
         style={{
-          fontSize: 17,
+          fontSize: fontSize.lg,
           fontWeight: '800',
           color: colors.text,
           letterSpacing: 0.2,
@@ -175,13 +177,13 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
 
       {/* Labels */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.success }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.success }}>
           Income ({formatUsdInt(totalIncome)})
         </Text>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.text }}>
           You
         </Text>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.danger }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.danger }}>
           Expense ({formatUsdInt(totalExpense)})
         </Text>
       </View>
@@ -282,14 +284,14 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
         {incomePositions.slice(0, 3).map((flow, idx) => (
           <View key={`legend-income-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: flow.meta.color }} />
-            <Text style={{ fontSize: 10, color: colors.textSecondary }}>{flow.meta.name}</Text>
+            <View style={{ width: 8, height: 8, borderRadius: radius.sm, backgroundColor: flow.meta.color }} />
+            <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{flow.meta.name}</Text>
           </View>
         ))}
         {expensePositions.slice(0, 3).map((flow, idx) => (
           <View key={`legend-expense-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: flow.meta.color }} />
-            <Text style={{ fontSize: 10, color: colors.textSecondary }}>{flow.meta.name}</Text>
+            <View style={{ width: 8, height: 8, borderRadius: radius.sm, backgroundColor: flow.meta.color }} />
+            <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{flow.meta.name}</Text>
           </View>
         ))}
       </View>

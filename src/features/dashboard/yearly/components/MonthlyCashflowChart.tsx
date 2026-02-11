@@ -3,6 +3,8 @@ import { LayoutChangeEvent, PanResponder, Text, View } from 'react-native'
 import Svg, { Path, Circle, Line } from 'react-native-svg'
 
 import { formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 import type { MonthData } from '../hooks/useYearlyData'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
@@ -112,8 +114,8 @@ function ComboChart({
                   width: BAR_WIDTH,
                   height: Math.max(2, incomeHeight),
                   backgroundColor: isFuture ? colors.surfaceAlt : colors.success,
-                  borderTopLeftRadius: 3,
-                  borderTopRightRadius: 3,
+                  borderTopLeftRadius: radius.xs,
+                  borderTopRightRadius: radius.xs,
                   opacity: isFuture ? 0.4 : isSelected ? 1 : 0.8
                 }}
               />
@@ -126,8 +128,8 @@ function ComboChart({
                   width: BAR_WIDTH,
                   height: Math.max(2, expenseHeight),
                   backgroundColor: isFuture ? colors.surfaceAlt : colors.danger,
-                  borderBottomLeftRadius: 3,
-                  borderBottomRightRadius: 3,
+                  borderBottomLeftRadius: radius.xs,
+                  borderBottomRightRadius: radius.xs,
                   opacity: isFuture ? 0.4 : isSelected ? 1 : 0.8
                 }}
               />
@@ -212,7 +214,7 @@ function ComboChart({
             <View key={idx} style={{ width: monthWidth, alignItems: 'center' }}>
               <Text
                 style={{
-                  fontSize: 9,
+                  fontSize: fontSize.xs,
                   fontWeight: isSelected ? '800' : '600',
                   color: isSelected ? colors.text : colors.textMuted,
                   opacity: isFuture ? 0.4 : 1
@@ -225,7 +227,7 @@ function ComboChart({
                   style={{
                     width: 4,
                     height: 4,
-                    borderRadius: 2,
+                    borderRadius: radius.full,
                     backgroundColor: colors.warning,
                     marginTop: 2
                   }}
@@ -251,7 +253,9 @@ export function MonthlyCashflowChart({
 }: Props) {
   const [chartWidth, setChartWidth] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [isLocked, setIsLocked] = useState(false) // Toggle lock state
   const isDraggingRef = useRef(false)
+  const startXRef = useRef<number | null>(null)
 
   // Calculate month index from X position
   const getMonthFromX = useCallback(
@@ -268,33 +272,63 @@ export function MonthlyCashflowChart({
     [chartWidth]
   )
 
-  // Pan responder for drag interaction
+  // Pan responder for drag and tap interaction
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: evt => {
-          isDraggingRef.current = true
+          startXRef.current = evt.nativeEvent.locationX
+          isDraggingRef.current = false
           const x = evt.nativeEvent.locationX
-          setSelectedIndex(getMonthFromX(x))
+          const newIdx = getMonthFromX(x)
+          setSelectedIndex(newIdx)
         },
         onPanResponderMove: evt => {
-          if (!isDraggingRef.current) return
           const x = evt.nativeEvent.locationX
+          // Check if this is a drag (moved more than 10px)
+          if (startXRef.current !== null && Math.abs(x - startXRef.current) > 10) {
+            isDraggingRef.current = true
+            setIsLocked(false) // Unlock when dragging
+          }
           const newIdx = getMonthFromX(x)
           setSelectedIndex(prev => (prev !== newIdx ? newIdx : prev))
         },
-        onPanResponderRelease: () => {
+        onPanResponderRelease: evt => {
+          const x = evt.nativeEvent.locationX
+          const wasDragging = isDraggingRef.current
           isDraggingRef.current = false
-          setSelectedIndex(null)
+          startXRef.current = null
+
+          if (!wasDragging) {
+            // This was a tap - toggle lock state
+            const tappedIdx = getMonthFromX(x)
+            if (isLocked && selectedIndex === tappedIdx) {
+              // Tapped same month while locked - unlock and clear
+              setIsLocked(false)
+              setSelectedIndex(null)
+            } else {
+              // Lock on this month
+              setIsLocked(true)
+              setSelectedIndex(tappedIdx)
+            }
+          } else {
+            // Was dragging - clear selection unless locked
+            if (!isLocked) {
+              setSelectedIndex(null)
+            }
+          }
         },
         onPanResponderTerminate: () => {
           isDraggingRef.current = false
-          setSelectedIndex(null)
+          startXRef.current = null
+          if (!isLocked) {
+            setSelectedIndex(null)
+          }
         }
       }),
-    [getMonthFromX]
+    [getMonthFromX, isLocked, selectedIndex]
   )
 
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
@@ -328,7 +362,7 @@ export function MonthlyCashflowChart({
         <View
           style={{
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 10,
+            borderRadius: radius.md,
             padding: 12,
             marginTop: 12,
             marginHorizontal: CHART_PADDING_H
@@ -337,7 +371,7 @@ export function MonthlyCashflowChart({
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text
               style={{
-                fontSize: 14,
+                fontSize: fontSize.md,
                 fontWeight: '700',
                 color: colors.text,
                 width: 40
@@ -355,7 +389,7 @@ export function MonthlyCashflowChart({
               <View style={{ alignItems: 'center' }}>
                 <Text
                   style={{
-                    fontSize: 9,
+                    fontSize: fontSize.xs,
                     fontWeight: '600',
                     color: colors.textMuted,
                     marginBottom: 2
@@ -364,7 +398,7 @@ export function MonthlyCashflowChart({
                   IN
                 </Text>
                 <Text
-                  style={{ fontSize: 13, fontWeight: '700', color: colors.success }}
+                  style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.success }}
                 >
                   {formatUsdInt(selectedData.incomeDollar)}
                 </Text>
@@ -372,7 +406,7 @@ export function MonthlyCashflowChart({
               <View style={{ alignItems: 'center' }}>
                 <Text
                   style={{
-                    fontSize: 9,
+                    fontSize: fontSize.xs,
                     fontWeight: '600',
                     color: colors.textMuted,
                     marginBottom: 2
@@ -381,7 +415,7 @@ export function MonthlyCashflowChart({
                   OUT
                 </Text>
                 <Text
-                  style={{ fontSize: 13, fontWeight: '700', color: colors.danger }}
+                  style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.danger }}
                 >
                   {formatUsdInt(selectedData.expenseDollar)}
                 </Text>
@@ -389,7 +423,7 @@ export function MonthlyCashflowChart({
               <View style={{ alignItems: 'center' }}>
                 <Text
                   style={{
-                    fontSize: 9,
+                    fontSize: fontSize.xs,
                     fontWeight: '600',
                     color: colors.textMuted,
                     marginBottom: 2
@@ -399,7 +433,7 @@ export function MonthlyCashflowChart({
                 </Text>
                 <Text
                   style={{
-                    fontSize: 13,
+                    fontSize: fontSize.sm,
                     fontWeight: '700',
                     color:
                       selectedData.netDollar >= 0 ? colors.success : colors.danger
@@ -413,16 +447,16 @@ export function MonthlyCashflowChart({
           </View>
         </View>
       ) : (
-        /* Hint when not dragging */
+        /* Hint when not selected */
         <Text
           style={{
-            fontSize: 11,
+            fontSize: fontSize.xs,
             color: colors.textMuted,
             textAlign: 'center',
             marginTop: 12
           }}
         >
-          Press and drag to explore months
+          Tap or drag to explore months
         </Text>
       )}
 
@@ -440,33 +474,33 @@ export function MonthlyCashflowChart({
             style={{
               width: 8,
               height: 8,
-              borderRadius: 2,
+              borderRadius: radius.xs,
               backgroundColor: colors.success
             }}
           />
-          <Text style={{ fontSize: 10, color: colors.textMuted }}>Income</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Income</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View
             style={{
               width: 8,
               height: 8,
-              borderRadius: 2,
+              borderRadius: radius.xs,
               backgroundColor: colors.danger
             }}
           />
-          <Text style={{ fontSize: 10, color: colors.textMuted }}>Expense</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Expense</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View
             style={{
               width: 8,
               height: 8,
-              borderRadius: 4,
+              borderRadius: radius.full,
               backgroundColor: colors.warning
             }}
           />
-          <Text style={{ fontSize: 10, color: colors.textMuted }}>Net</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Net</Text>
         </View>
       </View>
     </View>

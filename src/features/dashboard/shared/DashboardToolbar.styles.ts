@@ -1,6 +1,8 @@
 import { StyleSheet } from 'react-native'
 
 import type { useHoHTheme } from '@/providers'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHTheme>) {
   return StyleSheet.create({
@@ -19,13 +21,13 @@ export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHThem
     },
     chevronBtn: {
       padding: 6,
-      borderRadius: 6
+      borderRadius: radius.sm
     },
     chevronBtnDisabled: {
       opacity: 0.3
     },
     chevronText: {
-      fontSize: 14,
+      fontSize: fontSize.md,
       fontWeight: '600',
       color: theme.semantic.text
     },
@@ -34,10 +36,10 @@ export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHThem
       alignItems: 'center',
       paddingHorizontal: 4,
       paddingVertical: 4,
-      borderRadius: 6
+      borderRadius: radius.sm
     },
     periodText: {
-      fontSize: 15,
+      fontSize: fontSize.lg,
       fontWeight: '600',
       color: theme.semantic.text
     },
@@ -53,7 +55,7 @@ export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHThem
       borderBottomColor: 'transparent'
     },
     todayText: {
-      fontSize: 13,
+      fontSize: fontSize.sm,
       fontWeight: '500',
       color: theme.semantic.textSecondary
     }

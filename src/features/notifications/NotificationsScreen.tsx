@@ -8,6 +8,8 @@
 import type { Notification, NotificationTab, TimeGroup } from '@/domain/notification'
 import { TIME_GROUP_LABELS } from '@/domain/notification'
 import { useHoHTheme } from '@/providers'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import { useDraftsStore, useNotificationsStore } from '@/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
@@ -622,7 +624,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: fontSize.lg,
     fontWeight: '600',
   },
   headerSpacer: {
@@ -645,19 +647,19 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
   },
   badge: {
     minWidth: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,
   },
   badgeText: {
     color: '#fff',
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   content: {
@@ -667,7 +669,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   sectionHeader: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -684,14 +686,14 @@ const styles = StyleSheet.create({
   typeBadge: {
     minWidth: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,
   },
   typeBadgeText: {
     color: '#fff',
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   row: {
@@ -704,17 +706,17 @@ const styles = StyleSheet.create({
   avatar: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   rowText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: fontSize.md,
   },
   rowTextUnread: {
     fontWeight: '500',
@@ -731,10 +733,10 @@ const styles = StyleSheet.create({
   unreadDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: radius.xs,
   },
   rowTime: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
   },
   emptyState: {
     flex: 1,
@@ -743,27 +745,27 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: fontSize.lg,
   },
   draftContent: {
     flex: 1,
   },
   draftTitle: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   draftSubtitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     marginTop: 2,
   },
   draftAmount: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
     marginLeft: 8,
   },
   draftDate: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     marginLeft: 12,
     marginRight: 8,
   },
@@ -781,20 +783,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: radius.xl,
   },
   filterPillText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '500',
   },
   filterPillCount: {
     marginLeft: 6,
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 8,
+    borderRadius: radius.md,
   },
   filterPillCountText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   starButton: {

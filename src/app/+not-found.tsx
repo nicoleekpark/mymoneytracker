@@ -1,4 +1,5 @@
 import { useHoHTheme } from '@/providers'
+import { fontSize } from '@/theme/tokens/typography'
 import { Link, Stack } from 'expo-router'
 import React, { useMemo } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
@@ -35,7 +36,7 @@ function createStyles(theme: ReturnType<typeof useHoHTheme>) {
       backgroundColor: theme.semantic.background
     },
     title: {
-      fontSize: 20,
+      fontSize: fontSize['2xl'],
       fontWeight: 'bold',
       color: theme.semantic.text
     },
@@ -44,7 +45,7 @@ function createStyles(theme: ReturnType<typeof useHoHTheme>) {
       paddingVertical: 15
     },
     linkText: {
-      fontSize: 14,
+      fontSize: fontSize.md,
       color: theme.semantic.primary
     }
   })

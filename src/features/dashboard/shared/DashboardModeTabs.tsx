@@ -1,8 +1,50 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
 
 import type { DashboardMode } from '../types'
 import type { DashboardStyles } from '../store'
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+
+function AnimatedTab({
+  mode,
+  selected,
+  onPress,
+  styles
+}: {
+  mode: { key: DashboardMode; label: string }
+  selected: boolean
+  onPress: () => void
+  styles: DashboardStyles
+}) {
+  const scale = useSharedValue(1)
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }]
+  }))
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95, { damping: 15, stiffness: 400 })
+  }
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 400 })
+  }
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[selected ? styles.tabSelected : styles.tab, animatedStyle]}
+      accessibilityRole="tab"
+      accessibilityState={{ selected }}
+    >
+      <Text style={selected ? styles.tabTextSelected : styles.tabText}>{mode.label}</Text>
+    </AnimatedPressable>
+  )
+}
 
 export function DashboardModeTabs(props: {
   modes: ReadonlyArray<{ key: DashboardMode; label: string }>
@@ -19,20 +61,15 @@ export function DashboardModeTabs(props: {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
       >
-        {modes.map((m) => {
-          const selected = m.key === value
-          return (
-            <Pressable
-              key={m.key}
-              onPress={() => onChange(m.key)}
-              style={selected ? styles.tabSelected : styles.tab}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-            >
-              <Text style={selected ? styles.tabTextSelected : styles.tabText}>{m.label}</Text>
-            </Pressable>
-          )
-        })}
+        {modes.map((m) => (
+          <AnimatedTab
+            key={m.key}
+            mode={m}
+            selected={m.key === value}
+            onPress={() => onChange(m.key)}
+            styles={styles}
+          />
+        ))}
       </ScrollView>
     </View>
   )

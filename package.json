@@ -15,7 +15,9 @@
     "db:migration:new": "node scripts/create-migration.js",
     "db:migration:regen": "node scripts/create-migration.js --regen",
     "db:export:sim": "./scripts/export-db-from-simulator.sh",
-    "db:dev:pull": "./scripts/dbpull.sh"
+    "db:dev:pull": "./scripts/dbpull.sh",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

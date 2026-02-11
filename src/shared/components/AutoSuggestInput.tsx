@@ -6,6 +6,7 @@
  */
 
 import { useHoHTheme } from '@/providers'
+import { fontSize } from '@/theme/tokens/typography'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Pressable,
@@ -165,7 +166,7 @@ export function AutoSuggestInput({
 
 const styles = StyleSheet.create({
   input: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     paddingVertical: 4,
   },
   suggestionsContainer: {
@@ -176,6 +177,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   suggestionText: {
-    fontSize: 15,
+    fontSize: fontSize.lg,
   },
 })

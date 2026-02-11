@@ -2,6 +2,7 @@ import { useHoHTheme } from '@/providers'
 import { Divider } from '@/shared/components'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { radius } from '@/theme/tokens/radius'
 
 import type { DateTimeState } from '../hooks/useDateTime'
 
@@ -85,7 +86,7 @@ export function DateTimeSection({ dateTime, embedded = false }: Props) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: radius.xl,
     padding: 14,
   },
   row: {

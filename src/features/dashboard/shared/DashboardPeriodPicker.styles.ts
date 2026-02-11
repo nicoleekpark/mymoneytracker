@@ -1,6 +1,8 @@
 import { Platform, StyleSheet } from 'react-native'
 
 import type { useHoHTheme } from '@/providers'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHoHTheme>) {
   return StyleSheet.create({
@@ -11,15 +13,15 @@ export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHo
     },
     sheet: {
       backgroundColor: theme.semantic.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
       paddingBottom: Platform.OS === 'ios' ? 34 : 20
     },
     handle: {
       width: 36,
       height: 4,
       backgroundColor: theme.semantic.border,
-      borderRadius: 2,
+      borderRadius: radius.xs,
       alignSelf: 'center',
       marginTop: 8,
       marginBottom: 4
@@ -34,7 +36,7 @@ export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHo
       borderBottomColor: theme.semantic.border
     },
     headerTitle: {
-      fontSize: 16,
+      fontSize: fontSize.lg,
       fontWeight: '600',
       color: theme.semantic.text
     },
@@ -42,10 +44,10 @@ export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHo
       paddingHorizontal: 12,
       paddingVertical: 6,
       backgroundColor: theme.semantic.primary,
-      borderRadius: 8
+      borderRadius: radius.md
     },
     doneBtnText: {
-      fontSize: 14,
+      fontSize: fontSize.md,
       fontWeight: '600',
       color: '#FFFFFF'
     },
@@ -60,7 +62,7 @@ export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHo
       height: 200
     },
     pickerItem: {
-      fontSize: 18,
+      fontSize: fontSize.xl,
       color: theme.semantic.text
     }
   })

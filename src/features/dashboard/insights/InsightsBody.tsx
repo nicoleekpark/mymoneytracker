@@ -1,5 +1,7 @@
 import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 import { InsightCard, InsightCarousel, NetSparkline, WeekdayHeatHint, CategoryDeltaBar } from './components'
 import { useInsightsData } from './hooks'
@@ -13,12 +15,12 @@ type Props = {
 // Section gap matching Monthly/Yearly/All views
 const SECTION_GAP = 40
 
-// Accent line colors matching Monthly
+// Accent line colors (neon palette)
 const ACCENT_COLORS = {
-  blue: '#60a5fa',
-  purple: '#a78bfa',
-  amber: '#fbbf24',
-  green: '#4ade80',
+  blue: '#00d4ff',    // neon cyan
+  purple: '#bf00ff',  // electric purple
+  amber: '#ffaa00',   // neon amber
+  green: '#00ffa3',   // neon mint
 }
 
 /**
@@ -35,8 +37,8 @@ function SectionHeader({
 }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-      <View style={{ width: 3, height: 20, borderRadius: 2, backgroundColor: accentColor }} />
-      <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
+      <View style={{ width: 3, height: 20, borderRadius: radius.xs, backgroundColor: accentColor }} />
+      <Text style={{ fontSize: fontSize['2xl'], fontWeight: '700', color: colors.text }}>
         {title}
       </Text>
     </View>
@@ -114,10 +116,10 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
   if (!hasAnyInsights) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: '600', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
           Not enough data yet
         </Text>
-        <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 20 }}>
+        <Text style={{ fontSize: fontSize.md, color: colors.textMuted, textAlign: 'center', lineHeight: 20 }}>
           We'll surface insights once more transactions are available. Keep tracking and check back soon.
         </Text>
       </View>
@@ -146,7 +148,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
             ),
             thisMonth.categoryComparison.length > 0 && (
               <View key="delta" style={{ paddingVertical: 8 }}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
                   Top changes vs last month
                 </Text>
                 <CategoryDeltaBar data={thisMonth.categoryComparison} colors={colors} />
@@ -166,7 +168,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
           {[
             patterns.netTrend.length > 1 && (
               <View key="sparkline" style={{ paddingVertical: 8 }}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
                   Monthly net (income - expenses)
                 </Text>
                 <NetSparkline
@@ -184,7 +186,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
             ),
             patterns.weekdayPattern.length > 0 && patterns.weekdayPattern.some(d => d.avgSpend > 0) && (
               <View key="heatmap" style={{ paddingVertical: 8 }}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
                   Spending by day of week
                 </Text>
                 <WeekdayHeatHint data={patterns.weekdayPattern} colors={colors} />

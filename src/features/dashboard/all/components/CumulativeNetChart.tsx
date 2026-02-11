@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
 import { LineChart } from 'react-native-gifted-charts'
 
 import { formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import type { CumulativeNetData } from '@/domain/transaction/transaction.usecase'
 
 type Colors = {
@@ -26,6 +28,12 @@ type ChartDataItem = {
   month: string // YYYY-MM for lookup
   netDollar: number // monthly net (not cumulative)
 }
+
+type SelectedPoint = {
+  month: string
+  cumulative: number
+  net: number
+} | null
 
 type PeriodKey = '1M' | '3M' | '6M' | '1Y' | 'YTD' | 'ALL'
 
@@ -148,6 +156,14 @@ function formatLabelForPeriod(monthStr: string, period: PeriodKey, index: number
 
 export function CumulativeNetChart({ data, colors }: Props) {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>('ALL')
+  const [selectedPoint, setSelectedPoint] = useState<SelectedPoint>(null)
+  const [chartWidth, setChartWidth] = useState(280)
+
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    // Account for y-axis label width (50) and padding
+    const availableWidth = e.nativeEvent.layout.width - 60
+    setChartWidth(Math.max(200, availableWidth))
+  }, [])
 
   // Filter data based on selected period
   const filteredData = useMemo(() => {
@@ -185,7 +201,7 @@ export function CumulativeNetChart({ data, colors }: Props) {
     return sampled.map((d, i) => ({
       value: d.cumulativeDollar,
       label: formatLabelForPeriod(d.month, selectedPeriod, i, sampled.length),
-      labelTextStyle: { color: colors.textSecondary, fontSize: 10 },
+      labelTextStyle: { color: colors.textSecondary, fontSize: fontSize.xs },
       month: d.month,
       netDollar: d.netDollar
     }))
@@ -220,32 +236,57 @@ export function CumulativeNetChart({ data, colors }: Props) {
   const yAxisOffset = minValue < 0 ? Math.abs(minValue) : 0
 
   return (
-    <View>
-      {/* Header: Total + Period change */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-        <View>
-          <Text style={{ fontSize: 11, color: colors.textSecondary, marginBottom: 2 }}>
-            Cumulative Net
-          </Text>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: isPositive ? colors.success : colors.danger }}>
-            {formatUsdInt(lastValue)}
-          </Text>
-        </View>
-        {periodChange !== null && selectedPeriod !== 'ALL' && (
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 10, color: colors.textSecondary, marginBottom: 2 }}>
-              {PERIODS.find(p => p.key === selectedPeriod)?.label ?? selectedPeriod}
-            </Text>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: changeIsPositive ? colors.success : colors.danger }}>
-              {changeIsPositive ? '+' : ''}{formatUsdInt(periodChange)}
-            </Text>
-          </View>
+    <View onLayout={handleLayout}>
+      {/* Header: Total + Period change OR Selected point details */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, minHeight: 48 }}>
+        {selectedPoint ? (
+          /* Fixed position details when a point is selected */
+          <>
+            <View>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
+                {formatFullMonth(selectedPoint.month)}
+              </Text>
+              <Text style={{ fontSize: fontSize['2xl'], fontWeight: '800', color: selectedPoint.cumulative >= 0 ? colors.success : colors.danger }}>
+                {formatUsdInt(selectedPoint.cumulative)}
+              </Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
+                Month net
+              </Text>
+              <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: selectedPoint.net >= 0 ? colors.success : colors.danger }}>
+                {selectedPoint.net >= 0 ? '+' : ''}{formatUsdInt(selectedPoint.net)}
+              </Text>
+            </View>
+          </>
+        ) : (
+          /* Default: Total + Period change */
+          <>
+            <View>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
+                Cumulative Net
+              </Text>
+              <Text style={{ fontSize: fontSize['2xl'], fontWeight: '800', color: isPositive ? colors.success : colors.danger }}>
+                {formatUsdInt(lastValue)}
+              </Text>
+            </View>
+            {periodChange !== null && selectedPeriod !== 'ALL' && (
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
+                  {PERIODS.find(p => p.key === selectedPeriod)?.label ?? selectedPeriod}
+                </Text>
+                <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: changeIsPositive ? colors.success : colors.danger }}>
+                  {changeIsPositive ? '+' : ''}{formatUsdInt(periodChange)}
+                </Text>
+              </View>
+            )}
+          </>
         )}
       </View>
 
       <LineChart
         data={chartData}
-        width={280}
+        width={chartWidth}
         height={160}
         color={changeIsPositive ? colors.success : colors.danger}
         thickness={2}
@@ -253,7 +294,7 @@ export function CumulativeNetChart({ data, colors }: Props) {
         hideRules
         yAxisColor="transparent"
         xAxisColor={colors.surfaceAlt}
-        yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+        yAxisTextStyle={{ color: colors.textSecondary, fontSize: fontSize.xs }}
         yAxisLabelWidth={50}
         formatYLabel={(val) => formatCompactAmount(Number(val))}
         noOfSections={4}
@@ -265,51 +306,60 @@ export function CumulativeNetChart({ data, colors }: Props) {
         endFillColor={changeIsPositive ? `${colors.success}10` : `${colors.danger}10`}
         startOpacity={0.3}
         endOpacity={0.05}
-        initialSpacing={10}
-        endSpacing={10}
+        initialSpacing={16}
+        endSpacing={24}
         adjustToWidth
+        xAxisLabelTextStyle={{ fontSize: fontSize.xs }}
         pointerConfig={{
           pointerStripColor: colors.textSecondary,
           pointerStripWidth: 1,
           pointerColor: changeIsPositive ? colors.success : colors.danger,
           radius: 5,
-          pointerLabelWidth: 140,
-          pointerLabelHeight: 60,
           activatePointersOnLongPress: false,
-          autoAdjustPointerLabelPosition: true,
+          autoAdjustPointerLabelPosition: false,
+          pointerLabelWidth: 0,
+          pointerLabelHeight: 0,
+          pointerVanishDelay: 0,
+          persistPointer: true,
+          pointerEvents: 'auto' as const,
           pointerLabelComponent: (items: ChartDataItem[]) => {
             const item = items[0]
-            if (!item) return null
-            const pointIsPositive = item.value >= 0
-            return (
-              <View
-                style={{
-                  backgroundColor: colors.surface,
-                  borderRadius: 10,
-                  padding: 10,
-                  borderWidth: 1,
-                  borderColor: colors.surfaceAlt,
-                  minWidth: 120
-                }}
-              >
-                {/* Month and Year */}
-                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary, marginBottom: 4 }}>
-                  {formatFullMonth(item.month)}
-                </Text>
-                {/* Cumulative Net */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 10, color: colors.textSecondary }}>
-                    Cumulative
-                  </Text>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: pointIsPositive ? colors.success : colors.danger }}>
-                    {formatUsdInt(item.value)}
-                  </Text>
-                </View>
-              </View>
-            )
+            if (item) {
+              // Update fixed position display
+              const newPoint = {
+                month: item.month,
+                cumulative: item.value,
+                net: item.netDollar
+              }
+              // Only update if different to avoid re-render loop
+              if (!selectedPoint ||
+                  selectedPoint.month !== newPoint.month ||
+                  selectedPoint.cumulative !== newPoint.cumulative) {
+                setTimeout(() => setSelectedPoint(newPoint), 0)
+              }
+            }
+            return null // No floating label
           }
         }}
+        onChartAreaPress={() => {
+          // Clear selection when tapping empty area
+          setSelectedPoint(null)
+        }}
       />
+
+      {/* Hint when not selected */}
+      {!selectedPoint && (
+        <Text
+          style={{
+            fontSize: fontSize.xs,
+            color: colors.textSecondary,
+            textAlign: 'center',
+            marginTop: 8
+          }}
+        >
+          Tap chart to explore months
+        </Text>
+      )}
 
       {/* Period selector tabs - Robinhood style */}
       <View
@@ -325,17 +375,20 @@ export function CumulativeNetChart({ data, colors }: Props) {
           return (
             <Pressable
               key={key}
-              onPress={() => setSelectedPeriod(key)}
+              onPress={() => {
+                setSelectedPeriod(key)
+                setSelectedPoint(null) // Clear selection on period change
+              }}
               style={{
                 paddingHorizontal: 12,
                 paddingVertical: 6,
-                borderRadius: 16,
+                borderRadius: radius.xl,
                 backgroundColor: isSelected ? colors.surfaceAlt : 'transparent'
               }}
             >
               <Text
                 style={{
-                  fontSize: 12,
+                  fontSize: fontSize.xs,
                   fontWeight: isSelected ? '700' : '500',
                   color: isSelected ? colors.text : colors.textSecondary
                 }}

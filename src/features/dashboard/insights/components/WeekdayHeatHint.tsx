@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, Pressable } from 'react-native'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 import type { InsightsColors } from '../insights.types'
 
@@ -44,11 +46,11 @@ export function WeekdayHeatHint({ data, colors }: Props) {
       {/* Selected day display */}
       <View style={{ height: 20, marginBottom: 8, justifyContent: 'center' }}>
         {selectedDay !== null && selectedSpend !== null ? (
-          <Text style={{ fontSize: 12, color: colors.text, fontWeight: '600' }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.text, fontWeight: '600' }}>
             {DAY_LABELS[selectedDay]}: {formatAmount(selectedSpend)} avg
           </Text>
         ) : (
-          <Text style={{ fontSize: 11, color: colors.textMuted }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
             Tap a day to see average
           </Text>
         )}
@@ -68,14 +70,14 @@ export function WeekdayHeatHint({ data, colors }: Props) {
               onPress={() => setSelectedDay(selectedDay === dayIndex ? null : dayIndex)}
               style={{ alignItems: 'center', gap: 4 }}
             >
-              <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: '500' }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, fontWeight: '500' }}>
                 {label}
               </Text>
               <View
                 style={{
                   width: 28,
                   height: 28,
-                  borderRadius: 6,
+                  borderRadius: radius.sm,
                   backgroundColor: colors.danger,
                   opacity,
                   borderWidth: isSelected ? 2 : 0,
@@ -90,12 +92,12 @@ export function WeekdayHeatHint({ data, colors }: Props) {
       {/* Subtle legend */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: colors.danger, opacity: 0.15 }} />
-          <Text style={{ fontSize: 9, color: colors.textMuted }}>Low</Text>
+          <View style={{ width: 8, height: 8, borderRadius: radius.xs, backgroundColor: colors.danger, opacity: 0.15 }} />
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Low</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: colors.danger, opacity: 0.6 }} />
-          <Text style={{ fontSize: 9, color: colors.textMuted }}>High</Text>
+          <View style={{ width: 8, height: 8, borderRadius: radius.xs, backgroundColor: colors.danger, opacity: 0.6 }} />
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>High</Text>
         </View>
       </View>
     </View>

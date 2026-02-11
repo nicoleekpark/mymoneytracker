@@ -1,76 +1,81 @@
 import type { SemanticColors } from '../types'
 import { PALETTE } from './base'
 
+// ===============================
+// Monet 1875 Garden Palette (A)
+// Parasol green primary, sunlight warning, sky info, coral danger
+// ===============================
+
 export const semanticLight: SemanticColors = {
-  // App background (warm stone tones)
-  background: PALETTE.zinc[50],
-  backgroundAlt: PALETTE.zinc[100],
+  // App background (airy sky paper)
+  background: PALETTE.surfaceLight.background,
+  backgroundAlt: PALETTE.surfaceLight.backgroundAlt,
 
   // Cards / surfaces
-  surface: '#FFFFFF',
-  surfaceAlt: PALETTE.zinc[100],
-  border: PALETTE.zinc[200],
+  surface: PALETTE.surfaceLight.surface,
+  surfaceAlt: PALETTE.surfaceLight.surfaceAlt,
+  border: PALETTE.surfaceLight.border,
 
   // Text
-  text: PALETTE.zinc[900],
-  textSecondary: PALETTE.zinc[500],
+  text: PALETTE.text.light,
+  textSecondary: PALETTE.text.lightSecondary,
 
-  // Brand (Warm Gray - Editorial)
-  primary: PALETTE.editorial.primary,
-  primarySoft: PALETTE.editorial.primarySoft,
-  primaryStrong: PALETTE.zinc[600],
+  // Brand (parasol green teal)
+  primary: PALETTE.garden.teal,
+  primarySoft: PALETTE.garden.tealSoft,
+  primaryStrong: PALETTE.garden.tealStrong,
 
-  // Status (Forest + Terracotta)
-  success: PALETTE.editorial.forest,
-  successSoft: PALETTE.editorial.forestSoft,
+  // Status - WCAG AA compliant
+  success: PALETTE.income.light,
+  successSoft: PALETTE.income.lightSoft,
 
-  warning: PALETTE.editorial.gold,
+  warning: PALETTE.warning.light,
+  warningSoft: PALETTE.warning.lightSoft,
 
-  danger: PALETTE.editorial.terracotta,
-  dangerSoft: PALETTE.editorial.terracottaSoft,
+  danger: PALETTE.expense.light,
+  dangerSoft: PALETTE.expense.lightSoft,
 
-  info: PALETTE.blue[500],
-  infoSoft: PALETTE.blue[50],
+  info: PALETTE.info.light,
+  infoSoft: PALETTE.info.lightSoft,
 
-  // Highlight/Achievement - Lavender (special days, milestones)
-  highlight: PALETTE.editorial.lavender,
-  highlightSoft: PALETTE.editorial.lavenderSoft
+  // Highlight (same as primary for Garden palette)
+  highlight: PALETTE.garden.teal,
+  highlightSoft: PALETTE.garden.tealSoft,
 }
-
 
 export const semanticDark: SemanticColors = {
-  // App background (warm stone tones)
-  background: PALETTE.zinc[950],
-  backgroundAlt: PALETTE.zinc[900],
+  // App background (deep ocean night)
+  background: PALETTE.surfaceDark.background,
+  backgroundAlt: PALETTE.surfaceDark.backgroundAlt,
 
   // Cards / surfaces
-  surface: PALETTE.zinc[900],
-  surfaceAlt: PALETTE.zinc[800],
-  border: PALETTE.zinc[700],
+  surface: PALETTE.surfaceDark.surface,
+  surfaceAlt: PALETTE.surfaceDark.surfaceAlt,
+  border: PALETTE.surfaceDark.border,
 
   // Text
-  text: PALETTE.zinc[50],
-  textSecondary: PALETTE.zinc[400],
+  text: PALETTE.text.dark,
+  textSecondary: PALETTE.text.darkSecondary,
 
-  // Brand (Warm Gray - Editorial, lighter for dark mode)
-  primary: PALETTE.editorial.primaryLight,
-  primarySoft: PALETTE.editorial.primarySoftDark,
-  primaryStrong: PALETTE.zinc[300],
+  // Brand (soft mint)
+  primary: PALETTE.garden.mint,
+  primarySoft: PALETTE.garden.mintSoft,
+  primaryStrong: PALETTE.surfaceDark.background,
 
-  // Status (Forest + Terracotta, lighter for dark mode)
-  success: PALETTE.editorial.forestLight,
-  successSoft: PALETTE.editorial.forestSoftDark,
+  // Status - bright on dark
+  success: PALETTE.income.dark,
+  successSoft: PALETTE.income.darkSoft,
 
-  warning: PALETTE.editorial.goldLight,
+  warning: PALETTE.warning.dark,
+  warningSoft: PALETTE.warning.darkSoft,
 
-  danger: PALETTE.editorial.terracottaLight,
-  dangerSoft: PALETTE.editorial.terracottaSoftDark,
+  danger: PALETTE.expense.dark,
+  dangerSoft: PALETTE.expense.darkSoft,
 
-  info: PALETTE.blue[400],
-  infoSoft: PALETTE.blue[900],
+  info: PALETTE.info.dark,
+  infoSoft: PALETTE.info.darkSoft,
 
-  // Highlight/Achievement - Lavender (special days, milestones)
-  highlight: PALETTE.editorial.lavenderLight,
-  highlightSoft: PALETTE.editorial.lavenderSoftDark
+  // Highlight
+  highlight: PALETTE.garden.mint,
+  highlightSoft: PALETTE.garden.mintSoft,
 }
-

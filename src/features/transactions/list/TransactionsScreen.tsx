@@ -2,6 +2,8 @@ import { getActiveAccounts } from '@/domain/account'
 import type { Transaction } from '@/domain/transaction'
 import { isExpense, safeDate, TransactionType } from '@/domain/transaction'
 import { useHoHTheme } from '@/providers'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import { formatDayHeader, formatMonthSectionTitle, monthKey, ymd } from '@/shared/format/date'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFocusEffect } from '@react-navigation/native'
@@ -328,7 +330,7 @@ export default function TransactionsScreen() {
             <View>
               {showDayHeader && rowYmd ? (
                 <View style={{ paddingTop: 12, paddingBottom: 6 }}>
-                  <Text style={{ color: theme.semantic.textSecondary, fontSize: 12, fontWeight: '800' }}>
+                  <Text style={{ color: theme.semantic.textSecondary, fontSize: fontSize.xs, fontWeight: '800' }}>
                     {formatDayHeader(d)}
                   </Text>
                 </View>
@@ -390,19 +392,19 @@ const DAY_GAP = 8
 
 const styles = StyleSheet.create({
   header: { justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 18, letterSpacing: 0.6, fontWeight: '700' },
+  title: { fontSize: fontSize.xl, letterSpacing: 0.6, fontWeight: '700' },
 
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 10,
     marginBottom: 12
   },
-  searchInput: { flex: 1, fontSize: 14, padding: 0 },
+  searchInput: { flex: 1, fontSize: fontSize.md, padding: 0 },
   filterBtn: { paddingLeft: 6, paddingVertical: 2 },
 
   monthBar: {
@@ -412,8 +414,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1
   },
-  monthText: { fontSize: 12, letterSpacing: 0.8, fontWeight: '700' },
-  monthTotal: { fontSize: 12 },
+  monthText: { fontSize: fontSize.xs, letterSpacing: 0.8, fontWeight: '700' },
+  monthTotal: { fontSize: fontSize.xs },
 
   separator: { height: 10 },
   emptyContainer: { paddingTop: 12 },
@@ -421,7 +423,7 @@ const styles = StyleSheet.create({
   rowCard: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     overflow: 'hidden',
     position: 'relative',
     minHeight: 50
@@ -449,26 +451,26 @@ const styles = StyleSheet.create({
 
   dayText: {
     width: DAY_COL_W,
-    fontSize: 18,
+    fontSize: fontSize.xl,
     fontWeight: '900',
     marginRight: DAY_GAP
   },
 
   itemTextNew: {
     flex: 1,
-    fontSize: 15,
+    fontSize: fontSize.lg,
     fontWeight: '900',
     paddingRight: 10
   },
 
   amountTextNew: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '900'
   },
 
   merchantTextNew: {
     flex: 1,
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700'
   },
 
@@ -482,7 +484,7 @@ const styles = StyleSheet.create({
   },
 
   accountTextNew: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     textAlign: 'right'
   },
@@ -503,14 +505,14 @@ const styles = StyleSheet.create({
 
   summaryPill: {
     width: '100%',
-    borderRadius: 10,
+    borderRadius: radius.md,
     paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center'
   },
 
   summaryPillText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.6,
     justifyContent: 'center'
@@ -518,7 +520,7 @@ const styles = StyleSheet.create({
 
   summaryValueSm: {
     marginTop: 10,
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '900'
   }
 })

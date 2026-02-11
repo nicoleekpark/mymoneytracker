@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
 
 import { formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import type { YearlyProjection } from '@/domain/transaction/transaction.usecase'
 
 type Colors = {
@@ -29,7 +31,7 @@ function ProgressBar({ progress, color }: { progress: number; color: string }) {
       style={{
         height: 6,
         backgroundColor: color + '33',
-        borderRadius: 3,
+        borderRadius: radius.full,
         overflow: 'hidden',
         marginTop: 10,
       }}
@@ -39,7 +41,7 @@ function ProgressBar({ progress, color }: { progress: number; color: string }) {
           height: '100%',
           width: `${clampedProgress}%`,
           backgroundColor: color,
-          borderRadius: 3,
+          borderRadius: radius.full,
         }}
       />
     </View>
@@ -54,13 +56,13 @@ function InfoButton({ onPress, color }: { onPress: () => void; color: string }) 
       style={{
         width: 14,
         height: 14,
-        borderRadius: 7,
+        borderRadius: radius.full,
         backgroundColor: color + '20',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Text style={{ fontSize: 8, fontWeight: '700', color }}>i</Text>
+      <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color }}>i</Text>
     </Pressable>
   )
 }
@@ -93,7 +95,7 @@ function InfoModal({
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: 16,
+            borderRadius: radius.xl,
             padding: 24,
             width: '100%',
             maxWidth: 320,
@@ -101,11 +103,11 @@ function InfoModal({
             borderColor: colors.border,
           }}
         >
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 16 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: 16 }}>
             {title}
           </Text>
           {content.map((line, i) => (
-            <Text key={i} style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
+            <Text key={i} style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
               {line}
             </Text>
           ))}
@@ -114,12 +116,12 @@ function InfoModal({
             style={{
               marginTop: 16,
               backgroundColor: colors.text,
-              borderRadius: 8,
+              borderRadius: radius.md,
               paddingVertical: 12,
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.surface }}>Got it</Text>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.surface }}>Got it</Text>
           </Pressable>
         </View>
       </Pressable>
@@ -157,7 +159,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
     <View
       style={{
         backgroundColor: colors.surface,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         borderWidth: 1,
         borderColor: colors.border,
         padding: 16,
@@ -212,10 +214,10 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
 
       {/* Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
           PROJECTION
         </Text>
-        <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
           Month {monthProgress} of 12
         </Text>
       </View>
@@ -227,7 +229,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
           style={{
             flex: 1,
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 12,
+            borderRadius: radius.lg,
             padding: 12,
           }}
         >
@@ -238,20 +240,20 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               justifyContent: 'space-between',
               alignItems: 'center',
               backgroundColor: colors.text + '10',
-              borderRadius: 6,
+              borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
               marginBottom: 10,
             }}
           >
-            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
               INCOME
             </Text>
             <InfoButton onPress={() => setShowIncomeInfo(true)} color={colors.textSecondary} />
           </View>
 
           {/* Amount */}
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
+          <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
             {formatUsdInt(projectedIncome)}
           </Text>
 
@@ -264,7 +266,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
           style={{
             flex: 1,
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 12,
+            borderRadius: radius.lg,
             padding: 12,
           }}
         >
@@ -275,20 +277,20 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               justifyContent: 'space-between',
               alignItems: 'center',
               backgroundColor: colors.danger + '18',
-              borderRadius: 6,
+              borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
               marginBottom: 10,
             }}
           >
-            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.danger, letterSpacing: 0.5 }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.danger, letterSpacing: 0.5 }}>
               EXPENSE
             </Text>
             <InfoButton onPress={() => setShowExpenseInfo(true)} color={colors.danger} />
           </View>
 
           {/* Amount */}
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
+          <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
             {formatUsdInt(projectedExpense)}
           </Text>
 
@@ -304,7 +306,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
           style={{
             flex: 1,
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 12,
+            borderRadius: radius.lg,
             padding: 12,
           }}
         >
@@ -315,13 +317,13 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               justifyContent: 'space-between',
               alignItems: 'center',
               backgroundColor: colors.success + '18',
-              borderRadius: 6,
+              borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
               marginBottom: 10,
             }}
           >
-            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.success, letterSpacing: 0.5 }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.success, letterSpacing: 0.5 }}>
               SAVINGS
             </Text>
             <InfoButton onPress={() => setShowSavingsInfo(true)} color={colors.success} />
@@ -330,7 +332,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
           {/* Amount */}
           <Text
             style={{
-              fontSize: 18,
+              fontSize: fontSize.xl,
               fontWeight: '800',
               color: projectedSavings >= 0 ? colors.success : colors.text,
               textAlign: 'center',
@@ -340,7 +342,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
           </Text>
 
           {/* Sub label */}
-          <Text style={{ fontSize: 10, color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
             {projectedSavingsRate}% rate
           </Text>
         </View>
@@ -350,7 +352,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
           style={{
             flex: 1,
             backgroundColor: colors.surfaceAlt,
-            borderRadius: 12,
+            borderRadius: radius.lg,
             padding: 12,
           }}
         >
@@ -361,13 +363,13 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               justifyContent: 'space-between',
               alignItems: 'center',
               backgroundColor: colors.primary + '18',
-              borderRadius: 6,
+              borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
               marginBottom: 10,
             }}
           >
-            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.primary, letterSpacing: 0.5 }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.primary, letterSpacing: 0.5 }}>
               VS LAST YEAR
             </Text>
             <InfoButton onPress={() => setShowVsLastYearInfo(true)} color={colors.primary} />
@@ -376,12 +378,12 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
           {vsLastYear ? (
             <>
               {/* Amount */}
-              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
+              <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
                 {vsLastYear.isMoreSaved ? '+' : '-'}{formatUsdInt(vsLastYear.delta)}
               </Text>
 
               {/* Sub label */}
-              <Text style={{ fontSize: 10, color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
                 <Text style={{ color: vsLastYear.isMoreSaved ? colors.success : colors.text }}>
                   {vsLastYear.isMoreSaved ? '↑' : '↓'}
                 </Text>
@@ -389,7 +391,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               </Text>
             </>
           ) : (
-            <Text style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginTop: 4 }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center', marginTop: 4 }}>
               No data
             </Text>
           )}

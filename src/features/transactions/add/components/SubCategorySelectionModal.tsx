@@ -3,6 +3,7 @@ import type { CategoryRef } from '@/domain/category'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
+import { radius } from '@/theme/tokens/radius'
 import React from 'react'
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   },
   topRow: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 12,
     flexDirection: 'row',

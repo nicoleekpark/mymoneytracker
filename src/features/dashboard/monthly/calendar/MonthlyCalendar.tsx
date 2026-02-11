@@ -1,6 +1,8 @@
 import { getTransactionsForDate } from '@/domain/transaction/transaction.usecase'
 import type { Transaction } from '@/domain/transaction/transaction.types'
 import { formatCompactUsd, formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, Text, View } from 'react-native'
 
@@ -222,7 +224,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
           style={{
             height: CELL_HEIGHT,
             backgroundColor: bgColor,
-            borderRadius: 8,
+            borderRadius: radius.md,
             borderWidth: isSelected ? 2 : 0,
             borderColor: isSelected ? colors.primary : 'transparent',
             paddingTop: 6,
@@ -237,7 +239,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
             style={{
               width: 22,
               height: 22,
-              borderRadius: 11,
+              borderRadius: radius.full,
               backgroundColor: isToday ? colors.primary : 'transparent',
               alignItems: 'center',
               justifyContent: 'center'
@@ -245,7 +247,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
           >
             <Text
               style={{
-                fontSize: 13,
+                fontSize: fontSize.sm,
                 fontWeight: '700',
                 color: isToday ? '#fff' : hasActivity ? colors.text : colors.textMuted
               }}
@@ -260,7 +262,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
               style={{
                 width: 9,
                 height: 9,
-                borderRadius: 4.5,
+                borderRadius: radius.full,
                 borderWidth: 1.5,
                 borderColor: colors.highlight,
                 alignItems: 'center',
@@ -272,7 +274,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                 style={{
                   width: 4,
                   height: 4,
-                  borderRadius: 2,
+                  borderRadius: radius.full,
                   backgroundColor: colors.highlight
                 }}
               />
@@ -283,7 +285,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
               style={{
                 width: 5,
                 height: 5,
-                borderRadius: 2.5,
+                borderRadius: radius.full,
                 backgroundColor: colors.highlight,
                 marginLeft: 2
               }}
@@ -294,12 +296,12 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
         {hasActivity && (
           <View style={{ alignItems: 'center', marginTop: 3 }}>
             {hasIncome && (
-              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.success }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.success }}>
                 +{formatCompactUsd(v!.income)}
               </Text>
             )}
             {hasExpense && (
-              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.danger }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.danger }}>
                 -{formatCompactUsd(v!.expense)}
               </Text>
             )}
@@ -316,7 +318,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
       <View style={{ flexDirection: 'row' }}>
         {WEEKDAYS.map((w, i) => (
           <View key={`wd-${i}`} style={{ flex: 1, marginHorizontal: CELL_MARGIN, alignItems: 'center', paddingVertical: 4 }}>
-            <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text }}>{w}</Text>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>{w}</Text>
           </View>
         ))}
       </View>
@@ -349,7 +351,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: colors.surface,
-              borderRadius: 16,
+              borderRadius: radius.xl,
               padding: 16,
               width: 280,
               maxHeight: 400,
@@ -373,7 +375,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                     marginBottom: 16
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                  <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
                     {formatDayLabel(selectedDay.ymd, selectedDay.dayNum)}
                   </Text>
                   <Pressable
@@ -385,7 +387,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                       justifyContent: 'center'
                     }}
                   >
-                    <Text style={{ fontSize: 16, fontWeight: '500', color: colors.textMuted }}>
+                    <Text style={{ fontSize: fontSize.lg, fontWeight: '500', color: colors.textMuted }}>
                       ✕
                     </Text>
                   </Pressable>
@@ -401,38 +403,38 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                     padding: 12,
                     borderWidth: 1,
                     borderColor: colors.border,
-                    borderRadius: 10
+                    borderRadius: radius.md
                   }}
                 >
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
                       Inflow
                     </Text>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: selectedDay.income > 0 ? colors.success : colors.textMuted }}>
+                    <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: selectedDay.income > 0 ? colors.success : colors.textMuted }}>
                       {formatUsdInt(selectedDay.income)}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: '400', color: colors.textMuted, marginTop: 14 }}>
+                  <Text style={{ fontSize: fontSize.lg, fontWeight: '400', color: colors.textMuted, marginTop: 14 }}>
                     −
                   </Text>
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
                       Outflow
                     </Text>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: selectedDay.expense > 0 ? colors.danger : colors.textMuted }}>
+                    <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: selectedDay.expense > 0 ? colors.danger : colors.textMuted }}>
                       {formatUsdInt(selectedDay.expense)}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: '400', color: colors.textMuted, marginTop: 14 }}>
+                  <Text style={{ fontSize: fontSize.lg, fontWeight: '400', color: colors.textMuted, marginTop: 14 }}>
                     =
                   </Text>
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
                       Net
                     </Text>
                     <Text
                       style={{
-                        fontSize: 15,
+                        fontSize: fontSize.lg,
                         fontWeight: '700',
                         color: selectedDay.net >= 0 ? colors.success : colors.danger
                       }}
@@ -462,14 +464,14 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                         }}
                       >
                         <Text
-                          style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.text, marginRight: 8 }}
+                          style={{ flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text, marginRight: 8 }}
                           numberOfLines={1}
                         >
                           {getTxDisplayName(tx)}
                         </Text>
                         <Text
                           style={{
-                            fontSize: 13,
+                            fontSize: fontSize.sm,
                             fontWeight: '700',
                             color: tx.type === 'income' ? colors.success : colors.danger
                           }}
@@ -489,7 +491,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                     alignItems: 'center'
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+                  <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
                     View all {selectedDay.txCount} transactions →
                   </Text>
                 </Pressable>

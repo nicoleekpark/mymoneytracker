@@ -22,6 +22,8 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { displaySize, fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import {
@@ -614,7 +616,7 @@ const styles = StyleSheet.create({
   dragHandle: {
     width: 36,
     height: 5,
-    borderRadius: 2.5,
+    borderRadius: radius.xs,
   },
   header: {
     flexDirection: 'row',
@@ -627,7 +629,7 @@ const styles = StyleSheet.create({
     width: 28,
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     textAlign: 'center',
     flex: 1,
@@ -648,7 +650,7 @@ const styles = StyleSheet.create({
     marginBottom: -1,
   },
   typeTabText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   content: {
@@ -657,22 +659,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   fieldGroup: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
   },
   titleInput: {
-    fontSize: 20,
+    fontSize: fontSize['2xl'],
     fontWeight: '600',
     paddingVertical: 2,
   },
   merchantInput: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
     paddingVertical: 2,
     marginTop: 8,
   },
   amountValue: {
-    fontSize: 32,
+    fontSize: displaySize.md,
     fontWeight: '700',
   },
   metadataRow: {
@@ -682,11 +684,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   metadataLabel: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   metadataValue: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   dateTimeValues: {
@@ -702,7 +704,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   noteInput: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     lineHeight: 20,
     minHeight: 32,
   },
@@ -717,7 +719,7 @@ const styles = StyleSheet.create({
   receiptImage: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   footer: {
     paddingHorizontal: 16,

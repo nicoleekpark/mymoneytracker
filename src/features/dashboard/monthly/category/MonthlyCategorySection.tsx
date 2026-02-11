@@ -4,6 +4,8 @@ import { Pressable, Text, View } from 'react-native'
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { CARD_SHADOW } from '@/theme/tokens'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 import type { CalendarColors } from '../calendar'
 import { formatUsdInt } from './category.utils'
@@ -103,7 +105,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
     ? {}
     : {
         backgroundColor: colors.surface,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         padding: 20,
         ...CARD_SHADOW
       }
@@ -113,14 +115,14 @@ export function MonthlyCategoryContent(props: ContentProps) {
       {/* Header - only show if not hidden */}
       {!hideHeader && (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
             Spending by Category
           </Text>
-          <Text style={{ fontSize: 10, color: colors.textMuted, marginLeft: 4 }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginLeft: 4 }}>
             % of total
           </Text>
           {hasData && (
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.danger }}>
+            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.danger }}>
               {formatUsdInt(totalSpentDollar)}
             </Text>
           )}
@@ -150,20 +152,20 @@ export function MonthlyCategoryContent(props: ContentProps) {
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
                     disabled={!hasSubcategories}
                   >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: catMeta.color }} />
-                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                    <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: catMeta.color }} />
+                    <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text }} numberOfLines={1}>
                       {catMeta.name}
                     </Text>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+                    <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
                       {formatUsdInt(cat.totalDollar)}
                     </Text>
-                    <Text style={{ width: 38, textAlign: 'right', fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
+                    <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted }}>
                       {Math.round(percent)}%
                     </Text>
                     {/* Chevron indicator - fixed width container for alignment */}
                     <View style={{ width: 20, alignItems: 'center' }}>
                       {hasSubcategories && (
-                        <Text style={{ fontSize: 10, color: colors.textMuted }}>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
                           {isExpanded ? '▼' : '▶'}
                         </Text>
                       )}
@@ -175,7 +177,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
                     style={{
                       height: 8,
                       backgroundColor: colors.surfaceAlt,
-                      borderRadius: 4,
+                      borderRadius: radius.sm,
                       marginLeft: 18,
                       overflow: 'hidden'
                     }}
@@ -185,7 +187,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
                         height: '100%',
                         width: `${barWidth}%`,
                         backgroundColor: catMeta.color,
-                        borderRadius: 4
+                        borderRadius: radius.sm
                       }}
                     />
                   </View>
@@ -194,7 +196,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
                   {isExpanded && hasSubcategories && (
                     <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
                       {/* Subcategory header showing % is of parent */}
-                      <Text style={{ fontSize: 9, color: colors.textMuted, marginBottom: 2 }}>
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: 2 }}>
                         % of {catMeta.name}
                       </Text>
                       {cat.subcategories.map((sub, subIdx) => {
@@ -207,14 +209,14 @@ export function MonthlyCategoryContent(props: ContentProps) {
                         return (
                           <View key={subIdx} style={{ gap: 4 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: subMeta.color }} />
-                              <Text style={{ flex: 1, fontSize: 12, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
+                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: subMeta.color }} />
+                              <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {subMeta.name}
                               </Text>
-                              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.totalDollar)}
                               </Text>
-                              <Text style={{ width: 38, textAlign: 'right', fontSize: 10, color: colors.textMuted }}>
+                              <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
                                 {Math.round(subPercent)}%
                               </Text>
                               {/* Spacer for alignment with parent rows */}
@@ -225,7 +227,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
                               style={{
                                 height: 4,
                                 backgroundColor: colors.surfaceAlt,
-                                borderRadius: 2,
+                                borderRadius: radius.xs,
                                 marginLeft: 12,
                                 overflow: 'hidden'
                               }}
@@ -236,7 +238,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
                                   width: `${subBarWidth}%`,
                                   backgroundColor: subMeta.color,
                                   opacity: 0.7,
-                                  borderRadius: 2
+                                  borderRadius: radius.xs
                                 }}
                               />
                             </View>
@@ -256,7 +258,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
               onPress={() => setShowAll(!showAll)}
               style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
                 {showAll ? 'Show less' : `Show all ${rows.length} categories`}
               </Text>
             </Pressable>

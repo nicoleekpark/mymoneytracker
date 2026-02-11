@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text } from 'react-native'
+import { fontSize } from '@/theme/tokens/typography'
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg'
 
 import type { InsightsColors } from '../insights.types'
@@ -67,10 +68,10 @@ export function NetSparkline({ data, baseline, colors }: Props) {
     <View style={{ alignItems: 'center' }}>
       {/* Current value display */}
       <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: currentColor }}>
+        <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: currentColor }}>
           {formatNet(currentNet)}
         </Text>
-        <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 4 }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginLeft: 4 }}>
           this month
         </Text>
       </View>
@@ -122,10 +123,10 @@ export function NetSparkline({ data, baseline, colors }: Props) {
 
       {/* Labels with year */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: width - paddingX * 2, marginTop: 4 }}>
-        <Text style={{ fontSize: 10, color: colors.textMuted }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
           {formatMonthLabel(data[0].month)}
         </Text>
-        <Text style={{ fontSize: 10, color: colors.textMuted }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
           {formatMonthLabel(data[data.length - 1].month)}
         </Text>
       </View>

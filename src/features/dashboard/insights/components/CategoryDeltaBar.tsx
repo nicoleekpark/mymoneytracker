@@ -1,5 +1,7 @@
 import React from 'react'
 import { View, Text } from 'react-native'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 
 import type { InsightsColors } from '../insights.types'
 
@@ -39,11 +41,11 @@ export function CategoryDeltaBar({ data, colors }: Props) {
           <View key={i} style={{ gap: 4 }}>
             {/* Category name and change */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>
                 {cat.name}
               </Text>
               {changePercent !== 0 && (
-                <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
                   {changePercent > 0 ? '+' : ''}{changePercent}%
                 </Text>
               )}
@@ -53,14 +55,14 @@ export function CategoryDeltaBar({ data, colors }: Props) {
             <View style={{ gap: 3 }}>
               {/* This month */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: 9, color: colors.textMuted, width: 50 }}>This mo</Text>
-                <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3 }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, width: 50 }}>This mo</Text>
+                <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: radius.full }}>
                   <View
                     style={{
                       width: `${thisWidth}%`,
                       height: '100%',
                       backgroundColor: colors.primary,
-                      borderRadius: 3,
+                      borderRadius: radius.full,
                       opacity: 0.8
                     }}
                   />
@@ -69,14 +71,14 @@ export function CategoryDeltaBar({ data, colors }: Props) {
 
               {/* Last month */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: 9, color: colors.textMuted, width: 50 }}>Last mo</Text>
-                <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3 }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, width: 50 }}>Last mo</Text>
+                <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: radius.full }}>
                   <View
                     style={{
                       width: `${lastWidth}%`,
                       height: '100%',
                       backgroundColor: colors.textMuted,
-                      borderRadius: 3,
+                      borderRadius: radius.full,
                       opacity: 0.4
                     }}
                   />

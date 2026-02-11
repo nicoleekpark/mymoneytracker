@@ -3,6 +3,7 @@ import { Text, View } from 'react-native'
 import { BarChart } from 'react-native-gifted-charts'
 
 import { formatUsdInt } from '@/shared/format/currency'
+import { fontSize } from '@/theme/tokens/typography'
 import type { YearlyFlowDollar } from '@/domain/transaction/transaction.usecase'
 
 type Colors = {
@@ -43,12 +44,12 @@ export function YearlyNetChart({ data, colors }: Props) {
         value: Math.abs(net),
         label: String(d.year),
         frontColor: isPositive ? colors.success : colors.danger,
-        labelTextStyle: { color: colors.textSecondary, fontSize: 11 },
+        labelTextStyle: { color: colors.textSecondary, fontSize: fontSize.xs },
         topLabelComponent: () => (
           <View style={{ alignItems: 'center', marginBottom: 4 }}>
             <Text
               style={{
-                fontSize: 10,
+                fontSize: fontSize.xs,
                 fontWeight: '700',
                 color: isPositive ? colors.success : colors.danger
               }}
@@ -56,7 +57,7 @@ export function YearlyNetChart({ data, colors }: Props) {
               {isPositive ? '+' : '-'}{formatCompactAmount(Math.abs(net))}
             </Text>
             {isCurrentYear && (
-              <Text style={{ fontSize: 8, color: colors.textSecondary }}>(YTD)</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>(YTD)</Text>
             )}
           </View>
         ),
@@ -87,7 +88,7 @@ export function YearlyNetChart({ data, colors }: Props) {
         hideRules
         yAxisColor="transparent"
         xAxisColor={colors.surfaceAlt}
-        yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+        yAxisTextStyle={{ color: colors.textSecondary, fontSize: fontSize.xs }}
         yAxisLabelWidth={50}
         formatYLabel={(val) => formatCompactAmount(Number(val))}
         noOfSections={4}

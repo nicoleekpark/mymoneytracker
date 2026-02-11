@@ -10,6 +10,8 @@ import { useDraftsStore } from '@/store'
 
 import { useHoHTheme } from '@/providers'
 import { useDevStore } from '@/store'
+import { fontSize } from '@/theme/tokens/typography'
+import { radius } from '@/theme/tokens/radius'
 import React, { useMemo, useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -150,7 +152,7 @@ export function DevToolsOverlay() {
           <View style={styles.row}>
             <DevBtn label="Export" onPress={exportDatabase} colors={colors} />
             <Pressable onPress={() => setOpen(false)} style={[styles.btn, { borderColor: colors.border, backgroundColor: colors.bg }]}>
-              <Text style={{ color: colors.text2, fontWeight: '700', fontSize: 11 }}>Close</Text>
+              <Text style={{ color: colors.text2, fontWeight: '700', fontSize: fontSize.xs }}>Close</Text>
             </Pressable>
           </View>
         </View>
@@ -173,7 +175,7 @@ function DevBtn({
       onPress={onPress}
       style={[styles.btn, { borderColor: colors.border, backgroundColor: colors.bg }]}
     >
-      <Text style={{ color: colors.text, fontWeight: '700', fontSize: 11 }}>{label}</Text>
+      <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSize.xs }}>{label}</Text>
     </Pressable>
   )
 }
@@ -187,17 +189,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: radius.full,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '900',
     letterSpacing: 0.4,
   },
   body: {
     marginTop: 8,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 6,
     width: 220,
   },
@@ -210,7 +212,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginVertical: 3,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radius.md,
     alignItems: 'center',
   },
 })

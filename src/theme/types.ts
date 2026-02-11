@@ -18,6 +18,7 @@ export type SemanticColors = {
   successSoft: string
 
   warning: string
+  warningSoft: string
 
   danger: string
   dangerSoft: string
