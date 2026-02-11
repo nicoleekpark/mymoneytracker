@@ -251,7 +251,7 @@ export default function TransactionsScreen() {
               { backgroundColor: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }
             ]}
           >
-            <Text style={[styles.summaryPillText, { color: '#ffffff' }]}>NET</Text>
+            <Text style={[styles.summaryPillText, { color: theme.semantic.onPrimary }]}>NET</Text>
           </View>
           <Text
             style={[

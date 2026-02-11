@@ -332,7 +332,7 @@ export default function NotificationsScreen() {
           <FontAwesome
             name={draft.starred ? 'star' : 'star-o'}
             size={16}
-            color={draft.starred ? '#fbbf24' : theme.semantic.textSecondary}
+            color={draft.starred ? 'theme.semantic.warning' : theme.semantic.textSecondary}
             style={{ opacity: draft.starred ? 1 : 0.4 }}
           />
         </Pressable>
@@ -520,7 +520,7 @@ export default function NotificationsScreen() {
                   <FontAwesome
                     name={filter.icon}
                     size={11}
-                    color={isActive ? theme.semantic.background : '#fbbf24'}
+                    color={isActive ? theme.semantic.background : 'theme.semantic.warning'}
                     style={{ marginRight: 4 }}
                   />
                 )}

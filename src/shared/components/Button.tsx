@@ -140,7 +140,7 @@ export function Button({
     switch (variant) {
       case 'primary':
       case 'danger':
-        return '#FFFFFF'
+        return theme.semantic.onPrimary
       case 'secondary':
         return theme.semantic.primary
       case 'text':

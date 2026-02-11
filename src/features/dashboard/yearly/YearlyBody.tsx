@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { displaySize, fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { useHoHTheme } from '@/providers'
 
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
@@ -66,12 +67,7 @@ type Props = {
 // Section gap for combined style (matching Monthly)
 const SECTION_GAP = 40
 
-// Accent line colors (neon palette)
-const ACCENT_COLORS = {
-  green: '#00ffa3',  // neon mint
-  blue: '#00d4ff',   // neon cyan
-  red: '#ff6b00',    // neon orange
-}
+// Accent colors now come from theme (see theme.accent)
 
 // Top N categories to show
 const TOP_N_CATEGORIES = 5
@@ -110,6 +106,7 @@ function SectionHeader({
 export function YearlyBody({ year, colors }: Props) {
   const { loading, error, data } = useYearlyData(year)
   const { data: heroData } = useYearlyHeroData(year)
+  const theme = useHoHTheme()
 
   // Feature flag for hero variant
   const useOptionAHero = FEATURE_FLAGS.heroVariant === 'optionA'
@@ -612,7 +609,7 @@ export function YearlyBody({ year, colors }: Props) {
       <View style={{ marginBottom: SECTION_GAP }}>
         <SectionHeader
           title="Monthly cashflow"
-          accentColor={ACCENT_COLORS.blue}
+          accentColor={theme.accent.blue}
           colors={colors}
         />
 
@@ -638,7 +635,7 @@ export function YearlyBody({ year, colors }: Props) {
       <View style={{ marginBottom: SECTION_GAP }}>
         <SectionHeader
           title="Where it went"
-          accentColor={ACCENT_COLORS.red}
+          accentColor={theme.accent.amber}
           rightText={totalExpense > 0 ? formatUsdInt(totalExpense) : undefined}
           rightColor={colors.danger}
           colors={colors}
@@ -787,7 +784,7 @@ export function YearlyBody({ year, colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Where it came from"
-            accentColor={ACCENT_COLORS.green}
+            accentColor={theme.accent.green}
             rightText={formatUsdInt(totalIncome)}
             rightColor={colors.success}
             colors={colors}

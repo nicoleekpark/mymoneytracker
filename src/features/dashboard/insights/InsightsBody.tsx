@@ -2,6 +2,7 @@ import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { useHoHTheme } from '@/providers'
 
 import { InsightCard, InsightCarousel, NetSparkline, WeekdayHeatHint, CategoryDeltaBar } from './components'
 import { useInsightsData } from './hooks'
@@ -15,13 +16,7 @@ type Props = {
 // Section gap matching Monthly/Yearly/All views
 const SECTION_GAP = 40
 
-// Accent line colors (neon palette)
-const ACCENT_COLORS = {
-  blue: '#00d4ff',    // neon cyan
-  purple: '#bf00ff',  // electric purple
-  amber: '#ffaa00',   // neon amber
-  green: '#00ffa3',   // neon mint
-}
+// Accent colors now come from theme (see theme.accent)
 
 /**
  * Section header with accent line - matching Monthly/Yearly/All style
@@ -87,6 +82,7 @@ function InsightSection({
 
 export function InsightsBody({ monthYYYYMM, colors }: Props) {
   const { loading, error, data } = useInsightsData(monthYYYYMM)
+  const theme = useHoHTheme()
 
   if (loading) {
     return (
@@ -136,7 +132,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
       {hasThisMonthInsights && (
         <InsightSection
           title="This month"
-          accentColor={ACCENT_COLORS.blue}
+          accentColor={theme.accent.blue}
           colors={colors}
         >
           {[
@@ -162,7 +158,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
       {hasPatternsInsights && (
         <InsightSection
           title="Patterns"
-          accentColor={ACCENT_COLORS.purple}
+          accentColor={theme.accent.purple}
           colors={colors}
         >
           {[
@@ -206,7 +202,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
       {hasWatchouts && (
         <InsightSection
           title="Watchouts"
-          accentColor={ACCENT_COLORS.amber}
+          accentColor={theme.accent.amber}
           colors={colors}
         >
           {watchouts.map(card => (
@@ -219,7 +215,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
       {hasOpportunities && (
         <InsightSection
           title="Opportunities"
-          accentColor={ACCENT_COLORS.green}
+          accentColor={theme.accent.green}
           colors={colors}
         >
           {opportunities.map(card => (

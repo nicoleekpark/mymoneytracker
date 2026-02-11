@@ -13,6 +13,7 @@ export type SemanticColors = {
   primary: string
   primarySoft: string
   primaryStrong: string
+  onPrimary: string  // text color on primary background
 
   success: string
   successSoft: string
@@ -38,8 +39,17 @@ export type FinanceColors = {
   loss: string
 }
 
+export type AccentColors = {
+  green: string   // budget, income sections
+  blue: string    // daily, tracking sections
+  amber: string   // expense sections (sunlight)
+  purple: string  // special sections
+  red: string     // danger/expense accent
+}
+
 export type Theme = {
   mode: Exclude<ThemeMode, null>
   semantic: SemanticColors
   finance: FinanceColors
+  accent: AccentColors
 }

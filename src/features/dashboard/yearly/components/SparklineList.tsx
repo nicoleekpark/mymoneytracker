@@ -201,7 +201,7 @@ function HorizontalBarRow({
                     width: 22,
                     height: 22,
                     borderRadius: radius.full,
-                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    backgroundColor: colors.surface,
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}

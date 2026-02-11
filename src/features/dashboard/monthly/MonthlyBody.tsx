@@ -1,4 +1,5 @@
 import { FEATURE_FLAGS } from '@/config'
+import { useHoHTheme } from '@/providers'
 import { formatUsdInt } from '@/shared/format/currency'
 import { displaySize, fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
@@ -26,12 +27,7 @@ const TRANSACTIONS_ROUTE = '/transactions' as const
 // Section gap for combined style
 const SECTION_GAP = 40
 
-// Accent line colors (neon palette)
-const ACCENT_COLORS = {
-  green: '#00ffa3',  // neon mint
-  blue: '#00d4ff',   // neon cyan
-  red: '#ff6b00',    // neon orange
-}
+// Accent colors now come from theme (see theme.accent)
 
 /**
  * Section header with accent line - stronger styling
@@ -67,6 +63,7 @@ function SectionHeader({
 export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors }) {
   const { monthYYYYMM, colors } = props
   const router = useRouter()
+  const theme = useHoHTheme()
 
   const { loading, error, daily } = useMonthlyDailyFlow(monthYYYYMM)
   const { data: budgetData } = useBudgetSummary(monthYYYYMM)
@@ -305,7 +302,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Budget"
-            accentColor={ACCENT_COLORS.green}
+            accentColor={theme.accent.green}
             rightText={formatUsdInt(budgetData.budgetDollar)}
             rightColor={colors.text}
             colors={colors}
@@ -363,7 +360,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
       <View style={{ marginBottom: SECTION_GAP }}>
         <SectionHeader
           title="Daily activity"
-          accentColor={ACCENT_COLORS.blue}
+          accentColor={theme.accent.blue}
           colors={colors}
         />
         {error && <Text style={{ color: colors.danger }}>{error}</Text>}
@@ -432,7 +429,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
       <View style={{ marginBottom: SECTION_GAP }}>
         <SectionHeader
           title="Where it went"
-          accentColor={ACCENT_COLORS.red}
+          accentColor={theme.accent.amber}
           rightText={totalExpense > 0 ? formatUsdInt(totalExpense) : undefined}
           rightColor={colors.danger}
           colors={colors}
@@ -449,7 +446,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Where it came from"
-            accentColor={ACCENT_COLORS.green}
+            accentColor={theme.accent.green}
             rightText={formatUsdInt(totalIncome)}
             rightColor={colors.success}
             colors={colors}

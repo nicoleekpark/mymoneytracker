@@ -24,6 +24,7 @@ export const semanticLight: SemanticColors = {
   primary: PALETTE.garden.teal,
   primarySoft: PALETTE.garden.tealSoft,
   primaryStrong: PALETTE.garden.tealStrong,
+  onPrimary: '#FFFFFF',  // white text on dark teal
 
   // Status - WCAG AA compliant
   success: PALETTE.income.light,
@@ -61,6 +62,7 @@ export const semanticDark: SemanticColors = {
   primary: PALETTE.garden.mint,
   primarySoft: PALETTE.garden.mintSoft,
   primaryStrong: PALETTE.surfaceDark.background,
+  onPrimary: '#071015',  // dark text on light mint
 
   // Status - bright on dark
   success: PALETTE.income.dark,

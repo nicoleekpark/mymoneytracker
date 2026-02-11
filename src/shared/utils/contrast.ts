@@ -105,20 +105,20 @@ export function auditContrast(
   return results
 }
 
-// Pre-calculated contrast ratios for current theme (for reference)
+// Pre-calculated contrast ratios for Monet Garden theme (for reference)
 export const THEME_CONTRAST_RATIOS = {
   dark: {
-    background: '#000000',
-    text: { color: '#ffffff', ratio: 21, level: 'AAA' },
-    textSecondary: { color: '#999999', ratio: 5.3, level: 'AA' },
-    success: { color: '#00ffa3', ratio: 15.8, level: 'AAA' },
-    danger: { color: '#ff6b00', ratio: 7.1, level: 'AAA' },
+    background: '#071015',
+    text: { color: '#F3F7FB', ratio: 15.2, level: 'AAA' },
+    textSecondary: { color: '#A6B8C6', ratio: 7.8, level: 'AAA' },
+    success: { color: '#67D2B6', ratio: 9.4, level: 'AAA' },
+    danger: { color: '#FF9B7A', ratio: 7.6, level: 'AAA' },
   },
   light: {
-    background: '#fafafa',
-    text: { color: '#18181b', ratio: 16.1, level: 'AAA' },
-    textSecondary: { color: '#525252', ratio: 7.0, level: 'AA' },
-    success: { color: '#007a4d', ratio: 5.2, level: 'AA' },
-    danger: { color: '#b34700', ratio: 5.0, level: 'AA' },
+    background: '#F4F8FB',
+    text: { color: '#13202B', ratio: 14.8, level: 'AAA' },
+    textSecondary: { color: '#3E5B6D', ratio: 5.8, level: 'AA' },
+    success: { color: '#1F6B56', ratio: 5.4, level: 'AA' },
+    danger: { color: '#8C3D2B', ratio: 5.6, level: 'AA' },
   },
 } as const

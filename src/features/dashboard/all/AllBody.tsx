@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from 'react-native'
 import { fontSize, displaySize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { useHoHTheme } from '@/providers'
 
 import { CATEGORIES } from '@/config/categories.config'
 import { FEATURE_FLAGS } from '@/config'
@@ -84,13 +85,7 @@ function getSubcategoryMeta(parentKey: string, subKey: string): { name: string; 
 // Section gap for combined style (matching Monthly/Yearly)
 const SECTION_GAP = 40
 
-// Accent line colors (neon palette)
-const ACCENT_COLORS = {
-  green: '#00ffa3',   // neon mint
-  blue: '#00d4ff',    // neon cyan
-  red: '#ff6b00',     // neon orange
-  purple: '#bf00ff',  // electric purple
-}
+// Accent colors now come from theme (see theme.accent)
 
 /**
  * Section header with accent line - matching Monthly/Yearly style
@@ -289,6 +284,7 @@ function InfoTooltip({
 
 export function AllBody({ colors }: Props) {
   const { loading, error, data } = useAllTimeData()
+  const theme = useHoHTheme()
 
   // Feature flag for hero variant
   const useOptionAHero = FEATURE_FLAGS.heroVariant === 'optionA'
@@ -565,7 +561,7 @@ export function AllBody({ colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Personal bests"
-            accentColor={ACCENT_COLORS.purple}
+            accentColor={theme.accent.purple}
             colors={colors}
           />
 
@@ -733,7 +729,7 @@ export function AllBody({ colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Cumulative net"
-            accentColor={ACCENT_COLORS.blue}
+            accentColor={theme.accent.blue}
             colors={colors}
           />
           <CumulativeNetChart
@@ -755,7 +751,7 @@ export function AllBody({ colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Where it went"
-            accentColor={ACCENT_COLORS.red}
+            accentColor={theme.accent.amber}
             rightText={formatUsdInt(data.totalExpense)}
             rightColor={colors.danger}
             colors={colors}
@@ -893,7 +889,7 @@ export function AllBody({ colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Where it came from"
-            accentColor={ACCENT_COLORS.green}
+            accentColor={theme.accent.green}
             rightText={formatUsdInt(data.totalIncome)}
             rightColor={colors.success}
             colors={colors}
