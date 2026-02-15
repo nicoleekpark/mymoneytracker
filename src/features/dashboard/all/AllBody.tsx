@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from 'react-native'
-import { fontSize, displaySize } from '@/theme/tokens/typography'
+import { fontSize, displaySize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
-import { useHoHTheme } from '@/providers'
+import { spacing } from '@/theme/tokens/spacing'
 
 import { CATEGORIES } from '@/config/categories.config'
 import { FEATURE_FLAGS } from '@/config'
@@ -85,35 +85,34 @@ function getSubcategoryMeta(parentKey: string, subKey: string): { name: string; 
 // Section gap for combined style (matching Monthly/Yearly)
 const SECTION_GAP = 40
 
-// Accent colors now come from theme (see theme.accent)
-
 /**
- * Section header with accent line - matching Monthly/Yearly style
+ * Section header - Stripe-like style with subtle divider
  */
 function SectionHeader({
   title,
-  accentColor,
   rightText,
   rightColor,
   colors
 }: {
   title: string
-  accentColor: string
   rightText?: string
   rightColor?: string
   colors: AllColors
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-      <View style={{ width: 3, height: 20, borderRadius: radius.xs, backgroundColor: accentColor }} />
-      <Text style={{ fontSize: fontSize['2xl'], fontWeight: '700', color: colors.text }}>
-        {title}
-      </Text>
-      {rightText && (
-        <Text style={{ marginLeft: 'auto', fontSize: fontSize.md, fontWeight: '700', color: rightColor || colors.text }}>
-          {rightText}
+    <View style={{ marginBottom: spacing.lg }}>
+      {/* Subtle divider above */}
+      <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
+          {title}
         </Text>
-      )}
+        {rightText && (
+          <Text style={{ marginLeft: 'auto', fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
+            {rightText}
+          </Text>
+        )}
+      </View>
     </View>
   )
 }
@@ -284,7 +283,6 @@ function InfoTooltip({
 
 export function AllBody({ colors }: Props) {
   const { loading, error, data } = useAllTimeData()
-  const theme = useHoHTheme()
 
   // Feature flag for hero variant
   const useOptionAHero = FEATURE_FLAGS.heroVariant === 'optionA'
@@ -385,7 +383,7 @@ export function AllBody({ colors }: Props) {
           <View style={{ alignItems: 'center', paddingVertical: 20 }}>
             {/* Title line */}
             <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: 4 }}>
-              Net
+              Net (Income - Expense)
             </Text>
 
             {/* Primary: Net amount */}
@@ -561,8 +559,7 @@ export function AllBody({ colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Personal bests"
-            accentColor={theme.accent.purple}
-            colors={colors}
+                        colors={colors}
           />
 
           {/* 2x2 Grid */}
@@ -724,13 +721,12 @@ export function AllBody({ colors }: Props) {
         </View>
       )}
 
-      {/* Cumulative Net Chart */}
+      {/* Cumulative Savings Chart */}
       {data.cumulativeData.length > 0 && (
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
-            title="Cumulative net"
-            accentColor={theme.accent.blue}
-            colors={colors}
+            title="Cumulative savings from income"
+                        colors={colors}
           />
           <CumulativeNetChart
             data={data.cumulativeData}
@@ -751,8 +747,7 @@ export function AllBody({ colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Where it went"
-            accentColor={theme.accent.amber}
-            rightText={formatUsdInt(data.totalExpense)}
+                        rightText={formatUsdInt(data.totalExpense)}
             rightColor={colors.danger}
             colors={colors}
           />
@@ -889,8 +884,7 @@ export function AllBody({ colors }: Props) {
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
             title="Where it came from"
-            accentColor={theme.accent.green}
-            rightText={formatUsdInt(data.totalIncome)}
+                        rightText={formatUsdInt(data.totalIncome)}
             rightColor={colors.success}
             colors={colors}
           />

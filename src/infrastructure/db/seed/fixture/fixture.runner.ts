@@ -6,6 +6,10 @@ import {
   deleteFixtureTransactions
 } from './fixture.apply'
 import {
+  applyFixtureAssets,
+  deleteFixtureAssets,
+} from './fixture.assets'
+import {
   applyFixtureNotifications,
   deleteFixtureNotifications,
 } from './fixture.notifications'
@@ -19,8 +23,8 @@ import type { SeedAccountsFile, SeedTransactionsFile } from './fixture.types'
 export type FixtureAction = 'seed' | 'delete'
 
 // Define fixture order for seed and delete operations
-const SEED_ORDER: FixtureName[] = ['accounts', 'transactions', 'notifications', 'suggestions']
-const DELETE_ORDER: FixtureName[] = ['suggestions', 'notifications', 'transactions', 'accounts']
+const SEED_ORDER: FixtureName[] = ['accounts', 'transactions', 'notifications', 'suggestions', 'assets']
+const DELETE_ORDER: FixtureName[] = ['assets', 'suggestions', 'notifications', 'transactions', 'accounts']
 
 export function runFixtures(action: FixtureAction, targets: FixtureName[]): SeedReport {
   const report = newReport()
@@ -54,6 +58,11 @@ export function runFixtures(action: FixtureAction, targets: FixtureName[]): Seed
     if (name === 'suggestions') {
       if (action === 'seed') applyFixtureSuggestions(report)
       else deleteAllSuggestions(report)
+    }
+
+    if (name === 'assets') {
+      if (action === 'seed') applyFixtureAssets(report)
+      else deleteFixtureAssets(report)
     }
   }
 

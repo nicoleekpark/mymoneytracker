@@ -20,6 +20,7 @@ type TransactionBase = Readonly<{
   category?: CategoryRef
   merchant?: string
   note?: string
+  memberId?: UUID // null = shared/household
 }>
 
 export type IncomeExpenseTransaction = TransactionBase &
@@ -51,6 +52,7 @@ export type AddTransactionInput =
       category?: CategoryRef
       merchant?: string
       note?: string
+      memberId?: UUID // null = shared/household
     }
   | {
       key?: string
@@ -63,4 +65,5 @@ export type AddTransactionInput =
       note?: string
       merchant?: string
       category?: CategoryRef
+      memberId?: UUID // null = shared/household
     }

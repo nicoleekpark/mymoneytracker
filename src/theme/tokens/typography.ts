@@ -2,19 +2,28 @@
 // TYPOGRAPHY TOKENS
 // =============================================================================
 // STRICT RULE: Only use these tokens. No hardcoded font sizes allowed.
+// Compliance: Apple HIG + WCAG accessibility guidelines
+// Reference: BASERULES.md for full typography rules
 // =============================================================================
 
 // -----------------------------------------------------------------------------
 // Text Scale - For readable content (body text, labels, headers)
 // -----------------------------------------------------------------------------
+// ACCESSIBILITY MINIMUMS (per Apple HIG + WCAG):
+// - Absolute minimum: 12px (xs) - only for timestamps, tertiary labels
+// - Secondary content: 14px (sm) minimum
+// - Body text: 16px (md) minimum - primary content baseline
+// - Interactive elements: 14px+ (preferably 16px+)
+// - Touch targets: 44x44pt minimum
+// -----------------------------------------------------------------------------
 export const fontSize = {
-  xs: 12,      // captions, labels, timestamps
-  sm: 13,      // secondary text, hints
-  md: 14,      // body text (default)
-  lg: 16,      // subtitles, row titles, buttons
-  xl: 18,      // stat amounts, emphasized text
-  '2xl': 20,   // section headers
-  '3xl': 24,   // large headers
+  xs: 12,      // MINIMUM - timestamps, tertiary labels, chart axes only
+  sm: 14,      // secondary text, hints, table cells, tab labels
+  md: 16,      // body text (DEFAULT) - primary readable content
+  lg: 18,      // subtitles, row titles, buttons, navigation
+  xl: 20,      // stat amounts, emphasized text
+  '2xl': 22,   // section headers
+  '3xl': 24,   // large headers, card primary values
 } as const
 
 // -----------------------------------------------------------------------------
@@ -55,37 +64,37 @@ export const letterSpacing = {
 export const textStyles = {
   // Screen-level header (tab titles, modal titles)
   screenHeader: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize['2xl'],      // 22px
     fontWeight: fontWeight.black,
     letterSpacing: letterSpacing.normal,
   },
   // Primary section header: Card/section titles
   sectionHeader: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.lg,          // 18px
     fontWeight: fontWeight.heavy,
     letterSpacing: letterSpacing.wide,
   },
   // Accent header: Sub-labels within cards (UPPERCASE)
   accentHeader: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.sm,          // 14px
     fontWeight: fontWeight.bold,
     letterSpacing: letterSpacing.wider,
   },
   // Card header
   cardHeader: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.md,          // 16px
     fontWeight: fontWeight.bold,
     letterSpacing: letterSpacing.normal,
   },
-  // Body text
+  // Body text - primary readable content
   body: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.md,          // 16px - WCAG/Apple HIG compliant
     fontWeight: fontWeight.normal,
     letterSpacing: letterSpacing.normal,
   },
-  // Caption/label
+  // Caption/label - use sparingly for non-critical info
   caption: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.xs,          // 12px - minimum allowed
     fontWeight: fontWeight.medium,
     letterSpacing: letterSpacing.normal,
   },
@@ -95,8 +104,8 @@ export const textStyles = {
 // Legacy Exports (for backward compatibility - prefer semantic names above)
 // -----------------------------------------------------------------------------
 export const typography = {
-  title: fontSize['2xl'],
-  subtitle: fontSize.lg,
-  body: fontSize.md,
-  small: fontSize.sm,
+  title: fontSize['2xl'],   // 22px
+  subtitle: fontSize.lg,    // 18px
+  body: fontSize.md,        // 16px
+  small: fontSize.sm,       // 14px
 } as const

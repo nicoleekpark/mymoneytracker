@@ -13,7 +13,10 @@ import { DashboardModeTabs } from './shared/DashboardModeTabs'
 import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
 import { DashboardToolbar } from './shared/DashboardToolbar'
 import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
+import { MemberTabs } from './shared/MemberTabs'
+import { getFamilyMembers } from '@/domain/asset'
 import { AllBody } from './all'
+import { AssetsBody } from './assets'
 import { InsightsBody } from './insights'
 import { MonthlyBody } from './monthly/MonthlyBody'
 import { YearlyBody } from './yearly'
@@ -33,14 +36,25 @@ export default function DashboardScreen() {
     mode,
     scope,
     period,
+    selectedMemberIds,
     setMode,
     setScope,
     shiftPeriod,
     setPeriod,
     resetToToday,
+    setSelectedMemberIds,
     canPrev,
     canNext
   } = useDashboardStore()
+
+  // Get family members for filtering
+  const members = useMemo(() => {
+    try {
+      return getFamilyMembers()
+    } catch {
+      return []
+    }
+  }, [])
 
   const [pickerOpen, setPickerOpen] = useState(false)
 
@@ -91,6 +105,20 @@ export default function DashboardScreen() {
             onScopeChange={setScope}
             onToday={resetToToday}
           />
+          {/* Member filter tabs - multi-select, only show if members exist */}
+          {members.length > 0 && (
+            <MemberTabs
+              members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
+              selectedIds={selectedMemberIds}
+              onSelectMulti={setSelectedMemberIds}
+              multiSelect
+              colors={{
+                primary: theme.semantic.primary,
+                surfaceAlt: theme.semantic.surfaceAlt,
+                textSecondary: theme.semantic.textSecondary,
+              }}
+            />
+          )}
           <Divider spacing='sm'/>
         </>
       )}
@@ -109,6 +137,25 @@ export default function DashboardScreen() {
               primary: theme.semantic.primary,
               success: theme.semantic.success,
               danger: theme.semantic.danger
+            }}
+          />
+        </View>
+      )}
+
+      {/* Assets mode - Net worth and asset tracking */}
+      {mode === 'assets' && (
+        <View style={styles.body}>
+          <AssetsBody
+            colors={{
+              text: theme.semantic.text,
+              textSecondary: theme.semantic.textSecondary,
+              border: theme.semantic.border,
+              surface: theme.semantic.surface,
+              surfaceAlt: theme.semantic.surfaceAlt,
+              primary: theme.semantic.primary,
+              success: theme.semantic.success,
+              danger: theme.semantic.danger,
+              warning: theme.semantic.warning
             }}
           />
         </View>

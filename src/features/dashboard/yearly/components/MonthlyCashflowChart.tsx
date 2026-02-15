@@ -85,16 +85,67 @@ function ComboChart({
     .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`)
     .join(' ')
 
+  // Determine if any month is selected for opacity logic
+  const hasSelection = selectedIndex !== null
+
   return (
-    <View style={{ height: CHART_HEIGHT + 24, position: 'relative' }}>
-      {/* Bars layer */}
+    <View style={{ height: CHART_HEIGHT + 24, position: 'relative', marginLeft: 16 }}>
+      {/* Zero label - left aligned outside chart */}
+      <Text
+        style={{
+          position: 'absolute',
+          top: halfHeight - 7,
+          left: -14,
+          fontSize: 10,
+          fontWeight: '500',
+          color: colors.textMuted,
+          opacity: 0.5
+        }}
+      >
+        0
+      </Text>
+
+      {/* Net line layer (SVG) - BEHIND bars */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 24 }}>
+        <Svg width={width} height={CHART_HEIGHT}>
+          {/* Net trend line - subtle, behind bars */}
+          <Path
+            d={netLinePath}
+            fill="none"
+            stroke={colors.text}
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.4}
+          />
+        </Svg>
+      </View>
+
+      {/* Zero baseline */}
+      <View
+        style={{
+          position: 'absolute',
+          top: halfHeight - 0.5,
+          left: 0,
+          right: 0,
+          height: 1,
+          backgroundColor: colors.text,
+          opacity: 0.15
+        }}
+      />
+
+      {/* Bars layer - on top of net line */}
       <View style={{ flexDirection: 'row', height: CHART_HEIGHT }}>
         {data.map((month, idx) => {
           const isFuture = !isPastYear && isCurrentYear && idx >= currentMonth
           const isSelected = selectedIndex === idx
+          const isCurrentMonthBar = isCurrentYear && idx === currentMonth - 1
 
           const incomeHeight = (month.incomeDollar / maxAmount) * halfHeight * 0.9
           const expenseHeight = (month.expenseDollar / maxAmount) * halfHeight * 0.9
+
+          // Opacity: selected = 1, others dimmed when selection exists
+          const barOpacity = isFuture ? 0.25 : isSelected ? 1 : hasSelection ? 0.4 : 0.85
 
           return (
             <View
@@ -106,7 +157,7 @@ function ComboChart({
                 justifyContent: 'center'
               }}
             >
-              {/* Income bar (grows upward from center) */}
+              {/* Income bar */}
               <View
                 style={{
                   position: 'absolute',
@@ -116,11 +167,11 @@ function ComboChart({
                   backgroundColor: isFuture ? colors.surfaceAlt : colors.success,
                   borderTopLeftRadius: radius.xs,
                   borderTopRightRadius: radius.xs,
-                  opacity: isFuture ? 0.4 : isSelected ? 1 : 0.8
+                  opacity: barOpacity
                 }}
               />
 
-              {/* Expense bar (grows downward from center) */}
+              {/* Expense bar */}
               <View
                 style={{
                   position: 'absolute',
@@ -130,50 +181,62 @@ function ComboChart({
                   backgroundColor: isFuture ? colors.surfaceAlt : colors.danger,
                   borderBottomLeftRadius: radius.xs,
                   borderBottomRightRadius: radius.xs,
-                  opacity: isFuture ? 0.4 : isSelected ? 1 : 0.8
+                  opacity: barOpacity
                 }}
               />
+
+              {/* Today marker - dashed line with label */}
+              {isCurrentMonthBar && (
+                <>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      right: -2,
+                      top: -8,
+                      bottom: -4,
+                      width: 1,
+                      backgroundColor: colors.text,
+                      opacity: 0.3
+                    }}
+                  />
+                  <Text
+                    style={{
+                      position: 'absolute',
+                      right: -18,
+                      top: -16,
+                      fontSize: 8,
+                      fontWeight: '500',
+                      color: colors.textMuted,
+                      opacity: 0.6
+                    }}
+                  >
+                    Today
+                  </Text>
+                </>
+              )}
             </View>
           )
         })}
       </View>
 
-      {/* Center line (zero line) */}
-      <View
-        style={{
-          position: 'absolute',
-          top: halfHeight,
-          left: 0,
-          right: 0,
-          height: 1,
-          backgroundColor: colors.surfaceAlt
-        }}
-      />
-
-      {/* Net line overlay (SVG) */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 24 }}>
+      {/* Selected point marker (SVG overlay) */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 24, pointerEvents: 'none' }}>
         <Svg width={width} height={CHART_HEIGHT}>
-          {/* Net trend line */}
-          <Path
-            d={netLinePath}
-            fill="none"
-            stroke={colors.warning}
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Dots on the net line */}
-          {netPoints.map((p) => (
-            <Circle
-              key={p.index}
-              cx={p.x}
-              cy={p.y}
-              r={selectedIndex === p.index ? 5 : 3}
-              fill={colors.warning}
-              opacity={selectedIndex === p.index ? 1 : 0.8}
-            />
-          ))}
+          {/* Point marker - only on selected */}
+          {netPoints.map((p) => {
+            const isSelected = selectedIndex === p.index
+            if (!isSelected) return null
+            return (
+              <Circle
+                key={p.index}
+                cx={p.x}
+                cy={p.y}
+                r={4}
+                fill={colors.text}
+                opacity={0.8}
+              />
+            )
+          })}
 
           {/* Selected dot highlight */}
           {selectedIndex !== null && (() => {
@@ -228,7 +291,7 @@ function ComboChart({
                     width: 4,
                     height: 4,
                     borderRadius: radius.full,
-                    backgroundColor: colors.warning,
+                    backgroundColor: colors.text,
                     marginTop: 2
                   }}
                 />
@@ -256,6 +319,7 @@ export function MonthlyCashflowChart({
   const [isLocked, setIsLocked] = useState(false) // Toggle lock state
   const isDraggingRef = useRef(false)
   const startXRef = useRef<number | null>(null)
+  const prevLockedIndexRef = useRef<number | null>(null) // Track previous locked index for tap comparison
 
   // Calculate month index from X position
   const getMonthFromX = useCallback(
@@ -281,6 +345,8 @@ export function MonthlyCashflowChart({
         onPanResponderGrant: evt => {
           startXRef.current = evt.nativeEvent.locationX
           isDraggingRef.current = false
+          // Store current locked index before updating
+          prevLockedIndexRef.current = isLocked ? selectedIndex : null
           const x = evt.nativeEvent.locationX
           const newIdx = getMonthFromX(x)
           setSelectedIndex(newIdx)
@@ -302,14 +368,15 @@ export function MonthlyCashflowChart({
           startXRef.current = null
 
           if (!wasDragging) {
-            // This was a tap - toggle lock state
+            // This was a tap
             const tappedIdx = getMonthFromX(x)
-            if (isLocked && selectedIndex === tappedIdx) {
-              // Tapped same month while locked - unlock and clear
+            // Only close if tapping the SAME month that was previously locked
+            if (prevLockedIndexRef.current === tappedIdx) {
+              // Tapped same month - close detail
               setIsLocked(false)
               setSelectedIndex(null)
             } else {
-              // Lock on this month
+              // Tapped different month (or wasn't locked) - show this month
               setIsLocked(true)
               setSelectedIndex(tappedIdx)
             }
@@ -319,6 +386,7 @@ export function MonthlyCashflowChart({
               setSelectedIndex(null)
             }
           }
+          prevLockedIndexRef.current = null
         },
         onPanResponderTerminate: () => {
           isDraggingRef.current = false
@@ -357,13 +425,15 @@ export function MonthlyCashflowChart({
         />
       </View>
 
-      {/* Selected month details (shows when dragging) */}
+      {/* Selected month details - subtle overlay style */}
       {selectedData ? (
         <View
           style={{
-            backgroundColor: colors.surfaceAlt,
+            backgroundColor: 'transparent',
+            borderWidth: 1,
+            borderColor: colors.surfaceAlt,
             borderRadius: radius.md,
-            padding: 12,
+            padding: 10,
             marginTop: 12,
             marginHorizontal: CHART_PADDING_H
           }}
@@ -371,10 +441,10 @@ export function MonthlyCashflowChart({
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text
               style={{
-                fontSize: fontSize.md,
-                fontWeight: '700',
-                color: colors.text,
-                width: 40
+                fontSize: fontSize.sm,
+                fontWeight: '600',
+                color: colors.textMuted,
+                width: 36
               }}
             >
               {MONTH_NAMES_SHORT[selectedIndex!].toUpperCase()}
@@ -390,15 +460,16 @@ export function MonthlyCashflowChart({
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    fontWeight: '600',
+                    fontWeight: '500',
                     color: colors.textMuted,
-                    marginBottom: 2
+                    marginBottom: 2,
+                    opacity: 0.7
                   }}
                 >
                   IN
                 </Text>
                 <Text
-                  style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.success }}
+                  style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.success, opacity: 0.9 }}
                 >
                   {formatUsdInt(selectedData.incomeDollar)}
                 </Text>
@@ -407,15 +478,16 @@ export function MonthlyCashflowChart({
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    fontWeight: '600',
+                    fontWeight: '500',
                     color: colors.textMuted,
-                    marginBottom: 2
+                    marginBottom: 2,
+                    opacity: 0.7
                   }}
                 >
                   OUT
                 </Text>
                 <Text
-                  style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.danger }}
+                  style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.danger, opacity: 0.9 }}
                 >
                   {formatUsdInt(selectedData.expenseDollar)}
                 </Text>
@@ -424,9 +496,10 @@ export function MonthlyCashflowChart({
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    fontWeight: '600',
+                    fontWeight: '500',
                     color: colors.textMuted,
-                    marginBottom: 2
+                    marginBottom: 2,
+                    opacity: 0.7
                   }}
                 >
                   NET
@@ -434,9 +507,8 @@ export function MonthlyCashflowChart({
                 <Text
                   style={{
                     fontSize: fontSize.sm,
-                    fontWeight: '700',
-                    color:
-                      selectedData.netDollar >= 0 ? colors.success : colors.danger
+                    fontWeight: '600',
+                    color: colors.text
                   }}
                 >
                   {selectedData.netDollar >= 0 ? '+' : ''}
@@ -497,7 +569,8 @@ export function MonthlyCashflowChart({
               width: 8,
               height: 8,
               borderRadius: radius.full,
-              backgroundColor: colors.warning
+              backgroundColor: colors.text,
+              opacity: 0.9
             }}
           />
           <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Net</Text>

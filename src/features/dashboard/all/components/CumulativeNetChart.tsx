@@ -264,7 +264,7 @@ export function CumulativeNetChart({ data, colors }: Props) {
           <>
             <View>
               <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
-                Cumulative Net
+                Cumulative Savings
               </Text>
               <Text style={{ fontSize: fontSize['2xl'], fontWeight: '800', color: isPositive ? colors.success : colors.danger }}>
                 {formatUsdInt(lastValue)}

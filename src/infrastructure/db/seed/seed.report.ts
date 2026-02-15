@@ -17,6 +17,7 @@ export type SeedReport = {
   notifications: SeedCounts
   suggestions: SeedCounts
   drafts: SeedCounts
+  assets: SeedCounts
 }
 
 export function newSeedCounts(): SeedCounts {
@@ -33,6 +34,7 @@ export function newReport(): SeedReport {
     notifications: newSeedCounts(),
     suggestions: newSeedCounts(),
     drafts: newSeedCounts(),
+    assets: newSeedCounts(),
   }
 }
 

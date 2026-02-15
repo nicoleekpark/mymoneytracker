@@ -37,7 +37,7 @@ export function DevToolsOverlay() {
 
   const seedAll = () => {
     try {
-      runFixtures('seed', ['accounts', 'transactions', 'notifications', 'suggestions'])
+      runFixtures('seed', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
       Alert.alert('Done', 'All fixtures seeded')
     } catch (e: any) {
       Alert.alert('Failed', String(e?.message ?? e))
@@ -46,7 +46,7 @@ export function DevToolsOverlay() {
 
   const clearAll = () => {
     try {
-      runFixtures('delete', ['accounts', 'transactions', 'notifications', 'suggestions'])
+      runFixtures('delete', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
       Alert.alert('Done', 'All fixtures cleared')
     } catch (e: any) {
       Alert.alert('Failed', String(e?.message ?? e))
@@ -64,7 +64,8 @@ export function DevToolsOverlay() {
             resetDbHardDropAllTables()
             migrate()
             runSystemSeeds() // Seed categories, accounts, tags
-            Alert.alert('Done', 'DB reset & schema recreated')
+            runFixtures('seed', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
+            Alert.alert('Done', 'DB reset & all fixtures seeded')
           } catch (e: any) {
             Alert.alert('Failed', String(e?.message ?? e))
           }

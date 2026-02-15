@@ -12,6 +12,7 @@ export type DashboardState = {
   mode: DashboardMode
   scope: Scope
   period: Period
+  selectedMemberIds: string[] // empty = All/Household
 }
 
 type DashboardActions = {
@@ -20,6 +21,7 @@ type DashboardActions = {
   shiftPeriod: (delta: -1 | 1) => void
   setPeriod: (period: Period) => void
   resetToToday: () => void
+  setSelectedMemberIds: (memberIds: string[]) => void
 }
 
 type DashboardSelectors = {
@@ -67,7 +69,8 @@ function createInitialState(): DashboardState {
   return {
     mode: 'overview',
     scope: 'month',
-    period: { year: max.year, month: max.month }
+    period: { year: max.year, month: max.month },
+    selectedMemberIds: [] // Default to All/Household (empty = all)
   }
 }
 
@@ -105,6 +108,8 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
       : { year: max.year, month: max.month }
     set({ period: todayPeriod })
   },
+
+  setSelectedMemberIds: (memberIds) => set({ selectedMemberIds: memberIds }),
 
   // Selectors
   getPeriodLabel: () => {

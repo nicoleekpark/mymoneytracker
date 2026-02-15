@@ -75,3 +75,17 @@ export function formatMonthSectionTitle(date: Date): string {
 
   return `${month} ${date.getFullYear()}`
 }
+
+/**
+ * Format YYYY-MM to readable format
+ * Example: "2026-01" -> "Jan 2026"
+ */
+export function formatYearMonth(yearMonth: string): string {
+  const [year, month] = yearMonth.split('-')
+  if (!year || !month) return yearMonth
+
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1)
+  const monthName = date.toLocaleString('en-US', { month: 'short' })
+
+  return `${monthName} ${year}`
+}

@@ -15,6 +15,11 @@ import { m20260131100200_create_suggestions } from './20260131100200_create_sugg
 import { m20260131100300_create_drafts } from './20260131100300_create_drafts'
 import { m20260201144839_allow_null_item } from './20260201144839_allow_null_item'
 import { m20260201171018_add_starred_to_drafts } from './20260201171018_add_starred_to_drafts'
+import { m20260211100000_create_assets } from './20260211100000_create_assets'
+import { m20260211100100_rename_asset_owners } from './20260211100100_rename_asset_owners'
+import { m20260211100200_rename_owner_id_to_member_id } from './20260211100200_rename_owner_id_to_member_id'
+import { m20260211100300_add_member_id_to_transactions } from './20260211100300_add_member_id_to_transactions'
+import { m20260211100400_add_goal_start_month } from './20260211100400_add_goal_start_month'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
@@ -28,5 +33,10 @@ export const MIGRATIONS: Migration[] = [
   m20260131100200_create_suggestions,
   m20260131100300_create_drafts,
   m20260201144839_allow_null_item,
-  m20260201171018_add_starred_to_drafts
+  m20260201171018_add_starred_to_drafts,
+  m20260211100000_create_assets,
+  m20260211100100_rename_asset_owners,
+  m20260211100200_rename_owner_id_to_member_id,
+  m20260211100300_add_member_id_to_transactions,
+  m20260211100400_add_goal_start_month
 ]

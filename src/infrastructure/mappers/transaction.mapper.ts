@@ -24,6 +24,7 @@ export type TransactionRow = Readonly<{
   category_id: UUID | null
   merchant: string | null
   note: string | null
+  member_id: UUID | null
 }>
 
 /**
@@ -50,6 +51,7 @@ export function rowToTransaction(
     category: row.category_id ? resolveCategoryRef(row.category_id) : undefined,
     merchant: row.merchant ?? undefined,
     note: row.note ?? undefined,
+    memberId: row.member_id ?? undefined,
   } as const
 
   if (row.type === 'transfer') {
@@ -86,6 +88,7 @@ export function transactionToRow(
     category_id: resolveCategoryId(tx.category) ?? null,
     merchant: tx.merchant ?? null,
     note: tx.note ?? null,
+    member_id: tx.memberId ?? null,
   }
 
   if (tx.type === 'transfer') {

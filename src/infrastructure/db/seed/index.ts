@@ -30,3 +30,9 @@ export {
   clearDraftsStandalone,
   getDraftStats,
 } from './fixture'
+
+// Asset fixture utilities
+export {
+  applyFixtureAssets,
+  deleteFixtureAssets,
+} from './fixture'
