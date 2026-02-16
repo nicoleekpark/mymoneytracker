@@ -370,7 +370,7 @@ function HeaderControls({
         <Pressable
           onPress={handleAllClick}
           style={{
-            paddingHorizontal: 14,
+            paddingHorizontal: spacing.md,
             paddingVertical: spacing.sm,
             borderRadius: radius.full,
             backgroundColor: allSelected ? colors.text : 'transparent',
@@ -383,7 +383,7 @@ function HeaderControls({
               color: allSelected ? colors.surface : colors.textSecondary,
             }}
           >
-            All
+            Everyone
           </Text>
         </Pressable>
         {members.map((member) => {
@@ -393,7 +393,7 @@ function HeaderControls({
               key={member.id}
               onPress={() => handleMemberClick(member.id)}
               style={{
-                paddingHorizontal: 14,
+                paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
                 borderRadius: radius.full,
                 backgroundColor: isSelected ? colors.text : 'transparent',
@@ -414,7 +414,7 @@ function HeaderControls({
       </ScrollView>
 
       {/* Year navigation */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginLeft: spacing.lg }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.sm, width: '35%', minWidth: 120, maxWidth: 160 }}>
         <Pressable
           onPress={onPrevYear}
           disabled={!canPrev}
@@ -555,7 +555,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
       />
 
       {/* Sticky Header Controls */}
-      <View style={{ paddingHorizontal: 20, paddingBottom: spacing.sm }}>
+      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm }}>
         {data.members.length > 0 ? (
           <HeaderControls
             members={data.members.map(m => ({ id: m.id, nickname: m.nickname }))}

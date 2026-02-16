@@ -1,6 +1,7 @@
 import type { useHoHTheme } from '@/providers'
 import { StyleSheet } from 'react-native'
 import { fontSize } from '@/theme/tokens/typography'
+import { spacing } from '@/theme/tokens/spacing'
 
 export function createDashboardStyles(theme: ReturnType<typeof useHoHTheme>) {
   const onPrimary = '#FFFFFF'
@@ -44,7 +45,7 @@ export function createDashboardStyles(theme: ReturnType<typeof useHoHTheme>) {
 
     body: {
       flex: 1,
-      paddingTop: 14
+      paddingTop: spacing.md
     }
   })
 }

@@ -165,7 +165,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
             patterns.netTrend.length > 1 && (
               <View key="sparkline" style={{ paddingVertical: 8 }}>
                 <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
-                  Monthly net (income - expenses)
+                  Monthly Net Cash Flow Trend
                 </Text>
                 <NetSparkline
                   data={patterns.netTrend}

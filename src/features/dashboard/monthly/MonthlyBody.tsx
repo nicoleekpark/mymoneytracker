@@ -128,7 +128,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
             <View style={{ alignItems: 'center', paddingVertical: 20 }}>
               {/* Title line */}
               <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
-                Net (Income - Expense)
+                Net Cash Flow
               </Text>
 
               {/* Primary: Net amount */}

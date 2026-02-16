@@ -59,7 +59,7 @@ export function formatPeriodLabelFull(scope: Scope, period: Period): string {
   if (scope === 'year') return `${period.year}`
 
   const month = 'month' in period ? clampMonth(period.month) : 1
-  return `${MONTH_NAMES_FULL[month - 1]} ${period.year}`
+  return `${MONTH_NAMES_SHORT[month - 1]} ${period.year}`
 }
 
 export function isCurrentPeriod(scope: Scope, period: Period, now = new Date()): boolean {

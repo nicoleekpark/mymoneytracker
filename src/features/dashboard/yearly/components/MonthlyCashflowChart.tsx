@@ -89,21 +89,7 @@ function ComboChart({
   const hasSelection = selectedIndex !== null
 
   return (
-    <View style={{ height: CHART_HEIGHT + 24, position: 'relative', marginLeft: 16 }}>
-      {/* Zero label - left aligned outside chart */}
-      <Text
-        style={{
-          position: 'absolute',
-          top: halfHeight - 7,
-          left: -14,
-          fontSize: 10,
-          fontWeight: '500',
-          color: colors.textMuted,
-          opacity: 0.5
-        }}
-      >
-        0
-      </Text>
+    <View style={{ height: CHART_HEIGHT + 24, position: 'relative' }}>
 
       {/* Net line layer (SVG) - BEHIND bars */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 24 }}>
@@ -139,7 +125,6 @@ function ComboChart({
         {data.map((month, idx) => {
           const isFuture = !isPastYear && isCurrentYear && idx >= currentMonth
           const isSelected = selectedIndex === idx
-          const isCurrentMonthBar = isCurrentYear && idx === currentMonth - 1
 
           const incomeHeight = (month.incomeDollar / maxAmount) * halfHeight * 0.9
           const expenseHeight = (month.expenseDollar / maxAmount) * halfHeight * 0.9
@@ -185,35 +170,6 @@ function ComboChart({
                 }}
               />
 
-              {/* Today marker - dashed line with label */}
-              {isCurrentMonthBar && (
-                <>
-                  <View
-                    style={{
-                      position: 'absolute',
-                      right: -2,
-                      top: -8,
-                      bottom: -4,
-                      width: 1,
-                      backgroundColor: colors.text,
-                      opacity: 0.3
-                    }}
-                  />
-                  <Text
-                    style={{
-                      position: 'absolute',
-                      right: -18,
-                      top: -16,
-                      fontSize: 8,
-                      fontWeight: '500',
-                      color: colors.textMuted,
-                      opacity: 0.6
-                    }}
-                  >
-                    Today
-                  </Text>
-                </>
-              )}
             </View>
           )
         })}
@@ -528,7 +484,7 @@ export function MonthlyCashflowChart({
             marginTop: 12
           }}
         >
-          Tap or drag to explore months
+          Tap a month to inspect
         </Text>
       )}
 

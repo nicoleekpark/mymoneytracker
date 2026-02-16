@@ -55,15 +55,15 @@ type Props = {
   colors: YearlyColors
 }
 
-// Section gap for combined style (matching Monthly)
-const SECTION_GAP = 40
+// Section gap for combined style
+const SECTION_GAP = spacing['2xl']
 
 
 // Top N categories to show
 const TOP_N_CATEGORIES = 5
 
 /**
- * Section header with accent line - matching Monthly style
+ * Section header - matching Assets style
  */
 function SectionHeader({
   title,
@@ -81,11 +81,11 @@ function SectionHeader({
       {/* Subtle divider above */}
       <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textMuted }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
           {title}
         </Text>
         {rightText && (
-          <Text style={{ marginLeft: 'auto', fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
+          <Text style={{ marginLeft: 'auto', fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
             {rightText}
           </Text>
         )}
@@ -198,7 +198,7 @@ export function YearlyBody({ year, colors }: Props) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
         <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>
       </View>
     )
@@ -206,7 +206,7 @@ export function YearlyBody({ year, colors }: Props) {
 
   if (error) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
         <Text style={{ color: colors.danger }}>{error}</Text>
       </View>
     )
@@ -215,87 +215,81 @@ export function YearlyBody({ year, colors }: Props) {
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
     >
       {/* Section 1: Hero - Year Overview */}
       <View style={{ marginBottom: SECTION_GAP }}>
         {/* Option A Hero: Net Outcome */}
         {useOptionAHero ? (
-          <View style={{ marginBottom: spacing.lg }}>
-            {/* Title line - left aligned, matches section header style */}
-            <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textMuted, marginBottom: spacing.sm }}>
-              Net (Income - Expense)
+          <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
+            {/* Title line */}
+            <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+              Net Cash Flow
             </Text>
 
-            {/* Hero number + sub-hero: center aligned */}
-            <View style={{ alignItems: 'center' }}>
-              {/* Primary: Net amount - neutral color like Assets */}
-              <Text
-                style={{
-                  fontSize: displaySize.xl,
-                  fontWeight: '800',
-                  color: colors.text
-                }}
-              >
-                {heroData.netDollar >= 0 ? '+' : ''}{formatUsdInt(heroData.netDollar)}
-              </Text>
+            {/* Primary: Net amount - neutral color like Assets */}
+            <Text
+              style={{
+                fontSize: displaySize.xl,
+                fontWeight: fontWeight.heavy,
+                color: colors.text,
+                letterSpacing: -1
+              }}
+            >
+              {heroData.netDollar >= 0 ? '+' : ''}{formatUsdInt(heroData.netDollar)}
+            </Text>
 
-              {/* Comparison with last year - muted semantic color */}
-              {heroData.hasLastYearData && heroData.netChangeDollar !== null && (
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    color: heroData.netChangeDollar >= 0 ? colors.success : colors.danger,
-                    opacity: 0.7,
-                    marginTop: spacing.sm
-                  }}
-                >
-                  {heroData.netChangeDollar >= 0 ? '↑' : '↓'} {formatUsdInt(Math.abs(heroData.netChangeDollar))} vs {year - 1}
+            {/* Comparison with last year - only delta colored */}
+            {heroData.hasLastYearData && heroData.netChangeDollar !== null && (
+              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                <Text style={{ color: heroData.netChangeDollar >= 0 ? colors.success : colors.danger }}>
+                  {heroData.netChangeDollar >= 0 ? '↑' : '↓'} {formatUsdInt(Math.abs(heroData.netChangeDollar))}
                 </Text>
-              )}
-            </View>
+                {' '}vs {year - 1}
+              </Text>
+            )}
           </View>
         ) : (
           /* Current Hero: $ Saved (absolute first, % as supporting) */
-          <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+          <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
             {totalIncome > 0 ? (
               savings > 0 ? (
                 // Positive savings - dollar amount primary, % supporting
                 <>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                     Saved
                   </Text>
-                  <Text style={{ fontSize: displaySize.xl, fontWeight: '800', color: colors.success }}>
+                  <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.success, letterSpacing: -1 }}>
                     {formatUsdInt(savings)}
                   </Text>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 8 }}>
-                    That's <Text style={{ fontWeight: '600', color: colors.success }}>{savingsRate}%</Text> of income
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                    That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.success }}>{savingsRate}%</Text> of income
                   </Text>
                 </>
               ) : savings < 0 ? (
                 // Spending exceeds income
                 <>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                     Spending exceeds income by
                   </Text>
-                  <Text style={{ fontSize: displaySize.xl, fontWeight: '800', color: colors.danger }}>
+                  <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.danger, letterSpacing: -1 }}>
                     {formatUsdInt(Math.abs(savings))}
                   </Text>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 8 }}>
-                    That's <Text style={{ fontWeight: '600', color: colors.danger }}>{Math.abs(savingsRate)}%</Text> of income
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                    That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{Math.abs(savingsRate)}%</Text> of income
                   </Text>
                 </>
               ) : (
                 // Broke even
                 <>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                     Breaking even
                   </Text>
-                  <Text style={{ fontSize: displaySize.md, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                  <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textMuted }}>
                     {formatUsdInt(0)}
                   </Text>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 4 }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs }}>
                     net
                   </Text>
                 </>
@@ -303,15 +297,15 @@ export function YearlyBody({ year, colors }: Props) {
             ) : (
               // No income
               <>
-                <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
-                  Net (Income - Expense)
+                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                  Net Cash Flow
                 </Text>
-                <Text style={{ fontSize: displaySize.sm, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textMuted }}>
                   No income recorded
                 </Text>
                 {savings < 0 && (
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 8 }}>
-                    <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                    <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
                   </Text>
                 )}
               </>
@@ -319,69 +313,53 @@ export function YearlyBody({ year, colors }: Props) {
           </View>
         )}
 
-        {/* Stats Row: Income / Expense only */}
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: radius.lg,
-              padding: 12,
-              alignItems: 'center'
-            }}
-          >
+        {/* Stats Row: Income / Expense - Accessible/Tied up style with semantic colors */}
+        <View style={{ flexDirection: 'row' }}>
+          {/* Income */}
+          <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
             <Text
               style={{
                 fontSize: fontSize.xs,
-                fontWeight: '600',
+                fontWeight: fontWeight.medium,
                 color: colors.textMuted,
-                textTransform: 'uppercase',
                 letterSpacing: 0.5,
-                marginBottom: 4
+                marginBottom: spacing.xs
               }}
             >
               Income
             </Text>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.success }}>
               {formatUsdInt(totalIncome)}
             </Text>
           </View>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: radius.lg,
-              padding: 12,
-              alignItems: 'center'
-            }}
-          >
+
+          {/* Subtle middle divider */}
+          <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
+
+          {/* Expense */}
+          <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
             <Text
               style={{
                 fontSize: fontSize.xs,
-                fontWeight: '600',
+                fontWeight: fontWeight.medium,
                 color: colors.textMuted,
-                textTransform: 'uppercase',
                 letterSpacing: 0.5,
-                marginBottom: 4
+                marginBottom: spacing.xs
               }}
             >
               Expense
             </Text>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.danger }}>
               {formatUsdInt(totalExpense)}
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Section 2: Monthly Cashflow */}
+      {/* Section 2: Year Cashflow */}
       <View style={{ marginBottom: SECTION_GAP }}>
         <SectionHeader
-          title="Monthly cashflow"
+          title="Year cashflow"
           colors={colors}
         />
 
@@ -414,7 +392,7 @@ export function YearlyBody({ year, colors }: Props) {
 
         {displayExpenseCategories.length > 0 ? (
           <>
-          <View style={{ gap: 12 }}>
+          <View style={{ gap: spacing.md }}>
             {displayExpenseCategories.map((cat, idx) => {
               const percent = totalExpense > 0 ? (cat.totalDollar / totalExpense) * 100 : 0
               const barWidth = maxExpenseAmount > 0 ? (cat.totalDollar / maxExpenseAmount) * 100 : 0
@@ -424,21 +402,21 @@ export function YearlyBody({ year, colors }: Props) {
               const isExpanded = expandedExpenseCategories.has(categoryKey)
 
               return (
-                <View key={idx} style={{ gap: 6 }}>
+                <View key={idx} style={{ gap: spacing.sm }}>
                   {/* Top row: name + amount + percent (clickable if has subcategories) */}
                   <Pressable
                     onPress={() => hasSubcategories && toggleExpenseCategory(categoryKey)}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                     disabled={!hasSubcategories}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: catMeta.color }} />
-                    <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                    <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
                       {catMeta.name}
                     </Text>
-                    <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+                    <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
                       {formatUsdInt(cat.totalDollar)}
                     </Text>
-                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted }}>
+                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                       {Math.round(percent)}%
                     </Text>
                   </Pressable>
@@ -446,9 +424,9 @@ export function YearlyBody({ year, colors }: Props) {
                   {/* Bar - neutral color */}
                   <View
                     style={{
-                      height: 6,
+                      height: spacing.sm,
                       backgroundColor: colors.surfaceAlt,
-                      borderRadius: radius.xs,
+                      borderRadius: radius.sm,
                       marginLeft: 18,
                       overflow: 'hidden'
                     }}
@@ -458,16 +436,16 @@ export function YearlyBody({ year, colors }: Props) {
                         height: '100%',
                         width: `${barWidth}%`,
                         backgroundColor: colors.textMuted,
-                        borderRadius: radius.xs
+                        borderRadius: radius.sm
                       }}
                     />
                   </View>
 
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
-                    <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                    <View style={{ marginLeft: 28, marginTop: spacing.xs, gap: spacing.sm }}>
                       {/* Subcategory header showing % is of parent */}
-                      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: 2 }}>
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
                         % of {catMeta.name}
                       </Text>
                       {cat.subcategories.map((sub, subIdx) => {
@@ -477,26 +455,26 @@ export function YearlyBody({ year, colors }: Props) {
                           : 0
 
                         return (
-                          <View key={subIdx} style={{ gap: 4 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <View key={subIdx} style={{ gap: spacing.xs }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                               <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.textMuted, opacity: 0.6 }} />
                               <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {getSubcategoryName(catMeta.subCategories, sub.subCategoryKey)}
                               </Text>
-                              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.totalDollar)}
                               </Text>
                               <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
                                 {Math.round(subPercent)}%
                               </Text>
                             </View>
-                            {/* Subcategory bar - neutral */}
+                            {/* Subcategory bar */}
                             <View
                               style={{
-                                height: 5,
+                                height: spacing.xs,
                                 backgroundColor: colors.surfaceAlt,
                                 borderRadius: radius.xs,
-                                marginLeft: 12,
+                                marginLeft: spacing.md,
                                 overflow: 'hidden'
                               }}
                             >
@@ -524,16 +502,16 @@ export function YearlyBody({ year, colors }: Props) {
           {hasMoreExpense && (
             <Pressable
               onPress={() => setShowAllExpense(!showAllExpense)}
-              style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+              style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
                 {showAllExpense ? 'Show less' : `Show all ${allExpenseCategories.length} categories`}
               </Text>
             </Pressable>
           )}
           </>
         ) : (
-          <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
+          <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: spacing.xl }}>
             No spending yet
           </Text>
         )}
@@ -551,7 +529,7 @@ export function YearlyBody({ year, colors }: Props) {
 
           {displayIncomeCategories.length > 0 ? (
             <>
-            <View style={{ gap: 12 }}>
+            <View style={{ gap: spacing.md }}>
               {displayIncomeCategories.map((cat, idx) => {
                 const percent = totalIncome > 0 ? (cat.totalDollar / totalIncome) * 100 : 0
                 const barWidth = maxIncomeAmount > 0 ? (cat.totalDollar / maxIncomeAmount) * 100 : 0
@@ -561,21 +539,21 @@ export function YearlyBody({ year, colors }: Props) {
                 const isExpanded = expandedIncomeCategories.has(categoryKey)
 
                 return (
-                  <View key={idx} style={{ gap: 6 }}>
+                  <View key={idx} style={{ gap: spacing.sm }}>
                     {/* Top row: name + amount + percent (clickable if has subcategories) */}
                     <Pressable
                       onPress={() => hasSubcategories && toggleIncomeCategory(categoryKey)}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                       disabled={!hasSubcategories}
                     >
                       <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: catMeta.color }} />
-                      <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                      <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
                         {catMeta.name}
                       </Text>
-                      <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+                      <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
                         {formatUsdInt(cat.totalDollar)}
                       </Text>
-                      <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted }}>
+                      <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                         {Math.round(percent)}%
                       </Text>
                     </Pressable>
@@ -583,9 +561,9 @@ export function YearlyBody({ year, colors }: Props) {
                     {/* Bar - neutral color */}
                     <View
                       style={{
-                        height: 6,
+                        height: spacing.sm,
                         backgroundColor: colors.surfaceAlt,
-                        borderRadius: radius.xs,
+                        borderRadius: radius.sm,
                         marginLeft: 18,
                         overflow: 'hidden'
                       }}
@@ -595,16 +573,16 @@ export function YearlyBody({ year, colors }: Props) {
                           height: '100%',
                           width: `${barWidth}%`,
                           backgroundColor: colors.textMuted,
-                          borderRadius: radius.xs
+                          borderRadius: radius.sm
                         }}
                       />
                     </View>
 
                     {/* Subcategories (accordion) */}
                     {isExpanded && hasSubcategories && (
-                      <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                      <View style={{ marginLeft: 28, marginTop: spacing.xs, gap: spacing.sm }}>
                         {/* Subcategory header showing % is of parent */}
-                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: 2 }}>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
                           % of {catMeta.name}
                         </Text>
                         {cat.subcategories.map((sub, subIdx) => {
@@ -614,26 +592,26 @@ export function YearlyBody({ year, colors }: Props) {
                             : 0
 
                           return (
-                            <View key={subIdx} style={{ gap: 4 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <View key={subIdx} style={{ gap: spacing.xs }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                                 <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.textMuted, opacity: 0.6 }} />
                                 <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                   {getSubcategoryName(catMeta.subCategories, sub.subCategoryKey)}
                                 </Text>
-                                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8 }}>
                                   {formatUsdInt(sub.totalDollar)}
                                 </Text>
                                 <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
                                   {Math.round(subPercent)}%
                                 </Text>
                               </View>
-                              {/* Subcategory bar - neutral */}
+                              {/* Subcategory bar */}
                               <View
                                 style={{
-                                  height: 5,
+                                  height: spacing.xs,
                                   backgroundColor: colors.surfaceAlt,
                                   borderRadius: radius.xs,
-                                  marginLeft: 12,
+                                  marginLeft: spacing.md,
                                   overflow: 'hidden'
                                 }}
                               >
@@ -661,16 +639,16 @@ export function YearlyBody({ year, colors }: Props) {
             {hasMoreIncome && (
               <Pressable
                 onPress={() => setShowAllIncome(!showAllIncome)}
-                style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+                style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
               >
-                <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
+                <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
                   {showAllIncome ? 'Show less' : `Show all ${allIncomeCategories.length} categories`}
                 </Text>
               </Pressable>
             )}
             </>
           ) : (
-            <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
+            <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: spacing.xl }}>
               No income yet
             </Text>
           )}

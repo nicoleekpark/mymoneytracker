@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
-import { AppBar, Divider } from '@/shared/components'
+import { AppBar } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 
 import type { Period } from './types'
@@ -11,9 +11,8 @@ import { createDashboardStyles, useDashboardStore } from './store'
 
 import { DashboardModeTabs } from './shared/DashboardModeTabs'
 import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
-import { DashboardToolbar } from './shared/DashboardToolbar'
+import { OverviewHeader } from './shared/OverviewHeader'
 import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
-import { MemberTabs } from './shared/MemberTabs'
 import { getFamilyMembers } from '@/domain/asset'
 import { AllBody } from './all'
 import { AssetsBody } from './assets'
@@ -91,36 +90,22 @@ export default function DashboardScreen() {
         styles={styles}
       />
 
-      {/* Toolbar - only show for overview mode */}
+      {/* Overview Header - members + period + scope */}
       {mode === 'overview' && (
-        <>
-          <DashboardToolbar
-            scope={scope}
-            period={period}
-            canPrev={canGoPrev}
-            canNext={canGoNext}
-            onPrev={() => shiftPeriod(-1)}
-            onNext={() => shiftPeriod(1)}
-            onOpenPicker={handleOpenPicker}
-            onScopeChange={setScope}
-            onToday={resetToToday}
-          />
-          {/* Member filter tabs - multi-select, only show if members exist */}
-          {members.length > 0 && (
-            <MemberTabs
-              members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
-              selectedIds={selectedMemberIds}
-              onSelectMulti={setSelectedMemberIds}
-              multiSelect
-              colors={{
-                primary: theme.semantic.primary,
-                surfaceAlt: theme.semantic.surfaceAlt,
-                textSecondary: theme.semantic.textSecondary,
-              }}
-            />
-          )}
-          <Divider spacing='sm'/>
-        </>
+        <OverviewHeader
+          members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
+          selectedMemberIds={selectedMemberIds}
+          onSelectMembers={setSelectedMemberIds}
+          scope={scope}
+          period={period}
+          canPrev={canGoPrev}
+          canNext={canGoNext}
+          onPrev={() => shiftPeriod(-1)}
+          onNext={() => shiftPeriod(1)}
+          onOpenPicker={handleOpenPicker}
+          onToday={resetToToday}
+          onScopeChange={setScope}
+        />
       )}
 
       {/* Insights mode - Monthly only, no scope selector */}
