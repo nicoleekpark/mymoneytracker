@@ -4,6 +4,7 @@ import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'rea
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
 
 // Enable LayoutAnimation on Android
@@ -169,10 +170,10 @@ export function GoalProgressHeader(props: Props) {
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.xl,
-        padding: 16,
+        padding: spacing.lg,
         borderWidth: 1,
         borderColor: colors.border,
-        gap: 16
+        gap: spacing.lg
       }}
     >
       {/* Header row */}
@@ -234,7 +235,7 @@ export function GoalProgressHeader(props: Props) {
           style={{
             backgroundColor: colors.surfaceAlt,
             borderRadius: radius.md,
-            padding: 12,
+            padding: spacing.md,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center'
@@ -243,7 +244,7 @@ export function GoalProgressHeader(props: Props) {
           <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.text }}>
             {MONTH_NAMES_SHORT[selectedMonth!]}
           </Text>
-          <View style={{ flexDirection: 'row', gap: 16 }}>
+          <View style={{ flexDirection: 'row', gap: spacing.lg }}>
             <View style={{ alignItems: 'center' }}>
               <Text style={{ fontSize: fontSize.sm, fontWeight: '800', color: colors.success }}>
                 {formatUsdInt(selectedData.incomeDollar)}

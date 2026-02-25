@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react'
-import { LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from 'react-native'
+import { LayoutAnimation, Platform, Pressable, ScrollView, Text, UIManager, View } from 'react-native'
 import { fontSize, displaySize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 
 import { CATEGORIES } from '@/config/categories.config'
 import { FEATURE_FLAGS } from '@/config'
-import { CategoryIcon, Stack } from '@/shared/components'
+import { CategoryIcon, InfoSheet } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
 import { useAllTimeData, type CategoryBreakdown } from './hooks'
@@ -20,7 +20,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export type AllColors = Readonly<{
   text: string
-  textSecondary: string
+  textMuted: string
   border: string
   surface: string
   surfaceAlt: string
@@ -160,7 +160,7 @@ function aggregateCategories(categories: CategoryBreakdown[]): AggregatedCategor
   return Array.from(byParent.values()).sort((a, b) => b.amount - a.amount)
 }
 
-function InfoTooltip({
+function SavingsRateInfoSheet({
   visible,
   onClose,
   colors
@@ -170,114 +170,84 @@ function InfoTooltip({
   colors: AllColors
 }) {
   return (
-    <Modal
+    <InfoSheet
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      onClose={onClose}
+      title="Savings Rate"
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textMuted: colors.textMuted,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={['60%']}
     >
-      <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
-        onPress={onClose}
+      {/* Description */}
+      <Text style={{ fontSize: fontSize.md, color: colors.textMuted, lineHeight: 20, marginBottom: spacing.lg }}>
+        The percentage of income you kept after expenses.
+      </Text>
+
+      {/* Formula - Fraction style in one line */}
+      <View
+        style={{
+          backgroundColor: colors.surfaceAlt,
+          borderRadius: radius.lg,
+          padding: spacing.lg,
+          alignItems: 'center',
+          marginBottom: spacing.lg
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }}>
+              Income − Expense
+            </Text>
+            <View
+              style={{
+                width: 120,
+                height: 1,
+                backgroundColor: colors.text,
+                marginVertical: spacing.xs
+              }}
+            />
+            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }}>
+              Income
+            </Text>
+          </View>
+          <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text }}>
+            × 100
+          </Text>
+        </View>
+      </View>
+
+      {/* Benchmark */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+          marginBottom: spacing.xl
+        }}
       >
         <View
           style={{
-            backgroundColor: colors.surface,
-            borderRadius: radius.xl,
-            padding: spacing.xl,
-            marginHorizontal: spacing['2xl'],
-            maxWidth: 320,
-            borderWidth: 1,
-            borderColor: colors.border
+            width: 6,
+            height: 6,
+            borderRadius: radius.full,
+            backgroundColor: colors.success
           }}
-        >
-          {/* Header */}
-          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.heavy, color: colors.text, marginBottom: spacing.md }}>
-            Savings Rate
-          </Text>
+        />
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
+          <Text style={{ fontWeight: fontWeight.bold, color: colors.text }}>20%+</Text>
+          {' '}is a common healthy target
+        </Text>
+      </View>
 
-          {/* Description */}
-          <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 20, marginBottom: spacing.lg }}>
-            The percentage of income you kept after expenses.
-          </Text>
-
-          {/* Formula - Fraction style in one line */}
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              borderRadius: radius.lg,
-              padding: spacing.lg,
-              alignItems: 'center',
-              marginBottom: spacing.lg
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }}>
-                  Income − Expense
-                </Text>
-                <View
-                  style={{
-                    width: 120,
-                    height: 1,
-                    backgroundColor: colors.text,
-                    marginVertical: spacing.xs
-                  }}
-                />
-                <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }}>
-                  Income
-                </Text>
-              </View>
-              <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text }}>
-                × 100
-              </Text>
-            </View>
-          </View>
-
-          {/* Benchmark */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: spacing.sm,
-              marginBottom: spacing.xl
-            }}
-          >
-            <View
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: radius.full,
-                backgroundColor: colors.success
-              }}
-            />
-            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
-              <Text style={{ fontWeight: fontWeight.bold, color: colors.text }}>20%+</Text>
-              {' '}is a common healthy target
-            </Text>
-          </View>
-
-          {/* Context */}
-          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, lineHeight: 18 }}>
-            Based on the 50/30/20 rule: 50% needs, 30% wants, 20% savings. Your ideal rate depends on your goals.
-          </Text>
-
-          {/* Close button */}
-          <Pressable
-            onPress={onClose}
-            style={{
-              marginTop: spacing.xl,
-              backgroundColor: colors.primary,
-              borderRadius: radius.md,
-              paddingVertical: spacing.md,
-              alignItems: 'center'
-            }}
-          >
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#fff' }}>Got it</Text>
-          </Pressable>
-        </View>
-      </Pressable>
-    </Modal>
+      {/* Context */}
+      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, lineHeight: 18 }}>
+        Based on the 50/30/20 rule: 50% needs, 30% wants, 20% savings. Your ideal rate depends on your goals.
+      </Text>
+    </InfoSheet>
   )
 }
 
@@ -362,9 +332,13 @@ export function AllBody({ colors }: Props) {
   }
 
   return (
-    <Stack gap="xl" scroll contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
-      {/* Savings Rate Info Modal */}
-      <InfoTooltip
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Savings Rate Info Sheet */}
+      <SavingsRateInfoSheet
         visible={showSavingsInfo}
         onClose={() => setShowSavingsInfo(false)}
         colors={colors}
@@ -373,7 +347,7 @@ export function AllBody({ colors }: Props) {
       {/* Section 1: All-Time Overview */}
       <View style={{ marginBottom: SECTION_GAP }}>
         {/* Tracking since subtitle */}
-        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, textAlign: 'right', marginBottom: spacing.xs }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, textAlign: 'right', marginBottom: spacing.xs }}>
           {formatTrackingSince(data.firstTransactionDate)}
         </Text>
 
@@ -382,16 +356,16 @@ export function AllBody({ colors }: Props) {
           /* Option A Hero: Net Outcome */
           <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
             {/* Title line */}
-            <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
               Net Cash Flow
             </Text>
 
-            {/* Primary: Net amount */}
+            {/* Primary: Net amount - neutral color like Assets */}
             <Text
               style={{
                 fontSize: displaySize.xl,
                 fontWeight: fontWeight.heavy,
-                color: data.netAmount >= 0 ? colors.success : colors.danger,
+                color: colors.text,
                 letterSpacing: -1
               }}
             >
@@ -400,15 +374,8 @@ export function AllBody({ colors }: Props) {
 
             {/* Supporting: Current streak (only if positive streak) */}
             {data.personalBests.currentStreak.isPositive && data.personalBests.currentStreak.months > 0 && (
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
                 {data.personalBests.currentStreak.months} positive-net {data.personalBests.currentStreak.months === 1 ? 'month' : 'months'} in a row
-              </Text>
-            )}
-
-            {/* Nudge for long-term consistency */}
-            {data.personalBests.currentStreak.isPositive && data.personalBests.currentStreak.months >= 3 && (
-              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs, opacity: 0.6, fontStyle: 'italic' }}>
-                Stay consistent, noise matters less now
               </Text>
             )}
           </View>
@@ -424,18 +391,18 @@ export function AllBody({ colors }: Props) {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}
                   >
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5 }}>
                       Lifetime savings rate
                     </Text>
-                    <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
+                    <CategoryIcon name="info-circle" size={12} color={colors.textMuted} />
                   </Pressable>
-                  <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.success, letterSpacing: -1 }}>
+                  <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: -1 }}>
                     {data.savingsRate.toFixed(0)}%
                   </Text>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
                     That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.success }}>{formatUsdInt(data.netAmount)}</Text> saved
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.xs }}>
                     (+{formatUsdInt(data.avgMonthlySaved)}/mo on average)
                   </Text>
                 </>
@@ -447,31 +414,31 @@ export function AllBody({ colors }: Props) {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}
                   >
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5 }}>
                       Lifetime savings rate
                     </Text>
-                    <CategoryIcon name="info-circle" size={12} color={colors.textSecondary} />
+                    <CategoryIcon name="info-circle" size={12} color={colors.textMuted} />
                   </Pressable>
-                  <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.danger, letterSpacing: -1 }}>
+                  <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: -1 }}>
                     {Math.abs(data.savingsRate).toFixed(0)}%
                   </Text>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
                     That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{formatUsdInt(Math.abs(data.netAmount))}</Text> overspent
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.xs }}>
                     ({formatUsdInt(Math.abs(data.avgMonthlySaved))}/mo on average)
                   </Text>
                 </>
               ) : (
                 // Broke even
                 <>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                     Lifetime result
                   </Text>
-                  <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
+                  <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textMuted }}>
                     {formatUsdInt(0)}
                   </Text>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs }}>
                     broke even
                   </Text>
                 </>
@@ -479,14 +446,14 @@ export function AllBody({ colors }: Props) {
             ) : (
               // No income
               <>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                   Lifetime
                 </Text>
-                <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
+                <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textMuted }}>
                   No income yet
                 </Text>
                 {data.totalExpense > 0 && (
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
                     <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{formatUsdInt(data.totalExpense)}</Text> spent
                   </Text>
                 )}
@@ -503,7 +470,7 @@ export function AllBody({ colors }: Props) {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
-                color: colors.textSecondary,
+                color: colors.textMuted,
                 letterSpacing: 0.5,
                 marginBottom: spacing.xs
               }}
@@ -524,7 +491,7 @@ export function AllBody({ colors }: Props) {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
-                color: colors.textSecondary,
+                color: colors.textMuted,
                 letterSpacing: 0.5,
                 marginBottom: spacing.xs
               }}
@@ -554,13 +521,13 @@ export function AllBody({ colors }: Props) {
               {/* Best Month */}
               {data.personalBests.bestSavingsMonth && (
                 <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
                     Best month
                   </Text>
-                  <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.success }}>
+                  <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
                     {formatUsdInt(data.personalBests.bestSavingsMonth.netDollar)}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.xs }}>
                     {formatMonthYear(data.personalBests.bestSavingsMonth.month)}
                   </Text>
                 </View>
@@ -572,13 +539,13 @@ export function AllBody({ colors }: Props) {
               {/* Lowest Month */}
               {data.personalBests.worstMonth && (
                 <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
                     Lowest month
                   </Text>
-                  <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: data.personalBests.worstMonth.netDollar >= 0 ? colors.success : colors.danger }}>
+                  <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
                     {formatUsdInt(data.personalBests.worstMonth.netDollar)}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.xs }}>
                     {formatMonthYear(data.personalBests.worstMonth.month)}
                   </Text>
                 </View>
@@ -592,14 +559,14 @@ export function AllBody({ colors }: Props) {
             <View style={{ flexDirection: 'row' }}>
               {/* Best Streak */}
               <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
                   Best streak
                 </Text>
-                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.success }}>
+                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
                   {data.personalBests.positiveStreak} mo
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
-                  consecutive profit
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.xs }}>
+                  positive months
                 </Text>
               </View>
 
@@ -608,13 +575,13 @@ export function AllBody({ colors }: Props) {
 
               {/* Current Streak */}
               <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
                   Current streak
                 </Text>
-                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: data.personalBests.currentStreak.isPositive ? colors.success : colors.danger }}>
+                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
                   {data.personalBests.currentStreak.months} mo
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.xs }}>
                   {data.personalBests.currentStreak.isPositive ? 'in profit' : 'in loss'}
                 </Text>
               </View>
@@ -627,14 +594,14 @@ export function AllBody({ colors }: Props) {
       {data.cumulativeData.length > 0 && (
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
-            title="Cumulative savings from income"
+            title="Net worth growth"
             colors={colors}
           />
           <CumulativeNetChart
             data={data.cumulativeData}
             colors={{
               text: colors.text,
-              textSecondary: colors.textSecondary,
+              textSecondary: colors.textMuted,
               surface: colors.surface,
               surfaceAlt: colors.surfaceAlt,
               success: colors.success,
@@ -677,26 +644,26 @@ export function AllBody({ colors }: Props) {
                     <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
                       {formatUsdInt(cat.amount)}
                     </Text>
-                    <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
+                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                       {Math.round(percent)}%
                     </Text>
                     {/* Chevron indicator - fixed width container for alignment */}
                     <View style={{ width: 20, alignItems: 'center' }}>
                       {hasSubcategories && (
-                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
                           {isExpanded ? '▼' : '▶'}
                         </Text>
                       )}
                     </View>
                   </Pressable>
 
-                  {/* Bar */}
+                  {/* Bar - neutral color */}
                   <View
                     style={{
                       height: spacing.sm,
                       backgroundColor: colors.surfaceAlt,
                       borderRadius: radius.sm,
-                      marginLeft: 18,
+                      marginLeft: spacing.lg,
                       overflow: 'hidden'
                     }}
                   >
@@ -704,7 +671,7 @@ export function AllBody({ colors }: Props) {
                       style={{
                         height: '100%',
                         width: `${barWidth}%`,
-                        backgroundColor: catMeta.color,
+                        backgroundColor: colors.textMuted,
                         borderRadius: radius.sm
                       }}
                     />
@@ -712,9 +679,9 @@ export function AllBody({ colors }: Props) {
 
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
-                    <View style={{ marginLeft: 28, marginTop: spacing.xs, gap: spacing.sm }}>
+                    <View style={{ marginLeft: spacing.xl + spacing.xs, marginTop: spacing.xs, gap: spacing.sm }}>
                       {/* Subcategory header showing % is of parent */}
-                      <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: spacing.xs }}>
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
                         % of {catMeta.name}
                       </Text>
                       {cat.subcategories.map((sub, subIdx) => {
@@ -725,14 +692,14 @@ export function AllBody({ colors }: Props) {
                         return (
                           <View key={`${sub.name}-${subIdx}`} style={{ gap: spacing.xs }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: sub.color }} />
+                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.textMuted, opacity: 0.6 }} />
                               <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {sub.name}
                               </Text>
                               <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.amount)}
                               </Text>
-                              <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
+                              <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
                                 {Math.round(subPercent)}%
                               </Text>
                               {/* Spacer for alignment with parent rows */}
@@ -751,8 +718,8 @@ export function AllBody({ colors }: Props) {
                                 style={{
                                   height: '100%',
                                   width: `${subBarWidth}%`,
-                                  backgroundColor: sub.color,
-                                  opacity: 0.7,
+                                  backgroundColor: colors.textMuted,
+                                  opacity: 0.5,
                                   borderRadius: radius.xs
                                 }}
                               />
@@ -773,7 +740,7 @@ export function AllBody({ colors }: Props) {
               onPress={() => setShowAllExpense(!showAllExpense)}
               style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                 {showAllExpense ? 'Show less' : `Show all ${allExpenseCategories.length} categories`}
               </Text>
             </Pressable>
@@ -814,26 +781,26 @@ export function AllBody({ colors }: Props) {
                     <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
                       {formatUsdInt(cat.amount)}
                     </Text>
-                    <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
+                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                       {Math.round(percent)}%
                     </Text>
                     {/* Chevron indicator - fixed width container for alignment */}
                     <View style={{ width: 20, alignItems: 'center' }}>
                       {hasSubcategories && (
-                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
                           {isExpanded ? '▼' : '▶'}
                         </Text>
                       )}
                     </View>
                   </Pressable>
 
-                  {/* Bar */}
+                  {/* Bar - neutral color */}
                   <View
                     style={{
                       height: spacing.sm,
                       backgroundColor: colors.surfaceAlt,
                       borderRadius: radius.sm,
-                      marginLeft: 18,
+                      marginLeft: spacing.lg,
                       overflow: 'hidden'
                     }}
                   >
@@ -841,7 +808,7 @@ export function AllBody({ colors }: Props) {
                       style={{
                         height: '100%',
                         width: `${barWidth}%`,
-                        backgroundColor: catMeta.color,
+                        backgroundColor: colors.textMuted,
                         borderRadius: radius.sm
                       }}
                     />
@@ -849,9 +816,9 @@ export function AllBody({ colors }: Props) {
 
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
-                    <View style={{ marginLeft: 28, marginTop: spacing.xs, gap: spacing.sm }}>
+                    <View style={{ marginLeft: spacing.xl + spacing.xs, marginTop: spacing.xs, gap: spacing.sm }}>
                       {/* Subcategory header showing % is of parent */}
-                      <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: spacing.xs }}>
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
                         % of {catMeta.name}
                       </Text>
                       {cat.subcategories.map((sub, subIdx) => {
@@ -862,14 +829,14 @@ export function AllBody({ colors }: Props) {
                         return (
                           <View key={`${sub.name}-${subIdx}`} style={{ gap: spacing.xs }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: sub.color }} />
+                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.textMuted, opacity: 0.6 }} />
                               <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {sub.name}
                               </Text>
                               <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.amount)}
                               </Text>
-                              <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
+                              <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
                                 {Math.round(subPercent)}%
                               </Text>
                               {/* Spacer for alignment with parent rows */}
@@ -888,8 +855,8 @@ export function AllBody({ colors }: Props) {
                                 style={{
                                   height: '100%',
                                   width: `${subBarWidth}%`,
-                                  backgroundColor: sub.color,
-                                  opacity: 0.7,
+                                  backgroundColor: colors.textMuted,
+                                  opacity: 0.5,
                                   borderRadius: radius.xs
                                 }}
                               />
@@ -910,13 +877,13 @@ export function AllBody({ colors }: Props) {
               onPress={() => setShowAllIncome(!showAllIncome)}
               style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                 {showAllIncome ? 'Show less' : `Show all ${allIncomeCategories.length} categories`}
               </Text>
             </Pressable>
           )}
         </View>
       )}
-    </Stack>
+    </ScrollView>
   )
 }

@@ -4,8 +4,9 @@ import { Pressable, Text, View } from 'react-native'
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { CARD_SHADOW } from '@/theme/tokens'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 
 import type { CalendarColors } from '../calendar'
 import { formatUsdInt } from './category.utils'
@@ -104,7 +105,7 @@ export function MonthlyIncomeContent(props: ContentProps) {
     : {
         backgroundColor: colors.surface,
         borderRadius: radius.xl,
-        padding: 20,
+        padding: spacing.xl,
         ...CARD_SHADOW
       }
 
@@ -112,12 +113,12 @@ export function MonthlyIncomeContent(props: ContentProps) {
     <View style={containerStyle}>
       {/* Header - only show if not hidden */}
       {!hideHeader && (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: 0.2 }}>
             Income by Category
           </Text>
           {hasData && (
-            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.success }}>
+            <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.success }}>
               {formatUsdInt(totalIncomeDollar)}
             </Text>
           )}
@@ -130,7 +131,7 @@ export function MonthlyIncomeContent(props: ContentProps) {
 
       {hasData ? (
         <>
-          <View style={{ gap: 12 }}>
+          <View style={{ gap: spacing.md }}>
             {displayRows.map((cat, idx) => {
               const percent = totalIncomeDollar > 0 ? (cat.totalDollar / totalIncomeDollar) * 100 : 0
               const barWidth = maxAmount > 0 ? (cat.totalDollar / maxAmount) * 100 : 0
@@ -140,40 +141,32 @@ export function MonthlyIncomeContent(props: ContentProps) {
               const isExpanded = expandedCategories.has(categoryKey)
 
               return (
-                <View key={idx} style={{ gap: 6 }}>
+                <View key={idx} style={{ gap: spacing.sm }}>
                   {/* Top row: name + amount + percent (clickable if has subcategories) */}
                   <Pressable
                     onPress={() => hasSubcategories && toggleCategory(categoryKey)}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                     disabled={!hasSubcategories}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: catMeta.color }} />
-                    <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                    <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
                       {catMeta.name}
                     </Text>
-                    <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+                    <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
                       {formatUsdInt(cat.totalDollar)}
                     </Text>
-                    <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted }}>
+                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                       {Math.round(percent)}%
                     </Text>
-                    {/* Chevron indicator - fixed width container for alignment */}
-                    <View style={{ width: 20, alignItems: 'center' }}>
-                      {hasSubcategories && (
-                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                          {isExpanded ? '▼' : '▶'}
-                        </Text>
-                      )}
-                    </View>
                   </Pressable>
 
-                  {/* Bar */}
+                  {/* Bar - neutral color */}
                   <View
                     style={{
-                      height: 8,
+                      height: spacing.sm,
                       backgroundColor: colors.surfaceAlt,
                       borderRadius: radius.sm,
-                      marginLeft: 18,
+                      marginLeft: spacing.lg,
                       overflow: 'hidden'
                     }}
                   >
@@ -181,7 +174,7 @@ export function MonthlyIncomeContent(props: ContentProps) {
                       style={{
                         height: '100%',
                         width: `${barWidth}%`,
-                        backgroundColor: catMeta.color,
+                        backgroundColor: colors.textMuted,
                         borderRadius: radius.sm
                       }}
                     />
@@ -189,37 +182,38 @@ export function MonthlyIncomeContent(props: ContentProps) {
 
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
-                    <View style={{ marginLeft: 28, marginTop: 4, gap: 8 }}>
+                    <View style={{ marginLeft: spacing.xl + spacing.xs, marginTop: spacing.xs, gap: spacing.sm }}>
+                      {/* Subcategory header showing % is of parent */}
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
+                        % of {catMeta.name}
+                      </Text>
                       {cat.subcategories.map((sub, subIdx) => {
                         const subPercent = cat.totalDollar > 0 ? (sub.totalDollar / cat.totalDollar) * 100 : 0
                         const subBarWidth = cat.subcategories[0].totalDollar > 0
                           ? (sub.totalDollar / cat.subcategories[0].totalDollar) * 100
                           : 0
-                        const subMeta = getSubcategoryMeta(categoryKey, sub.subCategoryKey)
 
                         return (
-                          <View key={subIdx} style={{ gap: 4 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: subMeta.color }} />
+                          <View key={subIdx} style={{ gap: spacing.xs }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.textMuted, opacity: 0.6 }} />
                               <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
-                                {subMeta.name}
+                                {getSubcategoryMeta(categoryKey, sub.subCategoryKey).name}
                               </Text>
-                              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text, opacity: 0.8 }}>
+                              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.totalDollar)}
                               </Text>
-                              <Text style={{ width: 38, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
+                              <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
                                 {Math.round(subPercent)}%
                               </Text>
-                              {/* Spacer for alignment with parent rows */}
-                              <View style={{ width: 20 }} />
                             </View>
                             {/* Subcategory bar */}
                             <View
                               style={{
-                                height: 4,
+                                height: spacing.xs,
                                 backgroundColor: colors.surfaceAlt,
                                 borderRadius: radius.xs,
-                                marginLeft: 12,
+                                marginLeft: spacing.md,
                                 overflow: 'hidden'
                               }}
                             >
@@ -227,8 +221,8 @@ export function MonthlyIncomeContent(props: ContentProps) {
                                 style={{
                                   height: '100%',
                                   width: `${subBarWidth}%`,
-                                  backgroundColor: subMeta.color,
-                                  opacity: 0.7,
+                                  backgroundColor: colors.textMuted,
+                                  opacity: 0.5,
                                   borderRadius: radius.xs
                                 }}
                               />
@@ -247,16 +241,16 @@ export function MonthlyIncomeContent(props: ContentProps) {
           {hasMore && (
             <Pressable
               onPress={() => setShowAll(!showAll)}
-              style={{ marginTop: 16, paddingVertical: 8, alignItems: 'center' }}
+              style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                 {showAll ? 'Show less' : `Show all ${rows.length} categories`}
               </Text>
             </Pressable>
           )}
         </>
       ) : !loading && !error ? (
-        <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
+        <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: spacing.xl }}>
           No income yet
         </Text>
       ) : null}

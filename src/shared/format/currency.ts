@@ -58,3 +58,24 @@ export function formatCompactUsd(amount: number): string {
   return String(v)
 }
 
+/**
+ * Format a signed currency amount in compact k format.
+ * e.g., +$9.6k, -$1.5k, $0
+ */
+export function formatSignedUsdCompact(amount: number): string {
+  const v = Math.round(Number(amount) || 0)
+  if (v === 0) return '$0'
+
+  const abs = Math.abs(v)
+  const sign = v > 0 ? '+' : '-'
+
+  if (abs >= 1000) {
+    const k = abs / 1000
+    // Show one decimal
+    const kStr = k >= 10 ? Math.round(k).toString() : k.toFixed(1)
+    return `${sign}$${kStr}k`
+  }
+
+  return `${sign}$${abs}`
+}
+

@@ -6,7 +6,7 @@ import { AppBar } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 
 import type { Period } from './types'
-import { MODES } from './types'
+import { MODES, getMaxYearMonth, ymIndex, clampMonth } from './types'
 import { createDashboardStyles, useDashboardStore } from './store'
 
 import { DashboardModeTabs } from './shared/DashboardModeTabs'
@@ -16,7 +16,7 @@ import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
 import { getFamilyMembers } from '@/domain/asset'
 import { AllBody } from './all'
 import { AssetsBody } from './assets'
-import { InsightsBody } from './insights'
+import { InsightsBody, InsightsHeader } from './insights'
 import { MonthlyBody } from './monthly/MonthlyBody'
 import { YearlyBody } from './yearly'
 
@@ -57,12 +57,46 @@ export default function DashboardScreen() {
 
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const canGoPrev = canPrev()
-  const canGoNext = canNext()
+  // For Insights mode, always use monthly scope logic for navigation
+  const canGoPrev = mode === 'insights' ? true : canPrev()
+  const canGoNext = useMemo(() => {
+    if (mode === 'insights') {
+      const max = getMaxYearMonth()
+      const month = 'month' in period ? clampMonth(period.month) : 1
+      return ymIndex({ year: period.year, month }) < ymIndex(max)
+    }
+    return canNext()
+  }, [mode, period, canNext])
 
   function handleOpenPicker() {
-    if (scope === 'all') return
+    // Only block picker in overview mode when scope is 'all'
+    if (mode === 'overview' && scope === 'all') return
     setPickerOpen(true)
+  }
+
+  // Shift period with monthly logic (used for Insights mode)
+  function shiftMonthlyPeriod(delta: -1 | 1) {
+    const y0 = period.year
+    const m0 = 'month' in period ? clampMonth(period.month) : 1
+    const m1 = m0 + delta
+
+    let newPeriod: Period
+    if (m1 < 1) {
+      newPeriod = { year: y0 - 1, month: 12 }
+    } else if (m1 > 12) {
+      newPeriod = { year: y0 + 1, month: 1 }
+    } else {
+      newPeriod = { year: y0, month: m1 }
+    }
+
+    // Clamp to max
+    const max = getMaxYearMonth()
+    const newMonth = 'month' in newPeriod ? newPeriod.month : 1
+    if (ymIndex({ year: newPeriod.year, month: newMonth }) > ymIndex(max)) {
+      newPeriod = { year: max.year, month: max.month }
+    }
+
+    setPeriod(newPeriod)
   }
 
   function handleSwipeLeft() {
@@ -108,23 +142,37 @@ export default function DashboardScreen() {
         />
       )}
 
-      {/* Insights mode - Monthly only, no scope selector */}
+      {/* Insights mode - Monthly only with member selector */}
       {mode === 'insights' && (
-        <View style={styles.body}>
-          <InsightsBody
-            monthYYYYMM={monthYYYYMM}
-            colors={{
-              text: theme.semantic.text,
-              textMuted: theme.semantic.textSecondary,
-              border: theme.semantic.border,
-              surface: theme.semantic.surface,
-              surfaceAlt: theme.semantic.surfaceAlt,
-              primary: theme.semantic.primary,
-              success: theme.semantic.success,
-              danger: theme.semantic.danger
-            }}
+        <>
+          <InsightsHeader
+            members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
+            selectedMemberIds={selectedMemberIds}
+            onSelectMembers={setSelectedMemberIds}
+            period={period}
+            canPrev={canGoPrev}
+            canNext={canGoNext}
+            onPrev={() => shiftMonthlyPeriod(-1)}
+            onNext={() => shiftMonthlyPeriod(1)}
+            onOpenPicker={handleOpenPicker}
           />
-        </View>
+          <View style={styles.body}>
+            <InsightsBody
+              monthYYYYMM={monthYYYYMM}
+              colors={{
+                text: theme.semantic.text,
+                textMuted: theme.semantic.textSecondary,
+                border: theme.semantic.border,
+                surface: theme.semantic.surface,
+                surfaceAlt: theme.semantic.surfaceAlt,
+                primary: theme.semantic.primary,
+                success: theme.semantic.success,
+                danger: theme.semantic.danger,
+                warning: theme.semantic.warning
+              }}
+            />
+          </View>
+        </>
       )}
 
       {/* Assets mode - Net worth and asset tracking */}
@@ -199,7 +247,7 @@ export default function DashboardScreen() {
               <AllBody
                 colors={{
                   text: theme.semantic.text,
-                  textSecondary: theme.semantic.textSecondary,
+                  textMuted: theme.semantic.textSecondary,
                   border: theme.semantic.border,
                   surface: theme.semantic.surface,
                   surfaceAlt: theme.semantic.surfaceAlt,
@@ -215,7 +263,7 @@ export default function DashboardScreen() {
 
       <DashboardPeriodPicker
         visible={pickerOpen}
-        scope={scope}
+        scope={mode === 'insights' ? 'month' : scope}
         currentPeriod={period}
         onClose={() => setPickerOpen(false)}
         onSelect={(p) => {

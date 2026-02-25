@@ -35,8 +35,23 @@ export type DashboardStore = DashboardState & DashboardActions & DashboardSelect
 function normalizeForScope(scope: Scope, p: Period): Period {
   if (scope === 'all') return { year: p.year }
   if (scope === 'year') return { year: p.year }
-  const month = 'month' in p ? p.month : 1
-  return { year: p.year, month: clampMonth(month) }
+
+  // When switching to month scope without a month:
+  // - Current year → current month
+  // - Past year → December (most recent)
+  // - Future year → January
+  if ('month' in p) {
+    return { year: p.year, month: clampMonth(p.month) }
+  }
+
+  const max = getMaxYearMonth()
+  if (p.year === max.year) {
+    return { year: p.year, month: max.month }
+  } else if (p.year < max.year) {
+    return { year: p.year, month: 12 }
+  } else {
+    return { year: p.year, month: 1 }
+  }
 }
 
 function clampToMax(scope: Scope, p: Period): Period {
@@ -79,7 +94,17 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
   ...createInitialState(),
 
   // Actions
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) => {
+    // Insights mode requires monthly scope - ensure period has month
+    if (mode === 'insights') {
+      const state = get()
+      const max = getMaxYearMonth()
+      const month = 'month' in state.period ? clampMonth(state.period.month) : max.month
+      set({ mode, scope: 'month', period: { year: state.period.year, month } })
+    } else {
+      set({ mode })
+    }
+  },
 
   setScope: (scope) => {
     const state = get()

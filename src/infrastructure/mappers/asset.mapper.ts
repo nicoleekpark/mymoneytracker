@@ -3,12 +3,12 @@ import type {
   AssetItem,
   AssetBalance,
   AssetGoal,
-} from '@/domain/asset'
+} from '@/domain/asset/asset.types'
 import {
   normalizeFamilyMemberRole,
   normalizeAssetField,
   normalizeAssetCategory,
-} from '@/domain/asset'
+} from '@/domain/asset/asset.model'
 
 // Database row types
 export type FamilyMemberRow = {

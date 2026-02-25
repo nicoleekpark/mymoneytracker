@@ -4,6 +4,7 @@ import { Modal, Pressable, Text, View } from 'react-native'
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 import type { YearlyProjection } from '@/domain/transaction/transaction.usecase'
 
 type Colors = {
@@ -88,7 +89,7 @@ function InfoModal({
           backgroundColor: 'rgba(0,0,0,0.7)',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 32,
+          padding: spacing['2xl'],
         }}
         onPress={onClose}
       >
@@ -96,7 +97,7 @@ function InfoModal({
           style={{
             backgroundColor: colors.surface,
             borderRadius: radius.xl,
-            padding: 24,
+            padding: spacing.xl,
             width: '100%',
             maxWidth: 320,
             borderWidth: 1,
@@ -107,17 +108,17 @@ function InfoModal({
             {title}
           </Text>
           {content.map((line, i) => (
-            <Text key={i} style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 20, marginBottom: 8 }}>
+            <Text key={i} style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 20, marginBottom: spacing.sm }}>
               {line}
             </Text>
           ))}
           <Pressable
             onPress={onClose}
             style={{
-              marginTop: 16,
+              marginTop: spacing.lg,
               backgroundColor: colors.text,
               borderRadius: radius.md,
-              paddingVertical: 12,
+              paddingVertical: spacing.md,
               alignItems: 'center',
             }}
           >
@@ -162,8 +163,8 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
         borderRadius: radius.xl,
         borderWidth: 1,
         borderColor: colors.border,
-        padding: 16,
-        gap: 12,
+        padding: spacing.lg,
+        gap: spacing.md,
       }}
     >
       {/* Info Modals */}
@@ -230,7 +231,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
             flex: 1,
             backgroundColor: colors.surfaceAlt,
             borderRadius: radius.lg,
-            padding: 12,
+            padding: spacing.md,
           }}
         >
           {/* Accent Header - Neutral */}
@@ -243,7 +244,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
-              marginBottom: 10,
+              marginBottom: spacing.md - 2,
             }}
           >
             <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
@@ -267,7 +268,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
             flex: 1,
             backgroundColor: colors.surfaceAlt,
             borderRadius: radius.lg,
-            padding: 12,
+            padding: spacing.md,
           }}
         >
           {/* Accent Header - Danger */}
@@ -280,7 +281,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
-              marginBottom: 10,
+              marginBottom: spacing.md - 2,
             }}
           >
             <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.danger, letterSpacing: 0.5 }}>
@@ -307,7 +308,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
             flex: 1,
             backgroundColor: colors.surfaceAlt,
             borderRadius: radius.lg,
-            padding: 12,
+            padding: spacing.md,
           }}
         >
           {/* Accent Header - Success */}
@@ -320,7 +321,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
-              marginBottom: 10,
+              marginBottom: spacing.md - 2,
             }}
           >
             <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.success, letterSpacing: 0.5 }}>
@@ -353,7 +354,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
             flex: 1,
             backgroundColor: colors.surfaceAlt,
             borderRadius: radius.lg,
-            padding: 12,
+            padding: spacing.md,
           }}
         >
           {/* Accent Header - Primary/Blue */}
@@ -366,7 +367,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               borderRadius: radius.sm,
               paddingVertical: 5,
               paddingHorizontal: 8,
-              marginBottom: 10,
+              marginBottom: spacing.md - 2,
             }}
           >
             <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.primary, letterSpacing: 0.5 }}>

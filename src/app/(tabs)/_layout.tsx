@@ -15,7 +15,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.semantic.primary,
+        tabBarActiveTintColor: theme.semantic.text,
         tabBarInactiveTintColor: theme.semantic.textSecondary,
         tabBarStyle: {
           backgroundColor: theme.semantic.background,
@@ -38,7 +38,7 @@ export default function TabLayout() {
         name="add"
         options={{
           title: '',
-          tabBarIcon: () => <FontAwesome name="plus-circle" size={26} color={theme.semantic.primary as any} />
+          tabBarIcon: () => <FontAwesome name="plus-circle" size={26} color={theme.semantic.text as any} />
         }}
         listeners={{
           tabPress: (e) => {

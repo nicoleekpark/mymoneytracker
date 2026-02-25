@@ -7,6 +7,7 @@ import { CategoryIcon } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -73,7 +74,7 @@ function SubcategoryRow({
   const percentage = maxAmount > 0 ? (data.total / maxAmount) * 100 : 0
 
   return (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: spacing.xs }}>
       {/* Name and amount row */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -148,7 +149,7 @@ function HorizontalBarRow({
         <View style={{ gap: 6 }}>
           {/* Crown for #1 */}
           {isFirst && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: -2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: -2 }}>
               <Text style={{ fontSize: fontSize.md }}>👑</Text>
               <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
                 Top spending
@@ -172,7 +173,7 @@ function HorizontalBarRow({
           </View>
 
           {/* Horizontal bar with icon at end */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
             <View
               style={{
                 flex: 1,
@@ -286,7 +287,7 @@ export function SparklineList({ categories, totalExpense, colors, onCategoryPres
     return (
       <View
         style={{
-          padding: 24,
+          padding: spacing.xl,
           alignItems: 'center',
           backgroundColor: colors.surface,
           borderRadius: radius.lg,
@@ -306,10 +307,10 @@ export function SparklineList({ categories, totalExpense, colors, onCategoryPres
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.xl,
-        padding: 16,
+        padding: spacing.lg,
         borderWidth: 1,
         borderColor: colors.border,
-        gap: 16
+        gap: spacing.lg
       }}
     >
       <Text

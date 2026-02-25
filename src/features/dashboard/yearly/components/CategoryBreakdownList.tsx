@@ -7,6 +7,7 @@ import { CategoryIcon } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -129,11 +130,11 @@ function CategoryRow({
         {isExpanded && hasSubcategories && (
           <View
             style={{
-              marginTop: 12,
+              marginTop: spacing.md,
               marginLeft: 42,
               backgroundColor: colors.surfaceAlt,
               borderRadius: radius.md,
-              padding: 12,
+              padding: spacing.md,
               gap: 10
             }}
           >
@@ -143,7 +144,7 @@ function CategoryRow({
               return (
                 <View
                   key={`${sub.name}-${idx}`}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                 >
                   <CategoryIcon name={sub.icon} size={12} color={sub.color} />
                   <Text style={{ flex: 1, fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>
@@ -164,7 +165,7 @@ function CategoryRow({
               style={{
                 borderTopWidth: 1,
                 borderTopColor: colors.border,
-                paddingTop: 8,
+                paddingTop: spacing.sm,
                 marginTop: 4
               }}
             >
@@ -177,7 +178,7 @@ function CategoryRow({
 
         {/* Expanded but no subcategories: just show average */}
         {isExpanded && !hasSubcategories && (
-          <View style={{ marginTop: 8, marginLeft: 42 }}>
+          <View style={{ marginTop: spacing.sm, marginLeft: 42 }}>
             <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
               Avg: {formatUsdInt(item.average)}/mo
             </Text>
@@ -211,7 +212,7 @@ export function CategoryBreakdownList({
         style={{
           backgroundColor: colors.surface,
           borderRadius: radius.xl,
-          padding: 20,
+          padding: spacing.xl,
           borderWidth: 1,
           borderColor: colors.border,
           alignItems: 'center'
@@ -229,7 +230,7 @@ export function CategoryBreakdownList({
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.xl,
-        padding: 16,
+        padding: spacing.lg,
         borderWidth: 1,
         borderColor: colors.border
       }}
@@ -267,7 +268,7 @@ export function CategoryBreakdownList({
       {categories.length > maxItems && (
         <Pressable
           style={{
-            paddingTop: 12,
+            paddingTop: spacing.md,
             borderTopWidth: 1,
             borderTopColor: colors.border,
             alignItems: 'center'

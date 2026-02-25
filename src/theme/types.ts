@@ -44,7 +44,7 @@ export type AccentColors = {
   blue: string    // daily, tracking sections
   amber: string   // expense sections (sunlight)
   purple: string  // special sections
-  red: string     // danger/expense accent
+  peach: string   // expense accent (Monet warm peach)
 }
 
 export type Theme = {

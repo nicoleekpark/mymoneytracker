@@ -155,6 +155,7 @@ export async function getDailyExpenseTotalsDollarForMonth(monthYYYYMM: string): 
 
 export type MonthlyExpenseByCategoryDollar = Readonly<{
   categoryId: UUID | null
+  categoryName: string | null
   category?: CategoryRef
   totalDollar: number
 }>
@@ -163,6 +164,7 @@ export async function getMonthlyExpenseByCategoryDollar(monthYYYYMM: string): Pr
   const rows = transactionRepository.listMonthlyExpenseByCategory(monthYYYYMM)
   return rows.map((r) => ({
     categoryId: r.categoryId,
+    categoryName: r.categoryName,
     totalDollar: centsToDollars(r.totalCents)
   }))
 }

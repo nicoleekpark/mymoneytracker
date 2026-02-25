@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import {
   LayoutAnimation,
   Linking,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -10,7 +9,7 @@ import {
   UIManager,
   View,
 } from 'react-native'
-import { CategoryIcon } from '@/shared/components'
+import { CategoryIcon, InfoSheet } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
 import { fontSize, displaySize, fontWeight } from '@/theme/tokens/typography'
@@ -53,72 +52,45 @@ function LiquidityInfoSheet({
   colors: AssetsColors
 }) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-        onPress={onClose}
-      >
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: colors.surface,
-            borderTopLeftRadius: radius.xl,
-            borderTopRightRadius: radius.xl,
-            paddingBottom: 34, // Safe area
-            maxHeight: '70%',
-          }}
-        >
-          {/* Drag handle */}
-          <View style={{ alignItems: 'center', paddingTop: spacing.md, paddingBottom: spacing.sm }}>
-            <View style={{ width: 36, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
-          </View>
+    <InfoSheet
+      visible={visible}
+      onClose={onClose}
+      title="Accessible Assets"
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textMuted: colors.textSecondary,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={['50%']}
+    >
+      <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
+        Money you can access quickly without penalties or significant loss.
+      </Text>
 
-          {/* Header with X close */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: spacing.md }}>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, flex: 1 }}>
-              Accessible Assets
-            </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              style={{ padding: spacing.xs }}
-            >
-              <CategoryIcon name="close" size={20} color={colors.textSecondary} />
-            </Pressable>
-          </View>
+      <View style={{ marginBottom: spacing.xl }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Included:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          {'\u2022'} Cash & Checking{'\n'}
+          {'\u2022'} Savings & HYSA{'\n'}
+          {'\u2022'} Brokerage accounts{'\n'}
+          {'\u2022'} Crypto
+        </Text>
+      </View>
 
-          {/* Scrollable content */}
-          <ScrollView style={{ paddingHorizontal: 20 }} showsVerticalScrollIndicator={false}>
-            <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
-              Money you can access quickly without penalties or significant loss.
-            </Text>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-                Included:
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-                {'\u2022'} Cash & Checking{'\n'}
-                {'\u2022'} Savings & HYSA{'\n'}
-                {'\u2022'} Brokerage accounts{'\n'}
-                {'\u2022'} Crypto
-              </Text>
-            </View>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-                Not included:
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-                {'\u2022'} Retirement accounts{'\n'}
-                {'\u2022'} Real estate{'\n'}
-                {'\u2022'} CDs & locked deposits
-              </Text>
-            </View>
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+      <View>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Not included:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          {'\u2022'} Retirement accounts{'\n'}
+          {'\u2022'} Real estate{'\n'}
+          {'\u2022'} CDs & locked deposits
+        </Text>
+      </View>
+    </InfoSheet>
   )
 }
 
@@ -135,101 +107,74 @@ function TiedUpInfoSheet({
   colors: AssetsColors
 }) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-        onPress={onClose}
-      >
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: colors.surface,
-            borderTopLeftRadius: radius.xl,
-            borderTopRightRadius: radius.xl,
-            paddingBottom: 34,
-            maxHeight: '80%',
-          }}
-        >
-          {/* Drag handle */}
-          <View style={{ alignItems: 'center', paddingTop: spacing.md, paddingBottom: spacing.sm }}>
-            <View style={{ width: 36, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
-          </View>
+    <InfoSheet
+      visible={visible}
+      onClose={onClose}
+      title="Tied Up Assets"
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textMuted: colors.textSecondary,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={['70%']}
+    >
+      <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
+        Assets that cannot be quickly converted to cash without significant loss, penalties, or time.
+      </Text>
 
-          {/* Header with X close */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: spacing.md }}>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, flex: 1 }}>
-              Tied Up Assets
+      <View style={{ marginBottom: spacing.xl }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Examples:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          {'\u2022'} Retirement accounts (401k, IRA, 403b){'\n'}
+          {'\u2022'} Real estate equity{'\n'}
+          {'\u2022'} Vehicles{'\n'}
+          {'\u2022'} Private investments{'\n'}
+          {'\u2022'} CDs & time deposits
+        </Text>
+      </View>
+
+      <View style={{ marginBottom: spacing.xl }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Early withdrawal penalties:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          {'\u2022'} 401(k) / IRA: 10% penalty + income tax if withdrawn before age 59½{'\n'}
+          {'\u2022'} SIMPLE IRA: 25% penalty if within first 2 years{'\n'}
+          {'\u2022'} Real estate: Selling costs typically 6-10% of value
+        </Text>
+      </View>
+
+      <View style={{ marginBottom: spacing.xl }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Why it matters:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          This is your long-term wealth. It grows over time but isn't available for emergencies without cost.
+        </Text>
+      </View>
+
+      <View>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: spacing.xs }}>
+          Sources:
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+          <Pressable onPress={() => Linking.openURL('https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-exceptions-to-tax-on-early-distributions')}>
+            <Text style={{ fontSize: fontSize.xs, color: colors.primary, textDecorationLine: 'underline' }}>
+              IRS
             </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              style={{ padding: spacing.xs }}
-            >
-              <CategoryIcon name="close" size={20} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-
-          {/* Scrollable content */}
-          <ScrollView style={{ paddingHorizontal: 20 }} showsVerticalScrollIndicator={false}>
-            <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
-              Assets that cannot be quickly converted to cash without significant loss, penalties, or time.
+          </Pressable>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{'\u2022'}</Text>
+          <Pressable onPress={() => Linking.openURL('https://www.investopedia.com/terms/i/illiquid.asp')}>
+            <Text style={{ fontSize: fontSize.xs, color: colors.primary, textDecorationLine: 'underline' }}>
+              Investopedia
             </Text>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-                Examples:
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-                {'\u2022'} Retirement accounts (401k, IRA, 403b){'\n'}
-                {'\u2022'} Real estate equity{'\n'}
-                {'\u2022'} Vehicles{'\n'}
-                {'\u2022'} Private investments{'\n'}
-                {'\u2022'} CDs & time deposits
-              </Text>
-            </View>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-                Early withdrawal penalties:
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-                {'\u2022'} 401(k) / IRA: 10% penalty + income tax if withdrawn before age 59½{'\n'}
-                {'\u2022'} SIMPLE IRA: 25% penalty if within first 2 years{'\n'}
-                {'\u2022'} Real estate: Selling costs typically 6-10% of value
-              </Text>
-            </View>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-                Why it matters:
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-                This is your long-term wealth. It grows over time but isn't available for emergencies without cost.
-              </Text>
-            </View>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: spacing.xs }}>
-                Sources:
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                <Pressable onPress={() => Linking.openURL('https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-exceptions-to-tax-on-early-distributions')}>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.primary, textDecorationLine: 'underline' }}>
-                    IRS
-                  </Text>
-                </Pressable>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{'\u2022'}</Text>
-                <Pressable onPress={() => Linking.openURL('https://www.investopedia.com/terms/i/illiquid.asp')}>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.primary, textDecorationLine: 'underline' }}>
-                    Investopedia
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+          </Pressable>
+        </View>
+      </View>
+    </InfoSheet>
   )
 }
 
@@ -252,67 +197,40 @@ function WealthGoalInfoSheet({
   targetNetWorth: number
 }) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-        onPress={onClose}
-      >
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: colors.surface,
-            borderTopLeftRadius: radius.xl,
-            borderTopRightRadius: radius.xl,
-            paddingBottom: 34,
-            maxHeight: '70%',
-          }}
-        >
-          {/* Drag handle */}
-          <View style={{ alignItems: 'center', paddingTop: spacing.md, paddingBottom: spacing.sm }}>
-            <View style={{ width: 36, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
-          </View>
+    <InfoSheet
+      visible={visible}
+      onClose={onClose}
+      title="Wealth goal"
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textMuted: colors.textSecondary,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={['50%']}
+    >
+      <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
+        A wealth goal is a target net worth you want to reach by a specific date, usually year-end.
+      </Text>
 
-          {/* Header with X close */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: spacing.md }}>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, flex: 1 }}>
-              Wealth goal
-            </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              style={{ padding: spacing.xs }}
-            >
-              <CategoryIcon name="close" size={20} color={colors.textSecondary} />
-            </Pressable>
-          </View>
+      <View style={{ marginBottom: spacing.xl }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Starting point
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          Your net worth on {formatYearMonth(startYearMonth)}: {formatUsdInt(startNetWorth)}
+        </Text>
+      </View>
 
-          {/* Scrollable content */}
-          <ScrollView style={{ paddingHorizontal: 20 }} showsVerticalScrollIndicator={false}>
-            <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
-              A wealth goal is a target net worth you want to reach by a specific date, usually year-end.
-            </Text>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-                Starting point
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-                Your net worth on {formatYearMonth(startYearMonth)}: {formatUsdInt(startNetWorth)}
-              </Text>
-            </View>
-
-            <View style={{ marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-                Target
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-                Where you want to be by year-end: {formatUsdInt(targetNetWorth)}
-              </Text>
-            </View>
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+      <View>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Target
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          Where you want to be by year-end: {formatUsdInt(targetNetWorth)}
+        </Text>
+      </View>
+    </InfoSheet>
   )
 }
 
@@ -593,7 +511,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
       >
 
@@ -736,7 +654,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
                 style={{
                   height: '100%',
                   width: `${progressPercent}%`,
-                  backgroundColor: colors.success,
+                  backgroundColor: colors.primary,
                   borderRadius: radius.sm,
                 }}
               />

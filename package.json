@@ -16,11 +16,13 @@
     "db:migration:regen": "node scripts/create-migration.js --regen",
     "db:export:sim": "./scripts/export-db-from-simulator.sh",
     "db:dev:pull": "./scripts/dbpull.sh",
+    "db:reset": "./scripts/db-reset.sh",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-picker/picker": "2.11.1",
     "@react-navigation/native": "^7.1.8",
@@ -43,7 +45,6 @@
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-get-random-values": "^2.0.0",
-    "react-native-gifted-charts": "^1.4.73",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",

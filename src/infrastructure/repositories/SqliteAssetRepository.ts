@@ -6,9 +6,9 @@ import type {
   AssetGoal,
   AssetSummary,
   AssetTrendPoint,
-  AssetRepository,
-} from '@/domain/asset'
-import { createEmptySummary, isLiquidifiableCategory } from '@/domain/asset'
+} from '@/domain/asset/asset.types'
+import type { AssetRepository } from '@/domain/asset/asset.repository'
+import { createEmptySummary, isLiquidifiableCategory } from '@/domain/asset/asset.model'
 import type { DataSource } from '../db/DataSource'
 import {
   rowToFamilyMember,

@@ -24,12 +24,12 @@ function buildMonthTitle(monthYYYYMM: string) {
 
 const TRANSACTIONS_ROUTE = '/transactions' as const
 
-// Section gap for combined style
-const SECTION_GAP = 40
+// Section gap for combined style - match Yearly
+const SECTION_GAP = spacing['2xl']
 
 
 /**
- * Section header - Stripe-like style with subtle divider
+ * Section header - matching Yearly/Assets style
  */
 function SectionHeader({
   title,
@@ -47,11 +47,11 @@ function SectionHeader({
       {/* Subtle divider above */}
       <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textMuted }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
           {title}
         </Text>
         {rightText && (
-          <Text style={{ marginLeft: 'auto', fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
+          <Text style={{ marginLeft: 'auto', fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
             {rightText}
           </Text>
         )}
@@ -98,10 +98,6 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
     return daily.filter(d => d.incomeDollar > 0 && d.expenseDollar === 0).length
   }, [daily])
 
-  // Low variable spend days: days with expense but variable expense < $20
-  const lowSpendDays = useMemo(() => {
-    return daily.filter(d => d.expenseDollar > 0 && d.variableExpenseDollar < 20).length
-  }, [daily])
 
   // Feature flag for hero variant
   const useOptionAHero = FEATURE_FLAGS.heroVariant === 'optionA'
@@ -109,7 +105,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+      contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
       showsVerticalScrollIndicator={false}
     >
       {/* Section 1: Hero - Month Overview */}
@@ -119,46 +115,50 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           <>
             {/* Day indicator for current month */}
             {heroData.isCurrentMonth && heroData.daysElapsed > 0 && (
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '500', color: colors.textMuted, textAlign: 'right', marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, textAlign: 'right', marginBottom: spacing.xs }}>
                 Day {heroData.daysElapsed} of {heroData.daysInMonth}
               </Text>
             )}
 
             {/* Hero: Net outcome */}
-            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+            <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
               {/* Title line */}
-              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                 Net Cash Flow
               </Text>
 
-              {/* Primary: Net amount */}
+              {/* Primary: Net amount - neutral color like Assets */}
               <Text
                 style={{
                   fontSize: displaySize.xl,
-                  fontWeight: '800',
-                  color: heroData.netDollar >= 0 ? colors.success : colors.danger
+                  fontWeight: fontWeight.heavy,
+                  color: colors.text,
+                  letterSpacing: -1
                 }}
               >
                 {heroData.netDollar >= 0 ? '+' : ''}{formatUsdInt(heroData.netDollar)}
               </Text>
 
-              {/* Comparison with last month */}
+              {/* Comparison with last month - only delta colored */}
               {heroData.hasLastMonthData && heroData.netChangeDollar !== null && (
-                <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 8 }}>
-                  {heroData.netChangeDollar >= 0 ? 'Up' : 'Down'} {formatUsdInt(Math.abs(heroData.netChangeDollar))} vs {heroData.lastMonthName}
+                <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                  <Text style={{ color: heroData.netChangeDollar >= 0 ? colors.success : colors.danger }}>
+                    {heroData.netChangeDollar >= 0 ? '↑' : '↓'} {formatUsdInt(Math.abs(heroData.netChangeDollar))}
+                  </Text>
+                  {' '}vs {heroData.lastMonthName}
                 </Text>
               )}
 
               {/* Supporting: Savings rate (only if positive income) */}
               {heroData.incomeDollar > 0 && (
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 12, opacity: 0.8 }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.md, opacity: 0.8 }}>
                   {heroData.savingsRate >= 0 ? 'Saved' : 'Overspent'} {Math.abs(heroData.savingsRate)}% of income
                 </Text>
               )}
 
               {/* Nudge */}
               {heroData.netDollar > 0 && heroData.isCurrentMonth && (
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 8, opacity: 0.6, fontStyle: 'italic' }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.sm, opacity: 0.6, fontStyle: 'italic' }}>
                   Keep this pace for the rest of the month
                 </Text>
               )}
@@ -169,50 +169,50 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
             {/* Current Hero: % Saved */}
             {/* Day indicator (month title removed - duplicate with date picker) */}
             {projectionData.daysElapsed > 0 && (
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '500', color: colors.textMuted, textAlign: 'right', marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, textAlign: 'right', marginBottom: spacing.xs }}>
                 Day {projectionData.daysElapsed} of {projectionData.daysInMonth}
               </Text>
             )}
 
             {/* Hero: $ saved (absolute first, % as supporting) */}
-            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+            <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
               {totalIncome > 0 ? (
                 savings > 0 ? (
                   // Positive savings - dollar amount primary, % supporting
                   <>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                       Saved
                     </Text>
-                    <Text style={{ fontSize: displaySize.xl, fontWeight: '800', color: colors.success }}>
+                    <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.success, letterSpacing: -1 }}>
                       {formatUsdInt(savings)}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 8 }}>
-                      That's <Text style={{ fontWeight: '600', color: colors.success }}>{savingsRate}%</Text> of income
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                      That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.success }}>{savingsRate}%</Text> of income
                     </Text>
                   </>
                 ) : savings < 0 ? (
                   // Spending exceeds income
                   <>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                       Spending exceeds income by
                     </Text>
-                    <Text style={{ fontSize: displaySize.xl, fontWeight: '800', color: colors.danger }}>
+                    <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.danger, letterSpacing: -1 }}>
                       {formatUsdInt(Math.abs(savings))}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 8 }}>
-                      That's <Text style={{ fontWeight: '600', color: colors.danger }}>{Math.abs(savingsRate)}%</Text> of income
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                      That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{Math.abs(savingsRate)}%</Text> of income
                     </Text>
                   </>
                 ) : (
                   // Broke even (savings = 0)
                   <>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                       Breaking even
                     </Text>
-                    <Text style={{ fontSize: displaySize.md, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                    <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textMuted }}>
                       {formatUsdInt(0)}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 4 }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs }}>
                       net
                     </Text>
                   </>
@@ -220,15 +220,15 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               ) : (
                 // No income
                 <>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 4 }}>
-                    Net
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                    Net Cash Flow
                   </Text>
-                  <Text style={{ fontSize: displaySize.sm, fontWeight: '700', color: colors.textMuted, marginTop: 8 }}>
+                  <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textMuted }}>
                     No income recorded
                   </Text>
                   {savings < 0 && (
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: 8 }}>
-                      <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                      <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
                     </Text>
                   )}
                 </>
@@ -237,59 +237,43 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           </>
         )}
 
-        {/* Income / Expense row */}
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View
-            style={{
-              flex: 1,                                               
-              backgroundColor: 'transparent',                        
-              borderWidth: 1,                                        
-              borderColor: colors.border, // or colors.surfaceAlt    
-              borderRadius: radius.lg,
-              padding: 16,
-              alignItems: 'center'
-            }}
-          >
+        {/* Stats Row: Income / Expense - Accessible/Tied up style with semantic colors */}
+        <View style={{ flexDirection: 'row' }}>
+          {/* Income */}
+          <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
             <Text
               style={{
                 fontSize: fontSize.xs,
-                fontWeight: '600',
-                color: colors.text,
-                textTransform: 'uppercase',
+                fontWeight: fontWeight.medium,
+                color: colors.textMuted,
                 letterSpacing: 0.5,
-                marginBottom: 4
+                marginBottom: spacing.xs
               }}
             >
               Income
             </Text>
-            <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.success }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.success }}>
               {formatUsdInt(totalIncome)}
             </Text>
           </View>
-          <View
-            style={{
-              flex: 1,                                             
-              backgroundColor: 'transparent',                        
-              borderWidth: 1,                                        
-              borderColor: colors.border, // or colors.surfaceAlt    
-              borderRadius: radius.lg,
-              padding: 16,
-              alignItems: 'center'
-            }}
-          >
+
+          {/* Subtle middle divider */}
+          <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
+
+          {/* Expense */}
+          <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
             <Text
               style={{
                 fontSize: fontSize.xs,
-                fontWeight: '600',
-                color: colors.text,
-                textTransform: 'uppercase',
+                fontWeight: fontWeight.medium,
+                color: colors.textMuted,
                 letterSpacing: 0.5,
-                marginBottom: 4
+                marginBottom: spacing.xs
               }}
             >
               Expense
             </Text>
-            <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.danger }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.danger }}>
               {formatUsdInt(totalExpense)}
             </Text>
           </View>
@@ -306,13 +290,13 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
             colors={colors}
           />
           {/* Progress row: spent | bar | left */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             {/* Spent amount */}
             <View>
-              <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
+              <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>
                 {formatUsdInt(budgetData.spentDollar)}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '500', color: colors.textMuted, marginTop: 2 }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, marginTop: spacing.xs }}>
                 spent
               </Text>
             </View>
@@ -320,7 +304,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
             <View
               style={{
                 flex: 1,
-                height: 8,
+                height: spacing.sm,
                 backgroundColor: colors.surfaceAlt,
                 borderRadius: radius.sm,
                 overflow: 'hidden'
@@ -330,7 +314,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 style={{
                   height: '100%',
                   width: `${budgetBarWidth}%`,
-                  backgroundColor: budgetData.remainingDollar >= 0 ? colors.success : colors.danger,
+                  backgroundColor: colors.textMuted,
                   borderRadius: radius.sm
                 }}
               />
@@ -340,13 +324,13 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               <Text
                 style={{
                   fontSize: fontSize.lg,
-                  fontWeight: '700',
+                  fontWeight: fontWeight.bold,
                   color: budgetData.remainingDollar >= 0 ? colors.success : colors.danger
                 }}
               >
                 {formatUsdInt(Math.abs(budgetData.remainingDollar))}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '500', color: colors.textMuted, marginTop: 2 }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, marginTop: spacing.xs }}>
                 {budgetData.remainingDollar >= 0 ? 'available' : 'over'}
               </Text>
             </View>
@@ -363,53 +347,43 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
         {error && <Text style={{ color: colors.danger }}>{error}</Text>}
         {!error && (
           <>
-            {/* Summary stats above calendar with dot indicators */}
-            {(zeroSpendDays > 0 || lowSpendDays > 0) && (
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 16, marginBottom: 8 }}>
-                {lowSpendDays > 0 && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    {/* Single dot for low-spend */}
+            {/* Summary stats above calendar with zero-spend indicator */}
+            {zeroSpendDays > 0 && (
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: spacing.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+                  {/* Top-left corner triangle indicator for zero-spend */}
+                  <View
+                    style={{
+                      width: 16,
+                      height: 12,
+                      backgroundColor: colors.textMuted + '20',
+                      borderRadius: radius.xs,
+                      overflow: 'hidden'
+                    }}
+                  >
                     <View
                       style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: radius.full,
-                        backgroundColor: colors.highlight
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: 0,
+                        height: 0,
+                        borderStyle: 'solid',
+                        borderTopWidth: 8,
+                        borderRightWidth: 8,
+                        borderBottomWidth: 0,
+                        borderLeftWidth: 0,
+                        borderTopColor: colors.highlight,
+                        borderRightColor: 'transparent',
+                        borderBottomColor: 'transparent',
+                        borderLeftColor: 'transparent'
                       }}
                     />
-                    <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                      {lowSpendDays} low-spend
-                    </Text>
                   </View>
-                )}
-                {zeroSpendDays > 0 && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    {/* Concentric circles for zero-spend (more special) */}
-                    <View
-                      style={{
-                        width: 9,
-                        height: 9,
-                        borderRadius: radius.full,
-                        borderWidth: 1.5,
-                        borderColor: colors.highlight,
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <View
-                        style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: radius.full,
-                          backgroundColor: colors.highlight
-                        }}
-                      />
-                    </View>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                      {zeroSpendDays} zero-spend
-                    </Text>
-                  </View>
-                )}
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+                    {zeroSpendDays} zero-spend
+                  </Text>
+                </View>
               </View>
             )}
             <MonthlyCalendar

@@ -1,10 +1,12 @@
-import React from 'react'
-import { ScrollView, Text, View } from 'react-native'
-import { fontSize } from '@/theme/tokens/typography'
+import React, { useState } from 'react'
+import { Pressable, ScrollView, Text, View } from 'react-native'
+import { InfoSheet } from '@/shared/components'
+import { fontSize, fontWeight, displaySize } from '@/theme/tokens/typography'
+import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
-import { useHoHTheme } from '@/providers'
+import { formatUsdInt } from '@/shared/format/currency'
 
-import { InsightCard, InsightCarousel, NetSparkline, WeekdayHeatHint, CategoryDeltaBar } from './components'
+import { NetSparkline, CategoryDeltaBar, DailyOutflowBars } from './components'
 import { useInsightsData } from './hooks'
 import type { InsightsColors } from './insights.types'
 
@@ -13,80 +15,107 @@ type Props = {
   colors: InsightsColors
 }
 
-// Section gap matching Monthly/Yearly/All views
-const SECTION_GAP = 40
-
-// Accent colors now come from theme (see theme.accent)
+// Section gap - matches Monthly/Yearly/Assets
+const SECTION_GAP = spacing['2xl']
 
 /**
- * Section header with accent line - matching Monthly/Yearly/All style
+ * Section header - matching Monthly/Yearly/Assets style
+ * Divider above, title with optional description below
  */
 function SectionHeader({
   title,
-  accentColor,
+  description,
+  rightLabel,
   colors
 }: {
   title: string
-  accentColor: string
+  description?: string  // One-line explanation below title
+  rightLabel?: string   // For labels like "vs last month" - small
   colors: InsightsColors
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-      <View style={{ width: 3, height: 20, borderRadius: radius.xs, backgroundColor: accentColor }} />
-      <Text style={{ fontSize: fontSize['2xl'], fontWeight: '700', color: colors.text }}>
-        {title}
-      </Text>
+    <View style={{ marginBottom: spacing.lg }}>
+      {/* Subtle divider above */}
+      <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
+          {title}
+        </Text>
+        {rightLabel && (
+          <Text style={{ marginLeft: 'auto', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textMuted }}>
+            {rightLabel}
+          </Text>
+        )}
+      </View>
+      {description && (
+        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.sm }}>
+          {description}
+        </Text>
+      )}
     </View>
   )
 }
 
-// Helper to properly flatten children
-function flattenChildren(children: React.ReactNode): React.ReactNode[] {
-  const result: React.ReactNode[] = []
-  React.Children.forEach(children, child => {
-    if (Array.isArray(child)) {
-      result.push(...child.filter(Boolean))
-    } else if (child) {
-      result.push(child)
-    }
-  })
-  return result
-}
-
 /**
- * Section container with carousel
+ * Info sheet for "Typical" explanation
  */
-function InsightSection({
-  title,
-  accentColor,
-  children,
+function TypicalInfoSheet({
+  visible,
+  onClose,
   colors
 }: {
-  title: string
-  accentColor: string
-  children: React.ReactNode
+  visible: boolean
+  onClose: () => void
   colors: InsightsColors
 }) {
-  const childArray = flattenChildren(children)
-  if (childArray.length === 0) return null
-
   return (
-    <View style={{ marginBottom: SECTION_GAP }}>
-      <SectionHeader title={title} accentColor={accentColor} colors={colors} />
-      <InsightCarousel colors={colors}>
-        {childArray}
-      </InsightCarousel>
-    </View>
+    <InfoSheet
+      visible={visible}
+      onClose={onClose}
+      title="What is 'Typical'?"
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textMuted: colors.textMuted,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={['35%']}
+    >
+      <View style={{ marginBottom: spacing.md }}>
+        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
+          Definition
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+          Your typical month is the median of your last 6-12 months of net cash flow.
+        </Text>
+      </View>
+      <View style={{ marginBottom: spacing.md }}>
+        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
+          Why median?
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+          More stable than average - one big expense won't skew it.
+        </Text>
+      </View>
+      <View>
+        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
+          How to use it
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+          Compare this month against typical to spot unusual patterns.
+        </Text>
+      </View>
+    </InfoSheet>
   )
 }
 
 export function InsightsBody({ monthYYYYMM, colors }: Props) {
   const { loading, error, data } = useInsightsData(monthYYYYMM)
-  const theme = useHoHTheme()
+  const [showTypicalInfo, setShowTypicalInfo] = useState(false)
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
         <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>
       </View>
     )
@@ -94,25 +123,27 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
 
   if (error) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
         <Text style={{ color: colors.danger }}>{error}</Text>
       </View>
     )
   }
 
-  const { thisMonth, patterns, watchouts, opportunities } = data
+  const { summary, insights, categoryComparison, netTrend, dailyOutflow, medianNet } = data
 
-  // Check if we have any insights to show
-  const hasThisMonthInsights = thisMonth.changeVsLastMonth || thisMonth.primaryDriver || thisMonth.categoryComparison.length > 0
-  const hasPatternsInsights = patterns.netBaseline || patterns.volatilityCheck || patterns.positiveStreak || patterns.quietDays || patterns.netTrend.length > 1 || patterns.weekdayPattern.length > 0
-  const hasWatchouts = watchouts.length > 0
-  const hasOpportunities = opportunities.length > 0
-  const hasAnyInsights = hasThisMonthInsights || hasPatternsInsights || hasWatchouts || hasOpportunities
+  // Extract key values from summary
+  const vsTypical = summary.baselineNetCents !== null
+    ? (summary.netCents - summary.baselineNetCents) / 100
+    : null
+  const netDollar = summary.netCents / 100
 
-  if (!hasAnyInsights) {
+  // Check if we have any content to show
+  const hasContent = netTrend.length > 1 || categoryComparison.length > 0 || dailyOutflow.length > 0
+
+  if (!hasContent && !data.hasEnoughData) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: '600', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, textAlign: 'center', marginBottom: spacing.sm }}>
           Not enough data yet
         </Text>
         <Text style={{ fontSize: fontSize.md, color: colors.textMuted, textAlign: 'center', lineHeight: 20 }}>
@@ -122,107 +153,260 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
     )
   }
 
+  // Find specific insights for section content
+  const volatilityInsight = insights.find(i => i.id === 'volatility')
+  const opportunityInsight = insights.find(i => i.id === 'opportunities')
+
+  // Primary driver - find the category with biggest absolute delta
+  const primaryDriver = categoryComparison.length > 0
+    ? categoryComparison.reduce((max, cat) => {
+        const delta = Math.abs(cat.thisMonth - cat.lastMonth)
+        const maxDelta = Math.abs(max.thisMonth - max.lastMonth)
+        return delta > maxDelta ? cat : max
+      }, categoryComparison[0])
+    : null
+  const primaryDriverDelta = primaryDriver
+    ? (primaryDriver.thisMonth - primaryDriver.lastMonth) / 100
+    : 0
+
+  // Format vs typical value - always with sign
+  const formatVsTypical = (val: number | null): string => {
+    if (val === null) return formatUsdInt(netDollar)
+    const abs = Math.abs(val)
+    const prefix = val >= 0 ? '+' : '-'
+    if (abs >= 1000) {
+      return `${prefix}$${(abs / 1000).toFixed(1)}k`
+    }
+    return `${prefix}$${Math.round(abs)}`
+  }
+
+  // Format delta for subtitle
+  const formatDeltaCompact = (val: number): string => {
+    const abs = Math.abs(val)
+    if (abs >= 1000) {
+      return `$${(abs / 1000).toFixed(1)}k`
+    }
+    return `$${Math.round(abs)}`
+  }
+
+  // Format delta with sign
+  const formatDeltaWithSign = (val: number): string => {
+    const abs = Math.abs(val)
+    const prefix = val >= 0 ? '+' : '-'
+    if (abs >= 1000) {
+      return `${prefix}$${(abs / 1000).toFixed(1)}k`
+    }
+    return `${prefix}$${Math.round(abs)}`
+  }
+
+  // Data quality info
+  const monthsTracked = netTrend.length
+  const isLimitedData = monthsTracked < 6
+
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Section: This month */}
-      {hasThisMonthInsights && (
-        <InsightSection
-          title="This month"
-          accentColor={theme.accent.blue}
-          colors={colors}
-        >
-          {[
-            thisMonth.changeVsLastMonth && (
-              <InsightCard key="change" card={thisMonth.changeVsLastMonth} colors={colors} />
-            ),
-            thisMonth.primaryDriver && (
-              <InsightCard key="driver" card={thisMonth.primaryDriver} colors={colors} />
-            ),
-            thisMonth.categoryComparison.length > 0 && (
-              <View key="delta" style={{ paddingVertical: 8 }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
-                  Top changes vs last month
-                </Text>
-                <CategoryDeltaBar data={thisMonth.categoryComparison} colors={colors} />
-              </View>
-            )
-          ]}
-        </InsightSection>
-      )}
+    <View style={{ flex: 1 }}>
+      {/* Info Sheets */}
+      <TypicalInfoSheet
+        visible={showTypicalInfo}
+        onClose={() => setShowTypicalInfo(false)}
+        colors={colors}
+      />
 
-      {/* Section: Patterns */}
-      {hasPatternsInsights && (
-        <InsightSection
-          title="Patterns"
-          accentColor={theme.accent.purple}
-          colors={colors}
-        >
-          {[
-            patterns.netTrend.length > 1 && (
-              <View key="sparkline" style={{ paddingVertical: 8 }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
-                  Monthly Net Cash Flow Trend
-                </Text>
-                <NetSparkline
-                  data={patterns.netTrend}
-                  baseline={patterns.medianNet ?? undefined}
-                  colors={colors}
-                />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* Hero Section - NEUTRAL like Assets, colored delta in subtitle only */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        <View style={{ marginBottom: SECTION_GAP }}>
+          {/* Hero: vs Typical - centered */}
+          <Pressable
+            onPress={() => setShowTypicalInfo(true)}
+            style={{ alignItems: 'center', paddingVertical: spacing.xl }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5 }}>
+                vs Typical
+              </Text>
+              <View
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: radius.full,
+                  borderWidth: 1,
+                  borderColor: colors.textMuted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: 0.6
+                }}
+              >
+                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textMuted }}>i</Text>
               </View>
-            ),
-            patterns.netBaseline && (
-              <InsightCard key="baseline" card={patterns.netBaseline} colors={colors} />
-            ),
-            patterns.volatilityCheck && (
-              <InsightCard key="volatility" card={patterns.volatilityCheck} colors={colors} />
-            ),
-            patterns.weekdayPattern.length > 0 && patterns.weekdayPattern.some(d => d.avgSpend > 0) && (
-              <View key="heatmap" style={{ paddingVertical: 8 }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
-                  Spending by day of week
+            </View>
+
+            {/* Primary value - NEUTRAL */}
+            <Text
+              style={{
+                fontSize: displaySize.xl,
+                fontWeight: fontWeight.heavy,
+                color: colors.text,
+                letterSpacing: -1
+              }}
+            >
+              {formatVsTypical(vsTypical)}
+            </Text>
+
+            {/* Secondary text with colored delta indicator */}
+            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+              {vsTypical !== null ? (
+                <>
+                  <Text style={{ fontWeight: fontWeight.semibold, color: vsTypical >= 0 ? colors.success : colors.danger }}>
+                    {vsTypical >= 0 ? '↑' : '↓'} {formatDeltaCompact(vsTypical)}
+                  </Text>
+                  {' '}{vsTypical >= 0 ? 'above' : 'below'} typical
+                </>
+              ) : (
+                'Not enough history yet'
+              )}
+            </Text>
+          </Pressable>
+
+          {/* Stats Row: This Month Net | Typical - NEUTRAL values */}
+          <View style={{ flexDirection: 'row' }}>
+            {/* This Month */}
+            <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+                This month
+              </Text>
+              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+                {formatUsdInt(netDollar)}
+              </Text>
+            </View>
+
+            {/* Subtle middle divider */}
+            <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
+
+            {/* Typical */}
+            <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+                Typical
+              </Text>
+              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+                {medianNet !== null ? formatUsdInt(medianNet) : '—'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* Section: Primary Driver */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {categoryComparison.length > 0 && (
+          <View style={{ marginBottom: SECTION_GAP }}>
+            <SectionHeader
+              title="Primary driver"
+              description="Which category changed the most"
+              colors={colors}
+            />
+            {/* Dynamic summary */}
+            {primaryDriver && (
+              <Text style={{ fontSize: fontSize.md, color: colors.text, marginBottom: spacing.md }}>
+                <Text style={{ fontWeight: fontWeight.semibold }}>{primaryDriver.name}</Text>
+                {' '}
+                {primaryDriverDelta >= 0 ? 'up' : 'down'}
+                {' '}
+                <Text style={{ fontWeight: fontWeight.semibold }}>
+                  {formatDeltaWithSign(primaryDriverDelta)}
                 </Text>
-                <WeekdayHeatHint data={patterns.weekdayPattern} colors={colors} />
-              </View>
-            ),
-            patterns.positiveStreak && (
-              <InsightCard key="streak" card={patterns.positiveStreak} colors={colors} />
-            ),
-            patterns.quietDays && (
-              <InsightCard key="quiet" card={patterns.quietDays} colors={colors} />
-            )
-          ]}
-        </InsightSection>
-      )}
+                {' '}vs last month
+              </Text>
+            )}
+            <CategoryDeltaBar data={categoryComparison} colors={colors} />
+          </View>
+        )}
 
-      {/* Section: Watchouts */}
-      {hasWatchouts && (
-        <InsightSection
-          title="Watchouts"
-          accentColor={theme.accent.amber}
-          colors={colors}
-        >
-          {watchouts.map(card => (
-            <InsightCard key={card.id} card={card} colors={colors} />
-          ))}
-        </InsightSection>
-      )}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* Section: Net Trend */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {netTrend.length > 1 && medianNet !== null && (
+          <View style={{ marginBottom: SECTION_GAP }}>
+            <SectionHeader
+              title="Net trend"
+              description="Long-term pattern and current position"
+              colors={colors}
+            />
+            <NetSparkline
+              data={netTrend}
+              baseline={medianNet}
+              colors={colors}
+            />
+          </View>
+        )}
 
-      {/* Section: Opportunities */}
-      {hasOpportunities && (
-        <InsightSection
-          title="Opportunities"
-          accentColor={theme.accent.green}
-          colors={colors}
-        >
-          {opportunities.map(card => (
-            <InsightCard key={card.id} card={card} colors={colors} />
-          ))}
-        </InsightSection>
-      )}
-    </ScrollView>
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* Section: Spending Pattern */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {dailyOutflow.length > 0 && (
+          <View style={{ marginBottom: SECTION_GAP }}>
+            <SectionHeader
+              title="Spending pattern"
+              description={volatilityInsight?.body ?? 'Daily outflow distribution'}
+              colors={colors}
+            />
+            <DailyOutflowBars data={dailyOutflow} monthYYYYMM={monthYYYYMM} colors={colors} />
+          </View>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* Section: Opportunity */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {opportunityInsight && (
+          <View style={{ marginBottom: SECTION_GAP }}>
+            <SectionHeader
+              title="Opportunity"
+              description="Suggested target for next month"
+              colors={colors}
+            />
+            <Text style={{ fontSize: fontSize.md, color: colors.text, lineHeight: 22 }}>
+              {opportunityInsight.body}
+            </Text>
+            {opportunityInsight.sub && (
+              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs }}>
+                {opportunityInsight.sub}
+              </Text>
+            )}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* Sticky Footer: Data Quality */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      <View style={{
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: colors.border
+      }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+            Data quality
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.text }}>
+            {isLimitedData ? (
+              <>
+                <Text>Last {monthsTracked} months</Text>
+                <Text style={{ color: colors.textMuted }}> · </Text>
+                <Text style={{ color: colors.warning }}>Insights improve over time</Text>
+              </>
+            ) : (
+              <Text>Last {monthsTracked} months</Text>
+            )}
+          </Text>
+        </View>
+      </View>
+    </View>
   )
 }

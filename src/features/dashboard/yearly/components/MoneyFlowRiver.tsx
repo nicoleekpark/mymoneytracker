@@ -7,6 +7,7 @@ import { CATEGORIES } from '@/config/categories.config'
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 
 export type MoneyFlowColors = Readonly<{
   text: string
@@ -139,7 +140,7 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
         style={{
           backgroundColor: colors.surface,
           borderRadius: radius.xl,
-          padding: 24,
+          padding: spacing.xl,
           borderWidth: 1,
           borderColor: colors.border,
           alignItems: 'center'
@@ -157,7 +158,7 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.xl,
-        padding: 16,
+        padding: spacing.lg,
         borderWidth: 1,
         borderColor: colors.border
       }}
@@ -281,15 +282,15 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
       </Svg>
 
       {/* Legend */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm }}>
         {incomePositions.slice(0, 3).map((flow, idx) => (
-          <View key={`legend-income-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <View key={`legend-income-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
             <View style={{ width: 8, height: 8, borderRadius: radius.sm, backgroundColor: flow.meta.color }} />
             <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{flow.meta.name}</Text>
           </View>
         ))}
         {expensePositions.slice(0, 3).map((flow, idx) => (
-          <View key={`legend-expense-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <View key={`legend-expense-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
             <View style={{ width: 8, height: 8, borderRadius: radius.sm, backgroundColor: flow.meta.color }} />
             <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{flow.meta.name}</Text>
           </View>

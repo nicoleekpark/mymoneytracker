@@ -1,26 +1,34 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useState } from 'react'
-import { Modal, Pressable, Text, View } from 'react-native'
-import { fontSize } from '@/theme/tokens/typography'
+import { Pressable, Text, View } from 'react-native'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
+import { InfoSheet } from '@/shared/components'
 
-import type { InsightCardData, InsightsColors } from '../insights.types'
+import type { InsightCardData, InsightsColors, EvidenceItem, CTAButton } from '../insights.types'
+import { BADGE_CONFIG } from '../insights.types'
 
 type Props = {
   card: InsightCardData
   colors: InsightsColors
+  children?: React.ReactNode
+  /** Flat = Option A (no evidence/CTAs), card = Option B (full card with evidence/CTAs) */
+  variant?: 'flat' | 'card'
 }
 
 /**
  * Parse body text and colorize values like $X, +$X, -$X, X%
+ * Supports compact format: -$9.8k, +$1.2k
  */
 function ColorizedBody({ text, colors }: { text: string; colors: InsightsColors }) {
-  // Match patterns: +$ 1,234 | -$ 1,234 | $ 1,234 | 45%
-  const regex = /(\+\$\s?[\d,]+|\-\$\s?[\d,]+|\$\s?[\d,]+|\d+%)/g
+  // Match patterns: +$9.8k | -$1,234 | $500 | 45%
+  const regex = /(\+\$[\d,.]+k?|\-\$[\d,.]+k?|\$[\d,.]+k?|\d+%)/g
   // Split with capturing group includes matches in the result array
   const parts = text.split(regex)
 
   return (
-    <Text style={{ fontSize: fontSize.lg, fontWeight: '500', color: colors.text, lineHeight: 24 }}>
+    <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text, lineHeight: 24 }}>
       {parts.map((part, i) => {
         if (!part) return null
         // Check if this part is a value (matches our pattern)
@@ -32,7 +40,7 @@ function ColorizedBody({ text, colors }: { text: string; colors: InsightsColors 
           const isNegative = part.startsWith('-')
           const valueColor = isNegative ? colors.danger : colors.success
           return (
-            <Text key={i} style={{ fontWeight: '700', color: valueColor }}>
+            <Text key={i} style={{ fontWeight: fontWeight.bold, color: valueColor }}>
               {part}
             </Text>
           )
@@ -41,6 +49,105 @@ function ColorizedBody({ text, colors }: { text: string; colors: InsightsColors 
         return <Text key={i}>{part}</Text>
       })}
     </Text>
+  )
+}
+
+/**
+ * Evidence section - displays key-value pairs
+ */
+function EvidenceSection({ items, colors }: { items: EvidenceItem[]; colors: InsightsColors }) {
+  if (items.length === 0) return null
+
+  return (
+    <View style={{ marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md, opacity: 0.8 }}>
+      {items.map((item, i) => (
+        <View
+          key={item.key + i}
+          style={{
+            flexDirection: 'row',
+            gap: spacing.md,
+            alignItems: 'flex-start',
+            marginBottom: spacing.sm
+          }}
+        >
+          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.3, width: 95 }}>
+            {item.key}
+          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, lineHeight: 18 }}>
+              {item.value}
+            </Text>
+            {item.detail && (
+              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 }}>
+                {item.detail}
+              </Text>
+            )}
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+/**
+ * CTA buttons row
+ * P1: Only first button is primary, rest are text links
+ */
+function CTARow({ buttons, colors }: { buttons: CTAButton[]; colors: InsightsColors }) {
+  if (buttons.length === 0) return null
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginTop: spacing.lg }}>
+      {buttons.map((btn, i) => {
+        // Only first button can be primary, rest are text links
+        const isPrimary = i === 0 && btn.variant === 'primary'
+
+        if (isPrimary) {
+          return (
+            <Pressable
+              key={btn.label + i}
+              onPress={() => {
+                // Placeholder - CTAs don't do anything yet
+              }}
+              style={{
+                paddingHorizontal: spacing.lg,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.full,
+                backgroundColor: colors.primary,
+                minHeight: 36
+              }}
+            >
+              <Text style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface
+              }}>
+                {btn.label}
+              </Text>
+            </Pressable>
+          )
+        }
+
+        // Text link style for secondary CTAs
+        return (
+          <Pressable
+            key={btn.label + i}
+            onPress={() => {
+              // Placeholder
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.textMuted
+            }}>
+              {btn.label}
+            </Text>
+          </Pressable>
+        )
+      })}
+    </View>
   )
 }
 
@@ -56,118 +163,117 @@ function ExplainBottomSheet({
   colors: InsightsColors
 }) {
   return (
-    <Modal
+    <InfoSheet
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
+      onClose={onClose}
+      title="About this insight"
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textMuted: colors.textMuted,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={['40%']}
     >
-      <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-        onPress={onClose}
-      >
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: colors.surface,
-            borderTopLeftRadius: radius.xl,
-            borderTopRightRadius: radius.xl,
-            padding: 24,
-            paddingBottom: 40,
-            maxHeight: '50%'
-          }}
-        >
-          {/* Header */}
-          <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: 20 }}>
-            Why you're seeing this
+      {/* Section A: Calculation */}
+      <View style={{ marginBottom: spacing.lg }}>
+        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
+          Calculation
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+          {card.explanation?.calculation || 'Compares this month to typical.'}
+        </Text>
+      </View>
+
+      {/* Section B: Why it matters (card-specific) */}
+      {card.explanation?.whatMatters && (
+        <View style={{ marginBottom: spacing.lg }}>
+          <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
+            Why it matters
           </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+            {card.explanation.whatMatters}
+          </Text>
+        </View>
+      )}
 
-          {/* Section A: How this is calculated (common) */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
-              How this is calculated
-            </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
-              Based on your last 6 months of transactions.{'\n'}
-              {card.explanation?.calculation || 'We compare this month to your typical baseline.'}
-            </Text>
-          </View>
-
-          {/* Section B: What matters here (card-specific) */}
-          {card.explanation?.whatMatters && (
-            <View style={{ marginBottom: 20 }}>
-              <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
-                What matters here
-              </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
-                {card.explanation.whatMatters}
-              </Text>
-            </View>
-          )}
-
-          {/* Section C: What this is not (common) */}
-          <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
-              What this is not
-            </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
-              This isn't a warning or a prediction.{'\n'}
-              It's a summary of recent patterns.
-            </Text>
-          </View>
-
-          {/* Close button */}
-          <Pressable
-            onPress={onClose}
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              borderRadius: radius.md,
-              paddingVertical: 14,
-              alignItems: 'center'
-            }}
-          >
-            <Text style={{ fontSize: fontSize.lg, fontWeight: '600', color: colors.text }}>Got it</Text>
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
+      {/* Section C: Note */}
+      <View>
+        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
+          Note
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+          Pattern summary, not a prediction.
+        </Text>
+      </View>
+    </InfoSheet>
   )
 }
 
-export function InsightCard({ card, colors }: Props) {
+export function InsightCard({ card, colors, children, variant = 'flat' }: Props) {
   const [showExplain, setShowExplain] = useState(false)
+  const isFlat = variant === 'flat'
 
   return (
     <>
-      <View style={{ paddingVertical: 8 }}>
-        {/* Header row: title + info icon */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, flex: 1 }}>
-            {card.title}
-          </Text>
+      <View>
+        {/* Header row: title + badge + info icon - matching Assets/Monthly */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 }}>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
+              {card.title}
+            </Text>
+            {card.badge && (
+              <FontAwesome
+                name={BADGE_CONFIG[card.badge].icon as React.ComponentProps<typeof FontAwesome>['name']}
+                size={14}
+                color={colors[BADGE_CONFIG[card.badge].colorKey as keyof InsightsColors]}
+              />
+            )}
+          </View>
           {card.explanation && (
             <Pressable
               onPress={() => setShowExplain(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={{
-                width: 16,
-                height: 16,
-                borderRadius: radius.md,
+                width: 14,
+                height: 14,
+                borderRadius: radius.full,
                 borderWidth: 1,
                 borderColor: colors.textMuted,
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: 0.5,
-                marginLeft: 8
+                opacity: 0.6,
+                marginLeft: spacing.sm
               }}
             >
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted }}>i</Text>
+              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textMuted }}>i</Text>
             </Pressable>
           )}
         </View>
 
-        {/* Body text */}
+        {/* Headline (body text) */}
         <ColorizedBody text={card.body} colors={colors} />
+
+        {/* Sub text */}
+        {card.sub && (
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs, lineHeight: 19 }}>
+            {card.sub}
+          </Text>
+        )}
+
+        {/* Evidence section - only in card variant */}
+        {!isFlat && card.evidence && card.evidence.length > 0 && (
+          <EvidenceSection items={card.evidence} colors={colors} />
+        )}
+
+        {/* Optional children (charts, etc.) */}
+        {children}
+
+        {/* CTA buttons - only in card variant */}
+        {!isFlat && card.ctas && card.ctas.length > 0 && (
+          <CTARow buttons={card.ctas} colors={colors} />
+        )}
       </View>
 
       {/* Bottom sheet */}

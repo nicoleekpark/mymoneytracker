@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react'
-import { Text, View } from 'react-native'
-import { BarChart } from 'react-native-gifted-charts'
+import React, { useCallback, useMemo, useState } from 'react'
+import { LayoutChangeEvent, Text, View } from 'react-native'
+import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg'
 
-import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import type { YearlyFlowDollar } from '@/domain/transaction/transaction.usecase'
 
 type Colors = {
@@ -20,6 +19,14 @@ type Props = {
   colors: Colors
 }
 
+const CHART_HEIGHT = 180
+const PADDING_TOP = 32
+const PADDING_BOTTOM = 24
+const PADDING_LEFT = 50
+const PADDING_RIGHT = 16
+const BAR_RADIUS = 4
+const MIN_BAR_HEIGHT = 8
+
 function formatCompactAmount(amount: number): string {
   const abs = Math.abs(amount)
   if (abs >= 1000000) {
@@ -32,40 +39,66 @@ function formatCompactAmount(amount: number): string {
 }
 
 export function YearlyNetChart({ data, colors }: Props) {
+  const [chartWidth, setChartWidth] = useState(320)
   const currentYear = new Date().getFullYear()
 
-  const chartData = useMemo(() => {
-    return data.map((d) => {
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    setChartWidth(e.nativeEvent.layout.width)
+  }, [])
+
+  const { bars, yAxisLabels, axisY } = useMemo(() => {
+    if (data.length === 0) {
+      return { bars: [], yAxisLabels: [], axisY: CHART_HEIGHT - PADDING_BOTTOM }
+    }
+
+    const netValues = data.map(d => d.incomeDollar - d.expenseDollar)
+    const maxAbs = Math.max(...netValues.map(Math.abs), 1)
+    const paddedMax = maxAbs * 1.3
+
+    const drawWidth = chartWidth - PADDING_LEFT - PADDING_RIGHT
+    const drawHeight = CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM
+
+    const barCount = data.length
+    const barWidth = Math.min(40, (drawWidth - (barCount - 1) * 16) / barCount)
+    const totalBarsWidth = barCount * barWidth + (barCount - 1) * 16
+    const startX = PADDING_LEFT + (drawWidth - totalBarsWidth) / 2
+
+    const baseline = CHART_HEIGHT - PADDING_BOTTOM
+
+    const barData = data.map((d, i) => {
       const net = d.incomeDollar - d.expenseDollar
       const isPositive = net >= 0
       const isCurrentYear = d.year === currentYear
 
+      const heightRatio = Math.abs(net) / paddedMax
+      const barHeight = Math.max(MIN_BAR_HEIGHT, heightRatio * drawHeight)
+
+      const x = startX + i * (barWidth + 16)
+      const y = isPositive ? baseline - barHeight : baseline
+
       return {
-        value: Math.abs(net),
-        label: String(d.year),
-        frontColor: isPositive ? colors.success : colors.danger,
-        labelTextStyle: { color: colors.textSecondary, fontSize: fontSize.xs },
-        topLabelComponent: () => (
-          <View style={{ alignItems: 'center', marginBottom: 4 }}>
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: '700',
-                color: isPositive ? colors.success : colors.danger
-              }}
-            >
-              {isPositive ? '+' : '-'}{formatCompactAmount(Math.abs(net))}
-            </Text>
-            {isCurrentYear && (
-              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>(YTD)</Text>
-            )}
-          </View>
-        ),
-        // Store original net value for tooltip
-        originalValue: net
+        x,
+        y,
+        width: barWidth,
+        height: barHeight,
+        color: isPositive ? colors.success : colors.danger,
+        net,
+        year: d.year,
+        isCurrentYear,
+        labelY: isPositive ? y - 8 : y + barHeight + 14
       }
     })
-  }, [data, colors, currentYear])
+
+    // Y-axis labels
+    const yLabels = []
+    for (let i = 0; i <= 4; i++) {
+      const val = paddedMax * (i / 4)
+      const y = baseline - (val / paddedMax) * drawHeight
+      yLabels.push({ value: val, y })
+    }
+
+    return { bars: barData, yAxisLabels: yLabels, axisY: baseline }
+  }, [data, chartWidth, colors, currentYear])
 
   if (data.length === 0) {
     return (
@@ -75,29 +108,82 @@ export function YearlyNetChart({ data, colors }: Props) {
     )
   }
 
-  const maxValue = Math.max(...chartData.map(d => d.value))
-
   return (
-    <View>
-      <BarChart
-        data={chartData}
-        width={280}
-        height={160}
-        barWidth={data.length <= 4 ? 40 : 28}
-        spacing={data.length <= 4 ? 24 : 16}
-        hideRules
-        yAxisColor="transparent"
-        xAxisColor={colors.surfaceAlt}
-        yAxisTextStyle={{ color: colors.textSecondary, fontSize: fontSize.xs }}
-        yAxisLabelWidth={50}
-        formatYLabel={(val) => formatCompactAmount(Number(val))}
-        noOfSections={4}
-        maxValue={maxValue * 1.3}
-        initialSpacing={16}
-        endSpacing={16}
-        barBorderRadius={4}
-        disablePress
-      />
+    <View onLayout={handleLayout}>
+      <Svg width={chartWidth} height={CHART_HEIGHT} viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}>
+        {/* Y-axis labels */}
+        {yAxisLabels.map((label, i) => (
+          <SvgText
+            key={i}
+            x={PADDING_LEFT - 8}
+            y={label.y + 4}
+            fill={colors.textSecondary}
+            fontSize={10}
+            fontWeight={fontWeight.medium}
+            textAnchor="end"
+          >
+            {formatCompactAmount(label.value)}
+          </SvgText>
+        ))}
+
+        {/* X-axis line */}
+        <Line
+          x1={PADDING_LEFT}
+          y1={axisY}
+          x2={chartWidth - PADDING_RIGHT}
+          y2={axisY}
+          stroke={colors.surfaceAlt}
+          strokeWidth={1}
+        />
+
+        {/* Bars */}
+        {bars.map((bar, i) => (
+          <React.Fragment key={i}>
+            <Rect
+              x={bar.x}
+              y={bar.y}
+              width={bar.width}
+              height={bar.height}
+              rx={BAR_RADIUS}
+              fill={bar.color}
+            />
+            {/* Value label above/below bar */}
+            <SvgText
+              x={bar.x + bar.width / 2}
+              y={bar.net >= 0 ? bar.y - 4 : bar.y + bar.height + 12}
+              fill={bar.color}
+              fontSize={10}
+              fontWeight={fontWeight.bold}
+              textAnchor="middle"
+            >
+              {bar.net >= 0 ? '+' : ''}{formatCompactAmount(bar.net)}
+            </SvgText>
+            {/* YTD indicator */}
+            {bar.isCurrentYear && (
+              <SvgText
+                x={bar.x + bar.width / 2}
+                y={bar.net >= 0 ? bar.y - 16 : bar.y + bar.height + 24}
+                fill={colors.textSecondary}
+                fontSize={9}
+                textAnchor="middle"
+              >
+                (YTD)
+              </SvgText>
+            )}
+            {/* Year label */}
+            <SvgText
+              x={bar.x + bar.width / 2}
+              y={CHART_HEIGHT - 6}
+              fill={colors.textSecondary}
+              fontSize={10}
+              fontWeight={fontWeight.medium}
+              textAnchor="middle"
+            >
+              {bar.year}
+            </SvgText>
+          </React.Fragment>
+        ))}
+      </Svg>
     </View>
   )
 }

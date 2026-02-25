@@ -5,5 +5,6 @@ export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from '.
 export { CategoryIcon } from './CategoryIcon'
 export { Divider } from './Divider'
 export { Header } from './Header'
+export { InfoSheet, type InfoSheetColors, type InfoSheetRef } from './InfoSheet'
 export { SegmentedControl, type SegmentOption } from './SegmentedControl'
 export { Stack } from './Stack'

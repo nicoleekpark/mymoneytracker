@@ -16,6 +16,7 @@ export type DailyExpenseTotal = Readonly<{
 
 export type MonthlyExpenseByCategory = Readonly<{
   categoryId: UUID | null
+  categoryName: string | null
   totalCents: number
 }>
 

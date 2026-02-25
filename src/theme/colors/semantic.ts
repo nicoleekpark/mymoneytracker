@@ -2,8 +2,9 @@ import type { SemanticColors } from '../types'
 import { PALETTE } from './base'
 
 // ===============================
-// Monet 1875 Garden Palette (A)
-// Parasol green primary, sunlight warning, sky info, coral danger
+// Monet 1875 "Woman with a Parasol" - Option C2
+// Sky blue primary, parasol green income, warm peach expense
+// Soft, misty, impressionistic
 // ===============================
 
 export const semanticLight: SemanticColors = {
@@ -20,28 +21,28 @@ export const semanticLight: SemanticColors = {
   text: PALETTE.text.light,
   textSecondary: PALETTE.text.lightSecondary,
 
-  // Brand (parasol green teal)
-  primary: PALETTE.garden.teal,
-  primarySoft: PALETTE.garden.tealSoft,
-  primaryStrong: PALETTE.garden.tealStrong,
-  onPrimary: '#FFFFFF',  // white text on dark teal
+  // Brand (sky blue - UI actions)
+  primary: PALETTE.sky.blue,
+  primarySoft: PALETTE.sky.blueSoft,
+  primaryStrong: PALETTE.sky.blueStrong,
+  onPrimary: '#FFFFFF',  // white text on blue
 
   // Status - WCAG AA compliant
-  success: PALETTE.income.light,
+  success: PALETTE.income.light,     // parasol green
   successSoft: PALETTE.income.lightSoft,
 
   warning: PALETTE.warning.light,
   warningSoft: PALETTE.warning.lightSoft,
 
-  danger: PALETTE.expense.light,
+  danger: PALETTE.expense.light,     // warm terracotta
   dangerSoft: PALETTE.expense.lightSoft,
 
   info: PALETTE.info.light,
   infoSoft: PALETTE.info.lightSoft,
 
-  // Highlight (same as primary for Garden palette)
-  highlight: PALETTE.garden.teal,
-  highlightSoft: PALETTE.garden.tealSoft,
+  // Highlight (use income/green for positive highlights)
+  highlight: PALETTE.income.light,
+  highlightSoft: PALETTE.income.lightSoft,
 }
 
 export const semanticDark: SemanticColors = {
@@ -58,26 +59,26 @@ export const semanticDark: SemanticColors = {
   text: PALETTE.text.dark,
   textSecondary: PALETTE.text.darkSecondary,
 
-  // Brand (soft mint)
-  primary: PALETTE.garden.mint,
-  primarySoft: PALETTE.garden.mintSoft,
+  // Brand (misty sky blue - UI actions)
+  primary: PALETTE.sky.mist,
+  primarySoft: PALETTE.sky.mistSoft,
   primaryStrong: PALETTE.surfaceDark.background,
-  onPrimary: '#071015',  // dark text on light mint
+  onPrimary: '#070D12',  // dark text on light blue
 
   // Status - bright on dark
-  success: PALETTE.income.dark,
+  success: PALETTE.income.dark,      // soft mint
   successSoft: PALETTE.income.darkSoft,
 
   warning: PALETTE.warning.dark,
   warningSoft: PALETTE.warning.darkSoft,
 
-  danger: PALETTE.expense.dark,
+  danger: PALETTE.expense.dark,      // soft peach
   dangerSoft: PALETTE.expense.darkSoft,
 
   info: PALETTE.info.dark,
   infoSoft: PALETTE.info.darkSoft,
 
-  // Highlight
-  highlight: PALETTE.garden.mint,
-  highlightSoft: PALETTE.garden.mintSoft,
+  // Highlight (use income/green for positive highlights)
+  highlight: PALETTE.income.dark,
+  highlightSoft: PALETTE.income.darkSoft,
 }

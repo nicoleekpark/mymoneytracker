@@ -35,6 +35,7 @@ type DailyExpenseTotalRow = Readonly<{
 
 type CategoryMonthlyTotalRow = Readonly<{
   category_id: UUID | null
+  category_name: string | null
   total_cents: number
 }>
 
@@ -203,12 +204,14 @@ export class SqliteTransactionRepository implements TransactionRepository {
     const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
       `
       SELECT
-        category_id,
-        COALESCE(SUM(amount_cents), 0) AS total_cents
-      FROM transactions
-      WHERE type = 'expense'
-        AND substr(occurred_at, 1, 7) = ?
-      GROUP BY category_id
+        t.category_id,
+        c.name AS category_name,
+        COALESCE(SUM(t.amount_cents), 0) AS total_cents
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.type = 'expense'
+        AND substr(t.occurred_at, 1, 7) = ?
+      GROUP BY t.category_id, c.name
       ORDER BY total_cents DESC;
       `,
       [monthYYYYMM]
@@ -216,6 +219,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
 
     return rows.map((r) => ({
       categoryId: r.category_id ?? null,
+      categoryName: r.category_name ?? null,
       totalCents: Number(r.total_cents ?? 0),
     }))
   }
@@ -224,12 +228,14 @@ export class SqliteTransactionRepository implements TransactionRepository {
     const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
       `
       SELECT
-        category_id,
-        COALESCE(SUM(amount_cents), 0) AS total_cents
-      FROM transactions
-      WHERE type = 'income'
-        AND substr(occurred_at, 1, 7) = ?
-      GROUP BY category_id
+        t.category_id,
+        c.name AS category_name,
+        COALESCE(SUM(t.amount_cents), 0) AS total_cents
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.type = 'income'
+        AND substr(t.occurred_at, 1, 7) = ?
+      GROUP BY t.category_id, c.name
       ORDER BY total_cents DESC;
       `,
       [monthYYYYMM]
@@ -237,6 +243,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
 
     return rows.map((r) => ({
       categoryId: r.category_id ?? null,
+      categoryName: r.category_name ?? null,
       totalCents: Number(r.total_cents ?? 0),
     }))
   }

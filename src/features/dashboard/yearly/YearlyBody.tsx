@@ -215,7 +215,7 @@ export function YearlyBody({ year, colors }: Props) {
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+      contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
       showsVerticalScrollIndicator={false}
     >
       {/* Section 1: Hero - Year Overview */}
@@ -427,7 +427,7 @@ export function YearlyBody({ year, colors }: Props) {
                       height: spacing.sm,
                       backgroundColor: colors.surfaceAlt,
                       borderRadius: radius.sm,
-                      marginLeft: 18,
+                      marginLeft: spacing.lg,
                       overflow: 'hidden'
                     }}
                   >
@@ -443,7 +443,7 @@ export function YearlyBody({ year, colors }: Props) {
 
                   {/* Subcategories (accordion) */}
                   {isExpanded && hasSubcategories && (
-                    <View style={{ marginLeft: 28, marginTop: spacing.xs, gap: spacing.sm }}>
+                    <View style={{ marginLeft: spacing.xl + spacing.xs, marginTop: spacing.xs, gap: spacing.sm }}>
                       {/* Subcategory header showing % is of parent */}
                       <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
                         % of {catMeta.name}
@@ -504,7 +504,7 @@ export function YearlyBody({ year, colors }: Props) {
               onPress={() => setShowAllExpense(!showAllExpense)}
               style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                 {showAllExpense ? 'Show less' : `Show all ${allExpenseCategories.length} categories`}
               </Text>
             </Pressable>
@@ -564,7 +564,7 @@ export function YearlyBody({ year, colors }: Props) {
                         height: spacing.sm,
                         backgroundColor: colors.surfaceAlt,
                         borderRadius: radius.sm,
-                        marginLeft: 18,
+                        marginLeft: spacing.lg,
                         overflow: 'hidden'
                       }}
                     >
@@ -580,7 +580,7 @@ export function YearlyBody({ year, colors }: Props) {
 
                     {/* Subcategories (accordion) */}
                     {isExpanded && hasSubcategories && (
-                      <View style={{ marginLeft: 28, marginTop: spacing.xs, gap: spacing.sm }}>
+                      <View style={{ marginLeft: spacing.xl + spacing.xs, marginTop: spacing.xs, gap: spacing.sm }}>
                         {/* Subcategory header showing % is of parent */}
                         <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
                           % of {catMeta.name}
@@ -641,7 +641,7 @@ export function YearlyBody({ year, colors }: Props) {
                 onPress={() => setShowAllIncome(!showAllIncome)}
                 style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
               >
-                <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
+                <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
                   {showAllIncome ? 'Show less' : `Show all ${allIncomeCategories.length} categories`}
                 </Text>
               </Pressable>

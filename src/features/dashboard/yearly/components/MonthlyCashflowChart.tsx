@@ -5,6 +5,7 @@ import Svg, { Path, Circle, Line } from 'react-native-svg'
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 
 import type { MonthData } from '../hooks/useYearlyData'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
@@ -102,7 +103,7 @@ function ComboChart({
             strokeWidth={1.5}
             strokeLinecap="round"
             strokeLinejoin="round"
-            opacity={0.4}
+            opacity={0.6}
           />
         </Svg>
       </View>
@@ -381,98 +382,18 @@ export function MonthlyCashflowChart({
         />
       </View>
 
-      {/* Selected month details - subtle overlay style */}
+      {/* Selected month details - single row, no border */}
       {selectedData ? (
-        <View
-          style={{
-            backgroundColor: 'transparent',
-            borderWidth: 1,
-            borderColor: colors.surfaceAlt,
-            borderRadius: radius.md,
-            padding: 10,
-            marginTop: 12,
-            marginHorizontal: CHART_PADDING_H
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: '600',
-                color: colors.textMuted,
-                width: 36
-              }}
-            >
-              {MONTH_NAMES_SHORT[selectedIndex!].toUpperCase()}
-            </Text>
-            <View
-              style={{
-                flex: 1,
-                flexDirection: 'row',
-                justifyContent: 'space-around'
-              }}
-            >
-              <View style={{ alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: '500',
-                    color: colors.textMuted,
-                    marginBottom: 2,
-                    opacity: 0.7
-                  }}
-                >
-                  IN
-                </Text>
-                <Text
-                  style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.success, opacity: 0.9 }}
-                >
-                  {formatUsdInt(selectedData.incomeDollar)}
-                </Text>
-              </View>
-              <View style={{ alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: '500',
-                    color: colors.textMuted,
-                    marginBottom: 2,
-                    opacity: 0.7
-                  }}
-                >
-                  OUT
-                </Text>
-                <Text
-                  style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.danger, opacity: 0.9 }}
-                >
-                  {formatUsdInt(selectedData.expenseDollar)}
-                </Text>
-              </View>
-              <View style={{ alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: '500',
-                    color: colors.textMuted,
-                    marginBottom: 2,
-                    opacity: 0.7
-                  }}
-                >
-                  NET
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: '600',
-                    color: colors.text
-                  }}
-                >
-                  {selectedData.netDollar >= 0 ? '+' : ''}
-                  {formatUsdInt(selectedData.netDollar)}
-                </Text>
-              </View>
-            </View>
-          </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md, marginHorizontal: CHART_PADDING_H }}>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
+            In <Text style={{ fontWeight: '600', color: colors.success }}>{formatUsdInt(selectedData.incomeDollar)}</Text>
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
+            Out <Text style={{ fontWeight: '600', color: colors.danger }}>{formatUsdInt(selectedData.expenseDollar)}</Text>
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
+            Net <Text style={{ fontWeight: '600', color: colors.text }}>{selectedData.netDollar >= 0 ? '+' : ''}{formatUsdInt(selectedData.netDollar)}</Text>
+          </Text>
         </View>
       ) : (
         /* Hint when not selected */
@@ -481,7 +402,7 @@ export function MonthlyCashflowChart({
             fontSize: fontSize.xs,
             color: colors.textMuted,
             textAlign: 'center',
-            marginTop: 12
+            marginTop: spacing.md
           }}
         >
           Tap a month to inspect
@@ -493,7 +414,7 @@ export function MonthlyCashflowChart({
         style={{
           flexDirection: 'row',
           justifyContent: 'center',
-          gap: 16,
+          gap: spacing.lg,
           marginTop: 12
         }}
       >

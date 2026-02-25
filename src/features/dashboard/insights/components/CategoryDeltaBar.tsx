@@ -1,6 +1,8 @@
 import React from 'react'
-import { View, Text } from 'react-native'
-import { fontSize } from '@/theme/tokens/typography'
+import { Text, View } from 'react-native'
+
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
 
 import type { InsightsColors } from '../insights.types'
@@ -9,6 +11,7 @@ type CategoryDelta = {
   name: string
   thisMonth: number
   lastMonth: number
+  color: string | null
 }
 
 type Props = {
@@ -16,74 +19,103 @@ type Props = {
   colors: InsightsColors
 }
 
+function formatDelta(value: number): string {
+  const abs = Math.abs(value)
+  if (abs >= 1000) {
+    return `${value >= 0 ? '+' : '-'}$${(abs / 1000).toFixed(1)}k`
+  }
+  return `${value >= 0 ? '+' : '-'}$${Math.round(abs)}`
+}
+
 /**
- * Simple delta bars showing this month vs last month for top categories
- * - Shows only top 3 categories with biggest changes
- * - Minimal, supportive visual
+ * Horizontal progress bar chart showing top category deltas vs last month
+ * Neutral styling - bars use category colors, delta text is neutral
+ *
+ * Layout:
+ * ┌──────────────────────────────────────────┐
+ * │ ● Food                            +$310  │
+ * │ ████████████████████████████████████     │
+ * │                                          │
+ * │ ● Housing                         +$180  │
+ * │ ████████████████████                     │
+ * └──────────────────────────────────────────┘
  */
 export function CategoryDeltaBar({ data, colors }: Props) {
   if (data.length === 0) return null
 
-  // Get max value for scaling
-  const maxValue = Math.max(...data.flatMap(d => [d.thisMonth, d.lastMonth]), 1)
+  // Take top 3 categories
+  const topCategories = data.slice(0, 3)
+
+  // Calculate deltas and find max for scaling
+  const deltas = topCategories.map(cat => ({
+    name: cat.name,
+    delta: cat.thisMonth - cat.lastMonth,
+    categoryColor: cat.color
+  }))
+
+  const maxDelta = Math.max(...deltas.map(d => Math.abs(d.delta)), 1)
 
   return (
-    <View style={{ gap: 12 }}>
-      {data.slice(0, 3).map((cat, i) => {
-        const thisWidth = (cat.thisMonth / maxValue) * 100
-        const lastWidth = (cat.lastMonth / maxValue) * 100
-        const change = cat.thisMonth - cat.lastMonth
-        const changePercent = cat.lastMonth > 0
-          ? Math.round((change / cat.lastMonth) * 100)
-          : 0
+    <View style={{ gap: spacing.md }}>
+      {deltas.map((d, i) => {
+        const widthPercent = (Math.abs(d.delta) / maxDelta) * 100
+
+        // Use category color or fallback to neutral
+        const barColor = d.categoryColor ?? colors.textMuted
 
         return (
-          <View key={i} style={{ gap: 4 }}>
-            {/* Category name and change */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>
-                {cat.name}
+          <View key={d.name + i}>
+            {/* Row: dot + name + delta */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: spacing.xs
+            }}>
+              {/* Category dot */}
+              <View style={{
+                width: 10,
+                height: 10,
+                borderRadius: radius.full,
+                backgroundColor: barColor,
+                marginRight: spacing.sm
+              }} />
+
+              {/* Category name */}
+              <Text style={{
+                flex: 1,
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: colors.text
+              }}>
+                {d.name}
               </Text>
-              {changePercent !== 0 && (
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                  {changePercent > 0 ? '+' : ''}{changePercent}%
-                </Text>
-              )}
+
+              {/* Delta amount - NEUTRAL */}
+              <Text style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: colors.text
+              }}>
+                {formatDelta(d.delta)}
+              </Text>
             </View>
 
-            {/* Stacked bars */}
-            <View style={{ gap: 3 }}>
-              {/* This month */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, width: 50 }}>This mo</Text>
-                <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: radius.full }}>
-                  <View
-                    style={{
-                      width: `${thisWidth}%`,
-                      height: '100%',
-                      backgroundColor: colors.primary,
-                      borderRadius: radius.full,
-                      opacity: 0.8
-                    }}
-                  />
-                </View>
-              </View>
-
-              {/* Last month */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, width: 50 }}>Last mo</Text>
-                <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: radius.full }}>
-                  <View
-                    style={{
-                      width: `${lastWidth}%`,
-                      height: '100%',
-                      backgroundColor: colors.textMuted,
-                      borderRadius: radius.full,
-                      opacity: 0.4
-                    }}
-                  />
-                </View>
-              </View>
+            {/* Progress bar track */}
+            <View style={{
+              height: 8,
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.sm,
+              marginLeft: 18, // align with text after dot
+              overflow: 'hidden'
+            }}>
+              {/* Progress bar fill */}
+              <View style={{
+                height: '100%',
+                width: `${widthPercent}%`,
+                backgroundColor: barColor,
+                borderRadius: radius.sm,
+                opacity: 0.5
+              }} />
             </View>
           </View>
         )
