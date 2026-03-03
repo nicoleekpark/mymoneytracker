@@ -66,9 +66,9 @@ export class SqliteTransactionRepository implements TransactionRepository {
         id, key, occurred_at, type, item,
         amount_cents, currency,
         account_id, from_account_id, to_account_id,
-        category_id, merchant, note,
+        category_id, merchant, note, is_estimated,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         row.id,
@@ -84,6 +84,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         row.category_id,
         row.merchant,
         row.note,
+        row.is_estimated,
         now,
         now,
       ]
@@ -96,7 +97,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       SELECT
         id, key, occurred_at, type, item, amount_cents, currency,
         account_id, category_id, merchant, note,
-        from_account_id, to_account_id
+        from_account_id, to_account_id, member_id, is_estimated
       FROM transactions
       ORDER BY occurred_at DESC, id DESC
       LIMIT ?;
@@ -114,7 +115,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       SELECT
         id, key, occurred_at, type, item, amount_cents, currency,
         account_id, category_id, merchant, note,
-        from_account_id, to_account_id
+        from_account_id, to_account_id, member_id, is_estimated
       FROM transactions
       WHERE substr(occurred_at, 1, 10) = ?
         AND type IN ('income', 'expense')
@@ -593,5 +594,69 @@ export class SqliteTransactionRepository implements TransactionRepository {
       incomeCents: Number(rows[0]?.income_cents ?? 0),
       expenseCents: Number(rows[0]?.expense_cents ?? 0),
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Tags
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Save tags for a transaction.
+   * Creates tags in the tags table if they don't exist.
+   */
+  saveTags(transactionId: UUID, tagNames: string[]): void {
+    if (!tagNames || tagNames.length === 0) return
+
+    for (const name of tagNames) {
+      const trimmed = name.trim().toLowerCase()
+      if (!trimmed) continue
+
+      // Find or create tag
+      let tagId = this.findTagIdByName(trimmed)
+      if (!tagId) {
+        tagId = this.createTag(trimmed)
+      }
+
+      // Insert into junction table (ignore if already exists)
+      this.dataSource.exec(
+        `INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)`,
+        [transactionId, tagId]
+      )
+    }
+  }
+
+  /**
+   * Get tag names for a transaction.
+   */
+  getTagsForTransaction(transactionId: UUID): string[] {
+    const rows = this.dataSource.queryAll<{ name: string }>(
+      `
+      SELECT t.name
+      FROM tags t
+      JOIN transaction_tags tt ON t.id = tt.tag_id
+      WHERE tt.transaction_id = ?
+      ORDER BY t.name;
+      `,
+      [transactionId]
+    )
+    return rows.map((r) => r.name)
+  }
+
+  private findTagIdByName(name: string): string | null {
+    const rows = this.dataSource.queryAll<{ id: string }>(
+      `SELECT id FROM tags WHERE LOWER(name) = LOWER(?)`,
+      [name]
+    )
+    return rows[0]?.id ?? null
+  }
+
+  private createTag(name: string): string {
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+    this.dataSource.exec(
+      `INSERT INTO tags (id, name, category, is_system, created_at, updated_at) VALUES (?, ?, 'custom', 0, ?, ?)`,
+      [id, name, now, now]
+    )
+    return id
   }
 }

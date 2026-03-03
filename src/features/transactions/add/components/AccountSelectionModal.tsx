@@ -1,15 +1,25 @@
+/**
+ * AccountSelectionModal
+ *
+ * Modal for selecting a payment method / account.
+ * Organized into sections: Frequently Used, Recent, All Accounts
+ */
+
 import type { Account } from '@/domain/account'
 import { useHoHTheme } from '@/providers'
 import { Screen } from '@/shared/layout/Screen'
+import { usePaymentFrequencyStore } from '@/store'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 import { fontSize } from '@/theme/tokens/typography'
-import React from 'react'
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import React, { useMemo } from 'react'
 import {
-  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -19,13 +29,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type Props = Readonly<{
   visible: boolean
-  accountKey: string
+  accountKey: string | null
   accountQuery: string
   filteredAccounts: Account[]
   onQueryChange: (q: string) => void
   onClose: () => void
   onChoose: (key: string) => void
 }>
+
+type SectionData = {
+  title: string
+  data: Account[]
+}
 
 export function AccountSelectionModal({
   visible,
@@ -39,6 +54,109 @@ export function AccountSelectionModal({
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
 
+  const { getFrequentKeys, getRecentKeys } = usePaymentFrequencyStore()
+
+  // Build sections: Frequently Used, Recent, All Accounts
+  const sections = useMemo((): SectionData[] => {
+    // If searching, just show flat filtered list
+    if (accountQuery.trim()) {
+      return [{ title: 'Search Results', data: filteredAccounts }]
+    }
+
+    const frequentKeys = getFrequentKeys(3)
+    const recentKeys = getRecentKeys(3)
+
+    // Build account lookup
+    const accountMap = new Map(filteredAccounts.map(a => [a.key, a]))
+
+    // Frequently Used section
+    const frequentAccounts = frequentKeys
+      .map(key => accountMap.get(key))
+      .filter((a): a is Account => !!a)
+
+    // Recent section (exclude items already in Frequent)
+    const frequentSet = new Set(frequentKeys)
+    const recentAccounts = recentKeys
+      .filter(key => !frequentSet.has(key))
+      .map(key => accountMap.get(key))
+      .filter((a): a is Account => !!a)
+
+    // All Accounts section
+    const usedSet = new Set([...frequentKeys, ...recentKeys])
+    const allAccounts = filteredAccounts.filter(a => !usedSet.has(a.key))
+
+    const result: SectionData[] = []
+
+    if (frequentAccounts.length > 0) {
+      result.push({ title: 'Frequently Used', data: frequentAccounts })
+    }
+    if (recentAccounts.length > 0) {
+      result.push({ title: 'Recent', data: recentAccounts })
+    }
+    if (allAccounts.length > 0) {
+      result.push({ title: 'All Accounts', data: allAccounts })
+    }
+
+    // If no sections (no usage data yet), just show all
+    if (result.length === 0) {
+      return [{ title: 'All Accounts', data: filteredAccounts }]
+    }
+
+    return result
+  }, [filteredAccounts, accountQuery, getFrequentKeys, getRecentKeys])
+
+  const getAccountIcon = (kind: Account['kind']) => {
+    switch (kind) {
+      case 'credit_card':
+        return 'credit-card'
+      case 'cash':
+        return 'money'
+      case 'checking':
+      case 'savings':
+        return 'bank'
+      default:
+        return 'university'
+    }
+  }
+
+  const renderSectionHeader = ({ section }: { section: SectionData }) => (
+    <View style={[styles.sectionHeader, { backgroundColor: theme.semantic.surface }]}>
+      <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+        {section.title.toUpperCase()}
+      </Text>
+    </View>
+  )
+
+  const renderItem = ({ item: a }: { item: Account }) => {
+    const selected = a.key === accountKey
+    const badge = `${a.kind}${a.nature === 'liability' ? ' • liability' : ''}`
+
+    return (
+      <Pressable
+        onPress={() => onChoose(a.key)}
+        style={[styles.row, { borderBottomColor: theme.semantic.border }]}
+      >
+        <View style={styles.rowLeft}>
+          <View style={[styles.iconContainer, { backgroundColor: theme.semantic.surfaceAlt }]}>
+            <FontAwesome
+              name={getAccountIcon(a.kind)}
+              size={14}
+              color={theme.semantic.textSecondary}
+            />
+          </View>
+          <View style={styles.rowInfo}>
+            <Text style={[styles.accountName, { color: theme.semantic.text }]}>{a.name}</Text>
+            <Text style={[styles.accountBadge, { color: theme.semantic.textSecondary }]}>{badge}</Text>
+          </View>
+        </View>
+
+        {selected && (
+          <FontAwesome name="check" size={16} color={theme.semantic.primary} />
+        )}
+      </Pressable>
+    )
+  }
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
@@ -47,6 +165,7 @@ export function AccountSelectionModal({
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={0}
         >
+          {/* Header */}
           <View
             style={[
               styles.headerBar,
@@ -58,58 +177,53 @@ export function AccountSelectionModal({
             ]}
           >
             <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
+              <Text style={[styles.headerCancel, { color: theme.semantic.textSecondary }]}>Cancel</Text>
             </Pressable>
 
-            <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Payment method</Text>
+            <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Payment Method</Text>
 
             <View style={{ width: 56 }} />
           </View>
 
-          <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+          {/* Search */}
+          <View style={styles.searchContainer}>
             <View
               style={[
                 styles.searchBox,
-                { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface, marginBottom: 0 },
+                { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surfaceAlt },
               ]}
             >
+              <FontAwesome name="search" size={14} color={theme.semantic.textSecondary} />
               <TextInput
                 value={accountQuery}
                 onChangeText={onQueryChange}
-                placeholder="Search account"
+                placeholder="Search accounts"
                 placeholderTextColor={theme.semantic.textSecondary}
-                style={{ color: theme.semantic.text, fontWeight: '700' }}
+                style={[styles.searchInput, { color: theme.semantic.text }]}
                 autoCorrect={false}
                 autoCapitalize="none"
                 returnKeyType="search"
                 blurOnSubmit={false}
               />
+              {accountQuery.length > 0 && (
+                <Pressable onPress={() => onQueryChange('')} hitSlop={8}>
+                  <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
+                </Pressable>
+              )}
             </View>
           </View>
 
-          <FlatList
+          {/* Sectioned List */}
+          <SectionList
             style={{ flex: 1 }}
-            data={filteredAccounts}
-            keyExtractor={(a) => a.key}
+            sections={sections}
+            keyExtractor={(item) => item.key}
+            renderItem={renderItem}
+            renderSectionHeader={renderSectionHeader}
             keyboardShouldPersistTaps="always"
-            keyboardDismissMode="none"
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 24 }}
-            renderItem={({ item: a }) => {
-              const selected = a.key === accountKey
-              const badge = `${a.kind}${a.nature === 'liability' ? ' • liability' : ''}`
-              return (
-                <Pressable onPress={() => onChoose(a.key)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{a.name}</Text>
-                    <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800', fontSize: fontSize.xs }}>{badge}</Text>
-                  </View>
-
-                  <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
-                    {selected ? '✓' : ''}
-                  </Text>
-                </Pressable>
-              )
-            }}
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
+            stickySectionHeadersEnabled={false}
           />
         </KeyboardAvoidingView>
       </Screen>
@@ -120,25 +234,82 @@ export function AccountSelectionModal({
 const styles = StyleSheet.create({
   headerBar: {
     minHeight: 52,
-    paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
+  },
+  headerCancel: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  headerTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  searchContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     borderWidth: 1,
     borderRadius: radius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.md,
+    fontWeight: '500',
+    paddingVertical: spacing.xs,
+  },
+  sectionHeader: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   row: {
-    height: 52,
-    borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    minHeight: 56,
+    borderBottomWidth: 1,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowInfo: {
+    flex: 1,
+  },
+  accountName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  accountBadge: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+    marginTop: 2,
   },
 })

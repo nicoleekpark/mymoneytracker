@@ -36,11 +36,11 @@ export class SqliteDraftRepository {
     this.dataSource.exec(
       `
       INSERT INTO transaction_drafts (
-        id, type, item, amount_cents, currency, merchant, note,
+        id, type, item, amount_cents, currency, merchant, note, tags,
         category_type, category_key, subcategory_key, account_key,
         occurred_at, receipt_uri, created_at, starred
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       `,
       [
         row.id,
@@ -50,6 +50,7 @@ export class SqliteDraftRepository {
         row.currency,
         row.merchant,
         row.note,
+        row.tags,
         row.category_type,
         row.category_key,
         row.subcategory_key,
@@ -76,6 +77,7 @@ export class SqliteDraftRepository {
         currency = ?,
         merchant = ?,
         note = ?,
+        tags = ?,
         category_type = ?,
         category_key = ?,
         subcategory_key = ?,
@@ -93,6 +95,7 @@ export class SqliteDraftRepository {
         row.currency,
         row.merchant,
         row.note,
+        row.tags,
         row.category_type,
         row.category_key,
         row.subcategory_key,

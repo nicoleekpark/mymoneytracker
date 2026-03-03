@@ -6,11 +6,11 @@ import { getActiveAccounts } from '@/domain/account'
 import { normalizeForSearch } from '@/shared/utils/search'
 
 export type AccountPickerState = Readonly<{
-  accountKey: string
+  accountKey: string | null
   showAccountModal: boolean
   accountQuery: string
   setAccountQuery: (q: string) => void
-  setAccountKey: (key: string) => void
+  setAccountKey: (key: string | null) => void
   accounts: Account[]
   filteredAccounts: Account[]
   selectedAccount: Account | null
@@ -18,10 +18,11 @@ export type AccountPickerState = Readonly<{
   openAccount: () => void
   closeAccount: () => void
   chooseAccount: (key: string) => void
+  clearAccount: () => void
 }>
 
-export function useAccountPicker(defaultKey = 'acct:cash_wallet'): AccountPickerState {
-  const [accountKey, setAccountKey] = useState(defaultKey)
+export function useAccountPicker(): AccountPickerState {
+  const [accountKey, setAccountKey] = useState<string | null>(null)
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [accountQuery, setAccountQuery] = useState('')
 
@@ -37,11 +38,12 @@ export function useAccountPicker(defaultKey = 'acct:cash_wallet'): AccountPicker
   }, [accounts, accountQuery])
 
   const selectedAccount = useMemo(() => {
+    if (!accountKey) return null
     return accounts.find((a) => a.key === accountKey) ?? null
   }, [accounts, accountKey])
 
   const accountDisplay = useMemo(() => {
-    return selectedAccount ? selectedAccount.name : 'Select'
+    return selectedAccount ? selectedAccount.name : 'Not set'
   }, [selectedAccount])
 
   const openAccount = useCallback(() => {
@@ -61,6 +63,10 @@ export function useAccountPicker(defaultKey = 'acct:cash_wallet'): AccountPicker
     setAccountQuery('')
   }, [])
 
+  const clearAccount = useCallback(() => {
+    setAccountKey(null)
+  }, [])
+
   return {
     accountKey,
     showAccountModal,
@@ -74,5 +80,6 @@ export function useAccountPicker(defaultKey = 'acct:cash_wallet'): AccountPicker
     openAccount,
     closeAccount,
     chooseAccount,
+    clearAccount,
   }
 }

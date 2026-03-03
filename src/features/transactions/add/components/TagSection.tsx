@@ -1,17 +1,19 @@
 /**
  * TagSection Component
  *
- * Expandable accordion for selecting/creating tags.
- * Follows Apple Reminders style with categorized suggestions.
+ * Non-accordion tag selector with single pool of chips.
+ * Selected tags have tinted background (same as category/account).
+ * No duplication - selection toggles in-place.
  */
 
 import type { Tag } from '@/domain/tag'
 import { useHoHTheme } from '@/providers'
 import { useTagsStore } from '@/store'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Pressable,
   StyleSheet,
@@ -19,6 +21,16 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  interpolateColor,
+  Easing,
+} from 'react-native-reanimated'
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 type Props = {
   selectedTags: string[]
@@ -27,13 +39,16 @@ type Props = {
 
 export function TagSection({ selectedTags, onTagsChange }: Props) {
   const theme = useHoHTheme()
-  const [expanded, setExpanded] = useState(false)
-  const [newTagInput, setNewTagInput] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+  const [newTagValue, setNewTagValue] = useState('')
+  const inputRef = useRef<TextInput>(null)
 
-  const { getAllTags, getTagsByCategory, createTag } = useTagsStore()
+  const { getTagsByCategory, createTag } = useTagsStore()
 
+  // Merge all tags into single pool
   const quickTags = getTagsByCategory('quick')
   const occurrenceTags = getTagsByCategory('occurrence')
+  const allTags = [...quickTags, ...occurrenceTags]
 
   const isSelected = (tagName: string) => selectedTags.includes(tagName)
 
@@ -45,237 +60,184 @@ export function TagSection({ selectedTags, onTagsChange }: Props) {
     }
   }
 
-  const handleCreateTag = () => {
-    const trimmed = newTagInput.trim()
-    if (!trimmed) return
-
-    createTag(trimmed, 'custom')
-    if (!isSelected(trimmed)) {
-      onTagsChange([...selectedTags, trimmed])
-    }
-    setNewTagInput('')
+  const startCreating = () => {
+    setIsCreating(true)
+    setTimeout(() => inputRef.current?.focus(), 50)
   }
 
-  // Preview text for collapsed state
-  const previewText = selectedTags.length > 0
-    ? selectedTags.join(', ')
-    : 'None'
+  const handleCreate = () => {
+    const trimmed = newTagValue.trim()
+    if (trimmed) {
+      createTag(trimmed, 'custom')
+      if (!isSelected(trimmed)) {
+        onTagsChange([...selectedTags, trimmed])
+      }
+    }
+    setNewTagValue('')
+    setIsCreating(false)
+  }
+
+  const handleBlur = () => {
+    handleCreate()
+  }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.semantic.surfaceAlt }]}>
-      {/* Header - Always visible */}
-      <Pressable
-        onPress={() => setExpanded(!expanded)}
-        style={styles.header}
-      >
-        <Text style={[styles.label, { color: theme.semantic.text }]}>Tags</Text>
-        <View style={styles.headerRight}>
-          <Text
-            style={[styles.preview, { color: theme.semantic.textSecondary }]}
-            numberOfLines={1}
-          >
-            {previewText}
-          </Text>
-          <FontAwesome
-            name={expanded ? 'chevron-up' : 'chevron-down'}
-            size={12}
-            color={theme.semantic.textSecondary}
+    <View style={styles.container}>
+      <Text style={[styles.label, { color: selectedTags.length > 0 ? theme.semantic.textSecondary : theme.semantic.text }]}>
+        Tags
+      </Text>
+
+      {/* Single pool of all tags */}
+      <View style={styles.chipRow}>
+        {allTags.map((tag) => (
+          <AnimatedTagChip
+            key={tag.id}
+            tag={tag}
+            selected={isSelected(tag.name)}
+            onPress={() => toggleTag(tag.name)}
+            theme={theme}
           />
-        </View>
-      </Pressable>
+        ))}
 
-      {/* Expanded content */}
-      {expanded && (
-        <View style={styles.content}>
-          {/* Selected tags */}
-          {selectedTags.length > 0 && (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-                Selected
-              </Text>
-              <View style={styles.chipRow}>
-                {selectedTags.map((tag) => (
-                  <Pressable
-                    key={tag}
-                    onPress={() => toggleTag(tag)}
-                    style={[styles.chip, styles.chipSelected, { backgroundColor: theme.semantic.primary }]}
-                  >
-                    <Text style={[styles.chipText, { color: '#fff' }]}>{tag}</Text>
-                    <FontAwesome name="times" size={10} color="#fff" style={{ marginLeft: 6 }} />
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Quick Add */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-              Quick Add
-            </Text>
-            <View style={styles.chipRow}>
-              {quickTags.map((tag) => (
-                <TagChip
-                  key={tag.id}
-                  tag={tag}
-                  selected={isSelected(tag.name)}
-                  onPress={() => toggleTag(tag.name)}
-                  theme={theme}
-                />
-              ))}
-            </View>
+        {/* Create new - editable chip */}
+        {isCreating ? (
+          <View style={[styles.chip, styles.chipEditing, { borderColor: theme.semantic.primary }]}>
+            <TextInput
+              ref={inputRef}
+              value={newTagValue}
+              onChangeText={setNewTagValue}
+              onBlur={handleBlur}
+              onSubmitEditing={handleCreate}
+              style={[styles.chipInput, { color: theme.semantic.text }]}
+              placeholder="tag name"
+              placeholderTextColor={theme.semantic.textSecondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+            />
           </View>
-
-          {/* By Occurrence */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-              By Occurrence
-            </Text>
-            <View style={styles.chipRow}>
-              {occurrenceTags.map((tag) => (
-                <TagChip
-                  key={tag.id}
-                  tag={tag}
-                  selected={isSelected(tag.name)}
-                  onPress={() => toggleTag(tag.name)}
-                  theme={theme}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* Create New */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-              Create New
-            </Text>
-            <View style={[styles.inputRow, { borderColor: theme.semantic.border }]}>
-              <TextInput
-                value={newTagInput}
-                onChangeText={setNewTagInput}
-                placeholder="Type to create..."
-                placeholderTextColor={theme.semantic.textSecondary}
-                style={[styles.input, { color: theme.semantic.text }]}
-                returnKeyType="done"
-                onSubmitEditing={handleCreateTag}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {newTagInput.trim() && (
-                <Pressable onPress={handleCreateTag} hitSlop={8}>
-                  <FontAwesome name="plus-circle" size={20} color={theme.semantic.primary} />
-                </Pressable>
-              )}
-            </View>
-          </View>
-        </View>
-      )}
+        ) : (
+          <Pressable
+            onPress={startCreating}
+            style={[styles.chip, { backgroundColor: 'transparent', borderColor: theme.semantic.border }]}
+          >
+            <FontAwesome name="plus" size={10} color={theme.semantic.textSecondary} style={{ marginRight: 4 }} />
+            <Text style={[styles.chipText, { color: theme.semantic.textSecondary }]}>New</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   )
 }
 
-type TagChipProps = {
+/**
+ * Animated tag chip with selection effect
+ * Same style as category/account chips
+ */
+type AnimatedTagChipProps = {
   tag: Tag
   selected: boolean
   onPress: () => void
   theme: ReturnType<typeof useHoHTheme>
 }
 
-function TagChip({ tag, selected, onPress, theme }: TagChipProps) {
+function AnimatedTagChip({ tag, selected, onPress, theme }: AnimatedTagChipProps) {
+  const scale = useSharedValue(1)
+  const selectionProgress = useSharedValue(selected ? 1 : 0)
+
+  useEffect(() => {
+    selectionProgress.value = withTiming(selected ? 1 : 0, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    })
+  }, [selected, selectionProgress])
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      selectionProgress.value,
+      [0, 1],
+      ['transparent', theme.semantic.primary + '20']
+    )
+
+    const borderColor = interpolateColor(
+      selectionProgress.value,
+      [0, 1],
+      [theme.semantic.border, theme.semantic.primary]
+    )
+
+    return {
+      transform: [{ scale: scale.value }],
+      backgroundColor,
+      borderColor,
+    }
+  })
+
+  const textAnimatedStyle = useAnimatedStyle(() => {
+    const color = interpolateColor(
+      selectionProgress.value,
+      [0, 1],
+      [theme.semantic.textSecondary, theme.semantic.primary]
+    )
+
+    return { color }
+  })
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.96, { damping: 15, stiffness: 400 })
+  }
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 400 })
+  }
+
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
-      style={[
-        styles.chip,
-        {
-          backgroundColor: selected ? theme.semantic.primary : theme.semantic.surface,
-          borderColor: selected ? theme.semantic.primary : theme.semantic.border,
-        }
-      ]}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.chip, animatedStyle]}
     >
-      <Text
-        style={[
-          styles.chipText,
-          { color: selected ? '#fff' : theme.semantic.text }
-        ]}
-      >
+      <Animated.Text style={[styles.chipText, textAnimatedStyle]}>
         {tag.name}
-      </Text>
-    </Pressable>
+      </Animated.Text>
+    </AnimatedPressable>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
   },
   label: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  preview: {
-    fontSize: fontSize.md,
-    maxWidth: 180,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 16,
-  },
-  section: {
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
     borderRadius: radius.xl,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  chipSelected: {
-    borderWidth: 0,
+  chipEditing: {
+    paddingVertical: spacing.xs,
+    minWidth: 80,
   },
   chipText: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
   },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: fontSize.md,
+  chipInput: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
     padding: 0,
+    minWidth: 60,
   },
 })

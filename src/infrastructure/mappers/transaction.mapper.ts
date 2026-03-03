@@ -25,6 +25,7 @@ export type TransactionRow = Readonly<{
   merchant: string | null
   note: string | null
   member_id: UUID | null
+  is_estimated: number // 0 or 1
 }>
 
 /**
@@ -52,6 +53,7 @@ export function rowToTransaction(
     merchant: row.merchant ?? undefined,
     note: row.note ?? undefined,
     memberId: row.member_id ?? undefined,
+    isEstimated: row.is_estimated === 1 ? true : undefined,
   } as const
 
   if (row.type === 'transfer') {
@@ -89,6 +91,7 @@ export function transactionToRow(
     merchant: tx.merchant ?? null,
     note: tx.note ?? null,
     member_id: tx.memberId ?? null,
+    is_estimated: tx.isEstimated ? 1 : 0,
   }
 
   if (tx.type === 'transfer') {

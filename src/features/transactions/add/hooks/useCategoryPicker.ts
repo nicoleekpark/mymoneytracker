@@ -159,10 +159,7 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
       setCategoryRef({ type, categoryKey: cat.key })
       setShowCategoryModal(false)
       setCategoryQuery('')
-
-      if (cat.subCategories?.length) {
-        setTimeout(() => setShowSubCategoryModal(true), 200)
-      }
+      // Subcategories are now handled inline in the modal, no need to open separate modal
     },
     [type]
   )

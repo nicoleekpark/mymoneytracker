@@ -8,6 +8,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import 'react-native-reanimated'
 
 import { HoHThemeProvider } from '@/providers'
+import { ToastProvider } from '@/shared/components'
 import { ScrollView, Text, View } from 'react-native'
 import { fontSize } from '@/theme/tokens/typography'
 
@@ -86,8 +87,9 @@ function RootLayoutNav() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <HoHThemeProvider initialMode="dark">
-          <TamaguiProvider config={tamaguiConfig}>
-            <Stack>
+          <ToastProvider>
+            <TamaguiProvider config={tamaguiConfig}>
+              <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="settings" />
               <Stack.Screen
@@ -106,8 +108,9 @@ function RootLayoutNav() {
                   gestureDirection: 'horizontal',
                 }}
               />
-            </Stack>
-          </TamaguiProvider>
+              </Stack>
+            </TamaguiProvider>
+          </ToastProvider>
         </HoHThemeProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

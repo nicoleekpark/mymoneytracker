@@ -1,4 +1,5 @@
 import type { DataSource } from '../db/DataSource'
+import { uuid } from '@/shared/utils/uuid'
 
 export type SuggestionType = 'item' | 'merchant'
 
@@ -91,7 +92,7 @@ export class SqliteSuggestionsRepository {
       )
     } else {
       // Insert new
-      const id = crypto.randomUUID()
+      const id = uuid()
       this.dataSource.exec(
         `INSERT INTO suggestions (id, type, value, frequency, last_used)
          VALUES (?, ?, ?, 1, ?);`,

@@ -11,6 +11,7 @@ export type DraftTransaction = {
   amountCents: number
   merchant?: string
   note?: string
+  tags?: string[]
   categoryRef?: CategoryRef
   accountKey?: string
   occurredAt: string // ISO string
@@ -30,6 +31,7 @@ export type DraftRow = {
   currency: string | null
   merchant: string | null
   note: string | null
+  tags: string | null // JSON array
   category_type: string | null
   category_key: string | null
   subcategory_key: string | null
@@ -54,6 +56,19 @@ export function rowToDraft(row: DraftRow): DraftTransaction {
         }
       : undefined
 
+  // Parse tags from JSON
+  let tags: string[] | undefined
+  if (row.tags) {
+    try {
+      const parsed = JSON.parse(row.tags)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        tags = parsed
+      }
+    } catch {
+      // Invalid JSON, ignore
+    }
+  }
+
   return {
     id: row.id,
     type: row.type,
@@ -61,6 +76,7 @@ export function rowToDraft(row: DraftRow): DraftTransaction {
     amountCents: row.amount_cents ?? 0,
     merchant: row.merchant ?? undefined,
     note: row.note ?? undefined,
+    tags,
     categoryRef,
     accountKey: row.account_key ?? undefined,
     occurredAt: row.occurred_at ?? new Date().toISOString(),
@@ -82,6 +98,7 @@ export function draftToRow(draft: DraftTransaction): Omit<DraftRow, 'updated_at'
     currency: 'USD',
     merchant: draft.merchant ?? null,
     note: draft.note ?? null,
+    tags: draft.tags && draft.tags.length > 0 ? JSON.stringify(draft.tags) : '[]',
     category_type: draft.categoryRef?.type ?? null,
     category_key: draft.categoryRef?.categoryKey ?? null,
     subcategory_key: draft.categoryRef?.subCategoryKey ?? null,

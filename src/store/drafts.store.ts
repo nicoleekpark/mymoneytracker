@@ -12,6 +12,7 @@ export type DraftTransaction = {
   amountCents: number
   merchant?: string
   note?: string
+  tags?: string[]
   categoryRef?: CategoryRef
   accountKey?: string
   occurredAt: string // ISO string

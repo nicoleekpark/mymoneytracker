@@ -6,6 +6,12 @@ export type DateTimeState = Readonly<{
   setOccurredAt: (date: Date) => void
   dateDisplay: string
   timeDisplay: string
+  // Combined modal state
+  showDateTimeModal: boolean
+  openDateTimeModal: () => void
+  closeDateTimeModal: () => void
+  onDateTimeConfirm: (date: Date) => void
+  // Legacy - for inline pickers if still needed
   showDatePicker: boolean
   showTimePicker: boolean
   openDatePicker: () => void
@@ -18,16 +24,44 @@ export type DateTimeState = Readonly<{
 
 export function useDateTime(initialDate?: Date): DateTimeState {
   const [occurredAt, setOccurredAt] = useState<Date>(initialDate ?? new Date())
+  const [showDateTimeModal, setShowDateTimeModal] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
 
-  const dateDisplay = useMemo(() => occurredAt.toLocaleDateString(), [occurredAt])
+  const dateDisplay = useMemo(() => {
+    const today = new Date()
+    const isToday = occurredAt.toDateString() === today.toDateString()
+
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const isYesterday = occurredAt.toDateString() === yesterday.toDateString()
+
+    if (isToday) return 'Today'
+    if (isYesterday) return 'Yesterday'
+    return occurredAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }, [occurredAt])
 
   const timeDisplay = useMemo(
-    () => occurredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    () => occurredAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
     [occurredAt]
   )
 
+  // Combined modal handlers
+  const openDateTimeModal = useCallback(() => {
+    Keyboard.dismiss()
+    setShowDateTimeModal(true)
+  }, [])
+
+  const closeDateTimeModal = useCallback(() => {
+    setShowDateTimeModal(false)
+  }, [])
+
+  const onDateTimeConfirm = useCallback((date: Date) => {
+    setOccurredAt(date)
+    setShowDateTimeModal(false)
+  }, [])
+
+  // Legacy handlers for inline pickers
   const openDatePicker = useCallback(() => {
     Keyboard.dismiss()
     setShowDatePicker((v) => !v)
@@ -69,6 +103,12 @@ export function useDateTime(initialDate?: Date): DateTimeState {
     setOccurredAt,
     dateDisplay,
     timeDisplay,
+    // Combined modal
+    showDateTimeModal,
+    openDateTimeModal,
+    closeDateTimeModal,
+    onDateTimeConfirm,
+    // Legacy
     showDatePicker,
     showTimePicker,
     openDatePicker,

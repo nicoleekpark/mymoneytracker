@@ -66,6 +66,8 @@ export async function addTransaction(
     merchant: input.merchant?.trim(),
     note: input.note?.trim(),
     category: input.category,
+    tags: input.tags,
+    isEstimated: input.isEstimated,
   }
 
   const tx: Transaction =
@@ -81,8 +83,14 @@ export async function addTransaction(
           type: input.type,
           accountId: input.accountId,
         })
-        
+
   transactionRepository.insert(tx)
+
+  // Save tags to junction table
+  if (input.tags && input.tags.length > 0) {
+    transactionRepository.saveTags(tx.id, input.tags)
+  }
+
   return tx
 }
 

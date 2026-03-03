@@ -9,7 +9,7 @@
 /**
  * Parse hex color to RGB values
  */
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
+export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const cleaned = hex.replace('#', '')
   const bigint = parseInt(cleaned, 16)
   return {
@@ -122,3 +122,50 @@ export const THEME_CONTRAST_RATIOS = {
     danger: { color: '#8C3D2B', ratio: 5.6, level: 'AA' },
   },
 } as const
+
+/**
+ * Convert RGB values to hex color
+ */
+export function rgbToHex(r: number, g: number, b: number): string {
+  const toHex = (n: number) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+/**
+ * Desaturate a hex color by a given amount (0-1)
+ * 0 = no change, 1 = fully grayscale
+ */
+export function desaturate(hex: string, amount: number = 0.5): string {
+  const { r, g, b } = hexToRgb(hex)
+
+  // Calculate grayscale value (luminance-based)
+  const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
+
+  // Interpolate between original color and grayscale
+  const newR = r + (gray - r) * amount
+  const newG = g + (gray - g) * amount
+  const newB = b + (gray - b) * amount
+
+  return rgbToHex(newR, newG, newB)
+}
+
+/**
+ * Lighten a hex color by a given amount (0-1)
+ */
+export function lighten(hex: string, amount: number = 0.2): string {
+  const { r, g, b } = hexToRgb(hex)
+
+  const newR = r + (255 - r) * amount
+  const newG = g + (255 - g) * amount
+  const newB = b + (255 - b) * amount
+
+  return rgbToHex(newR, newG, newB)
+}
+
+/**
+ * Create a muted version of a color (desaturated + slightly lightened)
+ * Good for chip backgrounds that need to be subtle
+ */
+export function muteColor(hex: string, desaturation: number = 0.4, lightening: number = 0.1): string {
+  return lighten(desaturate(hex, desaturation), lightening)
+}

@@ -1,6 +1,7 @@
 import { useHoHTheme } from '@/providers'
 import { displaySize, fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 import React from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -27,57 +28,94 @@ export function AmountKeypadModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      {/* Backdrop - tap to dismiss */}
       <Pressable style={styles.backdrop} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: theme.semantic.background, paddingBottom: insets.bottom + 18 }]}>
-        <View style={styles.header}>
+
+      {/* Sheet */}
+      <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border, paddingBottom: insets.bottom + spacing.lg }]}>
+        {/* Drag Handle */}
+        <View style={styles.handleContainer}>
+          <View style={[styles.handle, { backgroundColor: theme.semantic.border }]} />
+        </View>
+
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
           <Pressable onPress={onClose} hitSlop={10}>
-            <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
+            <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Cancel</Text>
           </Pressable>
 
-          <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Amount</Text>
+          <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Amount</Text>
 
           <Pressable onPress={onClear} hitSlop={10}>
-            <Text style={{ color: theme.semantic.primary, fontWeight: '900' }}>Clear</Text>
+            <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Clear</Text>
           </Pressable>
         </View>
 
-        <View style={[styles.preview, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-          <Text style={{ color: theme.semantic.text, fontWeight: '900', fontSize: displaySize.md }}>${amountDisplay}</Text>
+        {/* Amount Display */}
+        <View style={[styles.display, { backgroundColor: theme.semantic.surfaceAlt, borderColor: theme.semantic.border }]}>
+          <Text style={[styles.displayAmount, { color: theme.semantic.text }]}>${amountDisplay}</Text>
         </View>
 
+        {/* Keypad Grid */}
         <View style={styles.grid}>
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
             <Pressable
               key={d}
               onPress={() => onAppendDigit(d)}
-              style={[styles.key, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
+              style={({ pressed }) => [
+                styles.key,
+                {
+                  backgroundColor: pressed ? theme.semantic.surfaceAlt : 'rgba(255,255,255,0.03)',
+                  borderColor: theme.semantic.border,
+                }
+              ]}
             >
-              <Text style={{ color: theme.semantic.text, fontSize: fontSize['3xl'], fontWeight: '900' }}>{d}</Text>
+              <Text style={[styles.keyText, { color: theme.semantic.text }]}>{d}</Text>
             </Pressable>
           ))}
 
-          <View style={styles.keyEmpty} />
-
+          {/* Wide 0 key */}
           <Pressable
             onPress={() => onAppendDigit('0')}
-            style={[styles.key, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
+            style={({ pressed }) => [
+              styles.key,
+              styles.keyWide,
+              {
+                backgroundColor: pressed ? theme.semantic.surfaceAlt : 'rgba(255,255,255,0.03)',
+                borderColor: theme.semantic.border,
+              }
+            ]}
           >
-            <Text style={{ color: theme.semantic.text, fontSize: fontSize['3xl'], fontWeight: '900' }}>0</Text>
+            <Text style={[styles.keyText, { color: theme.semantic.text }]}>0</Text>
           </Pressable>
 
+          {/* Backspace key */}
           <Pressable
             onPress={onBackspace}
-            style={[styles.key, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
+            style={({ pressed }) => [
+              styles.key,
+              {
+                backgroundColor: pressed ? theme.semantic.surfaceAlt : 'rgba(255,255,255,0.03)',
+                borderColor: theme.semantic.border,
+              }
+            ]}
           >
-            <Text style={{ color: theme.semantic.text, fontSize: fontSize.xl, fontWeight: '900' }}>⌫</Text>
+            <Text style={[styles.keyText, { color: theme.semantic.text }]}>⌫</Text>
           </Pressable>
         </View>
 
+        {/* Done Button */}
         <Pressable
           onPress={onClose}
-          style={[styles.doneBtn, { backgroundColor: theme.semantic.primarySoft, borderColor: theme.semantic.primarySoft }]}
+          style={({ pressed }) => [
+            styles.doneBtn,
+            {
+              backgroundColor: theme.semantic.primary,
+              opacity: pressed ? 0.8 : 1,
+            }
+          ]}
         >
-          <Text style={{ color: theme.semantic.primaryStrong, fontSize: fontSize.xl, fontWeight: '900' }}>Done</Text>
+          <Text style={[styles.doneBtnText, { color: theme.semantic.onPrimary }]}>Done</Text>
         </Pressable>
       </View>
     </Modal>
@@ -87,51 +125,84 @@ export function AmountKeypadModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   sheet: {
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+  },
+  handleContainer: {
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  handle: {
+    width: 40,
+    height: 5,
+    borderRadius: radius.full,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
   },
-  preview: {
+  headerLink: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  headerTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '800',
+  },
+  display: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderRadius: radius.xl,
-    padding: 14,
-    marginBottom: 12,
+    alignItems: 'center',
+  },
+  displayAmount: {
+    fontSize: displaySize.md,
+    fontWeight: '900',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 12,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
   key: {
-    width: '31.5%',
-    height: 58,
+    width: '31%',
+    height: 56,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  keyEmpty: {
-    width: '31.5%',
-    height: 58,
+  keyWide: {
+    width: '64.5%',
+  },
+  keyText: {
+    fontSize: fontSize.xl,
+    fontWeight: '800',
   },
   doneBtn: {
-    width: '100%',
-    height: 58,
-    borderWidth: 1,
-    borderRadius: radius.xl,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    height: 56,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 12,
+  },
+  doneBtnText: {
+    fontSize: fontSize.lg,
+    fontWeight: '900',
   },
 })

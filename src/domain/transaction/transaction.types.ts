@@ -20,7 +20,9 @@ type TransactionBase = Readonly<{
   category?: CategoryRef
   merchant?: string
   note?: string
+  tags?: string[] // tag names
   memberId?: UUID // null = shared/household
+  isEstimated?: boolean // true = user marked amount as approximate
 }>
 
 export type IncomeExpenseTransaction = TransactionBase &
@@ -52,7 +54,9 @@ export type AddTransactionInput =
       category?: CategoryRef
       merchant?: string
       note?: string
+      tags?: string[]
       memberId?: UUID // null = shared/household
+      isEstimated?: boolean
     }
   | {
       key?: string
@@ -65,5 +69,7 @@ export type AddTransactionInput =
       note?: string
       merchant?: string
       category?: CategoryRef
+      tags?: string[]
       memberId?: UUID // null = shared/household
+      isEstimated?: boolean
     }
