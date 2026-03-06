@@ -98,12 +98,104 @@ export async function getTransactions(limit = 200): Promise<Transaction[]> {
   return transactionRepository.list(limit)
 }
 
+export type TransactionPage = Readonly<{
+  items: Transaction[]
+  hasMore: boolean
+  oldestDate: string | null
+}>
+
+/**
+ * Get transactions within a date range with pagination support.
+ * Default: 1 year from today.
+ */
+export async function getTransactionsInRange(
+  fromDate?: Date,
+  toDate?: Date,
+  limit = 500
+): Promise<TransactionPage> {
+  const now = new Date()
+  const to = toDate ?? now
+  const from = fromDate ?? new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+
+  const fromStr = from.toISOString().slice(0, 10)
+  const toStr = to.toISOString().slice(0, 10)
+
+  return transactionRepository.listInDateRange(fromStr, toStr, limit)
+}
+
 export async function getTransactionsForDate(dateYYYYMMDD: string, limit = 50): Promise<Transaction[]> {
   return transactionRepository.listForDate(dateYYYYMMDD, limit)
 }
 
 export async function removeTransaction(id: UUID): Promise<void> {
   transactionRepository.delete(id)
+}
+
+/**
+ * Restore a previously deleted transaction.
+ * Re-inserts the full transaction object (including its original ID).
+ */
+export async function restoreTransaction(tx: Transaction): Promise<void> {
+  transactionRepository.insert(tx)
+
+  // Restore tags if present
+  if (tx.tags && tx.tags.length > 0) {
+    transactionRepository.saveTags(tx.id, tx.tags)
+  }
+}
+
+export async function getTransactionById(id: UUID): Promise<Transaction | null> {
+  return transactionRepository.getById(id)
+}
+
+export async function updateTransaction(
+  categoryIndex: CategoryIndex,
+  id: UUID,
+  input: AddTransactionInput
+): Promise<Transaction> {
+  const occurredAt = input.occurredAt ?? new Date()
+
+  const existingTx = transactionRepository.getById(id)
+  if (!existingTx) {
+    throw new Error(`Transaction not found: ${id}`)
+  }
+
+  const base = {
+    id,
+    key: existingTx.key, // Keep original key
+    occurredAt,
+    type: input.type,
+    item: input.item,
+    money: { amount: input.amount, currency: 'USD' },
+    merchant: input.merchant?.trim(),
+    note: input.note?.trim(),
+    category: input.category,
+    tags: input.tags,
+    isEstimated: input.isEstimated,
+  }
+
+  const tx: Transaction =
+    input.type === 'transfer'
+      ? createTransaction(categoryIndex, {
+          ...base,
+          type: 'transfer',
+          fromAccountId: input.fromAccountId,
+          toAccountId: input.toAccountId,
+        })
+      : createTransaction(categoryIndex, {
+          ...base,
+          type: input.type,
+          accountId: input.accountId,
+        })
+
+  transactionRepository.update(tx)
+
+  // Update tags
+  if (input.tags && input.tags.length > 0) {
+    transactionRepository.saveTags(tx.id, input.tags)
+  }
+
+  return tx
 }
 
 export async function getThisMonthExpenseTotalDollar(now = new Date()): Promise<number> {

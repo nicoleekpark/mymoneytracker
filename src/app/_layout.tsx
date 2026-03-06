@@ -100,6 +100,13 @@ function RootLayoutNav() {
                 }}
               />
               <Stack.Screen
+                name="(modal)/edit-transaction"
+                options={{
+                  presentation: 'modal',
+                  headerShown: false
+                }}
+              />
+              <Stack.Screen
                 name="notifications"
                 options={{
                   headerShown: false,

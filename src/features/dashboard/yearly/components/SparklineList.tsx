@@ -8,6 +8,7 @@ import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
+import { UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -51,12 +52,12 @@ type Props = {
 
 function getCategoryMeta(categoryRef?: CategoryRef) {
   if (!categoryRef) {
-    return { name: 'Other', icon: 'cube', color: '#888' }
+    return { name: 'Other', icon: 'cube', color: UNCATEGORIZED_COLOR }
   }
 
   const cat = CATEGORIES.find(c => c.key === categoryRef.categoryKey)
   if (!cat) {
-    return { name: categoryRef.categoryKey, icon: 'cube', color: '#888' }
+    return { name: categoryRef.categoryKey, icon: 'cube', color: UNCATEGORIZED_COLOR }
   }
 
   return { name: cat.name, icon: cat.icon, color: cat.color }

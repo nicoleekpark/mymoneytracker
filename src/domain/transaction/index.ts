@@ -10,16 +10,21 @@ export {
   getMonthlyFlowDollarForYear,
   getMonthlyProjection,
   getThisMonthExpenseTotalDollar,
+  getTransactionById,
   getTransactions,
+  getTransactionsInRange,
   getYearlyExpenseByCategoryDollar,
   getYearlyIncomeByCategoryDollar,
   getYearlyProjection,
-  removeTransaction
+  removeTransaction,
+  restoreTransaction,
+  updateTransaction,
 } from './transaction.usecase'
 
 export type {
   MonthlyFlowDollar,
   MonthlyProjection,
+  TransactionPage,
   YearlyExpenseByCategoryDollar,
   YearlyIncomeByCategoryDollar,
   YearlyProjection

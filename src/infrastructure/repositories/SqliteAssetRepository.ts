@@ -228,11 +228,18 @@ export class SqliteAssetRepository implements AssetRepository {
   }
 
   getBalancesForMonth(yearMonth: string, memberId?: string | null): AssetBalance[] {
+    // Get the most recent balance for each asset item up to the requested month
+    // This ensures balances carry forward when no new value is recorded
     let sql = `
       SELECT b.id, b.asset_item_id, b.year_month, b.amount
       FROM asset_balances b
       JOIN asset_items i ON b.asset_item_id = i.id
-      WHERE b.year_month = ?
+      WHERE b.year_month = (
+        SELECT MAX(b2.year_month)
+        FROM asset_balances b2
+        WHERE b2.asset_item_id = b.asset_item_id
+          AND b2.year_month <= ?
+      )
         AND i.is_archived = 0
     `
     const args: unknown[] = [yearMonth]
@@ -315,7 +322,8 @@ export class SqliteAssetRepository implements AssetRepository {
   getSummary(yearMonth: string, memberId?: string | null): AssetSummary {
     const summary = createEmptySummary()
 
-    // Get all balances for the month with item details
+    // Get the most recent balance for each asset item up to the requested month
+    // This ensures balances carry forward when no new value is recorded
     type BalanceWithItem = AssetBalanceRow & {
       field: string
       category: string
@@ -327,7 +335,12 @@ export class SqliteAssetRepository implements AssetRepository {
              i.field, i.category, i.is_liquidifiable
       FROM asset_balances b
       JOIN asset_items i ON b.asset_item_id = i.id
-      WHERE b.year_month = ?
+      WHERE b.year_month = (
+        SELECT MAX(b2.year_month)
+        FROM asset_balances b2
+        WHERE b2.asset_item_id = b.asset_item_id
+          AND b2.year_month <= ?
+      )
         AND i.is_archived = 0
     `
     const args: unknown[] = [yearMonth]

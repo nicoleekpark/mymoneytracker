@@ -70,7 +70,7 @@ function EvidenceSection({ items, colors }: { items: EvidenceItem[]; colors: Ins
             marginBottom: spacing.sm
           }}
         >
-          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.3, width: 95 }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.3, width: 95 }}>
             {item.key}
           </Text>
           <View style={{ flex: 1 }}>
@@ -78,7 +78,7 @@ function EvidenceSection({ items, colors }: { items: EvidenceItem[]; colors: Ins
               {item.value}
             </Text>
             {item.detail && (
-              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 2 }}>
                 {item.detail}
               </Text>
             )}
@@ -140,7 +140,7 @@ function CTARow({ buttons, colors }: { buttons: CTAButton[]; colors: InsightsCol
             <Text style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
-              color: colors.textMuted
+              color: colors.textSecondary
             }}>
               {btn.label}
             </Text>
@@ -170,7 +170,7 @@ function ExplainBottomSheet({
       colors={{
         surface: colors.surface,
         text: colors.text,
-        textMuted: colors.textMuted,
+        textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
       snapPoints={['40%']}
@@ -180,7 +180,7 @@ function ExplainBottomSheet({
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
           Calculation
         </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
           {card.explanation?.calculation || 'Compares this month to typical.'}
         </Text>
       </View>
@@ -191,7 +191,7 @@ function ExplainBottomSheet({
           <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
             Why it matters
           </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
             {card.explanation.whatMatters}
           </Text>
         </View>
@@ -202,7 +202,7 @@ function ExplainBottomSheet({
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
           Note
         </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
           Pattern summary, not a prediction.
         </Text>
       </View>
@@ -240,14 +240,14 @@ export function InsightCard({ card, colors, children, variant = 'flat' }: Props)
                 height: 14,
                 borderRadius: radius.full,
                 borderWidth: 1,
-                borderColor: colors.textMuted,
+                borderColor: colors.textSecondary,
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: 0.6,
                 marginLeft: spacing.sm
               }}
             >
-              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textMuted }}>i</Text>
+              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textSecondary }}>i</Text>
             </Pressable>
           )}
         </View>
@@ -257,7 +257,7 @@ export function InsightCard({ card, colors, children, variant = 'flat' }: Props)
 
         {/* Sub text */}
         {card.sub && (
-          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs, lineHeight: 19 }}>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs, lineHeight: 19 }}>
             {card.sub}
           </Text>
         )}

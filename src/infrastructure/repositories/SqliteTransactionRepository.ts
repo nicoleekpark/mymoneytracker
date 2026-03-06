@@ -1,6 +1,8 @@
 import type { UUID } from '@/domain/common/uuid'
+import { uuid } from '@/shared/utils/uuid'
 import type { Transaction } from '@/domain/transaction/transaction.types'
 import type {
+  AccountActivityTotals,
   AllTimeExpenseByCategory,
   AllTimeIncomeByCategory,
   DailyExpenseTotal,
@@ -9,6 +11,7 @@ import type {
   MonthlyExpenseByCategory,
   MonthlyExpenseTotal,
   MonthlyFlowTotal,
+  TransactionPage,
   TransactionRepository,
   YearlyExpenseByCategory,
   YearlyFlowTotal,
@@ -91,6 +94,65 @@ export class SqliteTransactionRepository implements TransactionRepository {
     )
   }
 
+  update(tx: Transaction): void {
+    const row = transactionToRow(tx, (ref) => this.categoryRepo.resolveCategoryId(ref))
+    const now = new Date().toISOString()
+
+    this.dataSource.exec(
+      `
+      UPDATE transactions SET
+        occurred_at = ?,
+        type = ?,
+        item = ?,
+        amount_cents = ?,
+        currency = ?,
+        account_id = ?,
+        from_account_id = ?,
+        to_account_id = ?,
+        category_id = ?,
+        merchant = ?,
+        note = ?,
+        is_estimated = ?,
+        updated_at = ?
+      WHERE id = ?
+      `,
+      [
+        row.occurred_at,
+        row.type,
+        row.item,
+        row.amount_cents,
+        row.currency,
+        row.account_id,
+        row.from_account_id,
+        row.to_account_id,
+        row.category_id,
+        row.merchant,
+        row.note,
+        row.is_estimated,
+        now,
+        row.id,
+      ]
+    )
+  }
+
+  getById(id: string): Transaction | null {
+    const rows = this.dataSource.queryAll<TransactionRow>(
+      `
+      SELECT
+        id, key, occurred_at, type, item, amount_cents, currency,
+        account_id, category_id, merchant, note,
+        from_account_id, to_account_id, member_id, is_estimated
+      FROM transactions
+      WHERE id = ?
+      LIMIT 1;
+      `,
+      [id]
+    )
+    if (rows.length === 0) return null
+    const tags = this.getTagsForTransaction(rows[0].id)
+    return rowToTransaction(rows[0], (catId) => this.categoryRepo.resolveCategoryRefFromDbId(catId), tags)
+  }
+
   list(limit = 200): Transaction[] {
     const rows = this.dataSource.queryAll<TransactionRow>(
       `
@@ -104,9 +166,10 @@ export class SqliteTransactionRepository implements TransactionRepository {
       `,
       [limit]
     )
-    return rows.map((r) =>
-      rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id))
-    )
+    return rows.map((r) => {
+      const tags = this.getTagsForTransaction(r.id)
+      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
+    })
   }
 
   listForDate(dateYYYYMMDD: string, limit = 50): Transaction[] {
@@ -124,9 +187,43 @@ export class SqliteTransactionRepository implements TransactionRepository {
       `,
       [dateYYYYMMDD, limit]
     )
-    return rows.map((r) =>
-      rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id))
+    return rows.map((r) => {
+      const tags = this.getTagsForTransaction(r.id)
+      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
+    })
+  }
+
+  listInDateRange(fromDate: string, toDate: string, limit = 500): TransactionPage {
+    const rows = this.dataSource.queryAll<TransactionRow>(
+      `
+      SELECT
+        id, key, occurred_at, type, item, amount_cents, currency,
+        account_id, category_id, merchant, note,
+        from_account_id, to_account_id, member_id, is_estimated
+      FROM transactions
+      WHERE occurred_at >= ?
+        AND occurred_at <= ?
+      ORDER BY occurred_at DESC, id DESC
+      LIMIT ?;
+      `,
+      [fromDate, toDate + 'T23:59:59.999Z', limit]
     )
+
+    // Check if there are older transactions before the date range
+    const olderCount = this.dataSource.queryAll<{ cnt: number }>(
+      `SELECT COUNT(*) as cnt FROM transactions WHERE occurred_at < ?`,
+      [fromDate]
+    )
+    const hasMore = (olderCount[0]?.cnt ?? 0) > 0
+
+    const items = rows.map((r) => {
+      const tags = this.getTagsForTransaction(r.id)
+      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
+    })
+
+    const oldestDate = items.length > 0 ? items[items.length - 1].occurredAt.toISOString() : null
+
+    return { items, hasMore, oldestDate }
   }
 
   delete(id: UUID): void {
@@ -255,7 +352,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       SELECT
         id, key, occurred_at, type, item, amount_cents, currency,
         account_id, from_account_id, to_account_id,
-        category_id, merchant, note
+        category_id, merchant, note, member_id, is_estimated
       FROM transactions
       WHERE type = 'transfer'
         AND substr(occurred_at, 1, 7) = ?
@@ -264,9 +361,10 @@ export class SqliteTransactionRepository implements TransactionRepository {
       `,
       [monthYYYYMM, limit]
     )
-    return rows.map((r) =>
-      rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id))
-    )
+    return rows.map((r) => {
+      const tags = this.getTagsForTransaction(r.id)
+      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
+    })
   }
 
   listDailyFlowTotalsForMonth(monthYYYYMM: string): DailyFlowTotal[] {
@@ -651,12 +749,196 @@ export class SqliteTransactionRepository implements TransactionRepository {
   }
 
   private createTag(name: string): string {
-    const id = crypto.randomUUID()
+    const id = uuid()
     const now = new Date().toISOString()
     this.dataSource.exec(
       `INSERT INTO tags (id, name, category, is_system, created_at, updated_at) VALUES (?, ?, 'custom', 0, ?, ?)`,
       [id, name, now, now]
     )
     return id
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Account Activity Aggregations
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  listAccountActivityForMonth(monthYYYYMM: string): AccountActivityTotals[] {
+    const rows = this.dataSource.queryAll<{
+      account_id: string
+      expense_cents: number
+      income_cents: number
+      transfer_out_cents: number
+      transfer_in_cents: number
+      tx_count: number
+    }>(
+      `
+      SELECT
+        account_id,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COUNT(*) AS tx_count
+      FROM transactions
+      WHERE account_id IS NOT NULL
+        AND substr(occurred_at, 1, 7) = ?
+      GROUP BY account_id;
+      `,
+      [monthYYYYMM]
+    )
+
+    return rows.map((r) => ({
+      accountId: r.account_id,
+      expenseCents: Number(r.expense_cents ?? 0),
+      incomeCents: Number(r.income_cents ?? 0),
+      transferOutCents: Number(r.transfer_out_cents ?? 0),
+      transferInCents: Number(r.transfer_in_cents ?? 0),
+      transactionCount: Number(r.tx_count ?? 0),
+    }))
+  }
+
+  listAccountActivityForYear(year: number): AccountActivityTotals[] {
+    const yearPrefix = String(year)
+    const rows = this.dataSource.queryAll<{
+      account_id: string
+      expense_cents: number
+      income_cents: number
+      transfer_out_cents: number
+      transfer_in_cents: number
+      tx_count: number
+    }>(
+      `
+      SELECT
+        account_id,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COUNT(*) AS tx_count
+      FROM transactions
+      WHERE account_id IS NOT NULL
+        AND substr(occurred_at, 1, 4) = ?
+      GROUP BY account_id;
+      `,
+      [yearPrefix]
+    )
+
+    return rows.map((r) => ({
+      accountId: r.account_id,
+      expenseCents: Number(r.expense_cents ?? 0),
+      incomeCents: Number(r.income_cents ?? 0),
+      transferOutCents: Number(r.transfer_out_cents ?? 0),
+      transferInCents: Number(r.transfer_in_cents ?? 0),
+      transactionCount: Number(r.tx_count ?? 0),
+    }))
+  }
+
+  listAccountActivityAllTime(): AccountActivityTotals[] {
+    const rows = this.dataSource.queryAll<{
+      account_id: string
+      expense_cents: number
+      income_cents: number
+      transfer_out_cents: number
+      transfer_in_cents: number
+      tx_count: number
+    }>(
+      `
+      SELECT
+        account_id,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COUNT(*) AS tx_count
+      FROM transactions
+      WHERE account_id IS NOT NULL
+      GROUP BY account_id;
+      `
+    )
+
+    return rows.map((r) => ({
+      accountId: r.account_id,
+      expenseCents: Number(r.expense_cents ?? 0),
+      incomeCents: Number(r.income_cents ?? 0),
+      transferOutCents: Number(r.transfer_out_cents ?? 0),
+      transferInCents: Number(r.transfer_in_cents ?? 0),
+      transactionCount: Number(r.tx_count ?? 0),
+    }))
+  }
+
+  /**
+   * Calculate account balance from all transactions before a given date.
+   * For assets: income - expenses + transfers_in - transfers_out
+   * For liabilities: charges - payments (stored as expenses - income)
+   * Returns cents.
+   */
+  getAccountBalanceBeforeDate(accountId: UUID, dateYYYYMMDD: string): number {
+    const row = this.dataSource.queryFirst<{
+      income_cents: number
+      expense_cents: number
+      transfer_in_cents: number
+      transfer_out_cents: number
+    }>(
+      `
+      SELECT
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents
+      FROM transactions
+      WHERE account_id = ?
+        AND substr(occurred_at, 1, 10) < ?;
+      `,
+      [accountId, accountId, accountId, dateYYYYMMDD]
+    )
+
+    if (!row) return 0
+
+    // Balance = income - expenses + transfers_in - transfers_out
+    return (
+      Number(row.income_cents ?? 0) -
+      Number(row.expense_cents ?? 0) +
+      Number(row.transfer_in_cents ?? 0) -
+      Number(row.transfer_out_cents ?? 0)
+    )
+  }
+
+  /**
+   * Calculate account balance at the end of a month (inclusive).
+   * Returns cents.
+   */
+  getAccountBalanceAtEndOfMonth(accountId: UUID, monthYYYYMM: string): number {
+    // Get last day of the month
+    const [year, month] = monthYYYYMM.split('-').map(Number)
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${monthYYYYMM}-${String(lastDay).padStart(2, '0')}`
+
+    const row = this.dataSource.queryFirst<{
+      income_cents: number
+      expense_cents: number
+      transfer_in_cents: number
+      transfer_out_cents: number
+    }>(
+      `
+      SELECT
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents
+      FROM transactions
+      WHERE account_id = ?
+        AND substr(occurred_at, 1, 10) <= ?;
+      `,
+      [accountId, accountId, accountId, endDate]
+    )
+
+    if (!row) return 0
+
+    return (
+      Number(row.income_cents ?? 0) -
+      Number(row.expense_cents ?? 0) +
+      Number(row.transfer_in_cents ?? 0) -
+      Number(row.transfer_out_cents ?? 0)
+    )
   }
 }

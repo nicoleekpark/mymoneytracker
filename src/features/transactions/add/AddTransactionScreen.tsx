@@ -1,8 +1,8 @@
 import { CATEGORIES, CATEGORIES_INDEX } from '@/config'
-import { resolveAccountIdByKey } from '@/domain/account'
+import { getActiveAccounts, resolveAccountIdByKey } from '@/domain/account'
 import type { UUID } from '@/domain/common/uuid'
-import type { TransactionType } from '@/domain/transaction'
-import { addTransaction } from '@/domain/transaction/transaction.usecase'
+import type { Transaction, TransactionType } from '@/domain/transaction'
+import { addTransaction, getTransactionById, updateTransaction } from '@/domain/transaction/transaction.usecase'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon, ScalePressable } from '@/shared/components'
 import { muteColor } from '@/shared/utils/contrast'
@@ -73,11 +73,19 @@ const TRANSACTION_TYPES: { key: TransactionType; label: string }[] = [
 
 const TOAST_DURATION = 1500
 
-export default function AddTransactionScreen() {
+type Props = {
+  mode?: 'add' | 'edit'
+}
+
+export default function AddTransactionScreen({ mode = 'add' }: Props) {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
-  const params = useLocalSearchParams<{ draftId?: string }>()
+  const params = useLocalSearchParams<{ draftId?: string; transactionId?: string }>()
   const editingDraftId = params.draftId
+  const editingTransactionId = mode === 'edit' ? params.transactionId : undefined
+
+  // Track if we're editing an existing transaction
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
 
   // Local toast state (positioned above CTA bar)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -111,6 +119,7 @@ export default function AddTransactionScreen() {
   const [isEstimated, setIsEstimated] = useState(false) // Amount is approximate
   const [descriptionFocused, setDescriptionFocused] = useState(false)
   const [highlightedField, setHighlightedField] = useState<'category' | 'account' | null>(null)
+  const [highlightIdentifier, setHighlightIdentifier] = useState(false) // Highlight description + merchant
 
   // Quick chips store
   const { expenseChips, incomeChips } = useQuickChipsStore()
@@ -219,9 +228,75 @@ export default function AddTransactionScreen() {
     }
   }, [editingDraftId])
 
-  // Auto-scroll when More Details is expanded
+  // Load transaction data if editing existing transaction
+  useEffect(() => {
+    if (editingTransactionId) {
+      getTransactionById(editingTransactionId).then((tx) => {
+        if (tx) {
+          setEditingTransaction(tx)
+          setType(tx.type)
+          setDescription(tx.item || '')
+          setMerchant(tx.merchant || '')
+          setNote(tx.note || '')
+
+          // Convert amount from dollars to cents
+          const amountCents = Math.round(tx.money.amount * 100)
+          amount.setAmountCents(amountCents)
+
+          // Find account key by ID
+          const accounts = getActiveAccounts()
+          const acc = accounts.find((a) => a.id === tx.accountId)
+          if (acc) {
+            account.setAccountKey(acc.key)
+          }
+
+          // Set category
+          if (tx.category) {
+            category.setCategoryRef({
+              type: tx.type,
+              categoryKey: tx.category.categoryKey ?? '',
+              subCategoryKey: tx.category.subCategoryKey,
+            })
+          }
+
+          // Set date
+          dateTime.setOccurredAt(tx.occurredAt)
+
+          // Set tags
+          if (tx.tags && tx.tags.length > 0) {
+            setTags(tx.tags)
+          }
+
+          // Set estimated
+          if (tx.isEstimated) {
+            setIsEstimated(true)
+          }
+
+          // Expand more details if has optional fields
+          if (tx.merchant || tx.note || (tx.tags && tx.tags.length > 0)) {
+            setMoreDetailsExpanded(true)
+          }
+
+          // Scroll to top after loading edit data
+          setTimeout(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false })
+          }, 150)
+        }
+      })
+    }
+  }, [editingTransactionId])
+
+  // Track if we're in initial load (to skip auto-scroll)
+  const isInitialLoadRef = useRef(true)
+
+  // Auto-scroll when More Details is expanded (but not on initial edit load)
   useEffect(() => {
     if (moreDetailsExpanded && scrollRef.current) {
+      // Skip auto-scroll on initial load (when editing)
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false
+        return
+      }
       // Small delay to let the content render
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true })
@@ -262,25 +337,6 @@ export default function AddTransactionScreen() {
     return hasAmount
   }, [type, amount.amountCents])
 
-  // Draft validation
-  const canSaveDraft = useMemo(() => {
-    if (type === 'transfer') return false
-    const hasAmount = Number.isFinite(amount.amountCents) && amount.amountCents > 0
-    const hasDescription = description.trim().length > 0
-    return hasAmount || hasDescription
-  }, [type, amount.amountCents, description])
-
-  // Check if any data has been entered
-  const hasAnyData = useMemo(() => {
-    const hasAmount = Number.isFinite(amount.amountCents) && amount.amountCents > 0
-    const hasDescription = description.trim().length > 0
-    const hasMerchant = merchant.trim().length > 0
-    const hasNote = note.trim().length > 0
-    const hasCategory = !!category.categoryRef
-    const hasTags = tags.length > 0
-    return hasAmount || hasDescription || hasMerchant || hasNote || hasCategory || hasTags
-  }, [amount.amountCents, description, merchant, note, category.categoryRef, tags])
-
   // Check if more details has any content
   const moreDetailsCount = useMemo(() => {
     let count = 0
@@ -291,35 +347,7 @@ export default function AddTransactionScreen() {
   }, [note, tags, receiptUri])
 
   const onCancel = () => {
-    // Auto-save as draft if form has data (10A: silent auto-draft with toast)
-    if (hasAnyData && type !== 'transfer' && canSaveDraft) {
-      const cleanedDescription = description.trim()
-      const cleanedNote = note.trim()
-
-      const draftData = {
-        type,
-        item: cleanedDescription,
-        amountCents: amount.amountCents,
-        merchant: merchant.trim() || undefined,
-        note: cleanedNote || undefined,
-        tags: tags.length > 0 ? tags : undefined,
-        categoryRef: category.categoryRef ?? undefined,
-        accountKey: account.accountKey ?? undefined,
-        occurredAt: dateTime.occurredAt.toISOString(),
-        receiptUri: receiptUri ?? undefined,
-      }
-
-      if (editingDraftId) {
-        updateDraft(editingDraftId, draftData)
-      } else {
-        addDraft(draftData)
-      }
-
-      // Show toast then close modal
-      showToast('Saved as draft')
-      setTimeout(() => router.back(), 800)
-      return
-    }
+    // Simply close without saving - user must explicitly save as draft
     router.back()
   }
 
@@ -330,10 +358,19 @@ export default function AddTransactionScreen() {
     }
 
     const cleanedDescription = description.trim()
+    const cleanedMerchant = merchant.trim()
     const cleanedNote = note.trim()
 
     if (!Number.isFinite(amount.amountCents) || amount.amountCents <= 0) {
       showToast('Please enter an amount')
+      return
+    }
+
+    // Require either description or merchant for scannable transaction list
+    if (!cleanedDescription && !cleanedMerchant) {
+      showToast('Add a description or merchant')
+      setHighlightIdentifier(true)
+      setTimeout(() => setHighlightIdentifier(false), 2000)
       return
     }
 
@@ -363,37 +400,47 @@ export default function AddTransactionScreen() {
     }
 
     try {
-      await addTransaction(CATEGORIES_INDEX, {
+      const transactionInput = {
         type,
         item: cleanedDescription || undefined,
         amount: amount.amountDollars,
         category: category.categoryRef ?? undefined,
         accountId,
         occurredAt: dateTime.occurredAt,
-        merchant: merchant.trim() || undefined,
+        merchant: cleanedMerchant || undefined,
         note: cleanedNote || undefined,
         tags: tags.length > 0 ? tags : undefined,
         isEstimated: isEstimated || undefined,
-      })
+      }
+
+      if (editingTransaction && editingTransactionId) {
+        // Update existing transaction
+        await updateTransaction(CATEGORIES_INDEX, editingTransactionId, transactionInput)
+      } else {
+        // Create new transaction
+        await addTransaction(CATEGORIES_INDEX, transactionInput)
+      }
 
       if (cleanedDescription) {
         recordItem(cleanedDescription)
       }
-      if (merchant.trim()) {
-        recordMerchant(merchant.trim())
+      if (cleanedMerchant) {
+        recordMerchant(cleanedMerchant)
       }
 
-      // Save last transaction for "Repeat Last" feature
-      setLastTransaction({
-        type,
-        amountCents: amount.amountCents,
-        amountDisplay: amount.amountDisplay,
-        description: cleanedDescription || undefined,
-        categoryKey: category.categoryRef?.categoryKey,
-        subCategoryKey: category.categoryRef?.subCategoryKey,
-        accountKey: account.accountKey ?? undefined,
-        savedAt: new Date().toISOString(),
-      })
+      // Save last transaction for "Repeat Last" feature (only for new transactions)
+      if (!editingTransaction) {
+        setLastTransaction({
+          type,
+          amountCents: amount.amountCents,
+          amountDisplay: amount.amountDisplay,
+          description: cleanedDescription || undefined,
+          categoryKey: category.categoryRef?.categoryKey,
+          subCategoryKey: category.categoryRef?.subCategoryKey,
+          accountKey: account.accountKey ?? undefined,
+          savedAt: new Date().toISOString(),
+        })
+      }
 
       // Record payment method usage for auto-selection
       if (account.accountKey) {
@@ -405,7 +452,8 @@ export default function AddTransactionScreen() {
       }
 
       // Show toast then close modal
-      showToast(`$${amount.amountDisplay} added`)
+      const toastMsg = editingTransaction ? `$${amount.amountDisplay} updated` : `$${amount.amountDisplay} added`
+      showToast(toastMsg)
       setTimeout(() => router.back(), 800)
     } catch (e: unknown) {
       console.error(e)
@@ -788,7 +836,11 @@ export default function AddTransactionScreen() {
                 placeholderTextColor={theme.semantic.textSecondary}
                 style={[styles.descSubtitleInput, {
                   color: theme.semantic.text,
-                  borderBottomColor: description ? theme.semantic.primary : theme.semantic.border,
+                  borderBottomColor: highlightIdentifier
+                    ? theme.semantic.warning
+                    : description
+                      ? theme.semantic.primary
+                      : theme.semantic.border,
                 }]}
                 returnKeyType="done"
               />
@@ -808,7 +860,12 @@ export default function AddTransactionScreen() {
           {type !== 'transfer' && (
             <View style={styles.fieldGroup}>
               {/* Merchant (optional) */}
-              <View style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingRight: 0 }]}>
+              <View style={[
+                styles.fieldRow,
+                styles.fieldRowNoBorder,
+                { paddingRight: 0 },
+                highlightIdentifier && { backgroundColor: theme.semantic.warning + '15' }
+              ]}>
                 <Text style={[styles.fieldLabel, { color: merchant ? theme.semantic.textSecondary : theme.semantic.text }]}>
                   Merchant <Text style={styles.optionalLabel}>(optional)</Text>
                 </Text>
@@ -1339,8 +1396,9 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xs,
   },
   fieldLabel: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   fieldValue: {

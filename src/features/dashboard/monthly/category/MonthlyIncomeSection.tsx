@@ -7,6 +7,7 @@ import { CARD_SHADOW } from '@/theme/tokens'
 import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
+import { CATEGORY_DOT_SIZE, UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
 
 import type { CalendarColors } from '../calendar'
 import { formatUsdInt } from './category.utils'
@@ -19,12 +20,12 @@ const TOP_N_COLLAPSED = 5
  */
 function getCategoryMeta(categoryRef?: CategoryRef) {
   if (!categoryRef) {
-    return { name: 'Uncategorized', color: '#888' }
+    return { name: 'Uncategorized', color: UNCATEGORIZED_COLOR }
   }
 
   const cat = CATEGORIES.find(c => c.key === categoryRef.categoryKey)
   if (!cat) {
-    return { name: categoryRef.categoryKey, color: '#888' }
+    return { name: categoryRef.categoryKey, color: UNCATEGORIZED_COLOR }
   }
 
   return { name: cat.name, color: cat.color }
@@ -148,14 +149,14 @@ export function MonthlyIncomeContent(props: ContentProps) {
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                     disabled={!hasSubcategories}
                   >
-                    <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: catMeta.color }} />
+                    <View style={{ width: CATEGORY_DOT_SIZE, height: CATEGORY_DOT_SIZE, borderRadius: radius.full, backgroundColor: catMeta.color }} />
                     <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
                       {catMeta.name}
                     </Text>
                     <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
                       {formatUsdInt(cat.totalDollar)}
                     </Text>
-                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
+                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                       {Math.round(percent)}%
                     </Text>
                   </Pressable>
@@ -174,7 +175,7 @@ export function MonthlyIncomeContent(props: ContentProps) {
                       style={{
                         height: '100%',
                         width: `${barWidth}%`,
-                        backgroundColor: colors.textMuted,
+                        backgroundColor: colors.textSecondary,
                         borderRadius: radius.sm
                       }}
                     />
@@ -184,7 +185,7 @@ export function MonthlyIncomeContent(props: ContentProps) {
                   {isExpanded && hasSubcategories && (
                     <View style={{ marginLeft: spacing.xl + spacing.xs, marginTop: spacing.xs, gap: spacing.sm }}>
                       {/* Subcategory header showing % is of parent */}
-                      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: spacing.xs }}>
+                      <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: spacing.xs }}>
                         % of {catMeta.name}
                       </Text>
                       {cat.subcategories.map((sub, subIdx) => {
@@ -196,14 +197,14 @@ export function MonthlyIncomeContent(props: ContentProps) {
                         return (
                           <View key={subIdx} style={{ gap: spacing.xs }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.textMuted, opacity: 0.6 }} />
+                              <View style={{ width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.textSecondary, opacity: 0.6 }} />
                               <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {getSubcategoryMeta(categoryKey, sub.subCategoryKey).name}
                               </Text>
                               <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8 }}>
                                 {formatUsdInt(sub.totalDollar)}
                               </Text>
-                              <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textMuted }}>
+                              <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
                                 {Math.round(subPercent)}%
                               </Text>
                             </View>
@@ -221,7 +222,7 @@ export function MonthlyIncomeContent(props: ContentProps) {
                                 style={{
                                   height: '100%',
                                   width: `${subBarWidth}%`,
-                                  backgroundColor: colors.textMuted,
+                                  backgroundColor: colors.textSecondary,
                                   opacity: 0.5,
                                   borderRadius: radius.xs
                                 }}
@@ -243,14 +244,14 @@ export function MonthlyIncomeContent(props: ContentProps) {
               onPress={() => setShowAll(!showAll)}
               style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textMuted }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                 {showAll ? 'Show less' : `Show all ${rows.length} categories`}
               </Text>
             </Pressable>
           )}
         </>
       ) : !loading && !error ? (
-        <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: spacing.xl }}>
+        <Text style={{ color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.xl }}>
           No income yet
         </Text>
       ) : null}

@@ -45,10 +45,24 @@ export function TagSection({ selectedTags, onTagsChange }: Props) {
 
   const { getTagsByCategory, createTag } = useTagsStore()
 
-  // Merge all tags into single pool
+  // Merge all tags into single pool (quick + occurrence + custom)
   const quickTags = getTagsByCategory('quick')
   const occurrenceTags = getTagsByCategory('occurrence')
-  const allTags = [...quickTags, ...occurrenceTags]
+  const customTags = getTagsByCategory('custom')
+  const storeTags = [...quickTags, ...occurrenceTags, ...customTags]
+
+  // Include selected tags that aren't in the store (e.g., loaded from database after app restart)
+  const storeTagNames = new Set(storeTags.map((t) => t.name.toLowerCase()))
+  const extraSelectedTags: Tag[] = selectedTags
+    .filter((name) => !storeTagNames.has(name.toLowerCase()))
+    .map((name) => ({
+      id: `selected-${name}`,
+      name,
+      category: 'custom' as const,
+      createdAt: new Date().toISOString(),
+    }))
+
+  const allTags = [...storeTags, ...extraSelectedTags]
 
   const isSelected = (tagName: string) => selectedTags.includes(tagName)
 

@@ -40,7 +40,8 @@ export type CategoryIdResolver = (ref?: CategoryRef) => CategoryDbId | null
  */
 export function rowToTransaction(
   row: TransactionRow,
-  resolveCategoryRef: CategoryRefResolver
+  resolveCategoryRef: CategoryRefResolver,
+  tags?: string[]
 ): Transaction {
   const base = {
     id: row.id,
@@ -54,6 +55,7 @@ export function rowToTransaction(
     note: row.note ?? undefined,
     memberId: row.member_id ?? undefined,
     isEstimated: row.is_estimated === 1 ? true : undefined,
+    tags: tags && tags.length > 0 ? tags : undefined,
   } as const
 
   if (row.type === 'transfer') {

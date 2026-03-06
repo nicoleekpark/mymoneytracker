@@ -90,13 +90,13 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               width: 36,
               height: 4,
               borderRadius: 2,
-              backgroundColor: colors.textMuted,
+              backgroundColor: colors.textSecondary,
               opacity: 0.4
             }}
           />
         </View>
       ),
-      [colors.textMuted]
+      [colors.textSecondary]
     )
 
     if (!selectedDay) return null
@@ -133,7 +133,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
             <>
               {/* Net - Same line layout */}
               <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: spacing.lg }}>
-                <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginRight: spacing.sm }}>
+                <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginRight: spacing.sm }}>
                   Net
                 </Text>
                 <Text
@@ -152,14 +152,14 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               <View style={{ flexDirection: 'row', marginBottom: spacing.xl }}>
                 {/* Inflow */}
                 <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 2 }}>
                     Inflow
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.md,
                       fontWeight: fontWeight.semibold,
-                      color: selectedDay.income > 0 ? colors.success : colors.textMuted,
+                      color: selectedDay.income > 0 ? colors.success : colors.textSecondary,
                       fontVariant: ['tabular-nums']
                     }}
                   >
@@ -172,14 +172,14 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
 
                 {/* Outflow */}
                 <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 2 }}>
                     Outflow
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.md,
                       fontWeight: fontWeight.semibold,
-                      color: selectedDay.expense > 0 ? colors.danger : colors.textMuted,
+                      color: selectedDay.expense > 0 ? colors.danger : colors.textSecondary,
                       fontVariant: ['tabular-nums']
                     }}
                   >
@@ -194,7 +194,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
-                    color: colors.textMuted,
+                    color: colors.textSecondary,
                     marginBottom: spacing.md
                   }}
                 >
@@ -203,7 +203,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
 
                 {loadingTx ? (
                   <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>
-                    <ActivityIndicator size="small" color={colors.textMuted} />
+                    <ActivityIndicator size="small" color={colors.textSecondary} />
                   </View>
                 ) : (
                   <View>
@@ -234,7 +234,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                             <Text
                               style={{
                                 fontSize: fontSize.xs,
-                                color: colors.textMuted,
+                                color: colors.textSecondary,
                                 marginTop: 2
                               }}
                             >
@@ -266,7 +266,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                 style={{
                   paddingVertical: spacing.md,
                   alignItems: 'center',
-                  backgroundColor: colors.textMuted + '10',
+                  backgroundColor: colors.textSecondary + '10',
                   borderRadius: spacing.sm
                 }}
               >
@@ -274,7 +274,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                   style={{
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
-                    color: colors.textMuted
+                    color: colors.textSecondary
                   }}
                 >
                   View all {selectedDay.txCount} transactions →
@@ -283,7 +283,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
             </>
           ) : (
             /* No transactions - minimal view */
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.md }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.md }}>
               No transactions recorded
             </Text>
           )}

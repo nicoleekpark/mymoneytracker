@@ -1,19 +1,28 @@
+import { CATEGORIES } from '@/config'
 import { getActiveAccounts } from '@/domain/account'
 import type { Transaction } from '@/domain/transaction'
-import { isExpense, safeDate, TransactionType } from '@/domain/transaction'
+import { isExpense, removeTransaction, restoreTransaction, safeDate } from '@/domain/transaction'
 import { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { CategoryIcon } from '@/shared/components'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
+import { CATEGORY_DOT_SIZE_SM, BADGE_MIN_SIZE, FONT_SIZE_BADGE, FONT_SIZE_TINY } from '@/theme/tokens/viewStyles'
+import { formatCurrency } from '@/shared/format/currency'
 import { formatDayHeader, formatMonthSectionTitle, monthKey, ymd } from '@/shared/format/date'
+import { useDraftsStore } from '@/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
+import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useFocusEffect } from '@react-navigation/native'
-import { useLocalSearchParams } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTransactionsData } from './hooks/useTransactionsData'
+import { TransactionDetailSheet, UndoToast } from './components'
 import {
   LayoutAnimation,
   Platform,
+  Pressable,
   SectionList,
   StyleSheet,
   Text,
@@ -23,21 +32,29 @@ import {
   View
 } from 'react-native'
 
-import { formatCurrency } from '@/shared/format/currency'
 import { Screen } from '@/shared/layout/Screen'
 
-type MonthSection = {
-  key: string
-  title: string
-  total: number
-  data: Transaction[]
+// Extended transaction type that can also be a draft
+type TransactionOrDraft = Transaction & { isDraft?: boolean }
+
+type DaySection = {
+  key: string // YYYY-MM-DD
+  dayTitle: string // "Wed, Mar 3"
+  monthKey: string // YYYY-MM
+  monthTitle: string // "MARCH 2026"
+  monthTotal: number
+  dayTotal: number
+  data: TransactionOrDraft[]
 }
 
-function displayItem(tx: Transaction): string {
-  return tx.item || tx.note || 'Untitled'
+function displayItem(tx: TransactionOrDraft): string {
+  const item = (tx.item ?? '').trim()
+  const merchant = (tx.merchant ?? '').trim()
+  const typeLabel = tx.type === 'income' ? 'Income' : tx.type === 'transfer' ? 'Transfer' : 'Expense'
+  return item || merchant || typeLabel
 }
 
-function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
+function buildDaySections(all: TransactionOrDraft[], query: string): DaySection[] {
   const q = query.trim().toLowerCase()
 
   const filtered = q
@@ -50,62 +67,109 @@ function buildMonthSections(all: Transaction[], query: string): MonthSection[] {
     : all
 
   const sorted = [...filtered].sort((a, b) => safeDate(b).getTime() - safeDate(a).getTime())
-  const map = new Map<string, MonthSection>()
 
+  // Group by day
+  const dayMap = new Map<string, { date: Date; data: TransactionOrDraft[]; total: number }>()
   for (const tx of sorted) {
     const d = safeDate(tx)
-    const key = monthKey(d)
-    const section =
-      map.get(key) ??
-      ({
-        key,
-        title: formatMonthSectionTitle(d),
-        total: 0,
-        data: []
-      } satisfies MonthSection)
-
+    const key = ymd(d)
+    const existing = dayMap.get(key)
     const amt = tx.money.amount
-    if (Number.isFinite(amt) && isExpense(tx)) section.total += amt
-
-    section.data.push(tx)
-    map.set(key, section)
+    const expenseAmt = Number.isFinite(amt) && isExpense(tx) ? amt : 0
+    if (existing) {
+      existing.data.push(tx)
+      existing.total += expenseAmt
+    } else {
+      dayMap.set(key, { date: d, data: [tx], total: expenseAmt })
+    }
   }
 
-  return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1))
+  // Calculate month totals
+  const monthTotals = new Map<string, number>()
+  const monthTitles = new Map<string, string>()
+  for (const [, { date, total }] of dayMap) {
+    const mKey = monthKey(date)
+    monthTotals.set(mKey, (monthTotals.get(mKey) ?? 0) + total)
+    if (!monthTitles.has(mKey)) {
+      monthTitles.set(mKey, formatMonthSectionTitle(date))
+    }
+  }
+
+  // Build sections
+  const sections: DaySection[] = []
+  const sortedDays = [...dayMap.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))
+
+  for (const [dayKey, { date, data, total }] of sortedDays) {
+    const mKey = monthKey(date)
+    sections.push({
+      key: dayKey,
+      dayTitle: formatDayHeader(date),
+      monthKey: mKey,
+      monthTitle: monthTitles.get(mKey) ?? '',
+      monthTotal: monthTotals.get(mKey) ?? 0,
+      dayTotal: total,
+      data
+    })
+  }
+
+  return sections
 }
 
-function findScrollTarget(sections: MonthSection[], focusDate?: string) {
+function findScrollTarget(sections: DaySection[], focusDate?: string) {
   if (!focusDate) return null
   if (focusDate.length < 10) return null
 
-  const focusMonth = focusDate.slice(0, 7)
-  const sectionIndex = sections.findIndex((s) => s.key === focusMonth)
-  if (sectionIndex < 0) return null
+  const sectionIndex = sections.findIndex((s) => s.key === focusDate)
+  if (sectionIndex < 0) {
+    // Try to find by month
+    const focusMonth = focusDate.slice(0, 7)
+    const monthSectionIndex = sections.findIndex((s) => s.monthKey === focusMonth)
+    if (monthSectionIndex >= 0) return { sectionIndex: monthSectionIndex, itemIndex: 0 }
+    return null
+  }
 
-  const section = sections[sectionIndex]
-  const itemIndex = section.data.findIndex((tx) => ymd(safeDate(tx)) === focusDate)
-
-  if (itemIndex < 0) return { sectionIndex, itemIndex: 0, fallbackToHeader: true as const }
-  return { sectionIndex, itemIndex, fallbackToHeader: false as const }
+  return { sectionIndex, itemIndex: 0 }
 }
 
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
-  const params = useLocalSearchParams<{ focusDate?: string }>()
+  const params = useLocalSearchParams<{ focusDate?: string; accountId?: string }>()
   const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
+  const accountIdFilter = typeof params.accountId === 'string' ? params.accountId : undefined
 
-  const listRef = useRef<SectionList<Transaction, MonthSection>>(null)
+  const listRef = useRef<SectionList<TransactionOrDraft, DaySection>>(null)
   const didAutoScrollRef = useRef(false)
+  const detailSheetRef = useRef<BottomSheetModal>(null)
 
-  const { data, refetch } = useTransactionsData()
-  const { items, thisMonthExpense, thisMonthIncome, thisMonthNet } = data
+  const { data, refetch, loadMore, isLoadingMore } = useTransactionsData()
+  const { items, hasMore } = data
 
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [showDrafts, setShowDrafts] = useState(false)
+
+  // Drafts store
+  const { drafts, loadDrafts, isLoaded: draftsLoaded } = useDraftsStore()
+
+  // Load drafts on mount
+  useEffect(() => {
+    if (!draftsLoaded) {
+      loadDrafts()
+    }
+  }, [draftsLoaded, loadDrafts])
 
   const [highlightDate, setHighlightDate] = useState<string | null>(null)
   const pendingScrollRef = useRef<{ sectionIndex: number; itemIndex: number } | null>(null)
+
+  // Detail sheet state
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+
+  // Undo delete state
+  const [undoState, setUndoState] = useState<{
+    visible: boolean
+    transaction: Transaction | null
+  }>({ visible: false, transaction: null })
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -124,7 +188,7 @@ export default function TransactionsScreen() {
     didAutoScrollRef.current = false
   }, [focusDate])
 
-  // search debounce (focusDate로 들어온 경우 debouncedQuery를 즉시 ''로 세팅해두므로 정상 동작)
+  // search debounce
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 150)
     return () => clearTimeout(t)
@@ -152,14 +216,6 @@ export default function TransactionsScreen() {
     return m
   }, [accounts])
 
-  const stripBgByType = useCallback(
-    (t: TransactionType) => {
-      if (t === 'income') return theme.semantic.successSoft
-      if (t === 'transfer') return theme.semantic.infoSoft
-      return theme.semantic.dangerSoft
-    },
-    [theme.semantic]
-  )
 
   useFocusEffect(
     useCallback(() => {
@@ -168,7 +224,63 @@ export default function TransactionsScreen() {
     }, [refetch])
   )
 
-  const sections = useMemo(() => buildMonthSections(items, debouncedQuery), [items, debouncedQuery])
+  // Convert drafts to TransactionOrDraft format
+  const draftsAsTransactions: TransactionOrDraft[] = useMemo(() => {
+    if (!showDrafts) return []
+    return drafts.map((draft) => ({
+      id: draft.id,
+      key: `draft-${draft.id}`,
+      occurredAt: new Date(draft.occurredAt),
+      type: draft.type,
+      item: draft.item || undefined,
+      money: { amount: draft.amountCents / 100, currency: 'USD' },
+      accountId: draft.accountKey ? accounts.find(a => a.key === draft.accountKey)?.id : undefined,
+      merchant: draft.merchant,
+      note: draft.note,
+      tags: draft.tags,
+      category: draft.categoryRef,
+      isDraft: true,
+    } as TransactionOrDraft))
+  }, [showDrafts, drafts, accounts])
+
+  // Merge transactions and drafts
+  const allItems: TransactionOrDraft[] = useMemo(() => {
+    if (!showDrafts) return items
+    return [...items, ...draftsAsTransactions]
+  }, [items, showDrafts, draftsAsTransactions])
+
+  // Filter by accountId if present
+  const filteredItems: TransactionOrDraft[] = useMemo(() => {
+    if (!accountIdFilter) return allItems
+    return allItems.filter(tx => tx.accountId === accountIdFilter)
+  }, [allItems, accountIdFilter])
+
+  const sections = useMemo(() => buildDaySections(filteredItems, debouncedQuery), [filteredItems, debouncedQuery])
+
+  // Get filtered account name for display
+  const filteredAccountName = accountIdFilter ? accountNameById.get(accountIdFilter) : null
+
+  // Clear account filter - replace navigation without the param
+  const clearAccountFilter = useCallback(() => {
+    router.replace('/(tabs)/transactions')
+  }, [])
+
+  // Track current visible month for floating header
+  const [visibleMonth, setVisibleMonth] = useState<{ title: string; total: number } | null>(null)
+
+  // Update visible month when sections change
+  useEffect(() => {
+    if (sections.length > 0) {
+      setVisibleMonth({ title: sections[0].monthTitle, total: sections[0].monthTotal })
+    }
+  }, [sections])
+
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: Array<{ section?: DaySection }> }) => {
+    const firstVisible = viewableItems.find(item => item.section)
+    if (firstVisible?.section) {
+      setVisibleMonth({ title: firstVisible.section.monthTitle, total: firstVisible.section.monthTotal })
+    }
+  }, [])
 
   // focusDate면 첫 매칭 row로 자동 scrollToLocation
   useEffect(() => {
@@ -186,341 +298,545 @@ export default function TransactionsScreen() {
           sectionIndex: target.sectionIndex,
           itemIndex: target.itemIndex,
           animated: true,
-          viewPosition: 0.05 // Small offset to ensure day header is visible
+          viewPosition: 0.05
         })
         didAutoScrollRef.current = true
       } catch (e) {
         console.error(e)
       }
-    }, 150) // Increased delay for proper layout measurement
+    }, 150)
   }, [focusDate, sections])
 
+  // Handle row tap - open detail sheet
+  const handleRowPress = useCallback((tx: Transaction) => {
+    setSelectedTransaction(tx)
+  }, [])
+
+  // Present sheet when selectedTransaction changes
+  useEffect(() => {
+    if (selectedTransaction) {
+      detailSheetRef.current?.present()
+    }
+  }, [selectedTransaction])
+
+  // Handle detail sheet dismiss
+  const handleDetailDismiss = useCallback(() => {
+    setSelectedTransaction(null)
+  }, [])
+
+  // Handle edit from detail sheet
+  const handleEdit = useCallback((tx: Transaction) => {
+    detailSheetRef.current?.dismiss()
+    // Navigate to edit screen with transaction ID
+    router.push({
+      pathname: '/(modal)/edit-transaction',
+      params: { transactionId: tx.id }
+    })
+  }, [])
+
+  // Handle delete with undo
+  const handleDelete = useCallback(async (tx: Transaction) => {
+    // Store transaction for potential undo
+    setUndoState({ visible: true, transaction: tx })
+
+    // Actually delete
+    await removeTransaction(tx.id)
+    refetch()
+  }, [refetch])
+
+  // Handle undo
+  const handleUndo = useCallback(async () => {
+    if (undoState.transaction) {
+      await restoreTransaction(undoState.transaction)
+    }
+    setUndoState({ visible: false, transaction: null })
+    refetch()
+  }, [refetch, undoState.transaction])
+
+  // Handle undo dismiss
+  const handleUndoDismiss = useCallback(() => {
+    setUndoState({ visible: false, transaction: null })
+  }, [])
+
   return (
-    <Screen topPadding>
-      <View style={[styles.searchWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-        <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as any} />
-        <TextInput
-          value={query}
-          onChangeText={(t) => {
-            didAutoScrollRef.current = false
-            setQuery(t)
-          }}
-          placeholder="Search transactions"
-          placeholderTextColor={theme.semantic.textSecondary as any}
-          style={[styles.searchInput, { color: theme.semantic.text }]}
-          returnKeyType="search"
-          autoCapitalize="none"
-          autoCorrect={false}
-          clearButtonMode="while-editing"
-          accessibilityLabel="Search transactions"
-        />
-        <TouchableOpacity
-          onPress={() => {
-            // Phase 2: open filters
-          }}
-          style={styles.filterBtn}
-          accessibilityLabel="Open filters"
-        >
-          <FontAwesome name="sliders" size={16} color={theme.semantic.textSecondary as any} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.summaryRow}>
-        <View style={styles.summaryCell}>
-          <View style={[styles.summaryPill, { backgroundColor: theme.semantic.successSoft }]}>
-            <Text style={[styles.summaryPillText, { color: theme.semantic.success }]}>INFLOW</Text>
-          </View>
-          <Text style={[styles.summaryValueSm, { color: theme.semantic.success }]}>
-            {formatCurrency(thisMonthIncome)}
-          </Text>
-        </View>
-
-        <View style={styles.summaryCell}>
-          <View style={[styles.summaryPill, { backgroundColor: theme.semantic.dangerSoft }]}>
-            <Text style={[styles.summaryPillText, { color: theme.semantic.danger }]}>OUTFLOW</Text>
-          </View>
-          <Text style={[styles.summaryValueSm, { color: theme.semantic.danger }]}>
-            {formatCurrency(thisMonthExpense)}
-          </Text>
-        </View>
-
-        <View style={styles.summaryCell}>
-          <View
-            style={[
-              styles.summaryPill,
-              { backgroundColor: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }
-            ]}
+    <BottomSheetModalProvider>
+      <Screen topPadding>
+        <View style={[styles.searchWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
+          <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as string} />
+          <TextInput
+            value={query}
+            onChangeText={(t) => {
+              didAutoScrollRef.current = false
+              setQuery(t)
+            }}
+            placeholder="Search transactions"
+            placeholderTextColor={theme.semantic.textSecondary as string}
+            style={[styles.searchInput, { color: theme.semantic.text }]}
+            returnKeyType="search"
+            autoCapitalize="none"
+            autoCorrect={false}
+            clearButtonMode="while-editing"
+            accessibilityLabel="Search transactions"
+          />
+          {/* Filter/Drafts button */}
+          <TouchableOpacity
+            onPress={() => {
+              if (drafts.length > 0) {
+                setShowDrafts(!showDrafts)
+              }
+              // Phase 3: open full filters sheet
+            }}
+            style={styles.filterBtn}
+            accessibilityLabel={drafts.length > 0 ? `${showDrafts ? 'Hide' : 'Show'} ${drafts.length} drafts` : 'Open filters'}
           >
-            <Text style={[styles.summaryPillText, { color: theme.semantic.onPrimary }]}>NET</Text>
-          </View>
-          <Text
-            style={[
-              styles.summaryValueSm,
-              { color: thisMonthNet >= 0 ? theme.semantic.success : theme.semantic.danger }
-            ]}
-          >
-            {formatCurrency(thisMonthNet)}
-          </Text>
+            <FontAwesome
+              name={showDrafts ? 'pencil-square' : 'sliders'}
+              size={16}
+              color={showDrafts ? theme.semantic.primary as string : theme.semantic.textSecondary as string}
+            />
+            {drafts.length > 0 && !showDrafts && (
+              <View style={[styles.filterBadge, { backgroundColor: theme.semantic.warning }]}>
+                <Text style={[styles.filterBadgeText, { color: theme.semantic.surface }]}>
+                  {drafts.length}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-      </View>
 
-      <SectionList
-        ref={listRef}
-        style={{ flex: 1 }}
-        sections={sections}
-        keyExtractor={(it) => it.id}
-        stickySectionHeadersEnabled
-        contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        renderSectionHeader={({ section }) => (
-          <View style={[styles.monthBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
-            <Text style={[styles.monthText, { color: theme.semantic.text }]}>{section.title}</Text>
-            <Text style={[styles.monthTotal, { color: theme.semantic.textSecondary }]}>{formatCurrency(section.total)}</Text>
+        {/* Active account filter chip */}
+        {filteredAccountName && (
+          <View style={styles.filterChipRow}>
+            <Pressable
+              onPress={clearAccountFilter}
+              style={[styles.filterChip, { backgroundColor: theme.semantic.primarySoft }]}
+            >
+              <Text style={[styles.filterChipText, { color: theme.semantic.primary }]}>
+                {filteredAccountName}
+              </Text>
+              <FontAwesome name="times" size={12} color={theme.semantic.primary as string} />
+            </Pressable>
           </View>
         )}
-        onScrollToIndexFailed={() => {
-          const p = pendingScrollRef.current
-          if (!p) return
 
-          setTimeout(() => {
-            try {
-              listRef.current?.scrollToLocation({
-                sectionIndex: p.sectionIndex,
-                itemIndex: p.itemIndex,
-                animated: true,
-                viewPosition: 0
-              })
-            } catch (e) {
-              console.error(e)
+        {/* Floating month header */}
+        {visibleMonth && sections.length > 0 && (
+          <View style={[styles.monthBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
+            <Text style={[styles.monthText, { color: theme.semantic.text }]}>{visibleMonth.title}</Text>
+            <Text style={[styles.monthTotal, { color: theme.semantic.textSecondary }]}>
+              {formatCurrency(visibleMonth.total)}
+            </Text>
+          </View>
+        )}
+
+        <SectionList
+          ref={listRef}
+          style={{ flex: 1 }}
+          sections={sections}
+          keyExtractor={(it) => it.id}
+          stickySectionHeadersEnabled
+          contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
+          ItemSeparatorComponent={() => (
+            <View style={[styles.separator, { backgroundColor: theme.semantic.border }]} />
+          )}
+          renderSectionHeader={({ section }) => (
+            <View style={[styles.dayBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
+              <Text style={[styles.dayHeaderText, { color: theme.semantic.text }]}>{section.dayTitle}</Text>
+              <Text style={[styles.dayTotal, { color: theme.semantic.textSecondary }]}>
+                {formatCurrency(section.dayTotal)}
+              </Text>
+            </View>
+          )}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+          onScrollToIndexFailed={() => {
+            const p = pendingScrollRef.current
+            if (!p) return
+
+            setTimeout(() => {
+              try {
+                listRef.current?.scrollToLocation({
+                  sectionIndex: p.sectionIndex,
+                  itemIndex: p.itemIndex,
+                  animated: true,
+                  viewPosition: 0
+                })
+              } catch (e) {
+                console.error(e)
+              }
+            }, 120)
+          }}
+
+          renderItem={({ item }) => {
+            const amt = item.money.amount
+            const t = item.type
+            const isDraft = item.isDraft === true
+
+            const d = safeDate(item)
+            const rowYmd = Number.isFinite(d.getTime()) ? ymd(d) : null
+
+            const accountId = item.accountId ?? ''
+            const accountName = accountNameById.get(accountId) || 'Account'
+            const amountColor = t === 'income' ? theme.semantic.success : theme.semantic.text
+            const isHighlighted = rowYmd && rowYmd === highlightDate
+
+            // Get category info
+            const catRef = item.category
+            const cat = catRef ? CATEGORIES.find(c => c.key === catRef.categoryKey && c.type === catRef.type) : null
+            const subCat = catRef?.subCategoryKey && cat?.subCategories
+              ? cat.subCategories.find(s => s.key === catRef.subCategoryKey)
+              : null
+            const categoryColor = subCat?.color ?? cat?.color ?? theme.semantic.border
+            const categoryName = subCat?.name ?? cat?.name ?? null
+
+            // Fallback chain for primary text: item → merchant → category → type (for non-drafts)
+            const itemRaw = (item.item ?? '').trim()
+            const merchantRaw = (item.merchant ?? '').trim()
+            const typeLabel = t === 'income' ? 'Income' : t === 'transfer' ? 'Transfer' : 'Expense'
+
+            let primaryText: string
+            let merchantPromoted = false
+
+            if (itemRaw.length > 0) {
+              primaryText = itemRaw
+            } else if (merchantRaw.length > 0) {
+              primaryText = merchantRaw
+              merchantPromoted = true
+            } else if (categoryName) {
+              primaryText = categoryName
+            } else if (isDraft) {
+              // Draft with no identifier: leave empty (type shown as badge)
+              primaryText = ''
+            } else {
+              // Non-draft fallback to type
+              primaryText = typeLabel
             }
-          }, 120)
-        }}
 
-        renderItem={({ item, index, section }) => {
-          const amt = item.money.amount
+            // Secondary row: show merchant only if not promoted to primary
+            const secondaryText = !merchantPromoted && merchantRaw.length > 0 ? merchantRaw : ''
 
-          const t = item.type
-          const itemText = item.item || item.note || 'Untitled'
+            // Handle row press - drafts go to add transaction, others open detail
+            const onRowPress = () => {
+              if (isDraft) {
+                router.push({
+                  pathname: '/(modal)/add-transaction',
+                  params: { draftId: item.id }
+                })
+              } else {
+                handleRowPress(item)
+              }
+            }
 
-          const merchantRaw = (item.merchant ?? '').trim()
-          const merchantText = merchantRaw.length ? merchantRaw : null
-
-          const d = safeDate(item)
-          const dayText = Number.isFinite(d.getTime()) ? String(d.getDate()) : '--'
-          const rowYmd = Number.isFinite(d.getTime()) ? ymd(d) : null
-
-          const accountId = item.accountId ?? ''
-          const accountName = accountNameById.get(accountId) || 'Account'
-
-          const stripBg = stripBgByType(t)
-
-          const amountColor = t === 'income' ? (theme.semantic.success ?? theme.semantic.text) : theme.semantic.text
-
-          // 같은 month section 안에서 날짜가 바뀌는 지점에 day header 추가
-          const prev = index > 0 ? section.data[index - 1] : null
-          const prevDate = prev ? safeDate(prev) : null
-          const showDayHeader =
-            index === 0 ||
-            !prevDate ||
-            ymd(prevDate) !== (rowYmd ?? '')
-
-          const isHighlighted = rowYmd && rowYmd === highlightDate
-
-          return (
-            <View>
-              {showDayHeader && rowYmd ? (
-                <View style={{ paddingTop: 12, paddingBottom: 6 }}>
-                  <Text style={{ color: theme.semantic.textSecondary, fontSize: fontSize.xs, fontWeight: '800' }}>
-                    {formatDayHeader(d)}
-                  </Text>
-                </View>
-              ) : null}
-
+            return (
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => {
-                  // Phase 2: push detail screen
-                }}
+                onPress={onRowPress}
                 style={[
-                  styles.rowCard,
-                  {
-                    borderColor: isHighlighted ? theme.semantic.primary : theme.semantic.border,
-                    backgroundColor: isHighlighted
-                      ? (theme.semantic.primarySoft ?? theme.semantic.surfaceAlt)
-                      : theme.semantic.surface
-                  }
+                  styles.row,
+                  isHighlighted && { backgroundColor: theme.semantic.primarySoft ?? theme.semantic.surfaceAlt }
                 ]}
-                accessibilityLabel={`Transaction ${itemText} ${formatCurrency(amt)}`}
+                accessibilityLabel={`${isDraft ? 'Draft ' : ''}Transaction ${primaryText} ${formatCurrency(amt)}`}
               >
-                <View style={[styles.leftStripBg, { backgroundColor: stripBg }]} pointerEvents="none" />
-
-                <View style={styles.rowBody}>
-                  <View style={styles.rowTop}>
-                    <Text style={[styles.dayText, { color: theme.semantic.textSecondary }]}>{dayText}</Text>
-
-                    <Text style={[styles.itemTextNew, { color: theme.semantic.text }]} numberOfLines={1}>
-                      {itemText}
-                    </Text>
-
-                    <Text style={[styles.amountTextNew, { color: amountColor }]} numberOfLines={1}>
-                      {formatCurrency(amt)}
-                    </Text>
+                <View style={styles.rowTop}>
+                  {/* Category color dot */}
+                  <View style={[styles.categoryDot, { backgroundColor: categoryColor as string }]} />
+                  <View style={styles.itemWithBadge}>
+                    {primaryText.length > 0 && (
+                      <Text style={[styles.itemText, { color: theme.semantic.text }]} numberOfLines={1}>
+                        {primaryText}
+                      </Text>
+                    )}
+                    {isDraft && (
+                      <>
+                        <View style={[styles.draftBadge, { backgroundColor: theme.semantic.warningSoft }]}>
+                          <Text style={[styles.draftBadgeText, { color: theme.semantic.warning }]}>DRAFT</Text>
+                        </View>
+                        <View style={[styles.typeBadge, { backgroundColor: theme.semantic.surfaceAlt }]}>
+                          <Text style={[styles.typeBadgeText, { color: theme.semantic.textSecondary }]}>
+                            {typeLabel.toUpperCase()}
+                          </Text>
+                        </View>
+                      </>
+                    )}
                   </View>
+                  <Text style={[styles.amountText, { color: amountColor }]} numberOfLines={1}>
+                    {t === 'income' ? '+' : ''}{formatCurrency(amt)}
+                  </Text>
+                </View>
 
+                {/* Secondary row - only show if there's content */}
+                {(secondaryText || accountName) && (
                   <View style={styles.rowSecond}>
-                    <Text style={[styles.merchantTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
-                      {merchantText ?? ''}
+                    <Text style={[styles.merchantText, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
+                      {secondaryText}
                     </Text>
-
-                    <Text style={[styles.accountTextNew, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
+                    <Text style={[styles.accountText, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
                       {accountName}
                     </Text>
                   </View>
-                </View>
+                )}
               </TouchableOpacity>
+            )
+          }}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <CategoryIcon name="list-alt" size={48} color={theme.semantic.textSecondary as string} />
+              <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
+                {filteredAccountName ? 'No transactions' : 'No transactions yet'}
+              </Text>
+              <Text style={[styles.emptySubtitle, { color: theme.semantic.textSecondary }]}>
+                {filteredAccountName
+                  ? `No transactions found for ${filteredAccountName}.`
+                  : 'Add your first transaction to start tracking.'}
+              </Text>
             </View>
-          )
-        }}
-        ListEmptyComponent={<Text style={{ color: theme.semantic.textSecondary }}>No transactions yet</Text>}
-      />
-    </Screen>
+          }
+          ListFooterComponent={
+            hasMore ? (
+              <TouchableOpacity
+                onPress={loadMore}
+                disabled={isLoadingMore}
+                style={[styles.loadMoreBtn, { borderColor: theme.semantic.border }]}
+                accessibilityLabel="Load more transactions"
+              >
+                <Text style={[styles.loadMoreText, { color: theme.semantic.textSecondary }]}>
+                  {isLoadingMore ? 'Loading...' : 'Load older transactions'}
+                </Text>
+              </TouchableOpacity>
+            ) : sections.length > 0 ? (
+              <View style={styles.footerSpacer} />
+            ) : null
+          }
+        />
+
+        {/* Transaction Detail Sheet */}
+        <TransactionDetailSheet
+          transaction={selectedTransaction}
+          sheetRef={detailSheetRef as React.RefObject<BottomSheetModal>}
+          onDismiss={handleDetailDismiss}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+
+        {/* Undo Delete Toast */}
+        <UndoToast
+          visible={undoState.visible}
+          message={undoState.transaction ? `Deleted "${displayItem(undoState.transaction)}"` : ''}
+          onUndo={handleUndo}
+          onDismiss={handleUndoDismiss}
+          theme={{
+            text: theme.semantic.text as string,
+            surface: theme.semantic.surface as string,
+            primary: theme.semantic.primary as string,
+            onPrimary: theme.semantic.onPrimary as string,
+          }}
+        />
+      </Screen>
+    </BottomSheetModalProvider>
   )
 }
 
-const DAY_COL_W = 28
-const DAY_GAP = 8
-
 const styles = StyleSheet.create({
-  header: { justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: fontSize.xl, letterSpacing: 0.6, fontWeight: '700' },
-
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderRadius: radius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 10,
-    marginBottom: 12
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    marginBottom: spacing.md
   },
   searchInput: { flex: 1, fontSize: fontSize.md, padding: 0 },
-  filterBtn: { paddingLeft: 6, paddingVertical: 2 },
+  filterBtn: {
+    paddingLeft: spacing.sm,
+    paddingVertical: spacing.xs,
+    position: 'relative'
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -6,
+    minWidth: BADGE_MIN_SIZE,
+    height: BADGE_MIN_SIZE,
+    borderRadius: BADGE_MIN_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs
+  },
+  filterBadgeText: {
+    fontSize: FONT_SIZE_BADGE,
+    fontWeight: fontWeight.bold
+  },
+
+  filterChipRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+    gap: spacing.xs
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md
+  },
+  filterChipText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium
+  },
 
   monthBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1
   },
-  monthText: { fontSize: fontSize.xs, letterSpacing: 0.8, fontWeight: '700' },
-  monthTotal: { fontSize: fontSize.xs },
+  monthText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    letterSpacing: 0.5
+  },
+  monthTotal: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium
+  },
 
-  separator: { height: 10 },
-  emptyContainer: { paddingTop: 12 },
+  separator: {
+    height: 1,
+    marginLeft: spacing.md + CATEGORY_DOT_SIZE_SM + spacing.sm, // align with text after category dot
+    opacity: 0.5
+  },
+  emptyContainer: { paddingTop: spacing.md },
 
-  rowCard: {
+  emptyState: {
+    alignItems: 'center',
+    paddingTop: spacing['3xl'],
+    gap: spacing.sm
+  },
+  emptyTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    marginTop: spacing.sm
+  },
+  emptySubtitle: {
+    fontSize: fontSize.md,
+    textAlign: 'center'
+  },
+
+  dayBar: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    position: 'relative',
-    minHeight: 50
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1
+  },
+  dayHeaderText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold
+  },
+  dayTotal: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium
   },
 
-  leftStripBg: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 10
-  },
-
-  rowBody: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    paddingLeft: 12 + 10
+  row: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md
   },
 
   rowTop: {
     flexDirection: 'row',
-    alignItems: 'baseline'
-  },
-
-  dayText: {
-    width: DAY_COL_W,
-    fontSize: fontSize.xl,
-    fontWeight: '900',
-    marginRight: DAY_GAP
-  },
-
-  itemTextNew: {
-    flex: 1,
-    fontSize: fontSize.lg,
-    fontWeight: '900',
-    paddingRight: 10
-  },
-
-  amountTextNew: {
-    fontSize: fontSize.md,
-    fontWeight: '900'
-  },
-
-  merchantTextNew: {
-    flex: 1,
-    fontSize: fontSize.xs,
-    fontWeight: '700'
-  },
-
-  rowSecond: {
-    marginTop: 4,
-    marginLeft: DAY_COL_W + DAY_GAP,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10
-  },
-
-  accountTextNew: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textAlign: 'right'
-  },
-
-  summaryRow: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: 8,
-    paddingVertical: 10
-  },
-
-  summaryCell: {
-    flex: 1,
-    minWidth: 0,
     alignItems: 'center'
   },
 
-  summaryPill: {
-    width: '100%',
-    borderRadius: radius.md,
-    paddingVertical: 6,
+  categoryDot: {
+    width: CATEGORY_DOT_SIZE_SM,
+    height: CATEGORY_DOT_SIZE_SM,
+    borderRadius: CATEGORY_DOT_SIZE_SM / 2,
+    marginRight: spacing.sm
+  },
+
+  itemText: {
+    flexShrink: 1,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium
+  },
+
+  amountText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    fontVariant: ['tabular-nums']
+  },
+
+  merchantText: {
+    flex: 1,
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium
+  },
+
+  rowSecond: {
+    marginTop: spacing.xs,
+    marginLeft: CATEGORY_DOT_SIZE_SM + spacing.sm, // align with text after category dot
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm
+  },
+
+  accountText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    textAlign: 'right'
+  },
+
+  loadMoreBtn: {
+    marginTop: spacing.lg,
+    marginBottom: spacing['2xl'],
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center'
   },
 
-  summaryPillText: {
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    justifyContent: 'center'
+  loadMoreText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600'
   },
 
-  summaryValueSm: {
-    marginTop: 10,
-    fontSize: fontSize.lg,
-    fontWeight: '900'
+  footerSpacer: {
+    height: spacing['2xl']
+  },
+
+  // Draft badge in row
+  itemWithBadge: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingRight: spacing.sm
+  },
+  draftBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: radius.sm
+  },
+  draftBadgeText: {
+    fontSize: FONT_SIZE_TINY,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 0.5
+  },
+  typeBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: radius.sm
+  },
+  typeBadgeText: {
+    fontSize: FONT_SIZE_TINY,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 0.5
   }
 })

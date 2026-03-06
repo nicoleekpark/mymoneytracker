@@ -10,11 +10,12 @@ import {
 import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
+import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/theme/tokens/viewStyles'
 
 export type InfoSheetColors = {
   surface: string
   text: string
-  textMuted: string
+  textSecondary: string
   surfaceAlt: string
 }
 
@@ -90,16 +91,16 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
         <View style={{ alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.xs }}>
           <View
             style={{
-              width: 36,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: colors.textMuted,
+              width: GRABBER_WIDTH,
+              height: GRABBER_HEIGHT,
+              borderRadius: GRABBER_HEIGHT / 2,
+              backgroundColor: colors.textSecondary,
               opacity: 0.4
             }}
           />
         </View>
       ),
-      [colors.textMuted]
+      [colors.textSecondary]
     )
 
     return (

@@ -264,7 +264,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
-              color: isToday ? '#fff' : hasActivity ? colors.text : colors.textMuted
+              color: isToday ? '#fff' : hasActivity ? colors.text : colors.textSecondary
             }}
           >
             {dayNum}

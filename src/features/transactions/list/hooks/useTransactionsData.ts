@@ -1,71 +1,59 @@
+import { useCallback, useState } from 'react'
+
 import type { Transaction } from '@/domain/transaction'
-import {
-  getThisMonthExpenseTotalDollar,
-  getTransactions,
-  isExpense,
-  isIncome,
-  isTransfer,
-  safeDate,
-} from '@/domain/transaction'
-import { isSameMonth } from '@/shared/format/date'
+import { getTransactionsInRange } from '@/domain/transaction'
 import { useAsyncDataWithDefault } from '@/shared/hooks'
 
 export type TransactionsPageData = Readonly<{
   items: Transaction[]
-  thisMonthExpense: number
-  thisMonthIncome: number
-  thisMonthNet: number
+  hasMore: boolean
+  oldestDate: string | null
 }>
-
-function sumThisMonthIncomeAndNet(all: Transaction[], now: Date) {
-  let income = 0
-  let expense = 0
-
-  for (const tx of all) {
-    const d = safeDate(tx)
-    if (!isSameMonth(d, now)) continue
-
-    const amt = tx.money.amount
-    if (!Number.isFinite(amt) || amt <= 0) continue
-
-    if (isTransfer(tx)) continue
-
-    if (isIncome(tx)) income += amt
-    else if (isExpense(tx)) expense += amt
-  }
-
-  return { income, net: income - expense }
-}
-
-async function fetchTransactionsData(): Promise<TransactionsPageData> {
-  const [txs, expense] = await Promise.all([
-    getTransactions(200),
-    getThisMonthExpenseTotalDollar(),
-  ])
-
-  const items = Array.isArray(txs) ? txs : []
-  const thisMonthExpense = Number(expense ?? 0)
-  const { income, net } = sumThisMonthIncomeAndNet(items, new Date())
-
-  return {
-    items,
-    thisMonthExpense,
-    thisMonthIncome: income,
-    thisMonthNet: net,
-  }
-}
 
 const DEFAULT_DATA: TransactionsPageData = {
   items: [],
-  thisMonthExpense: 0,
-  thisMonthIncome: 0,
-  thisMonthNet: 0,
+  hasMore: false,
+  oldestDate: null,
 }
 
+/**
+ * Hook for paginated transaction list.
+ * Default: loads 1 year of transactions.
+ * Supports "Load more" to fetch older transactions.
+ */
 export function useTransactionsData() {
-  return useAsyncDataWithDefault(
-    fetchTransactionsData,
-    [],
+  const [loadMoreCount, setLoadMoreCount] = useState(0)
+
+  const fetchData = useCallback(async (): Promise<TransactionsPageData> => {
+    // Each "load more" extends the window by 1 year
+    const now = new Date()
+    const yearsBack = 1 + loadMoreCount
+    const fromDate = new Date(now.getFullYear() - yearsBack, now.getMonth(), now.getDate())
+
+    const page = await getTransactionsInRange(fromDate, now)
+
+    return {
+      items: page.items,
+      hasMore: page.hasMore,
+      oldestDate: page.oldestDate,
+    }
+  }, [loadMoreCount])
+
+  const result = useAsyncDataWithDefault(
+    fetchData,
+    [loadMoreCount],
     { defaultValue: DEFAULT_DATA }
   )
+
+  const loadMore = useCallback(() => {
+    if (result.data.hasMore) {
+      setLoadMoreCount((c) => c + 1)
+    }
+  }, [result.data.hasMore])
+
+  return {
+    ...result,
+    loadMore,
+    isLoadingMore: loadMoreCount > 0 && result.loading,
+  }
 }

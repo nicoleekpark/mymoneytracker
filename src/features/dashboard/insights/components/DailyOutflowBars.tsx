@@ -136,7 +136,7 @@ export function DailyOutflowBars({ data, monthYYYYMM, colors }: Props) {
     <View onLayout={handleLayout}>
       {/* Header row: label + selected day amount */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
           Daily outflow
         </Text>
         {selectedDay !== null && selectedAmount !== undefined && (
@@ -170,7 +170,7 @@ export function DailyOutflowBars({ data, monthYYYYMM, colors }: Props) {
               width={bar.width}
               height={bar.height}
               rx={BAR_RADIUS}
-              fill={isSelected ? colors.text : bar.isSpike ? colors.primary : colors.textMuted}
+              fill={isSelected ? colors.text : bar.isSpike ? colors.primary : colors.textSecondary}
               opacity={isSelected ? 1 : bar.isSpike ? 0.8 : 0.4}
             />
           )
@@ -180,10 +180,10 @@ export function DailyOutflowBars({ data, monthYYYYMM, colors }: Props) {
 
       {/* Day labels */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
-        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, opacity: 0.7 }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, opacity: 0.7 }}>
           1
         </Text>
-        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, opacity: 0.7 }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, opacity: 0.7 }}>
           {daysInMonth}
         </Text>
       </View>

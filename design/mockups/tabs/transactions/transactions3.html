@@ -1,0 +1,676 @@
+from pathlib import Path
+
+html = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Transactions List – 3 Draft Patterns</title>
+  <style>
+    :root{
+      --bg:#07090d;
+      --surface:#0e1118;
+      --card:#0b131a;
+      --text:#e9eef7;
+      --muted:#9aa6b2;
+      --line:rgba(255,255,255,.08);
+      --line2:rgba(255,255,255,.06);
+      --accent:#55c2ff;
+      --amber:#f2c14e;
+      --amberSoft:rgba(242,193,78,.16);
+      --good:#59d38f;
+      --shadow:0 18px 55px rgba(0,0,0,.62);
+      --r:18px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background:radial-gradient(900px 650px at 50% -220px, rgba(85,194,255,.18), transparent 55%),
+                 radial-gradient(900px 650px at 15% 15%, rgba(255,255,255,.06), transparent 60%),
+                 var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:1200px;margin:22px auto 60px;padding:0 18px}
+    header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}
+    h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.2px}
+    .sub{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.35;max-width:900px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+    .seg{
+      display:flex;gap:4px;
+      padding:4px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:999px;
+    }
+    .seg button{
+      border:0;background:transparent;color:rgba(233,238,247,.75);
+      padding:8px 10px;border-radius:999px;
+      font-size:12px;font-weight:780;cursor:pointer;
+      transition:.15s ease;user-select:none;
+      white-space:nowrap;
+    }
+    .seg button.active{
+      color:rgba(0,0,0,.85);
+      background:rgba(85,194,255,.95);
+      box-shadow:0 10px 30px rgba(85,194,255,.18);
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:rgba(233,238,247,.82);
+      padding:8px 10px;border-radius:999px;
+      font-size:12px;font-weight:760;
+      cursor:pointer;user-select:none;
+      transition:.15s ease;
+    }
+    .pill:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.13)}
+    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:start}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}.controls{justify-content:flex-start}}
+
+    /* phone */
+    .phoneShell{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:26px;
+      padding:16px;
+      box-shadow:var(--shadow);
+      min-height:820px;
+      position:relative;
+      overflow:hidden;
+    }
+    .phoneTop{display:flex;align-items:center;justify-content:space-between;padding:8px 6px 12px;border-bottom:1px solid var(--line)}
+    .status{font-weight:780;font-size:12px;color:rgba(233,238,247,.88)}
+    .iconBtn{
+      width:34px;height:34px;border-radius:12px;
+      display:grid;place-items:center;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      color:rgba(233,238,247,.86);
+      cursor:pointer;
+      transition:.15s ease;
+      user-select:none;
+    }
+    .iconBtn:hover{border-color:rgba(255,255,255,.16);transform:translateY(-1px)}
+    .stack{
+      position:absolute;inset:56px 16px 16px 16px;
+      overflow:hidden;border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .screen{
+      position:absolute;inset:0;
+      padding:14px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    /* top search + filter row */
+    .searchRow{
+      display:flex;gap:10px;align-items:center;
+      padding:10px 10px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+      border-radius:16px;
+    }
+    .searchRow .sicon{opacity:.85}
+    .searchRow input{
+      border:0;outline:0;background:transparent;color:rgba(233,238,247,.92);
+      font-size:13px;font-weight:720;flex:1;min-width:0;
+    }
+    .searchRow input::placeholder{color:rgba(154,166,178,.75);font-weight:680}
+    .filter{width:30px;height:30px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);display:grid;place-items:center;color:rgba(233,238,247,.84)}
+    .helperRow{display:flex;justify-content:space-between;align-items:center;margin:10px 2px 8px}
+    .month{font-size:12px;font-weight:860;letter-spacing:.14em;color:rgba(233,238,247,.70)}
+    .monthSum{font-size:12px;font-weight:860;color:rgba(154,166,178,.90)}
+    .sectionTitle{
+      margin:12px 2px 8px;
+      display:flex;justify-content:space-between;align-items:center;
+      color:rgba(233,238,247,.75);
+      font-size:12px;font-weight:860;letter-spacing:.12em;
+    }
+    .sectionTitle .count{
+      letter-spacing:0;
+      font-weight:860;
+      color:rgba(154,166,178,.92);
+      font-size:12px;
+    }
+    .divider{height:1px;background:rgba(255,255,255,.06);margin:10px 0}
+
+    /* list group header */
+    .dayRow{
+      display:flex;justify-content:space-between;align-items:center;
+      margin:10px 2px 8px;
+      color:rgba(233,238,247,.82);
+      font-size:13px;font-weight:840;
+    }
+    .daySum{color:rgba(154,166,178,.86);font-weight:820;font-size:12px}
+
+    /* cards */
+    .card{
+      border-radius:16px;
+      background:rgba(11,19,26,.78);
+      border:1px solid rgba(255,255,255,.06); /* can be toggled off */
+      overflow:hidden;
+      position:relative;
+      margin:8px 0;
+    }
+    .card.noBorder{border-color:transparent}
+    .stripe{
+      position:absolute;left:0;top:0;bottom:0;width:7px;
+      background:linear-gradient(180deg, rgba(242,193,78,.20), rgba(242,193,78,.05));
+      opacity:.0;
+    }
+    .stripe.on{opacity:1}
+    .row{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 12px 12px 14px;
+      cursor:pointer;
+      transition:.14s ease;
+    }
+    .row:hover{background:rgba(255,255,255,.03)}
+    .left{
+      min-width:0;
+      display:flex;gap:10px;align-items:flex-start;
+    }
+    .acctIcon{
+      width:30px;height:30px;border-radius:12px;
+      display:grid;place-items:center;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.07);
+      flex:0 0 auto;
+      font-size:14px;
+      margin-top:1px;
+    }
+    .main{
+      min-width:0;
+      display:flex;flex-direction:column;gap:3px;
+    }
+    .title{
+      font-size:15px;font-weight:880;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .subtitle{
+      font-size:12.5px;color:rgba(154,166,178,.92);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .meta{
+      display:flex;gap:8px;align-items:center;
+      font-size:12px;color:rgba(154,166,178,.86);font-weight:760;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:100%;
+    }
+    .dot{width:4px;height:4px;border-radius:999px;background:rgba(154,166,178,.55)}
+    .right{
+      text-align:right;flex:0 0 auto;
+      display:flex;flex-direction:column;gap:4px;align-items:flex-end;
+    }
+    .amt{font-size:15px;font-weight:880}
+    .acct{font-size:12px;color:rgba(154,166,178,.86);font-weight:760;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 8px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.03);
+      color:rgba(233,238,247,.82);
+      font-size:11px;font-weight:860;
+    }
+    .badge.draft{
+      border-color:rgba(242,193,78,.38);
+      background:rgba(242,193,78,.12);
+      color:rgba(242,193,78,.95);
+    }
+    .badge.small{padding:3px 7px;font-size:10.5px}
+
+    .draftTint{background:linear-gradient(180deg, rgba(242,193,78,.10), rgba(242,193,78,.03))}
+    .draftOutline{border-color:rgba(242,193,78,.55)}
+    .draftOutlineSoft{border-color:rgba(242,193,78,.22)}
+    .draftGlow{box-shadow:0 0 0 1px rgba(242,193,78,.25), 0 18px 55px rgba(0,0,0,.30)}
+
+    /* detail modal */
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      display:none;align-items:flex-end;justify-content:center;
+      padding:18px;z-index:9999;
+    }
+    .overlay.show{display:flex}
+    .sheet{
+      width:min(520px,100%);
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(14,17,24,.96);
+      box-shadow:0 30px 80px rgba(0,0,0,.7);
+      overflow:hidden;
+      transform:translateY(12px);opacity:0;
+      animation:in .18s ease forwards;
+    }
+    @keyframes in{to{transform:translateY(0);opacity:1}}
+    .sheetTop{
+      padding:12px 14px;display:flex;justify-content:space-between;align-items:center;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .sheetBtn{color:rgba(85,194,255,.95);font-weight:860;font-size:13px;padding:6px 10px;border-radius:12px;cursor:pointer;user-select:none}
+    .sheetBtn:hover{background:rgba(85,194,255,.10)}
+    .sheetTitle{font-weight:880;font-size:13px;color:rgba(233,238,247,.88)}
+    .sheetBody{padding:16px 14px 14px}
+    .detailHero{text-align:center;padding:8px 8px 12px}
+    .dAmt{font-size:52px;font-weight:920;letter-spacing:-.02em}
+    .dTitle{font-size:16px;font-weight:900;margin-top:4px}
+    .dSub{color:rgba(154,166,178,.92);font-weight:760;margin-top:3px}
+    .pillType{display:inline-flex;margin-top:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(242,193,78,.30);background:rgba(242,193,78,.10);color:rgba(242,193,78,.95);font-weight:900;font-size:12px;letter-spacing:.12em}
+    .kv{margin-top:10px;border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden;background:rgba(0,0,0,.08)}
+    .kvRow{display:flex;justify-content:space-between;gap:12px;padding:12px 12px;border-top:1px solid rgba(255,255,255,.06)}
+    .kvRow:first-child{border-top:0}
+    .k{color:rgba(154,166,178,.92);font-weight:860;font-size:12px}
+    .v{color:rgba(233,238,247,.92);font-weight:860;font-size:12.5px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+    .tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .tagChip{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);border-radius:999px;padding:5px 8px;font-size:11px;color:rgba(233,238,247,.82);font-weight:820}
+    .cta{margin-top:14px}
+    .cta button{
+      width:100%;border:0;border-radius:18px;
+      padding:14px 14px;
+      background:rgba(85,194,255,.92);
+      color:rgba(0,0,0,.85);
+      font-weight:920;font-size:15px;
+      cursor:pointer;
+      box-shadow:0 12px 34px rgba(85,194,255,.18);
+    }
+    .cta button:active{transform:translateY(1px)}
+    /* tiny toast */
+    .toast{
+      position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+      padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(14,17,24,.92);
+      color:rgba(233,238,247,.95);
+      box-shadow:0 20px 50px rgba(0,0,0,.65);
+      font-size:12.5px;
+      z-index:10000;
+      backdrop-filter:blur(10px);
+      opacity:0;
+      transition:opacity .2s ease, transform .2s ease;
+      pointer-events:none;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-2px)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Transactions list suggested patterns</h1>
+      <div class="sub">
+        3 draft handling options + 2 visual density toggles
+        Tap a row to open the detail sheet
+      </div>
+    </div>
+    <div class="controls">
+      <div class="seg" id="variantSeg"></div>
+      <div class="pill" id="toggleBorders">Borders: off</div>
+      <div class="pill" id="toggleStripes">Category stripes: on</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="phoneShell">
+      <div class="phoneTop">
+        <div class="status">12:00</div>
+        <div class="iconBtn" id="plusBtn">＋</div>
+      </div>
+      <div class="stack"><div class="screen" id="screen"></div></div>
+    </div>
+
+    <aside class="panel" style="background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.10);border-radius:22px;padding:16px;box-shadow:var(--shadow)">
+      <div style="font-weight:880;font-size:14px;margin-bottom:6px">What changed vs your screenshot</div>
+      <div style="color:rgba(154,166,178,.92);font-size:12.5px;line-height:1.45">
+        <div style="margin-top:8px">1 Drafts are either their own section, their own tab, or pinned to top with no toggle</div>
+        <div style="margin-top:8px">2 Untitled fallback replaced by Description → Merchant → Category → Expense</div>
+        <div style="margin-top:8px">3 Card visual density reduced by removing borders and relying on background + spacing</div>
+        <div style="margin-top:8px">4 Account icons added for scanning speed</div>
+        <div style="margin-top:8px">5 Draft styling uses soft tint + small badge instead of strong gold outline</div>
+      </div>
+
+      <div style="height:1px;background:var(--line);margin:14px 0"></div>
+
+      <div style="font-weight:880;font-size:14px;margin-bottom:6px">How to pick the best draft pattern</div>
+      <div style="color:rgba(154,166,178,.92);font-size:12.5px;line-height:1.45">
+        <div style="margin-top:8px">Option 1 Section is best when drafts are common and should be visible</div>
+        <div style="margin-top:8px">Option 2 Tab is best when drafts are many and could clutter normal history</div>
+        <div style="margin-top:8px">Option 3 Pinned is best when drafts are few and you want zero UI controls</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheetTop">
+      <div class="sheetBtn" id="closeSheet">Close</div>
+      <div class="sheetTitle">Transaction</div>
+      <div class="sheetBtn" id="fakeEdit">Edit</div>
+    </div>
+    <div class="sheetBody" id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const variants = [
+    { id:"section", label:"Option 1 · drafts section" },
+    { id:"tab",     label:"Option 2 · drafts tab" },
+    { id:"pinned",  label:"Option 3 · drafts pinned" },
+  ]
+
+  const sample = {
+    month: "March 2026",
+    monthTotal: 224.02,
+    days: [
+      {
+        day: "Tue, Mar 3",
+        total: 21.09,
+        items: [
+          { id:1, type:"expense", draft:false, desc:"donut", merchant:"Westside Superette", amount:3.11, account:"Cash Wallet", acctIcon:"💵", category:"Food › Coffee / Snacks", note:"monthly ritual", tags:["donut","monthly","unplanned"] },
+          { id:2, type:"expense", draft:false, desc:"donut", merchant:"Westside Superette", amount:8.99, account:"Cash Wallet", acctIcon:"💵", category:"Food › Coffee / Snacks", note:"", tags:["donut"] },
+          { id:3, type:"expense", draft:false, desc:"donut", merchant:"Westside Superette", amount:8.99, account:"Cash Wallet", acctIcon:"💵", category:"Food › Coffee / Snacks", note:"", tags:["donut"] },
+        ]
+      },
+      {
+        day: "Sun, Mar 1",
+        total: 202.93,
+        items: [
+          { id:4, type:"expense", draft:false, desc:"coffee and scone", merchant:"", amount:8.63, account:"Cash Wallet", acctIcon:"💵", category:"Food › Coffee / Snacks", note:"", tags:["coffee"] },
+          { id:5, type:"expense", draft:true,  desc:"", merchant:"", amount:7.00, account:"Cash Wallet", acctIcon:"💵", category:"", note:"", tags:[] },
+          { id:6, type:"expense", draft:false, desc:"date night", merchant:"Hmart", amount:85.00, account:"Chase Premier Plus Checking", acctIcon:"💳", category:"Lifestyle › Dining", note:"", tags:["date night"] },
+          { id:7, type:"expense", draft:true,  desc:"", merchant:"", amount:86.30, account:"Cash Wallet", acctIcon:"💵", category:"", note:"", tags:[] },
+          { id:8, type:"expense", draft:true,  desc:"Grocery shopping", merchant:"Whole Foods", amount:0.00, account:"Account", acctIcon:"🏦", category:"Food › Groceries", note:"", tags:[] },
+        ]
+      }
+    ]
+  }
+
+  let currentVariant = "section"
+  let bordersOn = false
+  let stripesOn = true
+
+  const screen = document.getElementById("screen")
+  const seg = document.getElementById("variantSeg")
+  const toggleBorders = document.getElementById("toggleBorders")
+  const toggleStripes = document.getElementById("toggleStripes")
+  const overlay = document.getElementById("overlay")
+  const sheetBody = document.getElementById("sheetBody")
+  const closeSheet = document.getElementById("closeSheet")
+  const toastEl = document.getElementById("toast")
+
+  function money(n){
+    return "$ " + n.toFixed(2)
+  }
+  function escapeHtml(s){
+    return String(s||"")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;")
+  }
+  function titleFallback(item){
+    // Description → Merchant → Category (top level) → Expense/Income
+    if(item.desc && item.desc.trim().length) return item.desc.trim()
+    if(item.merchant && item.merchant.trim().length) return item.merchant.trim()
+    if(item.category && item.category.trim().length){
+      // take left side of breadcrumb
+      return item.category.split("›")[0].trim()
+    }
+    return item.type === "income" ? "Income" : "Expense"
+  }
+  function subtitleFallback(item){
+    // Merchant → Category → empty
+    if(item.merchant && item.merchant.trim().length) return item.merchant.trim()
+    if(item.category && item.category.trim().length) return item.category.trim()
+    return ""
+  }
+
+  function toast(msg){
+    toastEl.textContent = msg
+    toastEl.classList.add("show")
+    clearTimeout(toastEl._t)
+    toastEl._t = setTimeout(()=>toastEl.classList.remove("show"), 1200)
+  }
+
+  function renderSeg(){
+    seg.innerHTML = ""
+    variants.forEach(v=>{
+      const b = document.createElement("button")
+      b.textContent = v.label
+      b.className = v.id === currentVariant ? "active" : ""
+      b.onclick = ()=>{ currentVariant = v.id; render() }
+      seg.appendChild(b)
+    })
+  }
+
+  function cardHTML(item){
+    const t = titleFallback(item)
+    const sub = subtitleFallback(item)
+    const amt = money(item.amount)
+    const badge = item.draft ? `<span class="badge draft small">DRAFT</span>` : ""
+    const draftClass = item.draft ? "draftTint draftOutlineSoft" : ""
+    const borderClass = bordersOn ? "" : "noBorder"
+    const stripeClass = stripesOn ? "on" : ""
+    const metaLine = sub ? `<div class="meta"><span>${escapeHtml(sub)}</span><span class="dot"></span><span>${escapeHtml(item.account)}</span></div>` : `<div class="meta"><span>${escapeHtml(item.account)}</span></div>`
+
+    return `
+      <div class="card ${draftClass} ${borderClass}" data-id="${item.id}">
+        <div class="stripe ${stripeClass}"></div>
+        <div class="row">
+          <div class="left">
+            <div class="acctIcon">${escapeHtml(item.acctIcon || "•")}</div>
+            <div class="main">
+              <div class="title">${escapeHtml(t)} ${badge}</div>
+              ${metaLine}
+            </div>
+          </div>
+          <div class="right">
+            <div class="amt">${escapeHtml(amt)}</div>
+            <div class="acct">${escapeHtml(item.account)}</div>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  function renderList(items){
+    return items.map(cardHTML).join("")
+  }
+
+  function renderOptionSection(){
+    // Drafts section visible before history
+    const drafts = []
+    const normalDays = sample.days.map(d=>{
+      const dDrafts = d.items.filter(x=>x.draft)
+      const dNormals = d.items.filter(x=>!x.draft)
+      drafts.push(...dDrafts)
+      return { ...d, items: dNormals }
+    })
+
+    const header = `
+      <div class="searchRow">
+        <div class="sicon">🔎</div>
+        <input placeholder="Search transactions" />
+        <div class="filter">≡</div>
+      </div>
+
+      <div class="helperRow">
+        <div class="month">${escapeHtml(sample.month.toUpperCase())}</div>
+        <div class="monthSum">${escapeHtml(money(sample.monthTotal))}</div>
+      </div>
+    `
+
+    const draftsBlock = `
+      <div class="sectionTitle">
+        <div>DRAFTS</div>
+        <div class="count">${drafts.length}</div>
+      </div>
+      ${renderList(drafts)}
+      <div class="divider"></div>
+    `
+
+    const history = normalDays.map(d=>`
+      <div class="dayRow"><div>${escapeHtml(d.day)}</div><div class="daySum">${escapeHtml(money(d.total))}</div></div>
+      ${renderList(d.items)}
+    `).join("")
+
+    screen.innerHTML = header + draftsBlock + history
+  }
+
+  function renderOptionTab(){
+    // Tabs: All | Drafts
+    const drafts = sample.days.flatMap(d=>d.items.filter(x=>x.draft))
+    const all = sample.days.flatMap(d=>d.items)
+
+    const tabs = `
+      <div class="seg" style="margin:10px 0 10px">
+        <button class="${tabState==='all'?'active':''}" data-tab="all">All</button>
+        <button class="${tabState==='drafts'?'active':''}" data-tab="drafts">Drafts <span style="opacity:.8">(${drafts.length})</span></button>
+      </div>
+    `
+
+    const header = `
+      <div class="searchRow">
+        <div class="sicon">🔎</div>
+        <input placeholder="Search transactions" />
+        <div class="filter">≡</div>
+      </div>
+      ${tabs}
+      <div class="helperRow">
+        <div class="month">${escapeHtml(sample.month.toUpperCase())}</div>
+        <div class="monthSum">${escapeHtml(money(sample.monthTotal))}</div>
+      </div>
+    `
+    const content = (tabState === "drafts")
+      ? renderList(drafts)
+      : sample.days.map(d=>`
+          <div class="dayRow"><div>${escapeHtml(d.day)}</div><div class="daySum">${escapeHtml(money(d.total))}</div></div>
+          ${renderList(d.items.filter(x=>!x.draft))}
+        `).join("")
+
+    screen.innerHTML = header + content
+
+    // tab clicks
+    const tabBtns = Array.from(screen.querySelectorAll('button[data-tab]'))
+    tabBtns.forEach(b=>{
+      b.onclick = ()=>{
+        tabState = b.dataset.tab
+        render()
+      }
+    })
+  }
+
+  function renderOptionPinned(){
+    // No UI toggle, drafts are pinned to the top of their day group OR pinned global top if any
+    const allDrafts = sample.days.flatMap(d=>d.items.filter(x=>x.draft))
+    const header = `
+      <div class="searchRow">
+        <div class="sicon">🔎</div>
+        <input placeholder="Search transactions" />
+        <div class="filter">≡</div>
+      </div>
+
+      <div class="helperRow">
+        <div class="month">${escapeHtml(sample.month.toUpperCase())}</div>
+        <div class="monthSum">${escapeHtml(money(sample.monthTotal))}</div>
+      </div>
+    `
+    const pinned = allDrafts.length ? `
+      <div class="sectionTitle">
+        <div>PINNED DRAFTS</div>
+        <div class="count">${allDrafts.length}</div>
+      </div>
+      ${renderList(allDrafts)}
+      <div class="divider"></div>
+    ` : ""
+
+    const history = sample.days.map(d=>{
+      const normals = d.items.filter(x=>!x.draft)
+      return `
+        <div class="dayRow"><div>${escapeHtml(d.day)}</div><div class="daySum">${escapeHtml(money(d.total))}</div></div>
+        ${renderList(normals)}
+      `
+    }).join("")
+    screen.innerHTML = header + pinned + history
+  }
+
+  function bindRowClicks(){
+    const cards = Array.from(screen.querySelectorAll(".card"))
+    cards.forEach(c=>{
+      c.onclick = ()=>{
+        const id = Number(c.dataset.id)
+        const item = sample.days.flatMap(d=>d.items).find(x=>x.id===id)
+        openDetail(item)
+      }
+    })
+  }
+
+  function openDetail(item){
+    const t = titleFallback(item)
+    const sub = subtitleFallback(item)
+    const typePill = item.type === "expense" ? "EXPENSE" : item.type === "income" ? "INCOME" : "TRANSFER"
+    const tags = (item.tags||[]).map(x=>`<span class="tagChip">${escapeHtml(x)}</span>`).join("")
+    sheetBody.innerHTML = `
+      <div class="detailHero">
+        <div class="dAmt">${escapeHtml(money(item.amount))}</div>
+        <div class="dTitle">${escapeHtml(t)}</div>
+        <div class="dSub">${escapeHtml(sub || "—")}</div>
+        <div class="pillType">${escapeHtml(typePill)}</div>
+      </div>
+
+      <div class="kv">
+        <div class="kvRow"><div class="k">Date</div><div class="v">Tuesday, March 3, 2026</div></div>
+        <div class="kvRow"><div class="k">Time</div><div class="v">5:18 PM</div></div>
+        <div class="kvRow"><div class="k">Paid with</div><div class="v">${escapeHtml(item.account)}</div></div>
+        <div class="kvRow"><div class="k">Category</div><div class="v">${escapeHtml(item.category || "—")}</div></div>
+        <div class="kvRow"><div class="k">Note</div><div class="v">${escapeHtml(item.note || "—")}</div></div>
+        <div class="kvRow"><div class="k">Tags</div><div class="v"><div class="tags">${tags || "<span style='color:rgba(154,166,178,.82)'>—</span>"}</div></div></div>
+      </div>
+
+      <div class="cta">
+        <button onclick="window.__toast('Edit opened')">Edit transaction</button>
+      </div>
+    `
+    overlay.classList.add("show")
+  }
+
+  closeSheet.onclick = ()=>overlay.classList.remove("show")
+  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.classList.remove("show") })
+  window.__toast = toast
+
+  // toggles
+  toggleBorders.onclick = ()=>{
+    bordersOn = !bordersOn
+    toggleBorders.textContent = "Borders: " + (bordersOn ? "on" : "off")
+    render()
+  }
+  toggleStripes.onclick = ()=>{
+    stripesOn = !stripesOn
+    toggleStripes.textContent = "Category stripes: " + (stripesOn ? "on" : "off")
+    render()
+  }
+  document.getElementById("plusBtn").onclick = ()=>toast("Open add transaction")
+
+  let tabState = "all"
+
+  function render(){
+    renderSeg()
+    if(currentVariant==="section") renderOptionSection()
+    if(currentVariant==="tab") renderOptionTab()
+    if(currentVariant==="pinned") renderOptionPinned()
+    bindRowClicks()
+  }
+
+  render()
+</script>
+</body>
+</html>
+"""
+path = Path("/mnt/data/transactions-drafts-3-options.html")
+path.write_text(html, encoding="utf-8")
+str(path)

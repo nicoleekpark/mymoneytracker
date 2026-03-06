@@ -50,7 +50,7 @@ export function WeekdayHeatHint({ data, colors }: Props) {
             {DAY_LABELS[selectedDay]}: {formatAmount(selectedSpend)} avg
           </Text>
         ) : (
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
             Tap a day to see average
           </Text>
         )}
@@ -70,7 +70,7 @@ export function WeekdayHeatHint({ data, colors }: Props) {
               onPress={() => setSelectedDay(selectedDay === dayIndex ? null : dayIndex)}
               style={{ alignItems: 'center', gap: 4 }}
             >
-              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, fontWeight: '500' }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, fontWeight: '500' }}>
                 {label}
               </Text>
               <View
@@ -93,11 +93,11 @@ export function WeekdayHeatHint({ data, colors }: Props) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <View style={{ width: 8, height: 8, borderRadius: radius.xs, backgroundColor: colors.danger, opacity: 0.15 }} />
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Low</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>Low</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <View style={{ width: 8, height: 8, borderRadius: radius.xs, backgroundColor: colors.danger, opacity: 0.6 }} />
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>High</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>High</Text>
         </View>
       </View>
     </View>

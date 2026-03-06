@@ -70,15 +70,33 @@ export type YearTotals = Readonly<{
   expenseCents: number
 }>
 
+export type AccountActivityTotals = Readonly<{
+  accountId: UUID
+  expenseCents: number
+  incomeCents: number
+  transferOutCents: number
+  transferInCents: number
+  transactionCount: number
+}>
+
 /**
  * TransactionRepository interface - defines data access contract for transactions.
  * Implementations handle persistence details (SQLite, etc.)
  */
+export type TransactionPage = Readonly<{
+  items: Transaction[]
+  hasMore: boolean
+  oldestDate: string | null // ISO date string of oldest item, used as cursor
+}>
+
 export interface TransactionRepository {
   // CRUD
   insert(tx: Transaction): void
+  update(tx: Transaction): void
+  getById(id: UUID): Transaction | null
   list(limit?: number): Transaction[]
   listForDate(dateYYYYMMDD: string, limit?: number): Transaction[]
+  listInDateRange(fromDate: string, toDate: string, limit?: number): TransactionPage
   delete(id: UUID): void
 
   // Aggregations (return cents)
@@ -113,4 +131,16 @@ export interface TransactionRepository {
   // Projections
   getYearTotals(year: number): YearTotals
   getMonthTotals(monthYYYYMM: string): YearTotals
+
+  // Tags
+  saveTags(transactionId: UUID, tagNames: string[]): void
+
+  // Account activity aggregations
+  listAccountActivityForMonth(monthYYYYMM: string): AccountActivityTotals[]
+  listAccountActivityForYear(year: number): AccountActivityTotals[]
+  listAccountActivityAllTime(): AccountActivityTotals[]
+
+  // Account balance (running total from transactions)
+  getAccountBalanceBeforeDate(accountId: UUID, dateYYYYMMDD: string): number
+  getAccountBalanceAtEndOfMonth(accountId: UUID, monthYYYYMM: string): number
 }

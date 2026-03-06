@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { LayoutChangeEvent, PanResponder, Text, View } from 'react-native'
+import { LayoutChangeEvent, PanResponder, Pressable, Text, View } from 'react-native'
 import Svg, { Path, Circle, Line } from 'react-native-svg'
 
 import { formatUsdInt } from '@/shared/format/currency'
@@ -12,7 +12,7 @@ import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
 
 export type MonthlyCashflowColors = Readonly<{
   text: string
-  textMuted: string
+  textSecondary: string
   surface: string
   surfaceAlt: string
   success: string
@@ -27,6 +27,7 @@ type Props = {
   isCurrentYear: boolean
   isPastYear: boolean
   colors: MonthlyCashflowColors
+  onMonthPress?: (month: number) => void // 1-12, called when user taps to navigate
 }
 
 const CHART_HEIGHT = 120
@@ -215,7 +216,7 @@ function ComboChart({
               y1={0}
               x2={monthWidth * selectedIndex + monthWidth / 2}
               y2={CHART_HEIGHT}
-              stroke={colors.textMuted}
+              stroke={colors.textSecondary}
               strokeWidth={1}
               strokeDasharray="4,4"
               opacity={0.5}
@@ -236,7 +237,7 @@ function ComboChart({
                 style={{
                   fontSize: fontSize.xs,
                   fontWeight: isSelected ? '800' : '600',
-                  color: isSelected ? colors.text : colors.textMuted,
+                  color: isSelected ? colors.text : colors.textSecondary,
                   opacity: isFuture ? 0.4 : 1
                 }}
               >
@@ -269,7 +270,8 @@ export function MonthlyCashflowChart({
   currentMonth,
   isCurrentYear,
   isPastYear,
-  colors
+  colors,
+  onMonthPress
 }: Props) {
   const [chartWidth, setChartWidth] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -384,23 +386,41 @@ export function MonthlyCashflowChart({
 
       {/* Selected month details - single row, no border */}
       {selectedData ? (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md, marginHorizontal: CHART_PADDING_H }}>
-          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
-            In <Text style={{ fontWeight: '600', color: colors.success }}>{formatUsdInt(selectedData.incomeDollar)}</Text>
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
-            Out <Text style={{ fontWeight: '600', color: colors.danger }}>{formatUsdInt(selectedData.expenseDollar)}</Text>
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
-            Net <Text style={{ fontWeight: '600', color: colors.text }}>{selectedData.netDollar >= 0 ? '+' : ''}{formatUsdInt(selectedData.netDollar)}</Text>
-          </Text>
+        <View style={{ marginTop: spacing.md, marginHorizontal: CHART_PADDING_H }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
+              In <Text style={{ fontWeight: '600', color: colors.success }}>{formatUsdInt(selectedData.incomeDollar)}</Text>
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
+              Out <Text style={{ fontWeight: '600', color: colors.danger }}>{formatUsdInt(selectedData.expenseDollar)}</Text>
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
+              Net <Text style={{ fontWeight: '600', color: colors.text }}>{selectedData.netDollar >= 0 ? '+' : ''}{formatUsdInt(selectedData.netDollar)}</Text>
+            </Text>
+          </View>
+          {/* Navigate to month link */}
+          {onMonthPress && selectedIndex !== null && (
+            <Pressable
+              onPress={() => onMonthPress(selectedIndex + 1)}
+              style={({ pressed }) => ({
+                alignSelf: 'center',
+                marginTop: spacing.sm,
+                opacity: pressed ? 0.5 : 1
+              })}
+              hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
+            >
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
+                View {MONTH_NAMES_SHORT[selectedIndex]} details ›
+              </Text>
+            </Pressable>
+          )}
         </View>
       ) : (
         /* Hint when not selected */
         <Text
           style={{
             fontSize: fontSize.xs,
-            color: colors.textMuted,
+            color: colors.textSecondary,
             textAlign: 'center',
             marginTop: spacing.md
           }}
@@ -427,7 +447,7 @@ export function MonthlyCashflowChart({
               backgroundColor: colors.success
             }}
           />
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Income</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>Income</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View
@@ -438,7 +458,7 @@ export function MonthlyCashflowChart({
               backgroundColor: colors.danger
             }}
           />
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Expense</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>Expense</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View
@@ -450,7 +470,7 @@ export function MonthlyCashflowChart({
               opacity: 0.9
             }}
           />
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>Net</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>Net</Text>
         </View>
       </View>
     </View>

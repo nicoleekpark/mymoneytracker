@@ -162,7 +162,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
       {/* Header row */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm }}>
         <View>
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: 2 }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
             {headerLeft.label}
           </Text>
           <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: headerLeft.color }}>
@@ -170,7 +170,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: 2 }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 2 }}>
             typical
           </Text>
           <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>
@@ -197,7 +197,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
           {/* Main line - neutral */}
           <Path
             d={linePath}
-            stroke={colors.textMuted}
+            stroke={colors.textSecondary}
             strokeWidth={2.5}
             fill="none"
             opacity={0.8}
@@ -222,7 +222,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
                 y1={selectedPoint.y}
                 x2={selectedPoint.x}
                 y2={AXIS_Y}
-                stroke={colors.textMuted}
+                stroke={colors.textSecondary}
                 strokeWidth={1}
                 opacity={0.5}
               />
@@ -240,10 +240,10 @@ export function NetSparkline({ data, baseline, colors }: Props) {
 
         {/* X-axis labels */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
-          <Text style={{ fontSize: LABEL_FONT_SIZE, color: colors.textMuted, opacity: 0.7 }}>
+          <Text style={{ fontSize: LABEL_FONT_SIZE, color: colors.textSecondary, opacity: 0.7 }}>
             12 mo ago
           </Text>
-          <Text style={{ fontSize: LABEL_FONT_SIZE, color: colors.textMuted, opacity: 0.7 }}>
+          <Text style={{ fontSize: LABEL_FONT_SIZE, color: colors.textSecondary, opacity: 0.7 }}>
             now
           </Text>
         </View>

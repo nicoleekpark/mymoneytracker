@@ -115,7 +115,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           <>
             {/* Day indicator for current month */}
             {heroData.isCurrentMonth && heroData.daysElapsed > 0 && (
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, textAlign: 'right', marginBottom: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, textAlign: 'right', marginBottom: spacing.xs }}>
                 Day {heroData.daysElapsed} of {heroData.daysInMonth}
               </Text>
             )}
@@ -123,7 +123,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
             {/* Hero: Net outcome */}
             <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
               {/* Title line */}
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                 Net Cash Flow
               </Text>
 
@@ -141,7 +141,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
 
               {/* Comparison with last month - only delta colored */}
               {heroData.hasLastMonthData && heroData.netChangeDollar !== null && (
-                <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
                   <Text style={{ color: heroData.netChangeDollar >= 0 ? colors.success : colors.danger }}>
                     {heroData.netChangeDollar >= 0 ? '↑' : '↓'} {formatUsdInt(Math.abs(heroData.netChangeDollar))}
                   </Text>
@@ -151,14 +151,14 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
 
               {/* Supporting: Savings rate (only if positive income) */}
               {heroData.incomeDollar > 0 && (
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.md, opacity: 0.8 }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.md, opacity: 0.8 }}>
                   {heroData.savingsRate >= 0 ? 'Saved' : 'Overspent'} {Math.abs(heroData.savingsRate)}% of income
                 </Text>
               )}
 
               {/* Nudge */}
               {heroData.netDollar > 0 && heroData.isCurrentMonth && (
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.sm, opacity: 0.6, fontStyle: 'italic' }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.sm, opacity: 0.6, fontStyle: 'italic' }}>
                   Keep this pace for the rest of the month
                 </Text>
               )}
@@ -169,7 +169,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
             {/* Current Hero: % Saved */}
             {/* Day indicator (month title removed - duplicate with date picker) */}
             {projectionData.daysElapsed > 0 && (
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, textAlign: 'right', marginBottom: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, textAlign: 'right', marginBottom: spacing.xs }}>
                 Day {projectionData.daysElapsed} of {projectionData.daysInMonth}
               </Text>
             )}
@@ -180,39 +180,39 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 savings > 0 ? (
                   // Positive savings - dollar amount primary, % supporting
                   <>
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                       Saved
                     </Text>
                     <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.success, letterSpacing: -1 }}>
                       {formatUsdInt(savings)}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
                       That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.success }}>{savingsRate}%</Text> of income
                     </Text>
                   </>
                 ) : savings < 0 ? (
                   // Spending exceeds income
                   <>
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                       Spending exceeds income by
                     </Text>
                     <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.danger, letterSpacing: -1 }}>
                       {formatUsdInt(Math.abs(savings))}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
                       That's <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{Math.abs(savingsRate)}%</Text> of income
                     </Text>
                   </>
                 ) : (
                   // Broke even (savings = 0)
                   <>
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                       Breaking even
                     </Text>
-                    <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textMuted }}>
+                    <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
                       {formatUsdInt(0)}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs }}>
                       net
                     </Text>
                   </>
@@ -220,14 +220,14 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               ) : (
                 // No income
                 <>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
                     Net Cash Flow
                   </Text>
-                  <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textMuted }}>
+                  <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
                     No income recorded
                   </Text>
                   {savings < 0 && (
-                    <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
                       <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{formatUsdInt(Math.abs(savings))}</Text> spent
                     </Text>
                   )}
@@ -245,14 +245,14 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
-                color: colors.textMuted,
+                color: colors.textSecondary,
                 letterSpacing: 0.5,
                 marginBottom: spacing.xs
               }}
             >
               Income
             </Text>
-            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.success }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.success, fontVariant: ['tabular-nums'] }}>
               {formatUsdInt(totalIncome)}
             </Text>
           </View>
@@ -266,14 +266,14 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
-                color: colors.textMuted,
+                color: colors.textSecondary,
                 letterSpacing: 0.5,
                 marginBottom: spacing.xs
               }}
             >
               Expense
             </Text>
-            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.danger }}>
+            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.danger, fontVariant: ['tabular-nums'] }}>
               {formatUsdInt(totalExpense)}
             </Text>
           </View>
@@ -296,7 +296,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>
                 {formatUsdInt(budgetData.spentDollar)}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, marginTop: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, marginTop: spacing.xs }}>
                 spent
               </Text>
             </View>
@@ -314,7 +314,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 style={{
                   height: '100%',
                   width: `${budgetBarWidth}%`,
-                  backgroundColor: colors.textMuted,
+                  backgroundColor: colors.textSecondary,
                   borderRadius: radius.sm
                 }}
               />
@@ -330,7 +330,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               >
                 {formatUsdInt(Math.abs(budgetData.remainingDollar))}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, marginTop: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, marginTop: spacing.xs }}>
                 {budgetData.remainingDollar >= 0 ? 'available' : 'over'}
               </Text>
             </View>
@@ -356,7 +356,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                     style={{
                       width: 16,
                       height: 12,
-                      backgroundColor: colors.textMuted + '20',
+                      backgroundColor: colors.textSecondary + '20',
                       borderRadius: radius.xs,
                       overflow: 'hidden'
                     }}
@@ -380,7 +380,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                       }}
                     />
                   </View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
                     {zeroSpendDays} zero-spend
                   </Text>
                 </View>

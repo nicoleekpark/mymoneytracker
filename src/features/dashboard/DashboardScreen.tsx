@@ -14,6 +14,7 @@ import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
 import { OverviewHeader } from './shared/OverviewHeader'
 import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
 import { getFamilyMembers } from '@/domain/asset'
+import { AccountsBody } from './accounts'
 import { AllBody } from './all'
 import { AssetsBody } from './assets'
 import { InsightsBody, InsightsHeader } from './insights'
@@ -161,7 +162,7 @@ export default function DashboardScreen() {
               monthYYYYMM={monthYYYYMM}
               colors={{
                 text: theme.semantic.text,
-                textMuted: theme.semantic.textSecondary,
+                textSecondary: theme.semantic.textSecondary,
                 border: theme.semantic.border,
                 surface: theme.semantic.surface,
                 surfaceAlt: theme.semantic.surfaceAlt,
@@ -194,6 +195,50 @@ export default function DashboardScreen() {
         </View>
       )}
 
+      {/* Accounts mode - Account activity tracking */}
+      {mode === 'accounts' && (
+        <>
+          <OverviewHeader
+            members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
+            selectedMemberIds={selectedMemberIds}
+            onSelectMembers={setSelectedMemberIds}
+            scope={scope}
+            period={period}
+            canPrev={canGoPrev}
+            canNext={canGoNext}
+            onPrev={() => shiftPeriod(-1)}
+            onNext={() => shiftPeriod(1)}
+            onOpenPicker={handleOpenPicker}
+            onToday={resetToToday}
+            onScopeChange={setScope}
+          />
+          <SwipeGestureWrapper
+            onSwipeLeft={handleSwipeLeft}
+            onSwipeRight={handleSwipeRight}
+            canSwipeLeft={canGoNext}
+            canSwipeRight={canGoPrev}
+            enabled={scope !== 'all'}
+          >
+            <View style={styles.body}>
+              <AccountsBody
+                scope={scope}
+                period={period}
+                colors={{
+                  text: theme.semantic.text,
+                  textSecondary: theme.semantic.textSecondary,
+                  border: theme.semantic.border,
+                  surface: theme.semantic.surface,
+                  surfaceAlt: theme.semantic.surfaceAlt,
+                  primary: theme.semantic.primary,
+                  success: theme.semantic.success,
+                  danger: theme.semantic.danger
+                }}
+              />
+            </View>
+          </SwipeGestureWrapper>
+        </>
+      )}
+
       {/* Overview mode - scope-based content */}
       {mode === 'overview' && (
         <SwipeGestureWrapper
@@ -211,7 +256,7 @@ export default function DashboardScreen() {
                   monthYYYYMM={monthYYYYMM}
                   colors={{
                     text: theme.semantic.text,
-                    textMuted: theme.semantic.textSecondary,
+                    textSecondary: theme.semantic.textSecondary,
                     border: theme.semantic.border,
                     surface: theme.semantic.background,
                     surfaceAlt: theme.semantic.surfaceAlt,
@@ -230,7 +275,7 @@ export default function DashboardScreen() {
                   year={period.year}
                   colors={{
                     text: theme.semantic.text,
-                    textMuted: theme.semantic.textSecondary,
+                    textSecondary: theme.semantic.textSecondary,
                     border: theme.semantic.border,
                     surface: theme.semantic.background,
                     surfaceAlt: theme.semantic.surfaceAlt,
@@ -238,6 +283,10 @@ export default function DashboardScreen() {
                     success: theme.semantic.success,
                     danger: theme.semantic.danger,
                     warning: theme.semantic.warning
+                  }}
+                  onMonthPress={(month) => {
+                    setPeriod({ year: period.year, month })
+                    setScope('month')
                   }}
                 />
               </View>
@@ -247,7 +296,7 @@ export default function DashboardScreen() {
               <AllBody
                 colors={{
                   text: theme.semantic.text,
-                  textMuted: theme.semantic.textSecondary,
+                  textSecondary: theme.semantic.textSecondary,
                   border: theme.semantic.border,
                   surface: theme.semantic.surface,
                   surfaceAlt: theme.semantic.surfaceAlt,

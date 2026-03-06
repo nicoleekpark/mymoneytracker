@@ -59,7 +59,7 @@ function LiquidityInfoSheet({
       colors={{
         surface: colors.surface,
         text: colors.text,
-        textMuted: colors.textSecondary,
+        textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
       snapPoints={['50%']}
@@ -114,7 +114,7 @@ function TiedUpInfoSheet({
       colors={{
         surface: colors.surface,
         text: colors.text,
-        textMuted: colors.textSecondary,
+        textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
       snapPoints={['70%']}
@@ -204,7 +204,7 @@ function WealthGoalInfoSheet({
       colors={{
         surface: colors.surface,
         text: colors.text,
-        textMuted: colors.textSecondary,
+        textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
       snapPoints={['50%']}
@@ -780,6 +780,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
                   </Text>
                   <Text style={{
                     fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
                     color: isMuted ? colors.textSecondary : colors.text,
                     flex: 1,
                     opacity: isMuted ? 0.6 : 1
@@ -788,7 +789,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
                   </Text>
                   <Text style={{
                     fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
+                    fontWeight: fontWeight.semibold,
                     color: isMuted ? colors.textSecondary : colors.text, // NEUTRAL
                     width: 100,
                     textAlign: 'right',

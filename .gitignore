@@ -46,10 +46,8 @@ db_exports/
 *.db-wal
 *.db-shm
 
-.claude/
-CLAUDE.md
-PROMPTS.md
-prompt-ex/
+# Claude Code
+.claude/settings.json
+.claude/projects/
 
-# temporary
-docs/
+

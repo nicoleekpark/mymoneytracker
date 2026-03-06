@@ -142,7 +142,7 @@ export type InsightsData = Readonly<{
 
 export type InsightsColors = Readonly<{
   text: string
-  textMuted: string
+  textSecondary: string
   border: string
   surface: string
   surfaceAlt: string

@@ -42,13 +42,13 @@ function SectionHeader({
           {title}
         </Text>
         {rightLabel && (
-          <Text style={{ marginLeft: 'auto', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textMuted }}>
+          <Text style={{ marginLeft: 'auto', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
             {rightLabel}
           </Text>
         )}
       </View>
       {description && (
-        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.sm }}>
+        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.sm }}>
           {description}
         </Text>
       )}
@@ -76,7 +76,7 @@ function TypicalInfoSheet({
       colors={{
         surface: colors.surface,
         text: colors.text,
-        textMuted: colors.textMuted,
+        textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
       snapPoints={['35%']}
@@ -85,7 +85,7 @@ function TypicalInfoSheet({
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
           Definition
         </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
           Your typical month is the median of your last 6-12 months of net cash flow.
         </Text>
       </View>
@@ -93,7 +93,7 @@ function TypicalInfoSheet({
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
           Why median?
         </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
           More stable than average - one big expense won't skew it.
         </Text>
       </View>
@@ -101,7 +101,7 @@ function TypicalInfoSheet({
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
           How to use it
         </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
           Compare this month against typical to spot unusual patterns.
         </Text>
       </View>
@@ -146,7 +146,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
         <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, textAlign: 'center', marginBottom: spacing.sm }}>
           Not enough data yet
         </Text>
-        <Text style={{ fontSize: fontSize.md, color: colors.textMuted, textAlign: 'center', lineHeight: 20 }}>
+        <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 }}>
           We'll surface insights once more transactions are available. Keep tracking and check back soon.
         </Text>
       </View>
@@ -214,7 +214,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
+        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
       >
         {/* ═══════════════════════════════════════════════════════════════════════ */}
@@ -227,7 +227,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
             style={{ alignItems: 'center', paddingVertical: spacing.xl }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
                 vs Typical
               </Text>
               <View
@@ -236,13 +236,13 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
                   height: 14,
                   borderRadius: radius.full,
                   borderWidth: 1,
-                  borderColor: colors.textMuted,
+                  borderColor: colors.textSecondary,
                   alignItems: 'center',
                   justifyContent: 'center',
                   opacity: 0.6
                 }}
               >
-                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textMuted }}>i</Text>
+                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textSecondary }}>i</Text>
               </View>
             </View>
 
@@ -259,7 +259,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
             </Text>
 
             {/* Secondary text with colored delta indicator */}
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.sm }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
               {vsTypical !== null ? (
                 <>
                   <Text style={{ fontWeight: fontWeight.semibold, color: vsTypical >= 0 ? colors.success : colors.danger }}>
@@ -277,10 +277,10 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
           <View style={{ flexDirection: 'row' }}>
             {/* This Month */}
             <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
                 This month
               </Text>
-              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, fontVariant: ['tabular-nums'] }}>
                 {formatUsdInt(netDollar)}
               </Text>
             </View>
@@ -290,10 +290,10 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
 
             {/* Typical */}
             <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
                 Typical
               </Text>
-              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, fontVariant: ['tabular-nums'] }}>
                 {medianNet !== null ? formatUsdInt(medianNet) : '—'}
               </Text>
             </View>
@@ -373,7 +373,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
               {opportunityInsight.body}
             </Text>
             {opportunityInsight.sub && (
-              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs }}>
                 {opportunityInsight.sub}
               </Text>
             )}
@@ -391,14 +391,14 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
         borderTopColor: colors.border
       }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
             Data quality
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.text }}>
             {isLimitedData ? (
               <>
                 <Text>Last {monthsTracked} months</Text>
-                <Text style={{ color: colors.textMuted }}> · </Text>
+                <Text style={{ color: colors.textSecondary }}> · </Text>
                 <Text style={{ color: colors.warning }}>Insights improve over time</Text>
               </>
             ) : (

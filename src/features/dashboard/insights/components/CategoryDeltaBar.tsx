@@ -4,6 +4,7 @@ import { Text, View } from 'react-native'
 import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
+import { CATEGORY_DOT_SIZE } from '@/theme/tokens/viewStyles'
 
 import type { InsightsColors } from '../insights.types'
 
@@ -61,7 +62,7 @@ export function CategoryDeltaBar({ data, colors }: Props) {
         const widthPercent = (Math.abs(d.delta) / maxDelta) * 100
 
         // Use category color or fallback to neutral
-        const barColor = d.categoryColor ?? colors.textMuted
+        const barColor = d.categoryColor ?? colors.textSecondary
 
         return (
           <View key={d.name + i}>
@@ -73,8 +74,8 @@ export function CategoryDeltaBar({ data, colors }: Props) {
             }}>
               {/* Category dot */}
               <View style={{
-                width: 10,
-                height: 10,
+                width: CATEGORY_DOT_SIZE,
+                height: CATEGORY_DOT_SIZE,
                 borderRadius: radius.full,
                 backgroundColor: barColor,
                 marginRight: spacing.sm

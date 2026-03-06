@@ -8,7 +8,7 @@ export type DailyFlow = Readonly<{
 
 export type CalendarColors = Readonly<{
   text: string
-  textMuted: string
+  textSecondary: string
   border: string
   surface: string
   surfaceAlt: string
