@@ -18,4 +18,10 @@ export interface CategoryRepository {
    * DB (FK leaf id) -> Domain (ref keys)
    */
   resolveCategoryRefFromDbId(categoryDbId: UUID): CategoryRef
+
+  /**
+   * Batch resolve multiple category IDs to CategoryRefs.
+   * Returns a Map for O(1) lookup. Used to avoid N+1 queries.
+   */
+  batchResolveCategoryRefs(categoryDbIds: UUID[]): Map<UUID, CategoryRef>
 }

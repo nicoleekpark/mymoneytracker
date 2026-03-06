@@ -87,4 +87,50 @@ export class SqliteCategoryRepository implements CategoryRepository {
       categoryKey: leaf.key,
     }
   }
+
+  /**
+   * Batch resolve multiple category IDs to CategoryRefs in a single query.
+   * Returns a Map for O(1) lookup. Avoids N+1 queries when loading transactions.
+   */
+  batchResolveCategoryRefs(categoryDbIds: UUID[]): Map<UUID, CategoryRef> {
+    const result = new Map<UUID, CategoryRef>()
+    if (categoryDbIds.length === 0) return result
+
+    // Get unique IDs
+    const uniqueIds = [...new Set(categoryDbIds)]
+
+    // Query all categories and their parents in one go
+    const placeholders = uniqueIds.map(() => '?').join(',')
+    const rows = this.dataSource.queryAll<CategoryRow & { parent_key?: string; parent_type?: CategoryType }>(
+      `
+      SELECT
+        c.id, c.key, c.type, c.parent_id,
+        p.key as parent_key, p.type as parent_type
+      FROM categories c
+      LEFT JOIN categories p ON p.id = c.parent_id
+      WHERE c.id IN (${placeholders});
+      `,
+      uniqueIds
+    )
+
+    // Build the map
+    for (const row of rows) {
+      if (row.parent_id && row.parent_key && row.parent_type) {
+        // This is a subcategory
+        result.set(row.id, {
+          type: row.parent_type,
+          categoryKey: row.parent_key,
+          subCategoryKey: normalizeSubKeyFromDbKey(row.key),
+        })
+      } else {
+        // This is a top-level category
+        result.set(row.id, {
+          type: row.type,
+          categoryKey: row.key,
+        })
+      }
+    }
+
+    return result
+  }
 }

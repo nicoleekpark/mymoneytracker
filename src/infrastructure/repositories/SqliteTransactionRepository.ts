@@ -50,6 +50,14 @@ type DailyFlowTotalRow = Readonly<{
 }>
 
 /**
+ * Extended row type that includes tags from GROUP_CONCAT join.
+ * Used by optimized list queries to avoid N+1 tag lookups.
+ */
+type TransactionRowWithTags = TransactionRow & Readonly<{
+  tag_names: string | null
+}>
+
+/**
  * SQLite implementation of TransactionRepository.
  * Requires a CategoryRepository for category resolution.
  */
@@ -58,6 +66,40 @@ export class SqliteTransactionRepository implements TransactionRepository {
     private readonly dataSource: DataSource,
     private readonly categoryRepo: CategoryRepository
   ) {}
+
+  /**
+   * Convert rows with embedded tag_names to Transaction objects.
+   * Uses batch category resolution to avoid N+1 queries.
+   */
+  private mapRowsToTransactions(rows: TransactionRowWithTags[]): Transaction[] {
+    if (rows.length === 0) return []
+
+    // Batch load all categories
+    const categoryIds = [...new Set(rows.map((r) => r.category_id).filter((id): id is UUID => id !== null))]
+    const categoryMap = this.categoryRepo.batchResolveCategoryRefs(categoryIds)
+
+    // Map rows to transactions
+    return rows.map((r) => {
+      const tags = r.tag_names ? r.tag_names.split(',') : undefined
+      const categoryResolver = (id: UUID) => categoryMap.get(id)!
+      return rowToTransaction(r, categoryResolver, tags)
+    })
+  }
+
+  /**
+   * Base SELECT columns for transaction queries with tags.
+   * Uses LEFT JOIN with GROUP_CONCAT to get all tags in one query.
+   */
+  private readonly SELECT_WITH_TAGS = `
+    SELECT
+      t.id, t.key, t.occurred_at, t.type, t.item, t.amount_cents, t.currency,
+      t.account_id, t.category_id, t.merchant, t.note,
+      t.from_account_id, t.to_account_id, t.member_id, t.is_estimated,
+      GROUP_CONCAT(tags.name) as tag_names
+    FROM transactions t
+    LEFT JOIN transaction_tags tt ON t.id = tt.transaction_id
+    LEFT JOIN tags ON tt.tag_id = tags.id
+  `
 
   insert(tx: Transaction): void {
     const row = transactionToRow(tx, (ref) => this.categoryRepo.resolveCategoryId(ref))
@@ -154,56 +196,41 @@ export class SqliteTransactionRepository implements TransactionRepository {
   }
 
   list(limit = 200): Transaction[] {
-    const rows = this.dataSource.queryAll<TransactionRow>(
+    const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      SELECT
-        id, key, occurred_at, type, item, amount_cents, currency,
-        account_id, category_id, merchant, note,
-        from_account_id, to_account_id, member_id, is_estimated
-      FROM transactions
-      ORDER BY occurred_at DESC, id DESC
+      ${this.SELECT_WITH_TAGS}
+      GROUP BY t.id
+      ORDER BY t.occurred_at DESC, t.id DESC
       LIMIT ?;
       `,
       [limit]
     )
-    return rows.map((r) => {
-      const tags = this.getTagsForTransaction(r.id)
-      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
-    })
+    return this.mapRowsToTransactions(rows)
   }
 
   listForDate(dateYYYYMMDD: string, limit = 50): Transaction[] {
-    const rows = this.dataSource.queryAll<TransactionRow>(
+    const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      SELECT
-        id, key, occurred_at, type, item, amount_cents, currency,
-        account_id, category_id, merchant, note,
-        from_account_id, to_account_id, member_id, is_estimated
-      FROM transactions
-      WHERE substr(occurred_at, 1, 10) = ?
-        AND type IN ('income', 'expense')
-      ORDER BY amount_cents DESC
+      ${this.SELECT_WITH_TAGS}
+      WHERE substr(t.occurred_at, 1, 10) = ?
+        AND t.type IN ('income', 'expense')
+      GROUP BY t.id
+      ORDER BY t.amount_cents DESC
       LIMIT ?;
       `,
       [dateYYYYMMDD, limit]
     )
-    return rows.map((r) => {
-      const tags = this.getTagsForTransaction(r.id)
-      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
-    })
+    return this.mapRowsToTransactions(rows)
   }
 
   listInDateRange(fromDate: string, toDate: string, limit = 500): TransactionPage {
-    const rows = this.dataSource.queryAll<TransactionRow>(
+    const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      SELECT
-        id, key, occurred_at, type, item, amount_cents, currency,
-        account_id, category_id, merchant, note,
-        from_account_id, to_account_id, member_id, is_estimated
-      FROM transactions
-      WHERE occurred_at >= ?
-        AND occurred_at <= ?
-      ORDER BY occurred_at DESC, id DESC
+      ${this.SELECT_WITH_TAGS}
+      WHERE t.occurred_at >= ?
+        AND t.occurred_at <= ?
+      GROUP BY t.id
+      ORDER BY t.occurred_at DESC, t.id DESC
       LIMIT ?;
       `,
       [fromDate, toDate + 'T23:59:59.999Z', limit]
@@ -216,11 +243,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
     )
     const hasMore = (olderCount[0]?.cnt ?? 0) > 0
 
-    const items = rows.map((r) => {
-      const tags = this.getTagsForTransaction(r.id)
-      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
-    })
-
+    const items = this.mapRowsToTransactions(rows)
     const oldestDate = items.length > 0 ? items[items.length - 1].occurredAt.toISOString() : null
 
     return { items, hasMore, oldestDate }
@@ -347,24 +370,18 @@ export class SqliteTransactionRepository implements TransactionRepository {
   }
 
   listTransfersForMonth(monthYYYYMM: string, limit = 500): Transaction[] {
-    const rows = this.dataSource.queryAll<TransactionRow>(
+    const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      SELECT
-        id, key, occurred_at, type, item, amount_cents, currency,
-        account_id, from_account_id, to_account_id,
-        category_id, merchant, note, member_id, is_estimated
-      FROM transactions
-      WHERE type = 'transfer'
-        AND substr(occurred_at, 1, 7) = ?
-      ORDER BY occurred_at DESC, id DESC
+      ${this.SELECT_WITH_TAGS}
+      WHERE t.type = 'transfer'
+        AND substr(t.occurred_at, 1, 7) = ?
+      GROUP BY t.id
+      ORDER BY t.occurred_at DESC, t.id DESC
       LIMIT ?;
       `,
       [monthYYYYMM, limit]
     )
-    return rows.map((r) => {
-      const tags = this.getTagsForTransaction(r.id)
-      return rowToTransaction(r, (id) => this.categoryRepo.resolveCategoryRefFromDbId(id), tags)
-    })
+    return this.mapRowsToTransactions(rows)
   }
 
   listDailyFlowTotalsForMonth(monthYYYYMM: string): DailyFlowTotal[] {

@@ -22,8 +22,10 @@ docs/
 ├── overview.md        # Project overview
 ├── glossary.md        # Term definitions
 ├── ui-terminology.md  # UI component naming
+├── refactoring.md     # Refactoring tracker
 ├── changelog.md       # Version history
 ├── dev-tools.md       # Developer tools & commands
+├── performance-tracking.md  # Performance measurements
 │
 ├── prd/               # Product Requirements
 │   ├── v1.md          # V1 PRD (current)
@@ -54,6 +56,8 @@ docs/
 | [changelog.md](changelog.md) | What changed in each version |
 | [glossary.md](glossary.md) | Domain terminology |
 | [ui-terminology.md](ui-terminology.md) | UI component naming & layout |
+| [refactoring.md](refactoring.md) | Refactoring tracker & progress |
+| [performance-tracking.md](performance-tracking.md) | Performance measurements |
 
 ---
 
@@ -77,6 +81,17 @@ ADRs document significant technical decisions with rationale.
 | [functional-report.md](qa/functional-report.md) | Test results and bug tracking |
 | [design-plan.md](qa/design-plan.md) | Visual consistency checks |
 | [design-report.md](qa/design-report.md) | Design QA results |
+
+---
+
+## Testing
+
+See [\_\_tests\_\_/README.md](../__tests__/README.md) for test setup and conventions.
+
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+```
 
 ---
 
