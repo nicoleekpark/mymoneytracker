@@ -6,8 +6,16 @@ import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
 import { useDevStore, useDraftsStore, useNotificationsStore } from '@/store'
-import { fontSize, textStyles } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing, textStyles } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
+
+// Component-specific sizes (not in global tokens)
+const APPBAR_HEIGHT = 56
+const ICON_BUTTON_SIZE = 40
+const AVATAR_SIZE = 32
+const MENU_WIDTH = 200
+const MENU_TOP_OFFSET = 60
 
 type AppBarProps = {
   /** User initials to display in avatar */
@@ -197,7 +205,7 @@ function MenuItem({ icon, label, badge, onPress, theme, disabled }: MenuItemProp
       )}
       {badge !== undefined && badge > 0 && (
         <View style={[styles.menuBadge, { backgroundColor: theme.semantic.danger }]}>
-          <Text style={styles.menuBadgeText}>{badge}</Text>
+          <Text style={[styles.menuBadgeText, { color: theme.semantic.onPrimary }]}>{badge}</Text>
         </View>
       )}
     </Pressable>
@@ -209,22 +217,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    height: 56,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    height: APPBAR_HEIGHT,
   },
   logo: {
     ...textStyles.screenHeader,
-    letterSpacing: -0.5,
+    letterSpacing: letterSpacing.tight,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
+    width: ICON_BUTTON_SIZE,
+    height: ICON_BUTTON_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.xl,
@@ -232,24 +240,24 @@ const styles = StyleSheet.create({
   },
   dot: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
+    top: spacing.sm,
+    right: spacing.sm,
+    width: spacing.sm,
+    height: spacing.sm,
     borderRadius: radius.sm,
   },
   avatar: {
-    width: 32,
-    height: 32,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
     borderRadius: radius.xl,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 4,
+    marginLeft: spacing.xs,
   },
   avatarText: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   overlay: {
     flex: 1,
@@ -257,12 +265,12 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: 'absolute',
-    top: 60,
-    right: 20,
-    width: 200,
+    top: MENU_TOP_OFFSET,
+    right: spacing.xl,
+    width: MENU_WIDTH,
     borderRadius: radius.lg,
     borderWidth: 1,
-    padding: 8,
+    padding: spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
@@ -271,33 +279,32 @@ const styles = StyleSheet.create({
   },
   menuDivider: {
     height: 1,
-    marginVertical: 8,
+    marginVertical: spacing.sm,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    gap: spacing.md,
+    paddingVertical: spacing.sm + spacing.xs / 2, // 10
+    paddingHorizontal: spacing.md,
     borderRadius: radius.md,
   },
   menuItemLabel: {
     fontSize: fontSize.md,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
     flex: 1,
   },
   menuItemBadge: {
     fontSize: fontSize.xs,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
   },
   menuBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: spacing.sm - spacing.xs / 2, // 6
+    paddingVertical: spacing.xs / 2, // 2
     borderRadius: radius.md,
   },
   menuBadgeText: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: fontWeight.semibold,
   },
 })

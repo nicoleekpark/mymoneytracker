@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
 import { AppBar } from '@/shared/components'
+import { useThemeColors, useExtendedThemeColors } from '@/shared/hooks/useThemeColors'
 import { Screen } from '@/shared/layout/Screen'
 
 import type { Period } from './types'
@@ -31,6 +32,10 @@ function periodToMonthYYYYMM(p: Period): string {
 export default function DashboardScreen() {
   const theme = useHoHTheme()
   const styles = useMemo(() => createDashboardStyles(theme), [theme])
+
+  // Memoized color objects to prevent unnecessary child re-renders
+  const standardColors = useThemeColors()
+  const extendedColors = useExtendedThemeColors()
 
   const {
     mode,
@@ -160,17 +165,7 @@ export default function DashboardScreen() {
           <View style={styles.body}>
             <InsightsBody
               monthYYYYMM={monthYYYYMM}
-              colors={{
-                text: theme.semantic.text,
-                textSecondary: theme.semantic.textSecondary,
-                border: theme.semantic.border,
-                surface: theme.semantic.surface,
-                surfaceAlt: theme.semantic.surfaceAlt,
-                primary: theme.semantic.primary,
-                success: theme.semantic.success,
-                danger: theme.semantic.danger,
-                warning: theme.semantic.warning
-              }}
+              colors={standardColors}
             />
           </View>
         </>
@@ -179,19 +174,7 @@ export default function DashboardScreen() {
       {/* Assets mode - Net worth and asset tracking */}
       {mode === 'assets' && (
         <View style={styles.body}>
-          <AssetsBody
-            colors={{
-              text: theme.semantic.text,
-              textSecondary: theme.semantic.textSecondary,
-              border: theme.semantic.border,
-              surface: theme.semantic.surface,
-              surfaceAlt: theme.semantic.surfaceAlt,
-              primary: theme.semantic.primary,
-              success: theme.semantic.success,
-              danger: theme.semantic.danger,
-              warning: theme.semantic.warning
-            }}
-          />
+          <AssetsBody colors={standardColors} />
         </View>
       )}
 
@@ -223,16 +206,7 @@ export default function DashboardScreen() {
               <AccountsBody
                 scope={scope}
                 period={period}
-                colors={{
-                  text: theme.semantic.text,
-                  textSecondary: theme.semantic.textSecondary,
-                  border: theme.semantic.border,
-                  surface: theme.semantic.surface,
-                  surfaceAlt: theme.semantic.surfaceAlt,
-                  primary: theme.semantic.primary,
-                  success: theme.semantic.success,
-                  danger: theme.semantic.danger
-                }}
+                colors={standardColors}
               />
             </View>
           </SwipeGestureWrapper>
@@ -254,17 +228,7 @@ export default function DashboardScreen() {
               <View style={scope === 'month' ? { flex: 1 } : { display: 'none' }}>
                 <MonthlyBody
                   monthYYYYMM={monthYYYYMM}
-                  colors={{
-                    text: theme.semantic.text,
-                    textSecondary: theme.semantic.textSecondary,
-                    border: theme.semantic.border,
-                    surface: theme.semantic.background,
-                    surfaceAlt: theme.semantic.surfaceAlt,
-                    primary: theme.semantic.primary,
-                    success: theme.semantic.success,
-                    danger: theme.semantic.danger,
-                    highlight: theme.semantic.highlight
-                  }}
+                  colors={extendedColors}
                 />
               </View>
             )}
@@ -273,17 +237,7 @@ export default function DashboardScreen() {
               <View style={scope === 'year' ? { flex: 1 } : { display: 'none' }}>
                 <YearlyBody
                   year={period.year}
-                  colors={{
-                    text: theme.semantic.text,
-                    textSecondary: theme.semantic.textSecondary,
-                    border: theme.semantic.border,
-                    surface: theme.semantic.background,
-                    surfaceAlt: theme.semantic.surfaceAlt,
-                    primary: theme.semantic.primary,
-                    success: theme.semantic.success,
-                    danger: theme.semantic.danger,
-                    warning: theme.semantic.warning
-                  }}
+                  colors={standardColors}
                   onMonthPress={(month) => {
                     setPeriod({ year: period.year, month })
                     setScope('month')
@@ -293,18 +247,7 @@ export default function DashboardScreen() {
             )}
             {/* All - only mounted when needed */}
             {scope === 'all' && (
-              <AllBody
-                colors={{
-                  text: theme.semantic.text,
-                  textSecondary: theme.semantic.textSecondary,
-                  border: theme.semantic.border,
-                  surface: theme.semantic.surface,
-                  surfaceAlt: theme.semantic.surfaceAlt,
-                  primary: theme.semantic.primary,
-                  success: theme.semantic.success,
-                  danger: theme.semantic.danger
-                }}
-              />
+              <AllBody colors={standardColors} />
             )}
           </View>
         </SwipeGestureWrapper>

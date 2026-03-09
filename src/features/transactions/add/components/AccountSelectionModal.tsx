@@ -11,7 +11,7 @@ import { Screen } from '@/shared/layout/Screen'
 import { usePaymentFrequencyStore } from '@/store'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useMemo } from 'react'
 import {
@@ -243,11 +243,11 @@ const styles = StyleSheet.create({
   },
   headerCancel: {
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   headerTitle: {
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
   },
   searchContainer: {
     paddingHorizontal: spacing.lg,
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: fontSize.md,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
     paddingVertical: spacing.xs,
   },
   sectionHeader: {
@@ -275,8 +275,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: fontWeight.semibold,
+    letterSpacing: letterSpacing.wider,
   },
   row: {
     flexDirection: 'row',
@@ -305,11 +305,11 @@ const styles = StyleSheet.create({
   },
   accountName: {
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   accountBadge: {
     fontSize: fontSize.xs,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
     marginTop: 2,
   },
 })

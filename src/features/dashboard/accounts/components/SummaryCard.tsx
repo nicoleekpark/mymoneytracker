@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { formatCurrency } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
 import type { SectionSummary, AccountsColors } from '../accounts.types'
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    letterSpacing: 0.5,
+    letterSpacing: letterSpacing.wider,
   },
   tapHint: {
     fontSize: 10,

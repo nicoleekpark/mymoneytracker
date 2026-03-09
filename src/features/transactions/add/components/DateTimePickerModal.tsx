@@ -1,5 +1,5 @@
 import { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -166,11 +166,11 @@ const styles = StyleSheet.create({
   },
   headerLink: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
   },
   headerTitle: {
     fontSize: fontSize.md,
-    fontWeight: '800',
+    fontWeight: fontWeight.heavy,
   },
   calendarContainer: {
     marginHorizontal: spacing.lg,
@@ -192,11 +192,11 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   timeValue: {
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
   },
   timePickerWrapper: {
     borderTopWidth: 1,

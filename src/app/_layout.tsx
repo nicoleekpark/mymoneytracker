@@ -10,7 +10,7 @@ import 'react-native-reanimated'
 import { HoHThemeProvider } from '@/providers'
 import { ToastProvider } from '@/shared/components'
 import { ScrollView, Text, View } from 'react-native'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 
 import { initDbPragmas, migrate, runSystemSeeds } from '@/infrastructure/db'
 
@@ -65,7 +65,7 @@ export default function RootLayout() {
   if (dbError) {
     return (
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <Text style={{ fontSize: fontSize.xl, fontWeight: '700', marginBottom: 8 }}>DB init failed</Text>
+        <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, marginBottom: 8 }}>DB init failed</Text>
         <Text selectable>{String((dbError as any)?.message ?? dbError)}</Text>
       </ScrollView>
     )

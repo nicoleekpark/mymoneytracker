@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
@@ -105,7 +105,7 @@ function MonthBar({
       <Text
         style={{
           fontSize: fontSize.xs,
-          fontWeight: isSelected ? '800' : '600',
+          fontWeight: isSelected ? fontWeight.heavy : fontWeight.semibold,
           color: isSelected ? colors.text : colors.textSecondary,
           marginTop: 4,
           opacity: isFuture ? 0.4 : 1
@@ -178,7 +178,7 @@ export function GoalProgressHeader(props: Props) {
     >
       {/* Header row */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
           {year} OVERVIEW
         </Text>
         <View style={{ alignItems: 'flex-end' }}>
@@ -194,14 +194,14 @@ export function GoalProgressHeader(props: Props) {
             <Text
               style={{
                 fontSize: fontSize['3xl'],
-                fontWeight: '900',
+                fontWeight: fontWeight.black,
                 color: netCashFlow >= 0 ? colors.success : colors.danger
               }}
             >
               {formatUsdInt(Math.abs(netCashFlow))}
             </Text>
           </View>
-          <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
             net
           </Text>
         </View>
@@ -241,18 +241,18 @@ export function GoalProgressHeader(props: Props) {
             alignItems: 'center'
           }}
         >
-          <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.text }}>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
             {MONTH_NAMES_SHORT[selectedMonth!]}
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing.lg }}>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: '800', color: colors.success }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.heavy, color: colors.success }}>
                 {formatUsdInt(selectedData.incomeDollar)}
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>in</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.sm, fontWeight: '800', color: colors.danger }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.heavy, color: colors.danger }}>
                 {formatUsdInt(selectedData.expenseDollar)}
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>out</Text>
@@ -265,7 +265,7 @@ export function GoalProgressHeader(props: Props) {
                 <Text
                   style={{
                     fontSize: fontSize.sm,
-                    fontWeight: '800',
+                    fontWeight: fontWeight.heavy,
                     color: selectedData.netDollar >= 0 ? colors.success : colors.danger
                   }}
                 >

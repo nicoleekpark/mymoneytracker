@@ -36,7 +36,8 @@
 
 import { useHoHTheme } from '@/providers'
 import { radius } from '@/theme/tokens/radius'
-import { fontSize } from '@/theme/tokens/typography'
+import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import React from 'react'
 import {
   Pressable,
@@ -70,30 +71,35 @@ export type ButtonProps = {
   textStyle?: StyleProp<TextStyle>
 }
 
+// Button heights following Apple HIG touch targets
+const BUTTON_HEIGHT_LARGE = 50  // Large CTA
+const BUTTON_HEIGHT_MEDIUM = 44 // Standard touch target (HIG minimum)
+const BUTTON_HEIGHT_SMALL = 36  // Compact
+
 /**
  * Size configurations following Apple HIG spacing
  */
 const SIZE_CONFIG = {
   large: {
-    height: 50,
+    height: BUTTON_HEIGHT_LARGE,
     fontSize: fontSize.lg,
-    fontWeight: '600' as const,
+    fontWeight: fontWeight.semibold,
     borderRadius: radius.lg,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.xl,
   },
   medium: {
-    height: 44,
+    height: BUTTON_HEIGHT_MEDIUM,
     fontSize: fontSize.lg,
-    fontWeight: '600' as const,
+    fontWeight: fontWeight.semibold,
     borderRadius: radius.lg,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.xl,
   },
   small: {
-    height: 36,
+    height: BUTTON_HEIGHT_SMALL,
     fontSize: fontSize.md,
-    fontWeight: '500' as const,
+    fontWeight: fontWeight.medium,
     borderRadius: radius.md,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
   },
 } as const
 
@@ -171,7 +177,7 @@ export function Button({
           height: variant === 'text' ? 'auto' : sizeConfig.height,
           borderRadius: sizeConfig.borderRadius,
           paddingHorizontal: variant === 'text' ? 0 : sizeConfig.paddingHorizontal,
-          paddingVertical: variant === 'text' ? 8 : 0,
+          paddingVertical: variant === 'text' ? spacing.sm : 0,
           backgroundColor: getBackgroundColor(),
           opacity: disabled ? OPACITY.disabled : pressed ? OPACITY.pressed : 1,
           width: fullWidth ? '100%' : undefined,

@@ -5,7 +5,7 @@ import Svg, { Defs, LinearGradient, Path, Stop, Text as SvgText } from 'react-na
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 
@@ -166,9 +166,9 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
       <Text
         style={{
           fontSize: fontSize.lg,
-          fontWeight: '800',
+          fontWeight: fontWeight.heavy,
           color: colors.text,
-          letterSpacing: 0.2,
+          letterSpacing: letterSpacing.wide,
           textAlign: 'center',
           marginBottom: 12
         }}
@@ -178,13 +178,13 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
 
       {/* Labels */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.success }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.success }}>
           Income ({formatUsdInt(totalIncome)})
         </Text>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.text }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.text }}>
           You
         </Text>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.danger }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.danger }}>
           Expense ({formatUsdInt(totalExpense)})
         </Text>
       </View>

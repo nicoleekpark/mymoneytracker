@@ -26,9 +26,13 @@ import Animated, {
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useHoHTheme } from '@/providers'
 import { ScalePressable } from '@/shared/components'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, displaySize } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
+import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/theme/tokens/viewStyles'
+
+// Component-specific size
+const KEY_HEIGHT = spacing['3xl'] // 48 - standard touch target
 
 type AmountKeypadSheetProps = {
   visible: boolean
@@ -208,8 +212,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
   },
   handle: {
-    width: spacing['2xl'] + spacing.xs, // 36
-    height: spacing.xs + 1, // 5
+    width: GRABBER_WIDTH,
+    height: GRABBER_HEIGHT + 1, // 5
     borderRadius: radius.xs,
   },
   amountPreview: {
@@ -217,7 +221,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
   },
   amountText: {
-    fontSize: spacing['3xl'], // 48
+    fontSize: displaySize.xl, // 48 - hero display size
     fontWeight: fontWeight.heavy,
     letterSpacing: -1,
   },
@@ -254,7 +258,7 @@ const styles = StyleSheet.create({
   },
   key: {
     flex: 1,
-    height: spacing['3xl'], // 48
+    height: KEY_HEIGHT,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',

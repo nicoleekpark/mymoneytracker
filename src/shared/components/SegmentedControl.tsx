@@ -1,5 +1,6 @@
 import { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { spacing } from '@/theme/tokens/spacing'
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 
@@ -36,8 +37,8 @@ export function SegmentedControl<T extends string>({ value, onChange, options }:
             key={opt.value}
             onPress={() => onChange(opt.value)}
             style={{
-              paddingHorizontal: 16,
-              paddingVertical: 12,
+              paddingHorizontal: spacing.lg,
+              paddingVertical: spacing.md,
               borderBottomWidth: 2,
               borderBottomColor: selected ? theme.semantic.primary : 'transparent',
               marginBottom: -1
@@ -49,7 +50,7 @@ export function SegmentedControl<T extends string>({ value, onChange, options }:
               style={{
                 fontSize: fontSize.md,
                 color: selected ? theme.semantic.primary : theme.semantic.textSecondary,
-                fontWeight: selected ? '600' : '500'
+                fontWeight: selected ? fontWeight.semibold : fontWeight.medium
               }}
             >
               {opt.label}

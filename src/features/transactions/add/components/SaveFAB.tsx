@@ -121,13 +121,13 @@ export function SaveFAB({
             exiting={FadeOutDown.duration(100)}
             style={styles.menuRow}
           >
-            <Text style={styles.menuLabel}>Draft</Text>
+            <Text style={[styles.menuLabel, { color: theme.semantic.onPrimary }]}>Draft</Text>
             <TouchableOpacity
               onPress={handleSaveAsDraft}
               activeOpacity={0.8}
-              style={[styles.fabOption, { backgroundColor: '#FF9500' }]}
+              style={[styles.fabOption, { backgroundColor: theme.semantic.warning }]}
             >
-              <FontAwesome name="bookmark-o" size={fontSize.lg} color="#fff" />
+              <FontAwesome name="bookmark-o" size={fontSize.lg} color={theme.semantic.onPrimary} />
             </TouchableOpacity>
           </Animated.View>
 
@@ -137,13 +137,13 @@ export function SaveFAB({
             exiting={FadeOutDown.duration(100)}
             style={styles.menuRow}
           >
-            <Text style={styles.menuLabel}>& New</Text>
+            <Text style={[styles.menuLabel, { color: theme.semantic.onPrimary }]}>& New</Text>
             <TouchableOpacity
               onPress={handleSaveAndNew}
               activeOpacity={0.8}
               style={[styles.fabOption, { backgroundColor: theme.semantic.textSecondary }]}
             >
-              <FontAwesome name="plus" size={fontSize.lg} color="#fff" />
+              <FontAwesome name="plus" size={fontSize.lg} color={theme.semantic.onPrimary} />
             </TouchableOpacity>
           </Animated.View>
 
@@ -153,7 +153,7 @@ export function SaveFAB({
             exiting={FadeOutDown.duration(100)}
             style={styles.menuRow}
           >
-            <Text style={styles.menuLabel}>Save & Close</Text>
+            <Text style={[styles.menuLabel, { color: theme.semantic.onPrimary }]}>Save & Close</Text>
             <TouchableOpacity
               onPress={handleSaveAndClose}
               activeOpacity={0.8}
@@ -225,6 +225,6 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: '#fff',
+    // Color set inline via theme.semantic.onPrimary
   },
 })

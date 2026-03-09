@@ -8,8 +8,9 @@
 import type { Notification, NotificationTab, TimeGroup } from '@/domain/notification'
 import { TIME_GROUP_LABELS } from '@/domain/notification'
 import { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 import { useDraftsStore, useNotificationsStore } from '@/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
@@ -608,6 +609,14 @@ export default function NotificationsScreen() {
   )
 }
 
+// Component-specific sizes
+const HEADER_BUTTON_SIZE = 32
+const TAB_HEIGHT = 44
+const BADGE_MIN_SIZE = 18
+const AVATAR_SIZE = 28
+const UNREAD_DOT_SIZE = 6
+const FILTER_HEIGHT = 48
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -616,123 +625,123 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
   backButton: {
-    width: 32,
+    width: HEADER_BUTTON_SIZE,
     alignItems: 'flex-start',
   },
   headerTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   headerSpacer: {
-    width: 32,
+    width: HEADER_BUTTON_SIZE,
   },
   tabsContainer: {
     borderBottomWidth: 1,
-    maxHeight: 44,
+    maxHeight: TAB_HEIGHT,
   },
   tabsContent: {
-    paddingHorizontal: 16,
-    gap: 20,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.xl,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: spacing.sm + spacing.xs / 2, // 10
     borderBottomWidth: 2,
     marginBottom: -1,
-    gap: 6,
+    gap: spacing.sm - spacing.xs / 2, // 6
   },
   tabText: {
     fontSize: fontSize.md,
   },
   badge: {
-    minWidth: 18,
-    height: 18,
+    minWidth: BADGE_MIN_SIZE,
+    height: BADGE_MIN_SIZE,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: spacing.xs + 1, // 5
   },
   badgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
+    // color set inline via theme.semantic.onPrimary
   },
   content: {
     flex: 1,
   },
   section: {
-    paddingTop: 16,
+    paddingTop: spacing.lg,
   },
   sectionHeader: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    letterSpacing: letterSpacing.wider,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
   },
   typeSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    gap: 8,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   typeBadge: {
-    minWidth: 18,
-    height: 18,
+    minWidth: BADGE_MIN_SIZE,
+    height: BADGE_MIN_SIZE,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: spacing.xs + 1, // 5
   },
   typeBadgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
+    // color set inline via theme.semantic.onPrimary
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
   avatar: {
-    width: 28,
-    height: 28,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   rowText: {
     flex: 1,
     fontSize: fontSize.md,
   },
   rowTextUnread: {
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
   },
   rowTitle: {
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   rowRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     flexShrink: 0,
   },
   unreadDot: {
-    width: 6,
-    height: 6,
+    width: UNREAD_DOT_SIZE,
+    height: UNREAD_DOT_SIZE,
     borderRadius: radius.xs,
   },
   rowTime: {
@@ -752,56 +761,56 @@ const styles = StyleSheet.create({
   },
   draftTitle: {
     fontSize: fontSize.md,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
   },
   draftSubtitle: {
     fontSize: fontSize.xs,
-    marginTop: 2,
+    marginTop: spacing.xs / 2, // 2
   },
   draftAmount: {
     fontSize: fontSize.md,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
     fontVariant: ['tabular-nums'],
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   draftDate: {
     fontSize: fontSize.xs,
-    marginLeft: 12,
-    marginRight: 8,
+    marginLeft: spacing.md,
+    marginRight: spacing.sm,
   },
   filterContainer: {
-    maxHeight: 48,
+    maxHeight: FILTER_HEIGHT,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   filterContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
   },
   filterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.sm - spacing.xs / 2, // 6
+    paddingHorizontal: spacing.md,
     borderRadius: radius.xl,
   },
   filterPillText: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
   },
   filterPillCount: {
-    marginLeft: 6,
-    paddingHorizontal: 6,
+    marginLeft: spacing.sm - spacing.xs / 2, // 6
+    paddingHorizontal: spacing.sm - spacing.xs / 2, // 6
     paddingVertical: 1,
     borderRadius: radius.md,
   },
   filterPillCountText: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   starButton: {
-    width: 28,
-    height: 28,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },

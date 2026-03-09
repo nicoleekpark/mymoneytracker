@@ -4,7 +4,7 @@ import type { Transaction } from '@/domain/transaction'
 import { isExpense, removeTransaction, restoreTransaction, safeDate } from '@/domain/transaction'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import { CATEGORY_DOT_SIZE_SM, BADGE_MIN_SIZE, FONT_SIZE_BADGE, FONT_SIZE_TINY } from '@/theme/tokens/viewStyles'
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   monthText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    letterSpacing: 0.5
+    letterSpacing: letterSpacing.wider
   },
   monthTotal: {
     fontSize: fontSize.sm,
@@ -804,7 +804,7 @@ const styles = StyleSheet.create({
 
   loadMoreText: {
     fontSize: fontSize.sm,
-    fontWeight: '600'
+    fontWeight: fontWeight.semibold
   },
 
   footerSpacer: {
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
   draftBadgeText: {
     fontSize: FONT_SIZE_TINY,
     fontWeight: fontWeight.bold,
-    letterSpacing: 0.5
+    letterSpacing: letterSpacing.wider
   },
   typeBadge: {
     paddingHorizontal: spacing.sm,
@@ -837,6 +837,6 @@ const styles = StyleSheet.create({
   typeBadgeText: {
     fontSize: FONT_SIZE_TINY,
     fontWeight: fontWeight.bold,
-    letterSpacing: 0.5
+    letterSpacing: letterSpacing.wider
   }
 })

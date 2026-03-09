@@ -12,7 +12,7 @@ import {
 import { CategoryIcon, InfoSheet } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
-import { fontSize, displaySize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, displaySize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import { useAssetsData } from './hooks/useAssetsData'
@@ -530,7 +530,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
           <View style={{ paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
             {/* Net Worth - centered */}
             <View style={{ alignItems: 'center', marginBottom: spacing.xl }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                 Current Net Worth
               </Text>
               <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: -1 }}>
@@ -556,7 +556,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
                     Accessible
                   </Text>
                   <InfoIndicator color={colors.textSecondary} />
@@ -582,7 +582,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
                     Tied up
                   </Text>
                   <InfoIndicator color={colors.textSecondary} />

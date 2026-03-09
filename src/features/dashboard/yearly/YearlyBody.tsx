@@ -1,20 +1,22 @@
 import React, { useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { displaySize, fontSize, fontWeight } from '@/theme/tokens/typography'
+import { displaySize, fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
-import { CATEGORY_DOT_SIZE, UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
+import { CATEGORY_DOT_SIZE, SECTION_GAP, UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
 
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { FEATURE_FLAGS } from '@/config'
+import { SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
 import { MonthlyCashflowChart } from './components'
-import { useYearlyHeroData } from './hooks'
+import { useYearlyHeroData, useYearlyData } from './hooks'
 
 /**
- * Get category display info (name, color) from categoryRef
+ * Get category display info (name, color) from categoryRef.
+ * Returns subCategories array for subcategory name lookup.
  */
 function getCategoryMeta(categoryRef?: CategoryRef) {
   if (!categoryRef) {
@@ -30,14 +32,12 @@ function getCategoryMeta(categoryRef?: CategoryRef) {
 }
 
 /**
- * Get subcategory display name from parent's subCategories array
+ * Get subcategory display name from parent's subCategories array.
  */
 function getSubcategoryName(subCategories: typeof CATEGORIES[0]['subCategories'], subKey: string): string {
   const sub = subCategories?.find(s => s.key === subKey)
   return sub?.name ?? subKey
 }
-
-import { useYearlyData } from './hooks'
 
 export type YearlyColors = Readonly<{
   text: string
@@ -57,44 +57,8 @@ type Props = {
   onMonthPress?: (month: number) => void // 1-12, navigate to monthly view
 }
 
-// Section gap for combined style
-const SECTION_GAP = spacing['2xl']
-
-
 // Top N categories to show
 const TOP_N_CATEGORIES = 5
-
-/**
- * Section header - matching Assets style
- */
-function SectionHeader({
-  title,
-  rightText,
-  rightColor,
-  colors
-}: {
-  title: string
-  rightText?: string
-  rightColor?: string
-  colors: YearlyColors
-}) {
-  return (
-    <View style={{ marginBottom: spacing.lg }}>
-      {/* Subtle divider above */}
-      <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
-          {title}
-        </Text>
-        {rightText && (
-          <Text style={{ marginLeft: 'auto', fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
-            {rightText}
-          </Text>
-        )}
-      </View>
-    </View>
-  )
-}
 
 export function YearlyBody({ year, colors, onMonthPress }: Props) {
   const { loading, error, data } = useYearlyData(year)
@@ -226,7 +190,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
         {useOptionAHero ? (
           <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
             {/* Title line */}
-            <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
               Net Cash Flow
             </Text>
 
@@ -259,7 +223,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
               savings > 0 ? (
                 // Positive savings - dollar amount primary, % supporting
                 <>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                     Saved
                   </Text>
                   <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.success, letterSpacing: -1 }}>
@@ -281,7 +245,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
               ) : savings < 0 ? (
                 // Spending exceeds income
                 <>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                     Spending exceeds income by
                   </Text>
                   <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.danger, letterSpacing: -1 }}>
@@ -303,7 +267,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
               ) : (
                 // Broke even
                 <>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                     Breaking even
                   </Text>
                   <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
@@ -326,7 +290,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
             ) : (
               // No income
               <>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                   Net Cash Flow
                 </Text>
                 <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
@@ -351,7 +315,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
                 color: colors.textSecondary,
-                letterSpacing: 0.5,
+                letterSpacing: letterSpacing.wider,
                 marginBottom: spacing.xs
               }}
             >
@@ -372,7 +336,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
                 color: colors.textSecondary,
-                letterSpacing: 0.5,
+                letterSpacing: letterSpacing.wider,
                 marginBottom: spacing.xs
               }}
             >

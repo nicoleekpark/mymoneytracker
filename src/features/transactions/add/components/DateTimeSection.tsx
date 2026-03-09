@@ -3,6 +3,7 @@ import { Divider } from '@/shared/components'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { radius } from '@/theme/tokens/radius'
+import { fontWeight } from '@/theme/tokens/typography'
 
 import type { DateTimeState } from '../hooks/useDateTime'
 
@@ -46,7 +47,7 @@ export function DateTimeSection({ dateTime, embedded = false }: Props) {
     <View style={[styles.card, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
       <Pressable onPress={dateTime.openDatePicker} style={styles.row}>
         <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Date</Text>
-        <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>{dateTime.dateDisplay}</Text>
+        <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.heavy }}>{dateTime.dateDisplay}</Text>
       </Pressable>
 
       {dateTime.showDatePicker && (
@@ -65,7 +66,7 @@ export function DateTimeSection({ dateTime, embedded = false }: Props) {
 
       <Pressable onPress={dateTime.openTimePicker} style={styles.row}>
         <Text style={[styles.rowLabel, { color: theme.semantic.textSecondary }]}>Time</Text>
-        <Text style={{ color: theme.semantic.text, fontWeight: '800' }}>{dateTime.timeDisplay}</Text>
+        <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.heavy }}>{dateTime.timeDisplay}</Text>
       </Pressable>
 
       {dateTime.showTimePicker && (
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     width: 80,
-    fontWeight: '800',
+    fontWeight: fontWeight.heavy,
   },
   pickerWrap: {
     marginTop: 10,

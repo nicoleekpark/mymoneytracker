@@ -35,9 +35,14 @@ export type {
 } from './transaction.repository'
 
 export {
+  buildTxKey,
+  currentMonthYYYYMM,
+  getDaysInMonth,
+  getYearProgressMonths,
   isExpense,
   isIncome,
   isTransfer,
   safeDate,
+  slugify,
   transactionAmount
 } from './transaction.utils'

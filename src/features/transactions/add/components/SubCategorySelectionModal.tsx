@@ -4,6 +4,7 @@ import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 import { radius } from '@/theme/tokens/radius'
+import { fontWeight } from '@/theme/tokens/typography'
 import React from 'react'
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -48,10 +49,10 @@ export function SubCategorySelectionModal({
           ]}
         >
           <Pressable onPress={onClose} hitSlop={10}>
-            <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Cancel</Text>
+            <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.heavy }}>Cancel</Text>
           </Pressable>
 
-          <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Subcategory</Text>
+          <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>Subcategory</Text>
 
           <View style={{ width: 56 }} />
         </View>
@@ -61,16 +62,16 @@ export function SubCategorySelectionModal({
             onPress={onReopenCategory}
             style={[styles.topRow, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
           >
-            <Text style={{ color: theme.semantic.textSecondary, fontWeight: '800' }}>Category</Text>
+            <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.heavy }}>Category</Text>
             {selectedCategory ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <CategoryIcon name={selectedCategory.icon} size={16} color={selectedCategory.color} />
-                <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{selectedCategory.name}</Text>
+                <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>{selectedCategory.name}</Text>
               </View>
             ) : (
-              <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>Select</Text>
+              <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>Select</Text>
             )}
-            <Text style={{ color: theme.semantic.textSecondary, fontWeight: '900' }} />
+            <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.black }} />
           </Pressable>
         </View>
 
@@ -86,8 +87,8 @@ export function SubCategorySelectionModal({
               const selected = !categoryRef?.subCategoryKey
               return (
                 <Pressable onPress={() => onChoose(undefined)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
-                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>None</Text>
-                  <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
+                  <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>None</Text>
+                  <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: fontWeight.black }}>
                     {selected ? '✓' : ''}
                   </Text>
                 </Pressable>
@@ -103,9 +104,9 @@ export function SubCategorySelectionModal({
                   <View style={styles.iconContainer}>
                     <CategoryIcon name={sc.icon} size={18} color={sc.color} />
                   </View>
-                  <Text style={{ color: theme.semantic.text, fontWeight: '900' }}>{sc.name}</Text>
+                  <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>{sc.name}</Text>
                 </View>
-                <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: '900' }}>
+                <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: fontWeight.black }}>
                   {selected ? '✓' : ''}
                 </Text>
               </Pressable>

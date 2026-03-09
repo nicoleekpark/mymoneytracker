@@ -9,7 +9,7 @@ import type { Account } from '@/domain/account'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { useQuickChipsStore, SPECIAL_CHIP_KEYS, type QuickChipConfig } from '@/store'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
@@ -290,19 +290,19 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
   },
   headerDone: {
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   content: {
     padding: spacing.lg,
   },
   sectionTitle: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: fontWeight.semibold,
+    letterSpacing: letterSpacing.wider,
     marginBottom: spacing.sm,
   },
   chipsList: {
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   chipLabel: {
     flex: 1,
     fontSize: fontSize.md,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
   },
   chipType: {
     fontSize: fontSize.xs,

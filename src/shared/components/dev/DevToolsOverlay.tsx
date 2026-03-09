@@ -10,7 +10,7 @@ import { useDraftsStore } from '@/store'
 
 import { useHoHTheme } from '@/providers'
 import { useDevStore } from '@/store'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import React, { useMemo, useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
@@ -153,7 +153,7 @@ export function DevToolsOverlay() {
           <View style={styles.row}>
             <DevBtn label="Export" onPress={exportDatabase} colors={colors} />
             <Pressable onPress={() => setOpen(false)} style={[styles.btn, { borderColor: colors.border, backgroundColor: colors.bg }]}>
-              <Text style={{ color: colors.text2, fontWeight: '700', fontSize: fontSize.xs }}>Close</Text>
+              <Text style={{ color: colors.text2, fontWeight: fontWeight.bold, fontSize: fontSize.xs }}>Close</Text>
             </Pressable>
           </View>
         </View>
@@ -176,7 +176,7 @@ function DevBtn({
       onPress={onPress}
       style={[styles.btn, { borderColor: colors.border, backgroundColor: colors.bg }]}
     >
-      <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSize.xs }}>{label}</Text>
+      <Text style={{ color: colors.text, fontWeight: fontWeight.bold, fontSize: fontSize.xs }}>{label}</Text>
     </Pressable>
   )
 }
@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: fontSize.xs,
-    fontWeight: '900',
-    letterSpacing: 0.4,
+    fontWeight: fontWeight.black,
+    letterSpacing: letterSpacing.wide,
   },
   body: {
     marginTop: 8,

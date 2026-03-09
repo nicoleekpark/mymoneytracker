@@ -3,7 +3,7 @@ import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import React, { useMemo, useState } from 'react'
 import type { TextInput } from 'react-native'
 import {
@@ -486,11 +486,11 @@ const styles = StyleSheet.create({
   },
   headerLink: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
   },
   headerTitle: {
     fontSize: fontSize.md,
-    fontWeight: '800',
+    fontWeight: fontWeight.heavy,
   },
   searchContainer: {
     paddingHorizontal: spacing.lg,
@@ -526,13 +526,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: letterSpacing.wider,
   },
   sectionHint: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   // Chip Row (Recent/Frequent)
   chipRow: {
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   // Group Section
   groupSection: {
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   },
   groupTitle: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
     marginBottom: spacing.sm,
   },
   // List Container
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   },
   listRowTitle: {
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   listRowSubtitle: {
     fontSize: fontSize.xs,

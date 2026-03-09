@@ -130,3 +130,27 @@ export type AssetTrendPoint = {
   totalLiabilities: number
   liquidifiable: number
 }
+
+/**
+ * Asset growth projection for year-end estimates
+ */
+export type AssetProjection = {
+  monthsElapsed: number
+  monthsRemaining: number
+  currentNetWorth: number
+  startNetWorth: number
+  currentGrowth: number
+  avgMonthlyGrowth: number
+  projectedYearEndNetWorth: number
+  projectedYearEndGrowth: number
+  vsGoal: {
+    targetGrowth: number
+    projectedVsTarget: number // positive = ahead, negative = behind
+    onTrackToMeetGoal: boolean
+  } | null
+  vsLastYear: {
+    lastYearGrowth: number
+    delta: number
+    isMoreGrowth: boolean
+  } | null
+}

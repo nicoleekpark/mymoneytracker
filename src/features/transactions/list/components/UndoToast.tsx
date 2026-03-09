@@ -9,7 +9,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 
@@ -136,6 +136,6 @@ const styles = StyleSheet.create({
   undoText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
-    letterSpacing: 0.5,
+    letterSpacing: letterSpacing.wider,
   },
 })

@@ -5,7 +5,7 @@ import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { CategoryIcon } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import { UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
@@ -80,12 +80,12 @@ function SubcategoryRow({
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <CategoryIcon name={data.icon} size={13} color={data.color} />
-          <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text }}>
             {data.name}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-          <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.text }}>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text }}>
             {formatUsdInt(data.total)}
           </Text>
           <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
@@ -152,7 +152,7 @@ function HorizontalBarRow({
           {isFirst && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: -2 }}>
               <Text style={{ fontSize: fontSize.md }}>👑</Text>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                 Top spending
               </Text>
             </View>
@@ -160,14 +160,14 @@ function HorizontalBarRow({
 
           {/* Category name row */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}>
+            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }}>
               {name}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-              <Text style={{ fontSize: fontSize.md, fontWeight: '800', color: colors.text }}>
+              <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.heavy, color: colors.text }}>
                 {formatUsdInt(data.total)}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                 {percentage.toFixed(0)}%
               </Text>
             </View>
@@ -249,7 +249,7 @@ function HorizontalBarRow({
             onPress={onViewAllPress}
             style={{ paddingVertical: 8, alignItems: 'center' }}
           >
-            <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.primary }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.primary }}>
               View all {name} transactions →
             </Text>
           </Pressable>
@@ -317,9 +317,9 @@ export function SparklineList({ categories, totalExpense, colors, onCategoryPres
       <Text
         style={{
           fontSize: fontSize.lg,
-          fontWeight: '800',
+          fontWeight: fontWeight.heavy,
           color: colors.text,
-          letterSpacing: 0.2
+          letterSpacing: letterSpacing.wide
         }}
       >
         Spending by Category

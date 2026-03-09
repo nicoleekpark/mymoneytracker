@@ -6,6 +6,7 @@ import type {
   AssetTrendPoint,
   AssetField,
   AssetCategory,
+  AssetProjection,
 } from './asset.types'
 import { assetRepository } from '@/infrastructure/repositories'
 import {
@@ -227,29 +228,8 @@ export function getGoalProgress(year?: number, memberId?: string | null): {
   }
 }
 
-/**
- * Asset growth projection type
- */
-export type AssetProjection = {
-  monthsElapsed: number
-  monthsRemaining: number
-  currentNetWorth: number
-  startNetWorth: number
-  currentGrowth: number
-  avgMonthlyGrowth: number
-  projectedYearEndNetWorth: number
-  projectedYearEndGrowth: number
-  vsGoal: {
-    targetGrowth: number
-    projectedVsTarget: number // positive = ahead, negative = behind
-    onTrackToMeetGoal: boolean
-  } | null
-  vsLastYear: {
-    lastYearGrowth: number
-    delta: number
-    isMoreGrowth: boolean
-  } | null
-}
+// Re-export type for backwards compatibility
+export type { AssetProjection } from './asset.types'
 
 /**
  * Calculate projected net worth growth for the year

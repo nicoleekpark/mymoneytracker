@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { LayoutAnimation, Pressable, StyleSheet, Text, View } from 'react-native'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { formatCurrency } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
 import type { AccountActivity, AccountsColors } from '../accounts.types'
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   columnLabel: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    letterSpacing: 0.3,
+    letterSpacing: letterSpacing.wide,
   },
   columnLabelEnd: {
     textAlign: 'right',

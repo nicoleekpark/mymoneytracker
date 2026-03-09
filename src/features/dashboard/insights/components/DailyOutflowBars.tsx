@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
 import Svg, { Rect, Line } from 'react-native-svg'
 
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 
 import type { InsightsColors, DailyOutflow } from '../insights.types'
@@ -136,10 +136,10 @@ export function DailyOutflowBars({ data, monthYYYYMM, colors }: Props) {
     <View onLayout={handleLayout}>
       {/* Header row: label + selected day amount */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
           Daily outflow
         </Text>
-        {selectedDay !== null && selectedAmount !== undefined && (
+        {selectedDay !== null && selectedAmount != null && (
           <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.text }}>
             Day {selectedDay}: {formatAmount(selectedAmount)}
           </Text>

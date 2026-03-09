@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { Text, View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { useThemeStore } from '@/store'
 import type { ThemeMode } from '@/theme'
 import { SegmentedControl } from '@/shared/components/SegmentedControl'
@@ -33,11 +33,11 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16, backgroundColor: theme.semantic.background }}>
-      <Text style={{ color: theme.semantic.text, fontSize: fontSize['2xl'], fontWeight: '900', marginBottom: 12 }}>
+      <Text style={{ color: theme.semantic.text, fontSize: fontSize['2xl'], fontWeight: fontWeight.black, marginBottom: 12 }}>
         Settings
       </Text>
 
-      <Text style={{ color: theme.semantic.textSecondary, fontSize: fontSize.sm, fontWeight: '800', marginBottom: 10 }}>
+      <Text style={{ color: theme.semantic.textSecondary, fontSize: fontSize.sm, fontWeight: fontWeight.heavy, marginBottom: 10 }}>
         Theme
       </Text>
 

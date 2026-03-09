@@ -9,7 +9,7 @@ import {
 
 import type { Transaction } from '@/domain/transaction/transaction.types'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import type { CalendarColors } from './calendar.types'
 import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
@@ -152,7 +152,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               <View style={{ flexDirection: 'row', marginBottom: spacing.xl }}>
                 {/* Inflow */}
                 <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: 2 }}>
                     Inflow
                   </Text>
                   <Text
@@ -172,7 +172,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
 
                 {/* Outflow */}
                 <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: 2 }}>
                     Outflow
                   </Text>
                   <Text

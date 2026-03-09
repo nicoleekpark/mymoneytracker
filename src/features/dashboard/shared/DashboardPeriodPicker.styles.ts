@@ -1,8 +1,15 @@
 import { Platform, StyleSheet } from 'react-native'
 
 import type { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
+import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/theme/tokens/viewStyles'
+
+// Platform-specific safe area padding
+const BOTTOM_PADDING_IOS = 34
+const BOTTOM_PADDING_ANDROID = 20
+const PICKER_HEIGHT = 200
 
 export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHoHTheme>) {
   return StyleSheet.create({
@@ -15,51 +22,51 @@ export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHo
       backgroundColor: theme.semantic.surface,
       borderTopLeftRadius: radius.xl,
       borderTopRightRadius: radius.xl,
-      paddingBottom: Platform.OS === 'ios' ? 34 : 20
+      paddingBottom: Platform.OS === 'ios' ? BOTTOM_PADDING_IOS : BOTTOM_PADDING_ANDROID
     },
     handle: {
-      width: 36,
-      height: 4,
+      width: GRABBER_WIDTH,
+      height: GRABBER_HEIGHT,
       backgroundColor: theme.semantic.border,
       borderRadius: radius.xs,
       alignSelf: 'center',
-      marginTop: 8,
-      marginBottom: 4
+      marginTop: spacing.sm,
+      marginBottom: spacing.xs
     },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: theme.semantic.border
     },
     headerTitle: {
       fontSize: fontSize.lg,
-      fontWeight: '600',
+      fontWeight: fontWeight.semibold,
       color: theme.semantic.text
     },
     doneBtn: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm - spacing.xs / 2, // 6
       backgroundColor: theme.semantic.primary,
       borderRadius: radius.md
     },
     doneBtnText: {
       fontSize: fontSize.md,
-      fontWeight: '600',
-      color: '#FFFFFF'
+      fontWeight: fontWeight.semibold,
+      color: theme.semantic.onPrimary
     },
     pickerContainer: {
       flexDirection: 'row',
-      paddingHorizontal: 16
+      paddingHorizontal: spacing.lg
     },
     pickerColumn: {
       flex: 1
     },
     picker: {
-      height: 200
+      height: PICKER_HEIGHT
     },
     pickerItem: {
       fontSize: fontSize.xl,

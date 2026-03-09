@@ -1,52 +1,19 @@
 import React, { useState } from 'react'
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native'
 import { router } from 'expo-router'
+import { SectionHeader } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
 import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
+import { SECTION_GAP } from '@/theme/tokens/viewStyles'
 import { useAccountsData } from './hooks/useAccountsData'
 import type { AccountsColors, AccountActivity, AccountGroup } from './accounts.types'
 import type { Period, Scope } from '../types'
-
-// Match other dashboard pages
-const SECTION_GAP = spacing['2xl']
 
 type Props = {
   colors: AccountsColors
   scope: Scope
   period: Period
-}
-
-/**
- * Section header - matching Monthly/Yearly style
- */
-function SectionHeader({
-  title,
-  rightText,
-  rightColor,
-  colors
-}: {
-  title: string
-  rightText?: string
-  rightColor?: string
-  colors: AccountsColors
-}) {
-  return (
-    <View style={{ marginBottom: spacing.lg }}>
-      {/* Subtle divider above */}
-      <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
-          {title}
-        </Text>
-        {rightText && (
-          <Text style={{ marginLeft: 'auto', fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
-            {rightText}
-          </Text>
-        )}
-      </View>
-    </View>
-  )
 }
 
 /**

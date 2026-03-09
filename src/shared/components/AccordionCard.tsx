@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -69,12 +70,12 @@ export function AccordionCard({
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: 16,
-          paddingBottom: showSummary ? 12 : 16,
+          padding: spacing.lg,
+          paddingBottom: showSummary ? spacing.md : spacing.lg,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-          <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: letterSpacing.wide }}>
             {title}
           </Text>
           {headerRight}
@@ -86,14 +87,14 @@ export function AccordionCard({
 
       {/* Summary - visible based on hideSummaryOnExpand setting */}
       {showSummary && (
-        <Pressable onPress={toggle} style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+        <Pressable onPress={toggle} style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.md }}>
           {summary}
         </Pressable>
       )}
 
       {/* Expand hint text at bottom when collapsed */}
       {!expanded && expandHintText && (
-        <Pressable onPress={toggle} style={{ paddingBottom: 16 }}>
+        <Pressable onPress={toggle} style={{ paddingBottom: spacing.lg }}>
           <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, textAlign: 'center' }}>
             {expandHintText}
           </Text>
@@ -106,7 +107,7 @@ export function AccordionCard({
           style={{
             borderTopWidth: 1,
             borderTopColor: colors.border,
-            padding: 16,
+            padding: spacing.lg,
             backgroundColor: colors.surfaceAlt,
           }}
         >
@@ -131,7 +132,7 @@ type SummaryRowProps = {
 
 export function AccordionSummaryRow({ items, colors }: SummaryRowProps) {
   return (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
+    <View style={{ flexDirection: 'row', gap: spacing.sm }}>
       {items.map((item, idx) => (
         <View
           key={idx}
@@ -139,18 +140,18 @@ export function AccordionSummaryRow({ items, colors }: SummaryRowProps) {
             flex: 1,
             backgroundColor: colors.surfaceAlt,
             borderRadius: radius.md,
-            padding: 10,
+            padding: spacing.sm + spacing.xs / 2, // 10
             alignItems: 'center',
           }}
         >
           <Text
             style={{
               fontSize: fontSize.xs,
-              fontWeight: '600',
+              fontWeight: fontWeight.semibold,
               color: colors.textSecondary,
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
-              marginBottom: 4,
+              letterSpacing: letterSpacing.wider,
+              marginBottom: spacing.xs,
             }}
           >
             {item.label}
@@ -158,7 +159,7 @@ export function AccordionSummaryRow({ items, colors }: SummaryRowProps) {
           <Text
             style={{
               fontSize: fontSize.lg,
-              fontWeight: '800',
+              fontWeight: fontWeight.heavy,
               color: item.color || colors.text,
             }}
           >

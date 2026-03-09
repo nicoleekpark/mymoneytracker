@@ -1,10 +1,12 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 
 type MemberTabsColors = {
   primary: string
+  onPrimary: string
   surfaceAlt: string
   textSecondary: string
 }
@@ -54,18 +56,18 @@ export function MemberTabs(props: Props) {
     }
 
     return (
-      <View style={{ paddingVertical: 8 }}>
+      <View style={{ paddingVertical: spacing.sm }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingHorizontal: 16, alignItems: 'center' }}
+          contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.lg, alignItems: 'center' }}
         >
           {/* All tab */}
           <Pressable
             onPress={handleAllClick}
             style={{
-              paddingHorizontal: 16,
-              paddingVertical: 8,
+              paddingHorizontal: spacing.lg,
+              paddingVertical: spacing.sm,
               borderRadius: radius.full,
               backgroundColor: allSelected ? colors.primary : colors.surfaceAlt,
             }}
@@ -73,8 +75,8 @@ export function MemberTabs(props: Props) {
             <Text
               style={{
                 fontSize: fontSize.sm,
-                fontWeight: '600',
-                color: allSelected ? '#fff' : colors.textSecondary,
+                fontWeight: fontWeight.semibold,
+                color: allSelected ? colors.onPrimary : colors.textSecondary,
               }}
             >
               All
@@ -89,8 +91,8 @@ export function MemberTabs(props: Props) {
                 key={member.id}
                 onPress={() => handleMemberClick(member.id)}
                 style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.sm,
                   borderRadius: radius.full,
                   backgroundColor: isSelected ? colors.primary : colors.surfaceAlt,
                 }}
@@ -98,8 +100,8 @@ export function MemberTabs(props: Props) {
                 <Text
                   style={{
                     fontSize: fontSize.sm,
-                    fontWeight: '600',
-                    color: isSelected ? '#fff' : colors.textSecondary,
+                    fontWeight: fontWeight.semibold,
+                    color: isSelected ? colors.onPrimary : colors.textSecondary,
                   }}
                 >
                   {member.nickname}
@@ -117,18 +119,18 @@ export function MemberTabs(props: Props) {
   const allSelected = selectedId === null
 
   return (
-    <View style={{ paddingVertical: 8 }}>
+    <View style={{ paddingVertical: spacing.sm }}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingHorizontal: 16, alignItems: 'center' }}
+        contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.lg, alignItems: 'center' }}
       >
         {/* All tab */}
         <Pressable
           onPress={() => onSelect(null)}
           style={{
-            paddingHorizontal: 16,
-            paddingVertical: 8,
+            paddingHorizontal: spacing.lg,
+            paddingVertical: spacing.sm,
             borderRadius: radius.full,
             backgroundColor: allSelected ? colors.primary : colors.surfaceAlt,
           }}
@@ -136,8 +138,8 @@ export function MemberTabs(props: Props) {
           <Text
             style={{
               fontSize: fontSize.sm,
-              fontWeight: '600',
-              color: allSelected ? '#fff' : colors.textSecondary,
+              fontWeight: fontWeight.semibold,
+              color: allSelected ? colors.onPrimary : colors.textSecondary,
             }}
           >
             All
@@ -152,8 +154,8 @@ export function MemberTabs(props: Props) {
               key={member.id}
               onPress={() => onSelect(member.id)}
               style={{
-                paddingHorizontal: 16,
-                paddingVertical: 8,
+                paddingHorizontal: spacing.lg,
+                paddingVertical: spacing.sm,
                 borderRadius: radius.full,
                 backgroundColor: isSelected ? colors.primary : colors.surfaceAlt,
               }}
@@ -161,8 +163,8 @@ export function MemberTabs(props: Props) {
               <Text
                 style={{
                   fontSize: fontSize.sm,
-                  fontWeight: '600',
-                  color: isSelected ? '#fff' : colors.textSecondary,
+                  fontWeight: fontWeight.semibold,
+                  color: isSelected ? colors.onPrimary : colors.textSecondary,
                 }}
               >
                 {member.nickname}

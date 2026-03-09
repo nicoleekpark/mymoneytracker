@@ -210,17 +210,21 @@ function getStripBg(t: TransactionType, theme: Props['theme']): string {
   return theme.dangerSoft
 }
 
+// Component-specific sizes
+const ROW_MIN_HEIGHT = 50
+const LEFT_STRIP_WIDTH = 10
+
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
   },
   dayHeader: {
-    paddingTop: 12,
-    paddingBottom: 6,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm - spacing.xs / 2, // 6
   },
   dayHeaderText: {
     fontSize: fontSize.xs,
-    fontWeight: '800',
+    fontWeight: fontWeight.heavy,
   },
   actionsContainer: {
     position: 'absolute',
@@ -244,9 +248,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.lg,
   },
   actionText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
+    // color set inline via theme.semantic.onPrimary
   },
   rowCard: {
     flexDirection: 'row',
@@ -254,21 +258,21 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     overflow: 'hidden',
     position: 'relative',
-    minHeight: 50,
-    backgroundColor: '#fff',
+    minHeight: ROW_MIN_HEIGHT,
+    // backgroundColor set inline via theme
   },
   leftStrip: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: 10,
+    width: LEFT_STRIP_WIDTH,
   },
   rowBody: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    paddingLeft: 12 + 10,
+    paddingVertical: spacing.sm + spacing.xs / 2, // 10
+    paddingHorizontal: spacing.md,
+    paddingLeft: spacing.md + LEFT_STRIP_WIDTH,
   },
   rowTop: {
     flexDirection: 'row',
@@ -277,35 +281,35 @@ const styles = StyleSheet.create({
   dayText: {
     width: DAY_COL_W,
     fontSize: fontSize.xl,
-    fontWeight: '900',
+    fontWeight: fontWeight.black,
     marginRight: DAY_GAP,
   },
   itemText: {
     flex: 1,
     fontSize: fontSize.lg,
-    fontWeight: '900',
-    paddingRight: 10,
+    fontWeight: fontWeight.black,
+    paddingRight: spacing.sm + spacing.xs / 2, // 10
   },
   amountText: {
     fontSize: fontSize.md,
-    fontWeight: '900',
+    fontWeight: fontWeight.black,
   },
   rowSecond: {
-    marginTop: 4,
+    marginTop: spacing.xs,
     marginLeft: DAY_COL_W + DAY_GAP,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
+    gap: spacing.sm + spacing.xs / 2, // 10
   },
   merchantText: {
     flex: 1,
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
   },
   accountText: {
     fontSize: fontSize.xs,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
     textAlign: 'right',
   },
 })

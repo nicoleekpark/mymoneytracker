@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native'
 import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { CARD_SHADOW } from '@/theme/tokens'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import { CATEGORY_DOT_SIZE, UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
@@ -117,7 +117,7 @@ export function MonthlyCategoryContent(props: ContentProps) {
       {/* Header - only show if not hidden */}
       {!hideHeader && (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
-          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: 0.2 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, letterSpacing: letterSpacing.wide }}>
             Spending by Category
           </Text>
           <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginLeft: spacing.xs }}>

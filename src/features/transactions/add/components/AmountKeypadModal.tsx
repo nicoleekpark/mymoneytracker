@@ -1,5 +1,5 @@
 import { useHoHTheme } from '@/providers'
-import { displaySize, fontSize } from '@/theme/tokens/typography'
+import { displaySize, fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import React from 'react'
@@ -153,11 +153,11 @@ const styles = StyleSheet.create({
   },
   headerLink: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontWeight: fontWeight.bold,
   },
   headerTitle: {
     fontSize: fontSize.md,
-    fontWeight: '800',
+    fontWeight: fontWeight.heavy,
   },
   display: {
     marginHorizontal: spacing.lg,
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
   displayAmount: {
     fontSize: displaySize.md,
-    fontWeight: '900',
+    fontWeight: fontWeight.black,
   },
   grid: {
     flexDirection: 'row',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   },
   keyText: {
     fontSize: fontSize.xl,
-    fontWeight: '800',
+    fontWeight: fontWeight.heavy,
   },
   doneBtn: {
     marginHorizontal: spacing.lg,
@@ -203,6 +203,6 @@ const styles = StyleSheet.create({
   },
   doneBtnText: {
     fontSize: fontSize.lg,
-    fontWeight: '900',
+    fontWeight: fontWeight.black,
   },
 })

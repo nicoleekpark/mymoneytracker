@@ -16,7 +16,7 @@ import { getActiveAccounts } from '@/domain/account'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
 
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontSize: 40,
-    fontWeight: '800',
+    fontWeight: fontWeight.heavy,
     letterSpacing: -1,
   },
   itemTitle: {
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   noteSectionLabel: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    letterSpacing: 0.5,
+    letterSpacing: letterSpacing.wider,
     marginBottom: spacing.xs,
   },
   noteSectionText: {

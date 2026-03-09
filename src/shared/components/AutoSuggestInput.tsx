@@ -6,7 +6,7 @@
  */
 
 import { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Pressable,
@@ -120,7 +120,7 @@ export function AutoSuggestInput({
     return (
       <Text style={[styles.suggestionText, { color: theme.semantic.text }]}>
         {before}
-        <Text style={{ fontWeight: '600' }}>{match}</Text>
+        <Text style={{ fontWeight: fontWeight.semibold }}>{match}</Text>
         {after}
       </Text>
     )

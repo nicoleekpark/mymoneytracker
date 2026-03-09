@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import type { AccountGroup, AccountsColors } from '../accounts.types'
 import { AccountRow } from './AccountRow'
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    letterSpacing: 0.5,
+    letterSpacing: letterSpacing.wider,
   },
   rows: {
     gap: 0,

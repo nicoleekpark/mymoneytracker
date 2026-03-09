@@ -19,7 +19,8 @@ export function createTransaction(categoryIndex: CategoryIndex, input: Transacti
       throw new Error('fromAccountId and toAccountId must differ')
     }
   } else {
-    if ((input as any).fromAccountId || (input as any).toAccountId) {
+    // Type-safe check for transfer-only fields on non-transfer transactions
+    if ('fromAccountId' in input || 'toAccountId' in input) {
       throw new Error('non-transfer must not include fromAccountId/toAccountId')
     }
   }

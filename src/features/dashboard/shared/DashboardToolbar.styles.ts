@@ -1,8 +1,12 @@
 import { StyleSheet } from 'react-native'
 
 import type { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
+
+// Component-specific size
+const TOOLBAR_HEIGHT = 40
 
 export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHTheme>) {
   return StyleSheet.create({
@@ -10,17 +14,17 @@ export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHThem
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: 40,
-      paddingHorizontal: 2
+      height: TOOLBAR_HEIGHT,
+      paddingHorizontal: spacing.xs / 2 // 2
     },
     periodSection: {
       flexDirection: 'row',
       alignItems: 'center',
-      height: 40,
+      height: TOOLBAR_HEIGHT,
       gap: 0
     },
     chevronBtn: {
-      padding: 6,
+      padding: spacing.sm - spacing.xs / 2, // 6
       borderRadius: radius.sm
     },
     chevronBtnDisabled: {
@@ -28,35 +32,35 @@ export function createDashboardToolbarStyles(theme: ReturnType<typeof useHoHThem
     },
     chevronText: {
       fontSize: fontSize.md,
-      fontWeight: '600',
+      fontWeight: fontWeight.semibold,
       color: theme.semantic.text
     },
     periodBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 4,
-      paddingVertical: 4,
+      paddingHorizontal: spacing.xs,
+      paddingVertical: spacing.xs,
       borderRadius: radius.sm
     },
     periodText: {
       fontSize: fontSize.lg,
-      fontWeight: '600',
+      fontWeight: fontWeight.semibold,
       color: theme.semantic.text
     },
     actions: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 2
+      gap: spacing.xs / 2 // 2
     },
     todayChip: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
       borderBottomWidth: 2,
       borderBottomColor: 'transparent'
     },
     todayText: {
       fontSize: fontSize.sm,
-      fontWeight: '500',
+      fontWeight: fontWeight.medium,
       color: theme.semantic.textSecondary
     }
   })

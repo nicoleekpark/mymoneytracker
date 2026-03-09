@@ -16,7 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { CategoryIcon } from '@/shared/components'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontWeight: fontWeight.medium,
     maxWidth: 100,
   },
 })

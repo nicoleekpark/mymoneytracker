@@ -21,7 +21,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   revealText: {
     color: '#fff',
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
   button: {
     flex: 1,
@@ -228,6 +228,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
   },
 })

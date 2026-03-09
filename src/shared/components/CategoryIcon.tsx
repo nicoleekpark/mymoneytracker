@@ -1,5 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React from 'react'
+import { UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
 
 type CategoryIconProps = {
   name: string
@@ -11,7 +12,7 @@ type CategoryIconProps = {
  * Renders a category icon using FontAwesome.
  * Falls back to 'question-circle' if icon name is invalid.
  */
-export function CategoryIcon({ name, size = 16, color = '#666' }: CategoryIconProps) {
+export function CategoryIcon({ name, size = 16, color = UNCATEGORIZED_COLOR }: CategoryIconProps) {
   return (
     <FontAwesome
       name={name as React.ComponentProps<typeof FontAwesome>['name']}

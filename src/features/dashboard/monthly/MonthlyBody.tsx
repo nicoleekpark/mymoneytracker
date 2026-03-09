@@ -1,8 +1,10 @@
 import { FEATURE_FLAGS } from '@/config'
+import { SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
-import { displaySize, fontSize, fontWeight } from '@/theme/tokens/typography'
+import { displaySize, fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
+import { SECTION_GAP } from '@/theme/tokens/viewStyles'
 import { useRouter } from 'expo-router'
 import React, { useMemo } from 'react'
 import { ScrollView, Text, View } from 'react-native'
@@ -23,42 +25,6 @@ function buildMonthTitle(monthYYYYMM: string) {
 }
 
 const TRANSACTIONS_ROUTE = '/transactions' as const
-
-// Section gap for combined style - match Yearly
-const SECTION_GAP = spacing['2xl']
-
-
-/**
- * Section header - matching Yearly/Assets style
- */
-function SectionHeader({
-  title,
-  rightText,
-  rightColor,
-  colors
-}: {
-  title: string
-  rightText?: string
-  rightColor?: string
-  colors: CalendarColors
-}) {
-  return (
-    <View style={{ marginBottom: spacing.lg }}>
-      {/* Subtle divider above */}
-      <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
-          {title}
-        </Text>
-        {rightText && (
-          <Text style={{ marginLeft: 'auto', fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: rightColor || colors.text }}>
-            {rightText}
-          </Text>
-        )}
-      </View>
-    </View>
-  )
-}
 
 export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors }) {
   const { monthYYYYMM, colors } = props
@@ -123,7 +89,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
             {/* Hero: Net outcome */}
             <View style={{ alignItems: 'center', paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
               {/* Title line */}
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                 Net Cash Flow
               </Text>
 
@@ -180,7 +146,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 savings > 0 ? (
                   // Positive savings - dollar amount primary, % supporting
                   <>
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                       Saved
                     </Text>
                     <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.success, letterSpacing: -1 }}>
@@ -193,7 +159,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 ) : savings < 0 ? (
                   // Spending exceeds income
                   <>
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                       Spending exceeds income by
                     </Text>
                     <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.danger, letterSpacing: -1 }}>
@@ -206,7 +172,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 ) : (
                   // Broke even (savings = 0)
                   <>
-                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                    <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                       Breaking even
                     </Text>
                     <Text style={{ fontSize: displaySize.md, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
@@ -220,7 +186,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               ) : (
                 // No income
                 <>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
                     Net Cash Flow
                   </Text>
                   <Text style={{ fontSize: displaySize.sm, fontWeight: fontWeight.bold, color: colors.textSecondary }}>
@@ -246,7 +212,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
                 color: colors.textSecondary,
-                letterSpacing: 0.5,
+                letterSpacing: letterSpacing.wider,
                 marginBottom: spacing.xs
               }}
             >
@@ -267,7 +233,7 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
                 color: colors.textSecondary,
-                letterSpacing: 0.5,
+                letterSpacing: letterSpacing.wider,
                 marginBottom: spacing.xs
               }}
             >

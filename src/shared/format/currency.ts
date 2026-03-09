@@ -79,3 +79,20 @@ export function formatSignedUsdCompact(amount: number): string {
   return `${sign}$${abs}`
 }
 
+/**
+ * Format amount with K/M suffix for display.
+ * Example: 1500000 -> "$ 1.5M", 15000 -> "$ 15K", 500 -> "$ 500"
+ */
+export function formatCompactAmount(amount: number): string {
+  const abs = Math.abs(amount)
+  if (abs >= 1_000_000) {
+    const m = abs / 1_000_000
+    return `$ ${m >= 10 ? Math.round(m) : m.toFixed(1)}M`
+  }
+  if (abs >= 1000) {
+    const k = abs / 1000
+    return `$ ${k >= 10 ? Math.round(k) : k.toFixed(1)}K`
+  }
+  return `$ ${Math.round(abs)}`
+}
+

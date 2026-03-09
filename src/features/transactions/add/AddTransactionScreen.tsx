@@ -1398,7 +1398,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    letterSpacing: 0.5,
+    letterSpacing: letterSpacing.wider,
     marginBottom: spacing.sm,
   },
   fieldValue: {

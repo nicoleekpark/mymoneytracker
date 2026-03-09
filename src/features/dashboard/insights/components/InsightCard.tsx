@@ -1,13 +1,22 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import { InfoSheet } from '@/shared/components'
+import { componentStyles, FONT_SIZE_TINY } from '@/theme/tokens/viewStyles'
 
 import type { InsightCardData, InsightsColors, EvidenceItem, CTAButton } from '../insights.types'
 import { BADGE_CONFIG } from '../insights.types'
+
+// Line heights for multi-line text readability
+const LINE_HEIGHT_LG = 24 // For lg fontSize (18)
+const LINE_HEIGHT_SM = 18 // For sm fontSize (14)
+const LINE_HEIGHT_MD = 19 // For md/sm fontSize in paragraphs
+
+// CTA button height (touch target)
+const CTA_BUTTON_HEIGHT = 36
 
 type Props = {
   card: InsightCardData
@@ -28,7 +37,7 @@ function ColorizedBody({ text, colors }: { text: string; colors: InsightsColors 
   const parts = text.split(regex)
 
   return (
-    <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text, lineHeight: 24 }}>
+    <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text, lineHeight: LINE_HEIGHT_LG }}>
       {parts.map((part, i) => {
         if (!part) return null
         // Check if this part is a value (matches our pattern)
@@ -70,15 +79,15 @@ function EvidenceSection({ items, colors }: { items: EvidenceItem[]; colors: Ins
             marginBottom: spacing.sm
           }}
         >
-          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.3, width: 95 }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: letterSpacing.wide, width: 95 }}>
             {item.key}
           </Text>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, lineHeight: 18 }}>
+            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text, lineHeight: LINE_HEIGHT_SM }}>
               {item.value}
             </Text>
             {item.detail && (
-              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 2 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs / 2 }}>
                 {item.detail}
               </Text>
             )}
@@ -114,7 +123,7 @@ function CTARow({ buttons, colors }: { buttons: CTAButton[]; colors: InsightsCol
                 paddingVertical: spacing.sm,
                 borderRadius: radius.full,
                 backgroundColor: colors.primary,
-                minHeight: 36
+                minHeight: CTA_BUTTON_HEIGHT
               }}
             >
               <Text style={{
@@ -135,7 +144,7 @@ function CTARow({ buttons, colors }: { buttons: CTAButton[]; colors: InsightsCol
             onPress={() => {
               // Placeholder
             }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={{ top: spacing.sm, bottom: spacing.sm, left: spacing.sm, right: spacing.sm }}
           >
             <Text style={{
               fontSize: fontSize.sm,
@@ -180,7 +189,7 @@ function ExplainBottomSheet({
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
           Calculation
         </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: LINE_HEIGHT_MD }}>
           {card.explanation?.calculation || 'Compares this month to typical.'}
         </Text>
       </View>
@@ -191,7 +200,7 @@ function ExplainBottomSheet({
           <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
             Why it matters
           </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: LINE_HEIGHT_MD }}>
             {card.explanation.whatMatters}
           </Text>
         </View>
@@ -202,7 +211,7 @@ function ExplainBottomSheet({
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
           Note
         </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: LINE_HEIGHT_MD }}>
           Pattern summary, not a prediction.
         </Text>
       </View>
@@ -234,20 +243,16 @@ export function InsightCard({ card, colors, children, variant = 'flat' }: Props)
           {card.explanation && (
             <Pressable
               onPress={() => setShowExplain(true)}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: radius.full,
-                borderWidth: 1,
-                borderColor: colors.textSecondary,
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: 0.6,
-                marginLeft: spacing.sm
-              }}
+              hitSlop={{ top: spacing.md, bottom: spacing.md, left: spacing.md, right: spacing.md }}
+              style={[
+                componentStyles.infoIndicator.container,
+                {
+                  borderColor: colors.textSecondary,
+                  marginLeft: spacing.sm
+                }
+              ]}
             >
-              <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textSecondary }}>i</Text>
+              <Text style={[componentStyles.infoIndicator.text, { color: colors.textSecondary }]}>i</Text>
             </Pressable>
           )}
         </View>
@@ -257,7 +262,7 @@ export function InsightCard({ card, colors, children, variant = 'flat' }: Props)
 
         {/* Sub text */}
         {card.sub && (
-          <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs, lineHeight: 19 }}>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs, lineHeight: LINE_HEIGHT_MD }}>
             {card.sub}
           </Text>
         )}

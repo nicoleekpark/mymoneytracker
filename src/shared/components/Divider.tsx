@@ -1,4 +1,5 @@
 import { useHoHTheme } from '@/providers'
+import { spacing as spacingTokens } from '@/theme/tokens/spacing'
 import React from 'react'
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native'
 
@@ -11,10 +12,10 @@ type DividerProps = {
 }
 
 const spacingMap: Record<DividerSpacing, number> = {
-  none: 0,
-  sm: 8,
-  md: 12,
-  lg: 16,
+  none: spacingTokens.none,
+  sm: spacingTokens.sm,
+  md: spacingTokens.md,
+  lg: spacingTokens.lg,
 }
 
 export function Divider({ spacing = 'none', opacity = 1, style }: DividerProps) {

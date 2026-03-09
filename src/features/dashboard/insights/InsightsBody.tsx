@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { InfoSheet } from '@/shared/components'
-import { fontSize, fontWeight, displaySize } from '@/theme/tokens/typography'
+import { InfoSheet, SectionHeader } from '@/shared/components'
+import { fontSize, fontWeight, displaySize, letterSpacing } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
+import { SECTION_GAP } from '@/theme/tokens/viewStyles'
 import { formatUsdInt } from '@/shared/format/currency'
 
 import { NetSparkline, CategoryDeltaBar, DailyOutflowBars } from './components'
@@ -13,47 +14,6 @@ import type { InsightsColors } from './insights.types'
 type Props = {
   monthYYYYMM: string
   colors: InsightsColors
-}
-
-// Section gap - matches Monthly/Yearly/Assets
-const SECTION_GAP = spacing['2xl']
-
-/**
- * Section header - matching Monthly/Yearly/Assets style
- * Divider above, title with optional description below
- */
-function SectionHeader({
-  title,
-  description,
-  rightLabel,
-  colors
-}: {
-  title: string
-  description?: string  // One-line explanation below title
-  rightLabel?: string   // For labels like "vs last month" - small
-  colors: InsightsColors
-}) {
-  return (
-    <View style={{ marginBottom: spacing.lg }}>
-      {/* Subtle divider above */}
-      <View style={{ height: 1, backgroundColor: colors.border, marginBottom: spacing.lg, opacity: 0.5 }} />
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text }}>
-          {title}
-        </Text>
-        {rightLabel && (
-          <Text style={{ marginLeft: 'auto', fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
-            {rightLabel}
-          </Text>
-        )}
-      </View>
-      {description && (
-        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.sm }}>
-          {description}
-        </Text>
-      )}
-    </View>
-  )
 }
 
 /**
@@ -227,7 +187,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
             style={{ alignItems: 'center', paddingVertical: spacing.xl }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
                 vs Typical
               </Text>
               <View
@@ -277,7 +237,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
           <View style={{ flexDirection: 'row' }}>
             {/* This Month */}
             <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
                 This month
               </Text>
               <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, fontVariant: ['tabular-nums'] }}>
@@ -290,7 +250,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
 
             {/* Typical */}
             <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.xs }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
                 Typical
               </Text>
               <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, fontVariant: ['tabular-nums'] }}>

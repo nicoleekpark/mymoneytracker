@@ -3,7 +3,7 @@ import { LayoutChangeEvent, PanResponder, Pressable, Text, View } from 'react-na
 import Svg, { Path, Circle, Line } from 'react-native-svg'
 
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 
@@ -236,7 +236,7 @@ function ComboChart({
               <Text
                 style={{
                   fontSize: fontSize.xs,
-                  fontWeight: isSelected ? '800' : '600',
+                  fontWeight: isSelected ? fontWeight.heavy : fontWeight.semibold,
                   color: isSelected ? colors.text : colors.textSecondary,
                   opacity: isFuture ? 0.4 : 1
                 }}
@@ -389,13 +389,13 @@ export function MonthlyCashflowChart({
         <View style={{ marginTop: spacing.md, marginHorizontal: CHART_PADDING_H }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
-              In <Text style={{ fontWeight: '600', color: colors.success }}>{formatUsdInt(selectedData.incomeDollar)}</Text>
+              In <Text style={{ fontWeight: fontWeight.semibold, color: colors.success }}>{formatUsdInt(selectedData.incomeDollar)}</Text>
             </Text>
             <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
-              Out <Text style={{ fontWeight: '600', color: colors.danger }}>{formatUsdInt(selectedData.expenseDollar)}</Text>
+              Out <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{formatUsdInt(selectedData.expenseDollar)}</Text>
             </Text>
             <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
-              Net <Text style={{ fontWeight: '600', color: colors.text }}>{selectedData.netDollar >= 0 ? '+' : ''}{formatUsdInt(selectedData.netDollar)}</Text>
+              Net <Text style={{ fontWeight: fontWeight.semibold, color: colors.text }}>{selectedData.netDollar >= 0 ? '+' : ''}{formatUsdInt(selectedData.netDollar)}</Text>
             </Text>
           </View>
           {/* Navigate to month link */}
@@ -409,7 +409,7 @@ export function MonthlyCashflowChart({
               })}
               hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
                 View {MONTH_NAMES_SHORT[selectedIndex]} details ›
               </Text>
             </Pressable>

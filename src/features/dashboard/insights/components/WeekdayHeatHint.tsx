@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { View, Text, Pressable } from 'react-native'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 
 import type { InsightsColors } from '../insights.types'
@@ -46,7 +46,7 @@ export function WeekdayHeatHint({ data, colors }: Props) {
       {/* Selected day display */}
       <View style={{ height: 20, marginBottom: 8, justifyContent: 'center' }}>
         {selectedDay !== null && selectedSpend !== null ? (
-          <Text style={{ fontSize: fontSize.xs, color: colors.text, fontWeight: '600' }}>
+          <Text style={{ fontSize: fontSize.xs, color: colors.text, fontWeight: fontWeight.semibold }}>
             {DAY_LABELS[selectedDay]}: {formatAmount(selectedSpend)} avg
           </Text>
         ) : (
@@ -70,7 +70,7 @@ export function WeekdayHeatHint({ data, colors }: Props) {
               onPress={() => setSelectedDay(selectedDay === dayIndex ? null : dayIndex)}
               style={{ alignItems: 'center', gap: 4 }}
             >
-              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, fontWeight: '500' }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, fontWeight: fontWeight.medium }}>
                 {label}
               </Text>
               <View

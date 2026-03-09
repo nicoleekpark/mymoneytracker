@@ -36,6 +36,22 @@ export type CategoryRefResolver = (categoryDbId: UUID) => CategoryRef
 export type CategoryIdResolver = (ref?: CategoryRef) => CategoryDbId | null
 
 /**
+ * Valid transaction types for runtime validation
+ */
+const VALID_TRANSACTION_TYPES: TransactionType[] = ['expense', 'income', 'transfer']
+
+/**
+ * Validate transaction type from database (guards against data corruption)
+ */
+function validateTransactionType(type: string): TransactionType {
+  if (!VALID_TRANSACTION_TYPES.includes(type as TransactionType)) {
+    console.warn(`[TransactionMapper] Invalid type "${type}", defaulting to "expense"`)
+    return 'expense'
+  }
+  return type as TransactionType
+}
+
+/**
  * Convert a database row to a domain Transaction object.
  */
 export function rowToTransaction(
@@ -43,11 +59,14 @@ export function rowToTransaction(
   resolveCategoryRef: CategoryRefResolver,
   tags?: string[]
 ): Transaction {
+  // Validate enum at runtime to catch data corruption
+  const validatedType = validateTransactionType(row.type)
+
   const base = {
     id: row.id,
     key: row.key,
     occurredAt: new Date(row.occurred_at),
-    type: row.type,
+    type: validatedType,
     item: row.item && row.item !== 'Not added' ? row.item : undefined,
     money: { amount: centsToDollars(row.amount_cents), currency: row.currency },
     category: row.category_id ? resolveCategoryRef(row.category_id) : undefined,
@@ -58,7 +77,7 @@ export function rowToTransaction(
     tags: tags && tags.length > 0 ? tags : undefined,
   } as const
 
-  if (row.type === 'transfer') {
+  if (validatedType === 'transfer') {
     return {
       ...base,
       type: 'transfer',

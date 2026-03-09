@@ -5,7 +5,7 @@ import type { CategoryRef } from '@/domain/category'
 import { CATEGORIES } from '@/config/categories.config'
 import { CategoryIcon } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 import { UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
@@ -105,7 +105,7 @@ function CategoryRow({
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {isTop && <Text style={{ fontSize: fontSize.xs }}>👑</Text>}
-              <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+              <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
                 {meta.name}
               </Text>
             </View>
@@ -118,10 +118,10 @@ function CategoryRow({
 
           {/* Amount + percentage */}
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text }}>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.heavy, color: colors.text }}>
               {formatUsdInt(item.total)}
             </Text>
-            <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
               {percentage.toFixed(0)}%
             </Text>
           </View>
@@ -148,13 +148,13 @@ function CategoryRow({
                   style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                 >
                   <CategoryIcon name={sub.icon} size={12} color={sub.color} />
-                  <Text style={{ flex: 1, fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>
+                  <Text style={{ flex: 1, fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text }}>
                     {sub.name}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.text }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: colors.text }}>
                     {formatUsdInt(sub.total)}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.textSecondary, width: 32, textAlign: 'right' }}>
+                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary, width: 32, textAlign: 'right' }}>
                     {subPct.toFixed(0)}%
                   </Text>
                 </View>
@@ -238,10 +238,10 @@ export function CategoryBreakdownList({
     >
       {/* Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: '800', color: colors.text, letterSpacing: 0.2 }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: letterSpacing.wide }}>
           {title}
         </Text>
-        <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: type === 'income' ? colors.success : colors.danger }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: type === 'income' ? colors.success : colors.danger }}>
           {formatUsdInt(totalAmount)}
         </Text>
       </View>
@@ -275,7 +275,7 @@ export function CategoryBreakdownList({
             alignItems: 'center'
           }}
         >
-          <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.primary }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.primary }}>
             See all {categories.length} categories →
           </Text>
         </Pressable>

@@ -89,3 +89,31 @@ export function formatYearMonth(yearMonth: string): string {
 
   return `${monthName} ${year}`
 }
+
+/**
+ * Format "tracking since" date string.
+ * Example: Date(2025, 0, 15) -> "Tracking since Jan 2025"
+ */
+export function formatTrackingSince(date: Date | null): string {
+  if (!date) return 'No data yet'
+  const monthName = date.toLocaleString('en-US', { month: 'short' })
+  return `Tracking since ${monthName} ${date.getFullYear()}`
+}
+
+/**
+ * Get number of days in a given month.
+ */
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate()
+}
+
+/**
+ * Get months elapsed between two dates.
+ */
+export function getMonthsElapsed(start: Date, end: Date): number {
+  const startYear = start.getFullYear()
+  const startMonth = start.getMonth()
+  const endYear = end.getFullYear()
+  const endMonth = end.getMonth()
+  return (endYear - startYear) * 12 + (endMonth - startMonth) + 1
+}
