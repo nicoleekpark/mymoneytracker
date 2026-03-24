@@ -4,6 +4,7 @@ import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 import { radius } from '@/theme/tokens/radius'
+import { spacing } from '@/theme/tokens/spacing'
 import { fontWeight } from '@/theme/tokens/typography'
 import React from 'react'
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
@@ -81,7 +82,7 @@ export function SubCategorySelectionModal({
           keyExtractor={(x) => x.key}
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="none"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
           renderItem={({ item: row }) => {
             if (row.key === '__none__') {
               const selected = !categoryRef?.subCategoryKey
@@ -121,22 +122,22 @@ export function SubCategorySelectionModal({
 const styles = StyleSheet.create({
   headerBar: {
     minHeight: 52,
-    paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm + 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
   },
   topRowWrap: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
   },
   topRow: {
     borderWidth: 1,
     borderRadius: radius.lg,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',

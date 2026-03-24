@@ -11,6 +11,7 @@ import { transactionRepository } from '@/infrastructure/repositories'
 import { createTransaction } from './transaction.model'
 import type { AddTransactionInput, Transaction } from './transaction.types'
 import { buildTxKey } from './transaction.utils'
+import { checkBudgetAlert } from '@/domain/notification'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -80,6 +81,11 @@ export async function addTransaction(
   // Persist tags to junction table
   if (input.tags && input.tags.length > 0) {
     transactionRepository.saveTags(tx.id, input.tags)
+  }
+
+  // Check budget alert after expense transactions
+  if (tx.type === 'expense') {
+    checkBudgetAlert()
   }
 
   return tx
@@ -188,6 +194,11 @@ export async function updateTransaction(
   // Update tags
   if (input.tags && input.tags.length > 0) {
     transactionRepository.saveTags(tx.id, input.tags)
+  }
+
+  // Check budget alert after expense transactions
+  if (tx.type === 'expense') {
+    checkBudgetAlert()
   }
 
   return tx

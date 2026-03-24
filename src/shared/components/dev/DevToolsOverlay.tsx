@@ -21,6 +21,7 @@ export function DevToolsOverlay() {
   const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
   const devToolsVisible = useDevStore((s) => s.devToolsVisible)
+  const loadDrafts = useDraftsStore((s) => s.loadDrafts)
 
   const colors = useMemo(
     () => ({
@@ -96,8 +97,6 @@ export function DevToolsOverlay() {
       Alert.alert('Failed', String(e?.message ?? e))
     }
   }
-
-  const loadDrafts = useDraftsStore((s) => s.loadDrafts)
 
   const seedDrafts = () => {
     try {

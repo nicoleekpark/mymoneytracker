@@ -258,7 +258,7 @@ export function AllBody({ colors }: Props) {
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
+      contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
       showsVerticalScrollIndicator={false}
     >
       {/* Savings Rate Info Sheet */}

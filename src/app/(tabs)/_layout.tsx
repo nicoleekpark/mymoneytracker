@@ -1,8 +1,11 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { router, Tabs } from 'expo-router'
+import { Tabs } from 'expo-router'
 import React from 'react'
+import { View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useHoHTheme } from '@/providers'
+import { AppBar } from '@/shared/components/AppBar'
 
 function TabBarIcon(props: { name: React.ComponentProps<typeof FontAwesome>['name']; color: string }) {
   return <FontAwesome size={20} style={{ marginBottom: -3 }} {...props} />
@@ -10,51 +13,60 @@ function TabBarIcon(props: { name: React.ComponentProps<typeof FontAwesome>['nam
 
 export default function TabLayout() {
   const theme = useHoHTheme()
+  const insets = useSafeAreaInsets()
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.semantic.text,
-        tabBarInactiveTintColor: theme.semantic.textSecondary,
-        tabBarStyle: {
-          backgroundColor: theme.semantic.background,
-          height: 72,
-          paddingTop: 8,
-          paddingBottom: 8
-        },
-        tabBarShowLabel: false
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: theme.semantic.background }}>
+      {/* Persistent AppBar - stays mounted across tab switches */}
+      <View style={{ paddingTop: insets.top }}>
+        <AppBar />
+      </View>
+
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: theme.semantic.text,
+          tabBarInactiveTintColor: theme.semantic.textSecondary,
+          tabBarStyle: {
+            backgroundColor: theme.semantic.background,
+            height: 72,
+            paddingTop: 8,
+            paddingBottom: 8
+          },
+          tabBarShowLabel: false
+        }}
+      >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'dashboard',
-          tabBarIcon: ({ color }) => <TabBarIcon name="th-large" color={color} />
+          title: 'Dashboard',
+          tabBarIcon: ({ color }) => <TabBarIcon name="pie-chart" color={color} />
         }}
       />
 
       <Tabs.Screen
         name="add"
         options={{
-          title: '',
-          tabBarIcon: () => <FontAwesome name="plus-circle" size={26} color={theme.semantic.text as any} />
-        }}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault()
-            router.push('/(modal)/add-transaction' as any)
-          }
+          href: null, // Hide from tab bar
         }}
       />
 
       <Tabs.Screen
         name="transactions"
         options={{
-          title: 'transactions',
-          tabBarIcon: ({ color }) => <TabBarIcon name="files-o" color={color} />
+          title: 'Transactions',
+          tabBarIcon: ({ color }) => <TabBarIcon name="list" color={color} />
+        }}
+      />
+
+      {/* v2: Price Tracker - hidden for v1 release */}
+      <Tabs.Screen
+        name="price-tracker"
+        options={{
+          href: null, // Hidden for v1
         }}
       />
     </Tabs>
+    </View>
   )
 }

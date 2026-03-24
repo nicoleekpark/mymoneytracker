@@ -88,7 +88,7 @@ export function rowToTransaction(
 
   return {
     ...base,
-    type: row.type,
+    type: validatedType as 'income' | 'expense',
     accountId: row.account_id as UUID,
   }
 }

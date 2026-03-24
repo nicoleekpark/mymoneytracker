@@ -7,7 +7,7 @@ import { CategoryIcon } from '@/shared/components'
 import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
-import { CATEGORY_DOT_SIZE_SM, BADGE_MIN_SIZE, FONT_SIZE_BADGE, FONT_SIZE_TINY } from '@/theme/tokens/viewStyles'
+import { CATEGORY_DOT_SIZE_SM, FONT_SIZE_TINY } from '@/theme/tokens/viewStyles'
 import { formatCurrency } from '@/shared/format/currency'
 import { formatDayHeader, formatMonthSectionTitle, monthKey, ymd } from '@/shared/format/date'
 import { useDraftsStore } from '@/store'
@@ -18,7 +18,15 @@ import { router, useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTransactionsData } from './hooks/useTransactionsData'
-import { TransactionDetailSheet, UndoToast } from './components'
+import {
+  TransactionDetailSheet,
+  TransactionFilterSheet,
+  UndoToast,
+  getActiveFilterCount,
+  getActiveFilterChips,
+  DEFAULT_FILTERS,
+} from './components'
+import type { TransactionFilters, ActiveFilterChip } from './components'
 import {
   LayoutAnimation,
   Platform,
@@ -141,13 +149,14 @@ export default function TransactionsScreen() {
   const listRef = useRef<SectionList<TransactionOrDraft, DaySection>>(null)
   const didAutoScrollRef = useRef(false)
   const detailSheetRef = useRef<BottomSheetModal>(null)
+  const filterSheetRef = useRef<BottomSheetModal>(null)
 
   const { data, refetch, loadMore, isLoadingMore } = useTransactionsData()
   const { items, hasMore } = data
 
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [showDrafts, setShowDrafts] = useState(false)
+  const [filters, setFilters] = useState<TransactionFilters>(DEFAULT_FILTERS)
 
   // Drafts store
   const { drafts, loadDrafts, isLoaded: draftsLoaded } = useDraftsStore()
@@ -226,7 +235,7 @@ export default function TransactionsScreen() {
 
   // Convert drafts to TransactionOrDraft format
   const draftsAsTransactions: TransactionOrDraft[] = useMemo(() => {
-    if (!showDrafts) return []
+    if (!filters.showDrafts) return []
     return drafts.map((draft) => ({
       id: draft.id,
       key: `draft-${draft.id}`,
@@ -241,19 +250,38 @@ export default function TransactionsScreen() {
       category: draft.categoryRef,
       isDraft: true,
     } as TransactionOrDraft))
-  }, [showDrafts, drafts, accounts])
+  }, [filters.showDrafts, drafts, accounts])
 
   // Merge transactions and drafts
   const allItems: TransactionOrDraft[] = useMemo(() => {
-    if (!showDrafts) return items
+    if (!filters.showDrafts) return items
     return [...items, ...draftsAsTransactions]
-  }, [items, showDrafts, draftsAsTransactions])
+  }, [items, filters.showDrafts, draftsAsTransactions])
 
-  // Filter by accountId if present
+  // Apply all filters
   const filteredItems: TransactionOrDraft[] = useMemo(() => {
-    if (!accountIdFilter) return allItems
-    return allItems.filter(tx => tx.accountId === accountIdFilter)
-  }, [allItems, accountIdFilter])
+    let result = allItems
+
+    // Filter by accountId (from URL params)
+    if (accountIdFilter) {
+      result = result.filter(tx => tx.accountId === accountIdFilter)
+    }
+
+    // Filter by transaction type
+    if (filters.types.length > 0) {
+      result = result.filter(tx => filters.types.includes(tx.type as any))
+    }
+
+    // Filter by category
+    if (filters.categoryKeys.length > 0) {
+      result = result.filter(tx => {
+        const catKey = tx.category?.categoryKey
+        return catKey && filters.categoryKeys.includes(catKey)
+      })
+    }
+
+    return result
+  }, [allItems, accountIdFilter, filters.types, filters.categoryKeys])
 
   const sections = useMemo(() => buildDaySections(filteredItems, debouncedQuery), [filteredItems, debouncedQuery])
 
@@ -360,52 +388,144 @@ export default function TransactionsScreen() {
 
   return (
     <BottomSheetModalProvider>
-      <Screen topPadding>
-        <View style={[styles.searchWrap, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}>
-          <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as string} />
-          <TextInput
-            value={query}
-            onChangeText={(t) => {
-              didAutoScrollRef.current = false
-              setQuery(t)
-            }}
-            placeholder="Search transactions"
-            placeholderTextColor={theme.semantic.textSecondary as string}
-            style={[styles.searchInput, { color: theme.semantic.text }]}
-            returnKeyType="search"
-            autoCapitalize="none"
-            autoCorrect={false}
-            clearButtonMode="while-editing"
-            accessibilityLabel="Search transactions"
-          />
-          {/* Filter/Drafts button */}
-          <TouchableOpacity
-            onPress={() => {
-              if (drafts.length > 0) {
-                setShowDrafts(!showDrafts)
-              }
-              // Phase 3: open full filters sheet
-            }}
-            style={styles.filterBtn}
-            accessibilityLabel={drafts.length > 0 ? `${showDrafts ? 'Hide' : 'Show'} ${drafts.length} drafts` : 'Open filters'}
-          >
-            <FontAwesome
-              name={showDrafts ? 'pencil-square' : 'sliders'}
-              size={16}
-              color={showDrafts ? theme.semantic.primary as string : theme.semantic.textSecondary as string}
+      <Screen edges={[]}>
+        <View style={styles.searchRow}>
+          {/* Search area - subtle border style */}
+          <View style={[styles.searchArea, { backgroundColor: theme.semantic.surfaceAlt, borderColor: theme.semantic.border }]}>
+            <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as string} />
+            <TextInput
+              value={query}
+              onChangeText={(t) => {
+                didAutoScrollRef.current = false
+                setQuery(t)
+              }}
+              placeholder="Search transactions"
+              placeholderTextColor={theme.semantic.textSecondary as string}
+              style={[styles.searchInput, { color: theme.semantic.text }]}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              accessibilityLabel="Search transactions"
             />
-            {drafts.length > 0 && !showDrafts && (
-              <View style={[styles.filterBadge, { backgroundColor: theme.semantic.warning }]}>
-                <Text style={[styles.filterBadgeText, { color: theme.semantic.surface }]}>
-                  {drafts.length}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          </View>
+
+          {/* Filter icon button */}
+          {(() => {
+            const activeCount = getActiveFilterCount(filters)
+            const hasActiveFilters = activeCount > 0
+            return (
+              <TouchableOpacity
+                onPress={() => filterSheetRef.current?.present()}
+                style={[
+                  styles.filterIconBtn,
+                  { backgroundColor: hasActiveFilters ? theme.semantic.primary : theme.semantic.surfaceAlt }
+                ]}
+                accessibilityLabel={`Open filters${hasActiveFilters ? `, ${activeCount} active` : ''}`}
+              >
+                <FontAwesome
+                  name="sliders"
+                  size={16}
+                  color={hasActiveFilters ? (theme.semantic.onPrimary as string) : (theme.semantic.textSecondary as string)}
+                />
+                {activeCount > 0 && (
+                  <View style={[styles.filterIconBadge, { backgroundColor: theme.semantic.danger }]}>
+                    <Text style={[styles.filterIconBadgeText, { color: '#fff' }]}>
+                      {activeCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )
+          })()}
         </View>
 
-        {/* Active account filter chip */}
-        {filteredAccountName && (
+        {/* Active filter chips */}
+        {(() => {
+          const chips = getActiveFilterChips(filters)
+          if (chips.length === 0 && !filteredAccountName) return null
+
+          const removeFilter = (chip: ActiveFilterChip) => {
+            if (chip.type === 'type') {
+              const typeKey = chip.key.replace('type-', '') as any
+              setFilters({
+                ...filters,
+                types: filters.types.filter((t) => t !== typeKey),
+              })
+            } else if (chip.type === 'category') {
+              const catKey = chip.key.replace('cat-', '')
+              setFilters({
+                ...filters,
+                categoryKeys: filters.categoryKeys.filter((c) => c !== catKey),
+              })
+            } else if (chip.type === 'status') {
+              setFilters({ ...filters, showDrafts: false })
+            }
+          }
+
+          return (
+            <View style={styles.activeFiltersRow}>
+              {/* Account filter (from URL) */}
+              {filteredAccountName && (
+                <Pressable
+                  onPress={clearAccountFilter}
+                  style={[styles.activeFilterChip, { backgroundColor: theme.semantic.primarySoft }]}
+                >
+                  <Text style={[styles.activeFilterChipText, { color: theme.semantic.primary }]}>
+                    {filteredAccountName}
+                  </Text>
+                  <FontAwesome name="times" size={10} color={theme.semantic.primary as string} />
+                </Pressable>
+              )}
+
+              {/* Filter chips */}
+              {chips.map((chip) => (
+                <Pressable
+                  key={chip.key}
+                  onPress={() => removeFilter(chip)}
+                  style={[
+                    styles.activeFilterChip,
+                    {
+                      backgroundColor:
+                        chip.type === 'status'
+                          ? theme.semantic.warningSoft
+                          : theme.semantic.primarySoft,
+                    },
+                  ]}
+                >
+                  {chip.color && (
+                    <View style={[styles.activeFilterDot, { backgroundColor: chip.color }]} />
+                  )}
+                  <Text
+                    style={[
+                      styles.activeFilterChipText,
+                      {
+                        color:
+                          chip.type === 'status'
+                            ? theme.semantic.warning
+                            : theme.semantic.primary,
+                      },
+                    ]}
+                  >
+                    {chip.label}
+                  </Text>
+                  <FontAwesome
+                    name="times"
+                    size={10}
+                    color={
+                      chip.type === 'status'
+                        ? (theme.semantic.warning as string)
+                        : (theme.semantic.primary as string)
+                    }
+                  />
+                </Pressable>
+              ))}
+            </View>
+          )
+        })()}
+
+        {/* Active account filter chip - DEPRECATED, moved above */}
+        {false && filteredAccountName && (
           <View style={styles.filterChipRow}>
             <Pressable
               onPress={clearAccountFilter}
@@ -612,10 +732,18 @@ export default function TransactionsScreen() {
         {/* Transaction Detail Sheet */}
         <TransactionDetailSheet
           transaction={selectedTransaction}
-          sheetRef={detailSheetRef as React.RefObject<BottomSheetModal>}
+          sheetRef={detailSheetRef}
           onDismiss={handleDetailDismiss}
           onEdit={handleEdit}
           onDelete={handleDelete}
+        />
+
+        {/* Filter Sheet */}
+        <TransactionFilterSheet
+          sheetRef={filterSheetRef}
+          filters={filters}
+          onFiltersChange={setFilters}
+          draftCount={drafts.length}
         />
 
         {/* Undo Delete Toast */}
@@ -631,44 +759,83 @@ export default function TransactionsScreen() {
             onPrimary: theme.semantic.onPrimary as string,
           }}
         />
+
       </Screen>
     </BottomSheetModalProvider>
   )
 }
 
 const styles = StyleSheet.create({
-  searchWrap: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     gap: spacing.sm,
-    marginBottom: spacing.md
+    marginBottom: spacing.md,
   },
-  searchInput: { flex: 1, fontSize: fontSize.md, padding: 0 },
-  filterBtn: {
-    paddingLeft: spacing.sm,
-    paddingVertical: spacing.xs,
-    position: 'relative'
+  searchArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
   },
-  filterBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -6,
-    minWidth: BADGE_MIN_SIZE,
-    height: BADGE_MIN_SIZE,
-    borderRadius: BADGE_MIN_SIZE / 2,
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.md,
+    padding: 0,
+  },
+  filterIconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xs
+    position: 'relative',
   },
-  filterBadgeText: {
-    fontSize: FONT_SIZE_BADGE,
-    fontWeight: fontWeight.bold
+  filterIconBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  filterIconBadgeText: {
+    fontSize: 10,
+    fontWeight: fontWeight.bold,
   },
 
+  activeFiltersRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  activeFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+  },
+  activeFilterChipText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+  },
+  activeFilterDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  // Legacy - can remove
   filterChipRow: {
     flexDirection: 'row',
     marginBottom: spacing.sm,

@@ -3,6 +3,13 @@ import { getActiveAccounts, resolveAccountIdByKey } from '@/domain/account'
 import type { UUID } from '@/domain/common/uuid'
 import type { Transaction, TransactionType } from '@/domain/transaction'
 import { addTransaction, getTransactionById, updateTransaction } from '@/domain/transaction/transaction.usecase'
+import {
+  addTransactionItem,
+  deleteTransactionItems,
+  getTransactionItems,
+  getStoreByMerchant,
+  addPricePoint,
+} from '@/domain/price-tracker'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon, ScalePressable } from '@/shared/components'
 import { muteColor } from '@/shared/utils/contrast'
@@ -49,9 +56,11 @@ import {
   BottomCTABar,
   CategorySelectionModal,
   DateTimePickerModal,
+  ItemizedSection,
   QuickChipsEditModal,
   SubCategorySelectionModal,
   TagSection,
+  type ItemEntry,
 } from './components'
 import { useAccountPicker, useAmountKeypad, useCategoryPicker, useDateTime } from './hooks'
 
@@ -111,6 +120,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   const [note, setNote] = useState('')
   const [receiptUri, setReceiptUri] = useState<string | null>(null)
   const [tags, setTags] = useState<string[]>([])
+
+  // Itemized items
+  const [itemizedItems, setItemizedItems] = useState<ItemEntry[]>([])
+  const [itemizedExpanded, setItemizedExpanded] = useState(false)
 
   // UI state
   const [moreDetailsExpanded, setMoreDetailsExpanded] = useState(false)
@@ -221,7 +234,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           setTags(draft.tags)
         }
         // Expand more details if draft has any optional fields
-        if (draft.merchant || draft.note || draft.receiptUri || (draft.tags && draft.tags.length > 0)) {
+        if (draft.receiptUri || (draft.tags && draft.tags.length > 0)) {
           setMoreDetailsExpanded(true)
         }
       }
@@ -272,8 +285,24 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
             setIsEstimated(true)
           }
 
+          // Load transaction items if any
+          const txItems = getTransactionItems(editingTransactionId)
+          if (txItems.length > 0) {
+            setItemizedItems(
+              txItems.map((ti) => ({
+                id: ti.id,
+                name: ti.name,
+                priceCents: ti.priceCents,
+                quantity: ti.quantity,
+                unit: ti.unit,
+                itemId: ti.itemId,
+              }))
+            )
+            setItemizedExpanded(true)
+          }
+
           // Expand more details if has optional fields
-          if (tx.merchant || tx.note || (tx.tags && tx.tags.length > 0)) {
+          if (tx.tags && tx.tags.length > 0) {
             setMoreDetailsExpanded(true)
           }
 
@@ -340,11 +369,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   // Check if more details has any content
   const moreDetailsCount = useMemo(() => {
     let count = 0
-    if (note.trim()) count++
     if (tags.length > 0) count++
     if (receiptUri) count++
     return count
-  }, [note, tags, receiptUri])
+  }, [tags, receiptUri])
 
   const onCancel = () => {
     // Simply close without saving - user must explicitly save as draft
@@ -413,12 +441,51 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         isEstimated: isEstimated || undefined,
       }
 
+      let savedTransactionId: UUID | undefined
+
       if (editingTransaction && editingTransactionId) {
         // Update existing transaction
         await updateTransaction(CATEGORIES_INDEX, editingTransactionId, transactionInput)
+        savedTransactionId = editingTransactionId
+        // Delete existing items to replace with new ones
+        deleteTransactionItems(editingTransactionId)
       } else {
         // Create new transaction
-        await addTransaction(CATEGORIES_INDEX, transactionInput)
+        const newTx = await addTransaction(CATEGORIES_INDEX, transactionInput)
+        savedTransactionId = newTx?.id
+      }
+
+      // Save transaction items if any
+      if (savedTransactionId && itemizedItems.length > 0) {
+        // Find or create store from merchant
+        const store = cleanedMerchant ? getStoreByMerchant(cleanedMerchant) : null
+
+        itemizedItems.forEach((item, index) => {
+          if (item.name.trim() && item.priceCents > 0) {
+            // Add transaction item
+            addTransactionItem({
+              transactionId: savedTransactionId as UUID,
+              itemId: item.itemId,
+              name: item.name.trim(),
+              priceCents: item.priceCents,
+              quantity: item.quantity,
+              unit: item.unit,
+              sortOrder: index,
+            })
+
+            // Create price point if we have a store and item is linked
+            if (store && item.itemId) {
+              addPricePoint({
+                itemId: item.itemId,
+                storeId: store.id,
+                priceCents: item.priceCents,
+                quantity: item.quantity,
+                occurredAt: dateTime.occurredAt,
+                transactionId: savedTransactionId,
+              })
+            }
+          }
+        })
       }
 
       if (cleanedDescription) {
@@ -508,6 +575,8 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     setNote('')
     setReceiptUri(null)
     setTags([])
+    setItemizedItems([])
+    setItemizedExpanded(false)
     category.resetCategory()
     setMoreDetailsExpanded(false)
     setIsEstimated(false)
@@ -554,24 +623,55 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     }
 
     try {
-      await addTransaction(CATEGORIES_INDEX, {
+      const cleanedMerchant = merchant.trim()
+      const newTx = await addTransaction(CATEGORIES_INDEX, {
         type,
         item: cleanedDescription || undefined,
         amount: amount.amountDollars,
         category: category.categoryRef ?? undefined,
         accountId,
         occurredAt: dateTime.occurredAt,
-        merchant: merchant.trim() || undefined,
+        merchant: cleanedMerchant || undefined,
         note: cleanedNote || undefined,
         tags: tags.length > 0 ? tags : undefined,
         isEstimated: isEstimated || undefined,
       })
 
+      // Save transaction items if any
+      if (newTx?.id && itemizedItems.length > 0) {
+        const store = cleanedMerchant ? getStoreByMerchant(cleanedMerchant) : null
+
+        itemizedItems.forEach((item, index) => {
+          if (item.name.trim() && item.priceCents > 0) {
+            addTransactionItem({
+              transactionId: newTx.id,
+              itemId: item.itemId,
+              name: item.name.trim(),
+              priceCents: item.priceCents,
+              quantity: item.quantity,
+              unit: item.unit,
+              sortOrder: index,
+            })
+
+            if (store && item.itemId) {
+              addPricePoint({
+                itemId: item.itemId,
+                storeId: store.id,
+                priceCents: item.priceCents,
+                quantity: item.quantity,
+                occurredAt: dateTime.occurredAt,
+                transactionId: newTx.id,
+              })
+            }
+          }
+        })
+      }
+
       if (cleanedDescription) {
         recordItem(cleanedDescription)
       }
-      if (merchant.trim()) {
-        recordMerchant(merchant.trim())
+      if (cleanedMerchant) {
+        recordMerchant(cleanedMerchant)
       }
 
       // Save last transaction for "Repeat Last" feature
@@ -1026,14 +1126,49 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               {/* Date */}
               <Pressable
                 onPress={dateTime.openDateTimeModal}
-                style={[styles.fieldRow, styles.fieldRowLast]}
+                style={[styles.fieldRow, styles.fieldRowNoBorder]}
               >
-                <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>Date</Text>
+                <Text style={[styles.fieldLabel, { color: theme.semantic.text }]}>Date</Text>
                 <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
                   {dateTime.dateDisplay}, {dateTime.timeDisplay}
                 </Text>
                 <Text style={[styles.chevron, { color: theme.semantic.textSecondary }]}>›</Text>
               </Pressable>
+              <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+              {/* Note */}
+              <View style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingRight: 0 }]}>
+                <Text style={[styles.fieldLabel, { color: note ? theme.semantic.textSecondary : theme.semantic.text }]}>
+                  Note <Text style={styles.optionalLabel}>(optional)</Text>
+                </Text>
+                <View style={styles.fieldInputWrapper}>
+                  {!note && (
+                    <Text style={[styles.fieldPlaceholder, styles.fieldInputPlaceholder, { color: theme.semantic.textSecondary }]}>
+                      Add note
+                    </Text>
+                  )}
+                  <TextInput
+                    ref={noteInputRef}
+                    value={note}
+                    onChangeText={setNote}
+                    style={[styles.fieldInput, { color: theme.semantic.text }]}
+                    multiline
+                  />
+                </View>
+              </View>
+              {/* Itemized Items - expense only */}
+              {type === 'expense' && (
+                <>
+                  <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+                  <ItemizedSection
+                    items={itemizedItems}
+                    onItemsChange={setItemizedItems}
+                    expanded={itemizedExpanded}
+                    onExpandedChange={setItemizedExpanded}
+                    merchant={merchant}
+                  />
+                </>
+              )}
             </View>
           )}
 
@@ -1074,26 +1209,6 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               {/* Expanded Fields */}
               {moreDetailsExpanded && (
                 <View style={styles.fieldGroup}>
-                  {/* Note */}
-                  <View style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingRight: 0 }]}>
-                    <Text style={[styles.fieldLabel, { color: note ? theme.semantic.textSecondary : theme.semantic.text }]}>Note</Text>
-                    <View style={styles.fieldInputWrapper}>
-                      {!note && (
-                        <Text style={[styles.fieldPlaceholder, styles.fieldInputPlaceholder, { color: theme.semantic.textSecondary }]}>
-                          Add note
-                        </Text>
-                      )}
-                      <TextInput
-                        ref={noteInputRef}
-                        value={note}
-                        onChangeText={setNote}
-                        style={[styles.fieldInput, { color: theme.semantic.text }]}
-                        multiline
-                      />
-                    </View>
-                  </View>
-                  <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-
                   {/* Tags */}
                   <View style={[styles.tagsRow, { borderBottomColor: theme.semantic.border }]}>
                     <TagSection
@@ -1262,7 +1377,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
   },
   content: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg, // 16px - matches AppBar and Screen default
     paddingTop: spacing.xl,
   },
   // Hero Amount
@@ -1319,9 +1434,7 @@ const styles = StyleSheet.create({
   // Field-level chips (below Category/Paid with)
   fieldChipsRow: {
     marginTop: -spacing.xs,
-    marginBottom: spacing.lg, // breathing room between blocks
-    marginHorizontal: -spacing.md,
-    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
   },
   fieldChipsContent: {
     gap: spacing.sm,

@@ -174,7 +174,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
       >
         {/* ═══════════════════════════════════════════════════════════════════════ */}
@@ -345,7 +345,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
       {/* Sticky Footer: Data Quality */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       <View style={{
-        paddingHorizontal: spacing.xl,
+        paddingHorizontal: spacing.lg,
         paddingVertical: spacing.md,
         borderTopWidth: 1,
         borderTopColor: colors.border

@@ -1,12 +1,19 @@
-import { FEATURE_FLAGS } from '@/config'
+import { APP_CONFIG, FEATURE_FLAGS } from '@/config'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import {
+  resetDbHardDropAllTables,
+  seedDbMinimal,
+} from '@/infrastructure/db/queries/admin'
+import { migrate } from '@/infrastructure/db/migrate'
+import { exportDatabase } from '@/infrastructure/db/queries/export-db'
+import { runFixtures, runSystemSeeds, seedNotificationsStandalone, clearNotificationsStandalone, seedDraftsStandalone, clearDraftsStandalone } from '@/infrastructure/db/seed'
 import { useHoHTheme } from '@/providers'
 import { useDevStore, useDraftsStore, useNotificationsStore } from '@/store'
-import { fontSize, fontWeight, letterSpacing, textStyles } from '@/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
 import { radius } from '@/theme/tokens/radius'
 import { spacing } from '@/theme/tokens/spacing'
 
@@ -25,18 +32,122 @@ type AppBarProps = {
 export function AppBar({ userInitials = 'NP' }: AppBarProps) {
   const theme = useHoHTheme()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [devMenuOpen, setDevMenuOpen] = useState(false)
 
-  // Get notification and draft counts
+  // Get notification count (Phase 1: notifications only, drafts moved to FAB)
   const unreadCount = useNotificationsStore((s) => s.getUnreadCount())
-  const draftCount = useDraftsStore((s) => s.drafts.length)
-  const hasNotifications = unreadCount > 0 || draftCount > 0
+  const hasNotifications = unreadCount > 0
 
-  // Dev tools toggle
+  // Dev tools
+  const devToolsVisible = useDevStore((s) => s.devToolsVisible)
   const toggleDevTools = useDevStore((s) => s.toggleDevTools)
+  const loadDrafts = useDraftsStore((s) => s.loadDrafts)
+  const showDevChip = APP_CONFIG.featureFlags.devTools && devToolsVisible
 
-  const handleLogoPress = () => {
+  const handleAddPress = () => {
+    router.push('/(modal)/add-transaction' as any)
+  }
+
+  const handleDevToggle = () => {
+    // Hidden: tap center area to toggle dev tools visibility
     if (!FEATURE_FLAGS.devTools) return
     toggleDevTools()
+  }
+
+  // Dev tools actions
+  const seedAll = () => {
+    try {
+      runFixtures('seed', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
+      Alert.alert('Done', 'All fixtures seeded')
+    } catch (e: any) {
+      Alert.alert('Failed', String(e?.message ?? e))
+    }
+    setDevMenuOpen(false)
+  }
+
+  const clearAll = () => {
+    try {
+      runFixtures('delete', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
+      Alert.alert('Done', 'All fixtures cleared')
+    } catch (e: any) {
+      Alert.alert('Failed', String(e?.message ?? e))
+    }
+    setDevMenuOpen(false)
+  }
+
+  const resetDb = () => {
+    Alert.alert('Reset DB?', 'Drop all tables and recreate schema', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () => {
+          try {
+            resetDbHardDropAllTables()
+            migrate()
+            runSystemSeeds()
+            runFixtures('seed', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
+            Alert.alert('Done', 'DB reset & all fixtures seeded')
+          } catch (e: any) {
+            Alert.alert('Failed', String(e?.message ?? e))
+          }
+          setDevMenuOpen(false)
+        },
+      },
+    ])
+  }
+
+  const seedDb = () => {
+    seedDbMinimal()
+    Alert.alert('Done', 'DB seeded')
+    setDevMenuOpen(false)
+  }
+
+  const seedNotifs = () => {
+    try {
+      const count = seedNotificationsStandalone()
+      Alert.alert('Done', `${count} notifications seeded`)
+    } catch (e: any) {
+      Alert.alert('Failed', String(e?.message ?? e))
+    }
+    setDevMenuOpen(false)
+  }
+
+  const clearNotifs = () => {
+    try {
+      const count = clearNotificationsStandalone()
+      Alert.alert('Done', `${count} notifications cleared`)
+    } catch (e: any) {
+      Alert.alert('Failed', String(e?.message ?? e))
+    }
+    setDevMenuOpen(false)
+  }
+
+  const seedDrafts = () => {
+    try {
+      const count = seedDraftsStandalone()
+      loadDrafts()
+      Alert.alert('Done', `${count} drafts seeded`)
+    } catch (e: any) {
+      Alert.alert('Failed', String(e?.message ?? e))
+    }
+    setDevMenuOpen(false)
+  }
+
+  const clearDrafts = () => {
+    try {
+      const count = clearDraftsStandalone()
+      loadDrafts()
+      Alert.alert('Done', `${count} drafts cleared`)
+    } catch (e: any) {
+      Alert.alert('Failed', String(e?.message ?? e))
+    }
+    setDevMenuOpen(false)
+  }
+
+  const handleExport = () => {
+    exportDatabase()
+    setDevMenuOpen(false)
   }
 
   const handleBellPress = () => {
@@ -72,13 +183,34 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
   return (
     <>
       <View style={[styles.container, { borderBottomColor: theme.semantic.border }]}>
-        {/* Logo - tap to toggle dev tools */}
+        {/* Add button */}
         <Pressable
-          onPress={handleLogoPress}
+          onPress={handleAddPress}
           hitSlop={8}
+          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
         >
-          <Text style={[styles.logo, { color: theme.semantic.text }]}>HoH</Text>
+          <FontAwesome name="plus" size={20} color={theme.semantic.text} />
         </Pressable>
+
+        {/* Center: DEV chip or invisible toggle */}
+        {showDevChip ? (
+          <Pressable
+            onPress={() => setDevMenuOpen(true)}
+            onLongPress={handleDevToggle}
+            style={[styles.devChip, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border }]}
+            hitSlop={8}
+          >
+            <Text style={[styles.devChipText, { color: theme.semantic.text }]}>
+              DEV {devMenuOpen ? '▾' : '▸'}
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={handleDevToggle}
+            style={styles.centerTouch}
+            hitSlop={16}
+          />
+        )}
 
         {/* Actions */}
         <View style={styles.actions}>
@@ -134,12 +266,15 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
               }
             ]}
           >
+            {/* v2: Search disabled for v1 */}
             <MenuItem
               icon="search"
               label="Search"
               onPress={() => handleMenuAction('search')}
               theme={theme}
+              disabled
             />
+            {/* v2: Messages disabled for v1 */}
             <MenuItem
               icon="comment-o"
               label="Messages"
@@ -155,16 +290,75 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
               onPress={() => handleMenuAction('settings')}
               theme={theme}
             />
-            <MenuItem
-              icon="sign-out"
-              label="Sign out"
-              onPress={() => handleMenuAction('signout')}
-              theme={theme}
-            />
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Dev Tools Modal */}
+      <Modal
+        visible={devMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDevMenuOpen(false)}
+      >
+        <Pressable style={styles.overlay} onPress={() => setDevMenuOpen(false)}>
+          <View
+            style={[
+              styles.devMenu,
+              {
+                backgroundColor: theme.semantic.surface,
+                borderColor: theme.semantic.border
+              }
+            ]}
+          >
+            <View style={styles.devRow}>
+              <DevBtn label="Seed All" onPress={seedAll} theme={theme} />
+              <DevBtn label="Clear All" onPress={clearAll} theme={theme} />
+            </View>
+            <View style={styles.devRow}>
+              <DevBtn label="Seed Notifs" onPress={seedNotifs} theme={theme} />
+              <DevBtn label="Clear Notifs" onPress={clearNotifs} theme={theme} />
+            </View>
+            <View style={styles.devRow}>
+              <DevBtn label="Seed Drafts" onPress={seedDrafts} theme={theme} />
+              <DevBtn label="Clear Drafts" onPress={clearDrafts} theme={theme} />
+            </View>
+            <View style={styles.devRow}>
+              <DevBtn label="Reset DB" onPress={resetDb} theme={theme} />
+              <DevBtn label="Seed DB" onPress={seedDb} theme={theme} />
+            </View>
+            <View style={styles.devRow}>
+              <DevBtn label="Export" onPress={handleExport} theme={theme} />
+              <Pressable
+                onPress={() => setDevMenuOpen(false)}
+                style={[styles.devBtn, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.background }]}
+              >
+                <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.bold, fontSize: fontSize.xs }}>Close</Text>
+              </Pressable>
+            </View>
           </View>
         </Pressable>
       </Modal>
     </>
+  )
+}
+
+function DevBtn({
+  label,
+  onPress,
+  theme,
+}: {
+  label: string
+  onPress: () => void
+  theme: ReturnType<typeof useHoHTheme>
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.devBtn, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.background }]}
+    >
+      <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.bold, fontSize: fontSize.xs }}>{label}</Text>
+    </Pressable>
   )
 }
 
@@ -217,13 +411,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg, // 16px - matches Screen default
     paddingVertical: spacing.md,
     height: APPBAR_HEIGHT,
   },
-  logo: {
-    ...textStyles.screenHeader,
-    letterSpacing: letterSpacing.tight,
+  centerTouch: {
+    flex: 1,
+    height: APPBAR_HEIGHT,
   },
   actions: {
     flexDirection: 'row',
@@ -306,5 +500,43 @@ const styles = StyleSheet.create({
   menuBadgeText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
+  },
+  // Dev tools styles
+  devChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: radius.full,
+  },
+  devChipText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.black,
+    letterSpacing: letterSpacing.wide,
+  },
+  devMenu: {
+    position: 'absolute',
+    top: MENU_TOP_OFFSET,
+    left: spacing.xl,
+    width: 220,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  devRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  devBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    marginVertical: 3,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    alignItems: 'center',
   },
 })

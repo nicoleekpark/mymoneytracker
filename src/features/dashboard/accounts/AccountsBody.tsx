@@ -362,7 +362,7 @@ export function AccountsBody({ colors, scope, period }: Props) {
 
   if (groups.length === 0) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg }}>
         <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
           No accounts
         </Text>
@@ -376,7 +376,7 @@ export function AccountsBody({ colors, scope, period }: Props) {
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
+      contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
       showsVerticalScrollIndicator={false}
     >
       {/* Summary section */}

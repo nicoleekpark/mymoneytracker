@@ -6,3 +6,6 @@ export { rowToAccount } from './account.mapper'
 
 export type { FamilyMemberRow, AssetItemRow, AssetBalanceRow, AssetGoalRow } from './asset.mapper'
 export { rowToFamilyMember, rowToAssetItem, rowToAssetBalance, rowToAssetGoal } from './asset.mapper'
+
+export type { NotificationRow } from './notification.mapper'
+export { rowToNotification, notificationToRow } from './notification.mapper'

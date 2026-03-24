@@ -1,3 +1,6 @@
+export { DraftsFAB } from './DraftsFAB'
 export { SwipeableTransactionRow } from './SwipeableTransactionRow'
 export { TransactionDetailSheet } from './TransactionDetailSheet'
+export { TransactionFilterSheet, getActiveFilterCount, getActiveFilterChips, DEFAULT_FILTERS } from './TransactionFilterSheet'
+export type { TransactionFilters, TransactionType, DraftViewMode, ActiveFilterChip } from './TransactionFilterSheet'
 export { UndoToast } from './UndoToast'

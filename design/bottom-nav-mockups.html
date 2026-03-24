@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bottom Navigation Mockups - HoH Ledger</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      font-weight: 300;
+      color: #888;
+    }
+
+    h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .mockups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+      gap: 40px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .mockup-container {
+      background: #0a0a0a;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+
+    .mockup-label {
+      padding: 16px 20px;
+      background: #111;
+      border-bottom: 1px solid #333;
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mockup-label .badge {
+      background: #2563eb;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .mockup-label .badge.current {
+      background: #444;
+    }
+
+    /* Phone frame */
+    .phone {
+      width: 375px;
+      height: 700px;
+      background: #0d0d0d;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* App Bar (Top) */
+    .app-bar {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+
+    .app-bar .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .app-bar .add-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .app-bar .add-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .app-bar .add-btn i {
+      font-size: 24px;
+      color: #fff;
+    }
+
+    .app-bar .right-icons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .app-bar .right-icons i {
+      font-size: 18px;
+      color: #888;
+      cursor: pointer;
+    }
+
+    /* Content area */
+    .content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-size: 14px;
+    }
+
+    /* Tab Bar (Bottom) */
+    .tab-bar {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid #222;
+      padding-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .tab-bar.three-tabs {
+      justify-content: space-evenly;
+    }
+
+    .tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 24px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .tab:hover {
+      opacity: 0.8;
+    }
+
+    .tab i {
+      font-size: 22px;
+      color: #555;
+    }
+
+    .tab.active i {
+      color: #fff;
+    }
+
+    .tab .indicator {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: transparent;
+      margin-top: 6px;
+    }
+
+    .tab.active .indicator {
+      background: #fff;
+    }
+
+    /* Center add button in tab bar */
+    .tab.add-center {
+      background: #fff;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      padding: 0;
+      margin-top: -16px;
+    }
+
+    .tab.add-center i {
+      color: #000;
+      font-size: 24px;
+    }
+
+    /* Comparison section */
+    .comparison {
+      margin-top: 60px;
+      padding: 40px;
+      background: #111;
+      border-radius: 16px;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .comparison h2 {
+      margin-bottom: 24px;
+    }
+
+    .icon-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .icon-table th,
+    .icon-table td {
+      padding: 16px 24px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    .icon-table th {
+      color: #888;
+      font-weight: 500;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .icon-table td {
+      color: #fff;
+    }
+
+    .icon-table .icon-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-table .icon-preview i {
+      font-size: 20px;
+      width: 32px;
+      text-align: center;
+    }
+
+    .icon-table .icon-preview span {
+      color: #888;
+      font-size: 13px;
+    }
+
+    .icon-table .recommended {
+      background: rgba(37, 99, 235, 0.1);
+    }
+
+    .icon-table .recommended td:first-child::after {
+      content: "Recommended";
+      background: #2563eb;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* Section divider */
+    .section-title {
+      text-align: center;
+      margin: 60px 0 30px;
+      color: #444;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bottom Navigation Mockups</h1>
+
+  <!-- Current vs Proposed -->
+  <p class="section-title">Current vs Proposed</p>
+
+  <div class="mockups-grid">
+    <!-- CURRENT STATE -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Current State - 4 tabs, + in tab bar</span>
+        <span class="badge current">Current</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="logo">HoH</div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Dashboard Content</div>
+        <div class="tab-bar">
+          <div class="tab active">
+            <i class="fa-solid fa-th-large"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab add-center">
+            <i class="fa-solid fa-plus"></i>
+          </div>
+          <div class="tab">
+            <i class="fa-regular fa-file-lines"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-tag"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPOSED: + in App Bar (Instagram style) -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Proposed - + in App Bar (Instagram style)</span>
+        <span class="badge">Recommended</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-square-plus"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+            <i class="fa-solid fa-gear"></i>
+          </div>
+        </div>
+        <div class="content">Dashboard Content</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-house"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-list"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Icon Options -->
+  <p class="section-title">Icon Options Comparison</p>
+
+  <div class="mockups-grid">
+    <!-- Option A: home, list, dollar -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Option A - Home, List, Dollar</span>
+        <span class="badge">Recommended</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-square-plus"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Most intuitive icons</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-house"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-list"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option B: pie-chart, credit-card, line-chart -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Option B - Chart, Card, Trend</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-square-plus"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Finance-focused icons</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-chart-pie"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-credit-card"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-chart-line"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option C: grid, exchange, tags -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Option C - Grid, Exchange, Tags</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-square-plus"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Abstract icons</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-grip"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-right-left"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-tags"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mix: home, list-ul, chart-line -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Mix - Home, List, Trend</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-square-plus"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Balanced mix</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-house"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-list-ul"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-chart-line"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Button Variations -->
+  <p class="section-title">Add Button Style Variations</p>
+
+  <div class="mockups-grid">
+    <!-- Style 1: square-plus -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Add Style 1 - Square Plus (Instagram)</span>
+        <span class="badge">Recommended</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-square-plus"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Clean, recognizable</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-house"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-list"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Style 2: circle-plus -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Add Style 2 - Circle Plus</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-circle-plus"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Softer, friendly</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-house"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-list"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Style 3: plus only -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Add Style 3 - Plus Only (Minimal)</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-plus" style="font-size: 20px;"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Ultra minimal</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-house"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-list"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Style 4: pen-to-square (edit/compose) -->
+    <div class="mockup-container">
+      <div class="mockup-label">
+        <span>Add Style 4 - Compose (Twitter/X style)</span>
+      </div>
+      <div class="phone">
+        <div class="app-bar">
+          <div class="add-btn">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div class="right-icons">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+        </div>
+        <div class="content">Editorial feel</div>
+        <div class="tab-bar three-tabs">
+          <div class="tab active">
+            <i class="fa-solid fa-house"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-list"></i>
+            <div class="indicator"></div>
+          </div>
+          <div class="tab">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <div class="indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Icon Reference Table -->
+  <div class="comparison">
+    <h2>Icon Options Reference</h2>
+    <table class="icon-table">
+      <thead>
+        <tr>
+          <th>Tab</th>
+          <th>Option A</th>
+          <th>Option B</th>
+          <th>Option C</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="recommended">
+          <td><strong>Dashboard</strong></td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-house"></i>
+              <span>home</span>
+            </div>
+          </td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-chart-pie"></i>
+              <span>chart-pie</span>
+            </div>
+          </td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-grip"></i>
+              <span>grip / th-large</span>
+            </div>
+          </td>
+        </tr>
+        <tr class="recommended">
+          <td><strong>Transactions</strong></td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-list"></i>
+              <span>list</span>
+            </div>
+          </td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-credit-card"></i>
+              <span>credit-card</span>
+            </div>
+          </td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-right-left"></i>
+              <span>right-left / exchange</span>
+            </div>
+          </td>
+        </tr>
+        <tr class="recommended">
+          <td><strong>Prices</strong></td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-dollar-sign"></i>
+              <span>dollar-sign</span>
+            </div>
+          </td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>chart-line</span>
+            </div>
+          </td>
+          <td>
+            <div class="icon-preview">
+              <i class="fa-solid fa-tags"></i>
+              <span>tags</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recommendation Summary -->
+  <div class="comparison" style="margin-top: 40px;">
+    <h2>Recommendation Summary</h2>
+    <table class="icon-table">
+      <thead>
+        <tr>
+          <th>Element</th>
+          <th>Recommendation</th>
+          <th>Reasoning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Layout</strong></td>
+          <td>3 tabs + Add in top bar</td>
+          <td>Separates navigation from action, like Instagram</td>
+        </tr>
+        <tr>
+          <td><strong>Add Button</strong></td>
+          <td><i class="fa-solid fa-square-plus"></i> square-plus</td>
+          <td>Most recognizable "create" icon, Instagram standard</td>
+        </tr>
+        <tr>
+          <td><strong>Dashboard</strong></td>
+          <td><i class="fa-solid fa-house"></i> home</td>
+          <td>Universal, instantly understood</td>
+        </tr>
+        <tr>
+          <td><strong>Transactions</strong></td>
+          <td><i class="fa-solid fa-list"></i> list</td>
+          <td>Clear "list of items" meaning</td>
+        </tr>
+        <tr>
+          <td><strong>Prices</strong></td>
+          <td><i class="fa-solid fa-dollar-sign"></i> dollar-sign</td>
+          <td>Direct association with money/prices</td>
+        </tr>
+        <tr>
+          <td><strong>Tab Bar Height</strong></td>
+          <td>56px + safe area</td>
+          <td>Standard iOS/Material height</td>
+        </tr>
+        <tr>
+          <td><strong>Active Indicator</strong></td>
+          <td>Dot below active icon</td>
+          <td>Clear, accessible state indicator</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

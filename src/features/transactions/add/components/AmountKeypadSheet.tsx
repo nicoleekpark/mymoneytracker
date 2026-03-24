@@ -37,25 +37,31 @@ const KEY_HEIGHT = spacing['3xl'] // 48 - standard touch target
 type AmountKeypadSheetProps = {
   visible: boolean
   amountDisplay: string
-  isEstimated: boolean
+  isEstimated?: boolean
   onDigit: (digit: string) => void
   onBackspace: () => void
   onClear: () => void
-  onEstimatedChange: (value: boolean) => void
+  onEstimatedChange?: (value: boolean) => void
   onDone: () => void
   onClose: () => void
+  /** Optional title shown above amount (e.g., item name) */
+  title?: string
+  /** Hide the estimated toggle (for item prices) */
+  hideEstimated?: boolean
 }
 
 export function AmountKeypadSheet({
   visible,
   amountDisplay,
-  isEstimated,
+  isEstimated = false,
   onDigit,
   onBackspace,
   onClear,
   onEstimatedChange,
   onDone,
   onClose,
+  title,
+  hideEstimated = false,
 }: AmountKeypadSheetProps) {
   const theme = useHoHTheme()
 
@@ -86,6 +92,13 @@ export function AmountKeypadSheet({
           <View style={[styles.handle, { backgroundColor: theme.semantic.border }]} />
         </View>
 
+        {/* Title (optional) */}
+        {title && (
+          <Text style={[styles.titleText, { color: theme.semantic.textSecondary }]}>
+            {title}
+          </Text>
+        )}
+
         {/* Amount preview */}
         <View style={styles.amountPreview}>
           <Text style={[styles.amountText, { color: theme.semantic.text }]}>
@@ -93,21 +106,23 @@ export function AmountKeypadSheet({
           </Text>
         </View>
 
-        {/* Estimated toggle */}
-        <View style={[styles.estimatedRow, { backgroundColor: theme.semantic.surfaceAlt }]}>
-          <View style={styles.estimatedLabel}>
-            <Text style={[styles.estimatedIcon, { color: theme.semantic.warning }]}>~</Text>
-            <Text style={[styles.estimatedText, { color: theme.semantic.text }]}>
-              Estimated amount
-            </Text>
+        {/* Estimated toggle (optional) */}
+        {!hideEstimated && onEstimatedChange && (
+          <View style={[styles.estimatedRow, { backgroundColor: theme.semantic.surfaceAlt }]}>
+            <View style={styles.estimatedLabel}>
+              <Text style={[styles.estimatedIcon, { color: theme.semantic.warning }]}>~</Text>
+              <Text style={[styles.estimatedText, { color: theme.semantic.text }]}>
+                Estimated amount
+              </Text>
+            </View>
+            <Switch
+              value={isEstimated}
+              onValueChange={onEstimatedChange}
+              trackColor={{ false: theme.semantic.border, true: theme.semantic.warning }}
+              thumbColor="#fff"
+            />
           </View>
-          <Switch
-            value={isEstimated}
-            onValueChange={onEstimatedChange}
-            trackColor={{ false: theme.semantic.border, true: theme.semantic.warning }}
-            thumbColor="#fff"
-          />
-        </View>
+        )}
 
         {/* Keypad grid */}
         <View style={styles.keypad}>
@@ -215,6 +230,12 @@ const styles = StyleSheet.create({
     width: GRABBER_WIDTH,
     height: GRABBER_HEIGHT + 1, // 5
     borderRadius: radius.xs,
+  },
+  titleText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
+    marginTop: spacing.sm,
   },
   amountPreview: {
     alignItems: 'center',

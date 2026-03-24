@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { Text, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 
+import { spacing } from '@/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/theme/tokens/typography'
 
 import type { CategorySlice } from './category.utils'
@@ -81,7 +82,7 @@ export function MonthlyCategoryDonut(props: {
         </Svg>
 
         {/* center label */}
-        <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
+        <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg }}>
           <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.heavy, color: props.colors.mutedText }}>Total Spent</Text>
           <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.heavy, color: props.colors.text }}>
             {formatUsdInt(props.totalSpentDollar)}

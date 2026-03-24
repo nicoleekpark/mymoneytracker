@@ -1,24 +1,26 @@
 {
   "expo": {
-    "name": "hoh_finance-tracker",
-    "slug": "hoh_finance-tracker",
+    "name": "HoH Ledger",
+    "slug": "hoh-ledger",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "hohfinancetracker",
+    "scheme": "hohledger",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#121212"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.houseofhuynh.finance",
       "buildNumber": "1",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "HoH Ledger uses your camera to scan receipts.",
+        "NSPhotoLibraryUsageDescription": "HoH Ledger accesses your photos to import receipt images."
       }
     },
     "android": {

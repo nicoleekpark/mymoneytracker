@@ -72,7 +72,7 @@ export function OverviewHeader({
   return (
     <View style={{ paddingBottom: spacing.sm }}>
       {/* Row 1: Members (left) + Period nav (right) */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm }}>
         {/* Members */}
         <ScrollView
           horizontal
@@ -161,7 +161,7 @@ export function OverviewHeader({
       </View>
 
       {/* Row 2: Scope tabs with underline - right aligned */}
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: spacing.xl, gap: spacing.xl }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: spacing.lg, gap: spacing.xl }}>
         {/* Today button - only show when not at current period */}
         {!isCurrent && showNav && (
           <Pressable

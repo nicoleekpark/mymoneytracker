@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import {
   BottomSheetModal,
@@ -13,16 +13,26 @@ import { CATEGORIES } from '@/config'
 import type { Transaction } from '@/domain/transaction'
 import { safeDate } from '@/domain/transaction'
 import { getActiveAccounts } from '@/domain/account'
+import {
+  getTransactionItems,
+  getItemById,
+  getPriceHistoryForItem,
+  getLowestPriceForItem,
+  type TransactionItem,
+  type TrackedItem,
+  type PricePointWithStore,
+} from '@/domain/price-tracker'
 import { useHoHTheme } from '@/providers'
 import { CategoryIcon } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/theme/tokens/typography'
 import { spacing } from '@/theme/tokens/spacing'
 import { radius } from '@/theme/tokens/radius'
+import { ItemPriceHistorySheet } from '@/features/price-tracker'
 
 type Props = {
   transaction: Transaction | null
-  sheetRef: React.RefObject<BottomSheetModal>
+  sheetRef: React.RefObject<BottomSheetModal | null>
   onDismiss: () => void
   onEdit: (tx: Transaction) => void
   onDelete?: (tx: Transaction) => void
@@ -39,6 +49,51 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
     for (const a of accounts) m.set(a.id, a.name)
     return m
   }, [accounts])
+
+  // Transaction items state
+  const [transactionItems, setTransactionItems] = useState<TransactionItem[]>([])
+
+  // Price history sheet state
+  const priceHistorySheetRef = useRef<BottomSheetModal>(null)
+  const [selectedItem, setSelectedItem] = useState<TrackedItem | null>(null)
+  const [selectedPriceHistory, setSelectedPriceHistory] = useState<PricePointWithStore[]>([])
+  const [selectedLowestPrice, setSelectedLowestPrice] = useState<PricePointWithStore | null>(null)
+
+  // Load transaction items when transaction changes
+  useEffect(() => {
+    if (transaction) {
+      const items = getTransactionItems(transaction.id)
+      setTransactionItems(items)
+    } else {
+      setTransactionItems([])
+    }
+  }, [transaction])
+
+  // Calculate items total
+  const itemsTotal = useMemo(() => {
+    return transactionItems.reduce((sum, item) => sum + item.priceCents, 0) / 100
+  }, [transactionItems])
+
+  // Handle item tap - open price history
+  const handleItemPress = useCallback((txItem: TransactionItem) => {
+    if (txItem.itemId) {
+      const trackedItem = getItemById(txItem.itemId)
+      if (trackedItem) {
+        setSelectedItem(trackedItem)
+        const history = getPriceHistoryForItem(trackedItem.id, 50)
+        const lowest = getLowestPriceForItem(trackedItem.id)
+        setSelectedPriceHistory(history)
+        setSelectedLowestPrice(lowest)
+        priceHistorySheetRef.current?.present()
+      }
+    }
+  }, [])
+
+  const handlePriceHistoryDismiss = useCallback(() => {
+    setSelectedItem(null)
+    setSelectedPriceHistory([])
+    setSelectedLowestPrice(null)
+  }, [])
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -229,6 +284,45 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
           )}
         </View>
 
+        {/* Items Section */}
+        {transactionItems.length > 0 && (
+          <View style={styles.itemsSection}>
+            <View style={[styles.itemsSectionHeader, { borderBottomColor: theme.semantic.border }]}>
+              <Text style={[styles.itemsSectionTitle, { color: theme.semantic.textSecondary }]}>Items</Text>
+              <Text style={[styles.itemsSectionCount, { color: theme.semantic.textSecondary }]}>
+                {transactionItems.length} {transactionItems.length === 1 ? 'item' : 'items'} · {formatCurrency(itemsTotal)}
+              </Text>
+            </View>
+
+            {transactionItems.map((txItem) => (
+              <Pressable
+                key={txItem.id}
+                onPress={() => handleItemPress(txItem)}
+                style={[styles.itemRow, { borderBottomColor: theme.semantic.border }]}
+                disabled={!txItem.itemId}
+              >
+                <View style={styles.itemLeft}>
+                  <Text style={styles.itemEmoji}>📦</Text>
+                  <Text style={[styles.itemName, { color: theme.semantic.text }]}>{txItem.name}</Text>
+                  {txItem.quantity > 1 && (
+                    <Text style={[styles.itemQty, { color: theme.semantic.textSecondary }]}>
+                      × {txItem.quantity}{txItem.unit ? ` ${txItem.unit}` : ''}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.itemRight}>
+                  <Text style={[styles.itemPrice, { color: theme.semantic.text }]}>
+                    {formatCurrency(txItem.priceCents / 100)}
+                  </Text>
+                  {txItem.itemId && (
+                    <Text style={[styles.itemChevron, { color: theme.semantic.textSecondary }]}>›</Text>
+                  )}
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
         {/* Note - Full width section */}
         {transaction.note && (
           <View style={styles.noteSection}>
@@ -264,6 +358,15 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
             </Pressable>
           )}
         </View>
+
+        {/* Item Price History Sheet */}
+        <ItemPriceHistorySheet
+          item={selectedItem}
+          priceHistory={selectedPriceHistory}
+          lowestPrice={selectedLowestPrice}
+          sheetRef={priceHistorySheetRef}
+          onDismiss={handlePriceHistoryDismiss}
+        />
       </View>
     </BottomSheetModal>
   )
@@ -399,14 +502,69 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   noteSectionLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    letterSpacing: letterSpacing.wider,
     marginBottom: spacing.xs,
   },
   noteSectionText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
     lineHeight: 20,
+  },
+  // Items Section
+  itemsSection: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  itemsSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
+  itemsSectionTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+  },
+  itemsSectionCount: {
+    fontSize: fontSize.sm,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+  },
+  itemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  itemEmoji: {
+    fontSize: 18,
+  },
+  itemName: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    flexShrink: 1,
+  },
+  itemQty: {
+    fontSize: fontSize.xs,
+  },
+  itemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  itemPrice: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    fontVariant: ['tabular-nums'],
+  },
+  itemChevron: {
+    fontSize: fontSize.lg,
   },
 })

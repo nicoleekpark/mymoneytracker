@@ -57,7 +57,7 @@ export function InsightsHeader({
   return (
     <View style={{ paddingBottom: spacing.sm }}>
       {/* Row 1: Members (left) + Period nav (right) */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm }}>
         {/* Members */}
         <ScrollView
           horizontal

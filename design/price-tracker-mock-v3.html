@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Tracker v3 - HoH Ledger Mock</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-alt: #1c1c1c;
+      --surface-elevated: #242424;
+      --border: #2a2a2a;
+      --border-light: #222;
+      --text: #f5f5f5;
+      --text-secondary: #888;
+      --text-tertiary: #555;
+      --text-hint: #444;
+      --primary: #6366f1;
+      --primary-soft: rgba(99, 102, 241, 0.15);
+      --success: #22c55e;
+      --success-soft: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.15);
+      --warning: #f59e0b;
+      --warning-soft: rgba(245, 158, 11, 0.15);
+      --info: #3b82f6;
+      --info-soft: rgba(59, 130, 246, 0.15);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: #000;
+      color: var(--text);
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      gap: 24px;
+      padding: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: var(--bg);
+      border-radius: 40px;
+      border: 3px solid #333;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .screen-label {
+      position: absolute;
+      top: -30px;
+      left: 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .phone-wrapper {
+      position: relative;
+      margin-top: 40px;
+    }
+
+    .status-bar {
+      height: 44px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .nav-header {
+      padding: 0 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .nav-back {
+      font-size: 16px;
+      color: var(--primary);
+    }
+
+    .nav-action {
+      font-size: 14px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .bottom-tabs {
+      display: flex;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 8px 0 24px;
+    }
+
+    .tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .tab.active {
+      color: var(--primary);
+    }
+
+    .tab-icon {
+      font-size: 20px;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    /* ==================== TRANSACTION ROW - NO HINTS ==================== */
+    .tx-row {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tx-row:last-child {
+      border-bottom: none;
+    }
+
+    .tx-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .tx-left {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .tx-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .tx-icon.groceries { background: var(--success-soft); }
+    .tx-icon.coffee { background: var(--warning-soft); }
+    .tx-icon.income { background: var(--success-soft); }
+
+    .tx-details {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tx-category {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .tx-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .tx-amount {
+      font-size: 15px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tx-amount.income {
+      color: var(--success);
+    }
+
+    /* ==================== DETAIL SHEET ==================== */
+    .detail-sheet-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .detail-sheet {
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-height: 85%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--text-tertiary);
+      border-radius: 2px;
+      margin: 12px auto;
+    }
+
+    .sheet-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 20px;
+    }
+
+    .sheet-header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+
+    .sheet-amount {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .sheet-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Detail Rows */
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .detail-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      text-align: right;
+    }
+
+    .detail-value-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .category-icon-small {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    /* Items Section in Detail Sheet */
+    .items-section {
+      margin-top: 4px;
+    }
+
+    .items-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .items-section-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .items-section-count {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    /* Tappable Item Rows */
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+    }
+
+    .item-row:hover {
+      background: var(--surface-alt);
+      margin: 0 -20px;
+      padding: 12px 20px;
+    }
+
+    .item-row:last-child {
+      border-bottom: none;
+    }
+
+    .item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .item-emoji {
+      font-size: 18px;
+    }
+
+    .item-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .item-qty {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: 4px;
+    }
+
+    .item-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .item-price {
+      font-size: 14px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .item-chevron {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    /* Note Section */
+    .note-section {
+      padding: 14px 0;
+    }
+
+    .note-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .note-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Footer Buttons */
+    .sheet-footer {
+      padding: 16px 20px 32px;
+      border-top: 1px solid var(--border);
+    }
+
+    .edit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+    }
+
+    .delete-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--danger);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* ==================== ADD TRANSACTION MODAL ==================== */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .modal-sheet {
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-height: 90%;
+      overflow: hidden;
+    }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--text-tertiary);
+      border-radius: 2px;
+      margin: 12px auto;
+    }
+
+    .modal-header {
+      padding: 0 20px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .modal-content {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: calc(90vh - 120px);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .amount-display {
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .amount-value {
+      font-size: 48px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+    }
+
+    .type-selector {
+      display: flex;
+      gap: 8px;
+      padding: 4px;
+      background: var(--surface-alt);
+      border-radius: 12px;
+    }
+
+    .type-option {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .type-option.active {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .optional-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 20px;
+    }
+
+    .optional-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .optional-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Itemized Table */
+    .itemized-section {
+      background: var(--surface-alt);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .itemized-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .itemized-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .itemized-icon {
+      font-size: 14px;
+    }
+
+    .itemized-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .itemized-total {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .itemized-chevron {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .itemized-table {
+      width: 100%;
+    }
+
+    .itemized-table-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .itemized-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .itemized-row:last-child {
+      border-bottom: none;
+    }
+
+    .item-input {
+      flex: 1;
+      padding: 12px 0;
+      background: transparent;
+      border: none;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+
+    .item-input::placeholder {
+      color: var(--text-hint);
+    }
+
+    .item-input.price {
+      width: 80px;
+      flex: none;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+    }
+
+    .itemized-row.active {
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    /* Suggestions */
+    .item-suggestions {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 8px 16px 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .suggestion-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .suggestion-emoji {
+      font-size: 16px;
+    }
+
+    .suggestion-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .suggestion-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .suggestion-price {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    /* ==================== PRICE TRACKER ==================== */
+    .price-tracker-header {
+      padding: 16px;
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .tracker-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .tracker-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .tracker-tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .tracker-tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+    }
+
+    .tracker-tab.active {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .search-icon {
+      color: var(--text-secondary);
+    }
+
+    .search-input {
+      flex: 1;
+      background: none;
+      border: none;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .price-card {
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .price-card-header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .price-item-main {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .price-item-emoji {
+      width: 44px;
+      height: 44px;
+      background: var(--surface-alt);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .price-item-info h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .price-item-info p {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .price-trend {
+      text-align: right;
+    }
+
+    .price-trend-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--danger);
+    }
+
+    .price-trend-value.down {
+      color: var(--success);
+    }
+
+    .price-trend-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .price-stores {
+      border-top: 1px solid var(--border);
+    }
+
+    .price-store-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .price-store-row:last-child {
+      border-bottom: none;
+    }
+
+    .price-store-row.best {
+      background: var(--success-soft);
+    }
+
+    .price-store-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .best-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--success);
+      background: rgba(34, 197, 94, 0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .store-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .store-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .store-price {
+      font-size: 16px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ==================== ITEM PRICE HISTORY (on tap) ==================== */
+    .price-history-sheet {
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-height: 70%;
+    }
+
+    .price-history-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .price-history-emoji {
+      width: 56px;
+      height: 56px;
+      background: var(--surface-alt);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .price-history-info h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .price-history-info p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .price-history-content {
+      padding: 20px;
+    }
+
+    .price-history-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .price-history-store {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px;
+      background: var(--surface-alt);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .price-history-store.best {
+      background: var(--success-soft);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .price-history-store-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .price-history-store-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .price-history-store-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .price-history-store-price {
+      font-size: 18px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .price-history-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      background: var(--surface-alt);
+      border-radius: 12px;
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .flow-note {
+      text-align: center;
+      padding: 32px 24px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .flow-note strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ==================== SCREEN 1: Transaction List - No Hints ==================== -->
+    <div class="phone-wrapper">
+      <div class="screen-label">1. Transaction List — No Hints</div>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span>●●●●● 100%</span>
+        </div>
+
+        <div class="nav-header">
+          <span class="nav-back">← Back</span>
+          <span class="nav-title">Transactions</span>
+          <span class="nav-action">Filter</span>
+        </div>
+
+        <div class="content">
+          <div class="section-header">
+            <span class="section-title">Today</span>
+          </div>
+
+          <div class="card">
+            <!-- Standard rows - no hints about items -->
+            <div class="tx-row">
+              <div class="tx-main">
+                <div class="tx-left">
+                  <div class="tx-icon groceries">🥬</div>
+                  <div class="tx-details">
+                    <span class="tx-category">Groceries</span>
+                    <span class="tx-meta">Whole Foods · Chase Prime</span>
+                  </div>
+                </div>
+                <span class="tx-amount">$124.80</span>
+              </div>
+            </div>
+
+            <div class="tx-row">
+              <div class="tx-main">
+                <div class="tx-left">
+                  <div class="tx-icon coffee">☕</div>
+                  <div class="tx-details">
+                    <span class="tx-category">Coffee</span>
+                    <span class="tx-meta">Blue Bottle · Amex Gold</span>
+                  </div>
+                </div>
+                <span class="tx-amount">$12.50</span>
+              </div>
+            </div>
+
+            <div class="tx-row">
+              <div class="tx-main">
+                <div class="tx-left">
+                  <div class="tx-icon groceries">🥬</div>
+                  <div class="tx-details">
+                    <span class="tx-category">Groceries</span>
+                    <span class="tx-meta">Hmart · Amex Gold</span>
+                  </div>
+                </div>
+                <span class="tx-amount">$67.20</span>
+              </div>
+            </div>
+
+            <div class="tx-row">
+              <div class="tx-main">
+                <div class="tx-left">
+                  <div class="tx-icon income">💰</div>
+                  <div class="tx-details">
+                    <span class="tx-category">Salary</span>
+                    <span class="tx-meta">Direct Deposit · Chase</span>
+                  </div>
+                </div>
+                <span class="tx-amount income">+$4,500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-tabs">
+          <div class="tab">
+            <span class="tab-icon">📊</span>
+            <span>Dashboard</span>
+          </div>
+          <div class="tab active">
+            <span class="tab-icon">📝</span>
+            <span>Transactions</span>
+          </div>
+          <div class="tab">
+            <span class="tab-icon">💰</span>
+            <span>Accounts</span>
+          </div>
+          <div class="tab">
+            <span class="tab-icon">📈</span>
+            <span>Prices</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 2: Detail Sheet with Items ==================== -->
+    <div class="phone-wrapper">
+      <div class="screen-label">2. Detail Sheet — Items Below Fields</div>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span>●●●●● 100%</span>
+        </div>
+
+        <div class="nav-header" style="opacity: 0.3;">
+          <span class="nav-back">← Back</span>
+          <span class="nav-title">Transactions</span>
+          <span class="nav-action">Filter</span>
+        </div>
+
+        <div class="detail-sheet-overlay">
+          <div class="detail-sheet">
+            <div class="sheet-handle"></div>
+
+            <div class="sheet-scroll">
+              <!-- Header -->
+              <div class="sheet-header">
+                <div class="sheet-amount">$124.80</div>
+                <div class="sheet-title">Weekly groceries</div>
+                <div class="sheet-subtitle">Whole Foods</div>
+              </div>
+
+              <!-- Standard Detail Rows -->
+              <div class="detail-row">
+                <span class="detail-label">Date</span>
+                <span class="detail-value">Mon, Mar 10, 2025 • 2:34 PM</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">Paid with</span>
+                <span class="detail-value">Chase Prime Visa</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">Category</span>
+                <div class="detail-value-row">
+                  <div class="category-icon-small" style="background: var(--success-soft);">🥬</div>
+                  <span class="detail-value">Groceries</span>
+                </div>
+              </div>
+
+              <!-- Items Section - AFTER standard fields -->
+              <div class="items-section">
+                <div class="items-section-header">
+                  <span class="items-section-title">Items</span>
+                  <span class="items-section-count">4 items · $35.97</span>
+                </div>
+
+                <!-- Tappable item rows with chevron -->
+                <div class="item-row">
+                  <div class="item-left">
+                    <span class="item-emoji">🧅</span>
+                    <span class="item-name">Organic Onion</span>
+                    <span class="item-qty">× 3 lb</span>
+                  </div>
+                  <div class="item-right">
+                    <span class="item-price">$15.00</span>
+                    <span class="item-chevron">›</span>
+                  </div>
+                </div>
+
+                <div class="item-row">
+                  <div class="item-left">
+                    <span class="item-emoji">🥛</span>
+                    <span class="item-name">Oat Milk</span>
+                    <span class="item-qty">× 2</span>
+                  </div>
+                  <div class="item-right">
+                    <span class="item-price">$11.98</span>
+                    <span class="item-chevron">›</span>
+                  </div>
+                </div>
+
+                <div class="item-row">
+                  <div class="item-left">
+                    <span class="item-emoji">🍪</span>
+                    <span class="item-name">Cookies</span>
+                    <span class="item-qty">× 1</span>
+                  </div>
+                  <div class="item-right">
+                    <span class="item-price">$8.99</span>
+                    <span class="item-chevron">›</span>
+                  </div>
+                </div>
+
+                <div class="item-row" style="opacity: 0.6;">
+                  <div class="item-left">
+                    <span class="item-emoji">📦</span>
+                    <span class="item-name" style="color: var(--text-secondary);">Other items</span>
+                  </div>
+                  <div class="item-right">
+                    <span class="item-price" style="color: var(--text-secondary);">$88.83</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Note Section -->
+              <div class="note-section">
+                <div class="note-label">Note</div>
+                <div class="note-text">Weekly grocery run. Got extra cookies for the party.</div>
+              </div>
+            </div>
+
+            <div class="sheet-footer">
+              <div class="edit-btn">Edit</div>
+              <div class="delete-btn">Delete Transaction</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 3: Item Price History (on tap) ==================== -->
+    <div class="phone-wrapper">
+      <div class="screen-label">3. Tap Item → Price History</div>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span>●●●●● 100%</span>
+        </div>
+
+        <div class="nav-header" style="opacity: 0.2;"></div>
+
+        <div class="detail-sheet-overlay">
+          <div class="price-history-sheet">
+            <div class="sheet-handle"></div>
+
+            <div class="price-history-header">
+              <div class="price-history-emoji">🧅</div>
+              <div class="price-history-info">
+                <h2>Organic Onion</h2>
+                <p>per lb · 4 stores tracked</p>
+              </div>
+            </div>
+
+            <div class="price-history-content">
+              <div class="price-history-section-title">Price Comparison</div>
+
+              <div class="price-history-store best">
+                <div class="price-history-store-left">
+                  <span class="price-history-store-name">Morton Williams</span>
+                  <span class="price-history-store-date">Updated Mar 5 · Best price</span>
+                </div>
+                <span class="price-history-store-price" style="color: var(--success);">$3.50</span>
+              </div>
+
+              <div class="price-history-store">
+                <div class="price-history-store-left">
+                  <span class="price-history-store-name">Whole Foods</span>
+                  <span class="price-history-store-date">Updated Mar 10 · You paid</span>
+                </div>
+                <span class="price-history-store-price">$5.00</span>
+              </div>
+
+              <div class="price-history-store">
+                <div class="price-history-store-left">
+                  <span class="price-history-store-name">Hmart</span>
+                  <span class="price-history-store-date">Updated Feb 28</span>
+                </div>
+                <span class="price-history-store-price">$5.00</span>
+              </div>
+
+              <div class="price-history-store">
+                <div class="price-history-store-left">
+                  <span class="price-history-store-name">Trader Joe's</span>
+                  <span class="price-history-store-date">Updated Feb 15</span>
+                </div>
+                <span class="price-history-store-price">$4.29</span>
+              </div>
+
+              <div class="price-history-cta">
+                <span>📈</span>
+                <span>View Full Price History</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 4: Add Transaction - Itemized ==================== -->
+    <div class="phone-wrapper">
+      <div class="screen-label">4. Add Transaction — Itemized</div>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span>●●●●● 100%</span>
+        </div>
+
+        <div class="modal-overlay">
+          <div class="modal-sheet">
+            <div class="modal-handle"></div>
+
+            <div class="modal-header">
+              <span style="color: var(--primary); font-size: 16px;">Cancel</span>
+              <span class="modal-title">Add Transaction</span>
+              <span style="width: 50px;"></span>
+            </div>
+
+            <div class="modal-content">
+              <div class="amount-display">
+                <div class="amount-value">$124.80</div>
+              </div>
+
+              <div class="form-group">
+                <div class="type-selector">
+                  <div class="type-option active" style="color: var(--danger);">Expense</div>
+                  <div class="type-option">Income</div>
+                  <div class="type-option">Transfer</div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Category</label>
+                  <input class="form-input" value="🥬 Groceries" readonly style="font-size: 15px;">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Account</label>
+                  <input class="form-input" value="Chase Prime" readonly style="font-size: 15px;">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Merchant</label>
+                <input class="form-input" value="Whole Foods" style="font-size: 15px;">
+              </div>
+
+              <div class="optional-divider">
+                <div class="optional-line"></div>
+                <span class="optional-label">Optional</span>
+                <div class="optional-line"></div>
+              </div>
+
+              <!-- Itemized Section -->
+              <div class="itemized-section">
+                <div class="itemized-header">
+                  <div class="itemized-header-left">
+                    <span class="itemized-icon">📦</span>
+                    <span class="itemized-title">Itemized</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="itemized-total">$35.97</span>
+                    <span class="itemized-chevron">▼</span>
+                  </div>
+                </div>
+
+                <div class="itemized-table">
+                  <div class="itemized-table-header">
+                    <span>Item</span>
+                    <span>Price</span>
+                  </div>
+
+                  <div class="itemized-row">
+                    <input class="item-input" value="Organic Onion">
+                    <input class="item-input price" value="$15.00">
+                  </div>
+                  <div class="itemized-row">
+                    <input class="item-input" value="Oat Milk">
+                    <input class="item-input price" value="$11.98">
+                  </div>
+                  <div class="itemized-row">
+                    <input class="item-input" value="Cookies">
+                    <input class="item-input price" value="$8.99">
+                  </div>
+
+                  <div class="itemized-row active">
+                    <input class="item-input" placeholder="Add item...">
+                    <input class="item-input price" placeholder="$0.00">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Note</label>
+                <input class="form-input" placeholder="Add a note..." style="font-size: 15px;">
+              </div>
+
+              <button class="save-btn">Save Transaction</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="flow-note">
+    <strong>Key Changes (v3)</strong>
+    • Transaction rows: No hints — clean list<br>
+    • Detail sheet: Items section below Date/Paid with/Category/Note<br>
+    • Tap item row → Price history sheet (Option C)<br>
+    • Consistent font sizes for all labels
+  </div>
+
+  <div class="container">
+
+    <!-- ==================== SCREEN 5: Add Transaction - With Suggestions ==================== -->
+    <div class="phone-wrapper">
+      <div class="screen-label">5. Itemized — With Suggestions</div>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span>●●●●● 100%</span>
+        </div>
+
+        <div class="modal-overlay">
+          <div class="modal-sheet">
+            <div class="modal-handle"></div>
+
+            <div class="modal-header">
+              <span style="color: var(--primary); font-size: 16px;">Cancel</span>
+              <span class="modal-title">Add Transaction</span>
+              <span style="width: 50px;"></span>
+            </div>
+
+            <div class="modal-content">
+              <div class="amount-display">
+                <div class="amount-value">$124.80</div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Category</label>
+                  <input class="form-input" value="🥬 Groceries" readonly style="font-size: 15px;">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Merchant</label>
+                  <input class="form-input" value="Whole Foods" style="font-size: 15px;">
+                </div>
+              </div>
+
+              <div class="optional-divider">
+                <div class="optional-line"></div>
+                <span class="optional-label">Optional</span>
+                <div class="optional-line"></div>
+              </div>
+
+              <div class="itemized-section">
+                <div class="itemized-header">
+                  <div class="itemized-header-left">
+                    <span class="itemized-icon">📦</span>
+                    <span class="itemized-title">Itemized</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="itemized-total">$26.98</span>
+                    <span class="itemized-chevron">▼</span>
+                  </div>
+                </div>
+
+                <div class="itemized-table">
+                  <div class="itemized-table-header">
+                    <span>Item</span>
+                    <span>Price</span>
+                  </div>
+
+                  <div class="itemized-row">
+                    <input class="item-input" value="Organic Onion">
+                    <input class="item-input price" value="$15.00">
+                  </div>
+                  <div class="itemized-row">
+                    <input class="item-input" value="Oat Milk">
+                    <input class="item-input price" value="$11.98">
+                  </div>
+
+                  <div class="itemized-row active">
+                    <input class="item-input" value="coo" placeholder="Add item...">
+                    <input class="item-input price" placeholder="$0.00">
+                  </div>
+                </div>
+
+                <!-- Suggestions dropdown -->
+                <div class="item-suggestions">
+                  <div class="suggestion-item">
+                    <div class="suggestion-left">
+                      <span class="suggestion-emoji">🍪</span>
+                      <div>
+                        <div class="suggestion-name">Cookies</div>
+                        <div class="suggestion-hint">Last: $8.99 at Whole Foods</div>
+                      </div>
+                    </div>
+                    <span class="suggestion-price">$8.99</span>
+                  </div>
+                  <div class="suggestion-item">
+                    <div class="suggestion-left">
+                      <span class="suggestion-emoji">🥥</span>
+                      <div>
+                        <div class="suggestion-name">Coconut Water</div>
+                        <div class="suggestion-hint">Last: $3.99 at Trader Joe's</div>
+                      </div>
+                    </div>
+                    <span class="suggestion-price">$3.99</span>
+                  </div>
+                  <div class="suggestion-item">
+                    <div class="suggestion-left">
+                      <span class="suggestion-emoji">➕</span>
+                      <div>
+                        <div class="suggestion-name">Add "coo" as new item</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 6: Price Tracker ==================== -->
+    <div class="phone-wrapper">
+      <div class="screen-label">6. Price Tracker — Tab View</div>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span>●●●●● 100%</span>
+        </div>
+
+        <div class="content" style="padding-top: 8px;">
+          <div class="price-tracker-header">
+            <div class="tracker-title">Price Tracker</div>
+            <div class="tracker-subtitle">4 stores · 23 items</div>
+
+            <div class="tracker-tabs">
+              <div class="tracker-tab active">All</div>
+              <div class="tracker-tab">Groceries</div>
+              <div class="tracker-tab">Coffee</div>
+              <div class="tracker-tab">+ Add</div>
+            </div>
+          </div>
+
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" placeholder="Search items...">
+          </div>
+
+          <div class="price-card">
+            <div class="price-card-header">
+              <div class="price-item-main">
+                <div class="price-item-emoji">🧅</div>
+                <div class="price-item-info">
+                  <h3>Organic Onion</h3>
+                  <p>per lb · 4 stores</p>
+                </div>
+              </div>
+              <div class="price-trend">
+                <div class="price-trend-value">+320%</div>
+                <div class="price-trend-label">since 2021</div>
+              </div>
+            </div>
+            <div class="price-stores">
+              <div class="price-store-row best">
+                <div class="price-store-left">
+                  <span class="best-badge">BEST</span>
+                  <div>
+                    <div class="store-name">Morton Williams</div>
+                    <div class="store-date">Mar 5</div>
+                  </div>
+                </div>
+                <div class="store-price">$3.50</div>
+              </div>
+              <div class="price-store-row">
+                <div class="price-store-left">
+                  <div>
+                    <div class="store-name">Whole Foods</div>
+                    <div class="store-date">Mar 10</div>
+                  </div>
+                </div>
+                <div class="store-price">$5.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="price-card">
+            <div class="price-card-header">
+              <div class="price-item-main">
+                <div class="price-item-emoji">☕</div>
+                <div class="price-item-info">
+                  <h3>Latte (Large)</h3>
+                  <p>cafe · 3 places</p>
+                </div>
+              </div>
+              <div class="price-trend">
+                <div class="price-trend-value">+15%</div>
+                <div class="price-trend-label">since 2023</div>
+              </div>
+            </div>
+            <div class="price-stores">
+              <div class="price-store-row best">
+                <div class="price-store-left">
+                  <span class="best-badge">BEST</span>
+                  <div>
+                    <div class="store-name">Starbucks</div>
+                    <div class="store-date">Today</div>
+                  </div>
+                </div>
+                <div class="store-price">$5.75</div>
+              </div>
+              <div class="price-store-row">
+                <div class="price-store-left">
+                  <div>
+                    <div class="store-name">Blue Bottle</div>
+                    <div class="store-date">Today</div>
+                  </div>
+                </div>
+                <div class="store-price">$6.50</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="bottom-tabs">
+          <div class="tab">
+            <span class="tab-icon">📊</span>
+            <span>Dashboard</span>
+          </div>
+          <div class="tab">
+            <span class="tab-icon">📝</span>
+            <span>Transactions</span>
+          </div>
+          <div class="tab">
+            <span class="tab-icon">💰</span>
+            <span>Accounts</span>
+          </div>
+          <div class="tab active">
+            <span class="tab-icon">📈</span>
+            <span>Prices</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="flow-note">
+    <strong>User Flow Summary</strong>
+    1. Transaction list → tap row → Detail sheet<br>
+    2. Detail sheet shows fields + Items section<br>
+    3. Tap any item → Price history/comparison<br>
+    4. Price Tracker tab for standalone browsing<br>
+    5. Add Transaction → optional Itemized section with suggestions
+  </div>
+
+</body>
+</html>

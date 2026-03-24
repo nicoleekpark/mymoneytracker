@@ -473,7 +473,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
       />
 
       {/* Sticky Header Controls */}
-      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm }}>
+      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
         {data.members.length > 0 ? (
           <HeaderControls
             members={data.members.map(m => ({ id: m.id, nickname: m.nickname }))}
@@ -511,7 +511,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
       >
 
@@ -626,13 +626,7 @@ export function AssetsBody({ colors, initialYear }: Props) {
               >
                 <InfoIndicator color={colors.textSecondary} />
               </Pressable>
-              {/* ⋮ menu button - placeholder for future */}
-              <Pressable
-                onPress={() => {/* TODO: Open goal settings sheet */}}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Text style={{ fontSize: fontSize.lg, color: colors.textSecondary, fontWeight: fontWeight.semibold }}>⋮</Text>
-              </Pressable>
+              {/* v2: Goal settings menu - hidden for v1 */}
             </View>
 
             {/* Progress text */}

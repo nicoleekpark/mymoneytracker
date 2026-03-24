@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { useHoHTheme } from '@/providers'
-import { AppBar } from '@/shared/components'
 import { useThemeColors, useExtendedThemeColors } from '@/shared/hooks/useThemeColors'
 import { Screen } from '@/shared/layout/Screen'
 
@@ -120,9 +119,7 @@ export default function DashboardScreen() {
   const monthYYYYMM = periodToMonthYYYYMM(period)
 
   return (
-    <Screen topPadding>
-      <AppBar />
-
+    <Screen edges={[]} padded={false}>
       <DashboardModeTabs
         modes={MODES}
         value={mode}

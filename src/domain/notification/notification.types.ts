@@ -1,48 +1,43 @@
 /**
  * Notification Types
  *
- * Defines notification categories and data structures.
+ * Phase 1: System notifications only (single-user)
+ * Phase 2: Will add user_action, message, reaction, group for multi-user
  */
 
-export type NotificationType =
-  | 'system'      // App updates, maintenance
-  | 'user_action' // Someone added/edited transaction
-  | 'message'     // DM from group member
-  | 'reaction'    // Like, comment on transaction
-  | 'group'       // Group-related activity
+// Phase 1: System-only types
+export type NotificationType = 'system'
 
-export type ReactionType = 'like' | 'love' | 'question' | 'exclamation' | 'thanks'
+// System notification subtypes for Phase 1
+export type SystemNotificationSubtype =
+  | 'draft_reminder'    // Drafts older than 7 days
+  | 'budget_alert'      // Budget threshold exceeded
+  | 'inactivity_nudge'  // No transactions for X days
+  | 'anomaly_detected'  // Unusual spending pattern
 
 export type Notification = {
   id: string
   type: NotificationType
+  subtype?: SystemNotificationSubtype
   title: string
   message: string
-  timestamp: string // ISO date
+  createdAt: string // ISO date
   read: boolean
+  dismissed: boolean
 
-  // Optional fields based on type
-  senderId?: string      // User who triggered notification
-  senderName?: string    // Display name
-  senderAvatar?: string  // Avatar URL or initial
-  groupId?: string       // For group notifications
-  groupName?: string
-  transactionId?: string // For transaction-related
-  reactionType?: ReactionType
+  // Optional metadata
+  metadata?: Record<string, unknown>
 }
 
-export type NotificationTab = 'all' | 'unread' | 'drafts' | 'groups' | 'messages' | 'reactions'
+// Simplified tabs for Phase 1
+export type NotificationTab = 'all' | 'unread'
 
 /**
- * Tab configuration
+ * Tab configuration - Phase 1 (simplified)
  */
 export const NOTIFICATION_TABS: { key: NotificationTab; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'unread', label: 'Unread' },
-  { key: 'drafts', label: 'Drafts' },
-  { key: 'groups', label: 'Groups' },
-  { key: 'messages', label: 'Messages' },
-  { key: 'reactions', label: 'Reactions' },
 ]
 
 /**
@@ -57,3 +52,8 @@ export const TIME_GROUP_LABELS: Record<TimeGroup, string> = {
   last30days: 'Last 30 Days',
   older: 'Older',
 }
+
+/**
+ * Input for creating a notification
+ */
+export type CreateNotificationInput = Omit<Notification, 'id' | 'createdAt' | 'read' | 'dismissed'>

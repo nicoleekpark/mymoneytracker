@@ -5,6 +5,7 @@ import type { Edge } from 'react-native-safe-area-context'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useHoHTheme } from '@/providers'
+import { spacing } from '@/theme/tokens/spacing'
 
 type ScreenProps = Readonly<{
   children: React.ReactNode
@@ -62,10 +63,10 @@ function createStyles(theme: ReturnType<typeof useHoHTheme>) {
       flex: 1
     },
     padded: {
-      paddingHorizontal: 16
+      paddingHorizontal: spacing.lg // 16px
     },
     topPadding: {
-      paddingTop: 8
+      paddingTop: spacing.sm // 8px
     }
   })
 }

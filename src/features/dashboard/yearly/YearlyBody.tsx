@@ -181,7 +181,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] }}
+      contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
       showsVerticalScrollIndicator={false}
     >
       {/* Section 1: Hero - Year Overview */}

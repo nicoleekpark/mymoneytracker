@@ -1,6 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -13,6 +13,8 @@ import { ScrollView, Text, View } from 'react-native'
 import { fontSize, fontWeight } from '@/theme/tokens/typography'
 
 import { initDbPragmas, migrate, runSystemSeeds } from '@/infrastructure/db'
+import { runAppLaunchTriggers } from '@/domain/notification'
+import { DraftsFAB } from '@/features/transactions/list/components/DraftsFAB'
 
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
@@ -46,6 +48,8 @@ export default function RootLayout() {
       initDbPragmas()
       migrate()
       runSystemSeeds()
+      // Run notification triggers after DB is ready
+      runAppLaunchTriggers()
       setDbReady(true)
     } catch (e) {
       console.error('DB migrate failed', e)
@@ -83,6 +87,8 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const router = useRouter()
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
@@ -116,6 +122,11 @@ function RootLayoutNav() {
                 }}
               />
               </Stack>
+              {/* Global Drafts FAB - appears on all screens */}
+              <DraftsFAB
+                onPress={() => router.push('/transactions')}
+                bottomOffset={72} // Account for tab bar
+              />
             </TamaguiProvider>
           </ToastProvider>
         </HoHThemeProvider>

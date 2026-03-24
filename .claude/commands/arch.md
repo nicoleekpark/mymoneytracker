@@ -8,6 +8,7 @@ Instructions:
 - Consider scalability
 - Consider performance
 - Be decisive
+- Never implement before I confirm
 
 Specify if needed:
 - Options to evaluate:

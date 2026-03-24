@@ -3,6 +3,8 @@ import { SqliteAccountRepository } from './SqliteAccountRepository'
 import { SqliteAssetRepository } from './SqliteAssetRepository'
 import { SqliteCategoryRepository } from './SqliteCategoryRepository'
 import { SqliteDraftRepository } from './SqliteDraftRepository'
+import { SqliteNotificationRepository } from './SqliteNotificationRepository'
+import { SqlitePriceTrackerRepository } from './SqlitePriceTrackerRepository'
 import { SqliteSuggestionsRepository } from './SqliteSuggestionsRepository'
 import { SqliteTransactionRepository } from './SqliteTransactionRepository'
 
@@ -11,6 +13,8 @@ export { SqliteAccountRepository } from './SqliteAccountRepository'
 export { SqliteAssetRepository } from './SqliteAssetRepository'
 export { SqliteCategoryRepository } from './SqliteCategoryRepository'
 export { SqliteDraftRepository } from './SqliteDraftRepository'
+export { SqliteNotificationRepository } from './SqliteNotificationRepository'
+export { SqlitePriceTrackerRepository } from './SqlitePriceTrackerRepository'
 export { SqliteSuggestionsRepository } from './SqliteSuggestionsRepository'
 export { SqliteTransactionRepository } from './SqliteTransactionRepository'
 
@@ -27,3 +31,5 @@ export const transactionRepository = new SqliteTransactionRepository(
   sqliteDataSource,
   categoryRepository
 )
+export const priceTrackerRepository = new SqlitePriceTrackerRepository(sqliteDataSource)
+export const notificationRepository = new SqliteNotificationRepository(sqliteDataSource)

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search & Filter Visibility Options</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .mockup {
+      margin-bottom: 60px;
+    }
+
+    .mockup-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #4CAF50;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .mockup-desc {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .phone-frame {
+      background: #0d0d0d;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid #333;
+    }
+
+    /* Current Design */
+    .current .search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .current .search-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: transparent;
+    }
+
+    .current .search-area .icon { color: #555; font-size: 14px; }
+    .current .search-area input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .current .filter-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 100px;
+      background: #1f1f1f;
+      border: 1px solid #2a2a2a;
+      color: #888;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Option A: Subtle Border Always Visible */
+    .option-a .search-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .option-a .search-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #2a2a2a;
+    }
+
+    .option-a .search-area .icon { color: #666; font-size: 14px; }
+    .option-a .search-area input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .option-a .filter-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #2a2a2a;
+      color: #888;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .option-a .filter-pill .icon {
+      font-size: 14px;
+    }
+
+    /* Option B: Icon-Forward with Background */
+    .option-b .search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+    }
+
+    .option-b .search-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+    }
+
+    .option-b .search-icon-box {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+    }
+
+    .option-b .search-icon-box .icon { color: #888; font-size: 14px; }
+    .option-b .search-area input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .option-b .filter-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #4CAF50;
+      border-radius: 10px;
+      color: #000;
+      font-size: 16px;
+      position: relative;
+    }
+
+    .option-b .filter-btn .badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ff5722;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Option C: Full-Width Search Bar with Accent */
+    .option-c .search-container {
+      background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.02) 100%);
+      border-radius: 16px;
+      padding: 4px;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+    }
+
+    .option-c .search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #0d0d0d;
+      border-radius: 13px;
+    }
+
+    .option-c .search-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .option-c .search-area .icon { color: #4CAF50; font-size: 16px; }
+    .option-c .search-area input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #ddd;
+      font-size: 15px;
+      outline: none;
+    }
+    .option-c .search-area input::placeholder { color: #666; }
+
+    .option-c .divider {
+      width: 1px;
+      height: 24px;
+      background: #333;
+    }
+
+    .option-c .filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      color: #4CAF50;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .option-c .filter-btn .badge {
+      background: #4CAF50;
+      color: #000;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 100px;
+    }
+
+    /* Sample content */
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      background: rgba(76, 175, 80, 0.15);
+      border-radius: 100px;
+      color: #4CAF50;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .filter-chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 3px;
+    }
+
+    .transaction-preview {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #1f1f1f;
+    }
+
+    .month-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tx-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+    }
+
+    .tx-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 12px;
+    }
+
+    .tx-info { flex: 1; }
+    .tx-name { font-size: 14px; font-weight: 500; color: #ddd; }
+    .tx-merchant { font-size: 12px; color: #666; margin-top: 2px; }
+    .tx-amount { font-size: 14px; font-weight: 600; color: #ddd; }
+
+    /* Comparison */
+    .comparison {
+      margin-top: 60px;
+      padding: 20px;
+      background: #111;
+      border-radius: 12px;
+      border: 1px solid #222;
+    }
+
+    .comparison h3 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #4CAF50;
+      margin-bottom: 16px;
+    }
+
+    .comparison table {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
+    }
+
+    .comparison th {
+      text-align: left;
+      color: #666;
+      font-weight: 500;
+      padding: 8px 0;
+      border-bottom: 1px solid #222;
+    }
+
+    .comparison td {
+      padding: 10px 0;
+      color: #999;
+      border-bottom: 1px solid #1a1a1a;
+      vertical-align: top;
+    }
+
+    .comparison td:first-child {
+      color: #fff;
+      font-weight: 500;
+      width: 80px;
+    }
+
+    .rec {
+      display: inline-block;
+      background: #4CAF50;
+      color: #000;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Search & Filter Visibility</h1>
+
+    <!-- Current -->
+    <div class="mockup current">
+      <div class="mockup-label">Current (Ghost)</div>
+      <div class="mockup-desc">Minimal, transparent. Can feel invisible on dark backgrounds.</div>
+      <div class="phone-frame">
+        <div class="search-row">
+          <div class="search-area">
+            <span class="icon">&#x1F50D;</span>
+            <input type="text" placeholder="Search">
+          </div>
+          <button class="filter-pill">Filter</button>
+        </div>
+        <div class="transaction-preview">
+          <div class="month-header">
+            <span>March 2026</span>
+            <span>$132</span>
+          </div>
+          <div class="tx-row">
+            <div class="tx-dot" style="background: #4CAF50"></div>
+            <div class="tx-info">
+              <div class="tx-name">Groceries</div>
+              <div class="tx-merchant">Whole Foods</div>
+            </div>
+            <div class="tx-amount">$45.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option A: Subtle Border -->
+    <div class="mockup option-a">
+      <div class="mockup-label">Option A: Subtle Border</div>
+      <div class="mockup-desc">Always-visible border defines the search area. Clean but present.</div>
+      <div class="phone-frame">
+        <div class="search-row">
+          <div class="search-area">
+            <span class="icon">&#x1F50D;</span>
+            <input type="text" placeholder="Search transactions">
+          </div>
+          <button class="filter-pill">
+            <span class="icon">&#9881;</span>
+            Filter
+          </button>
+        </div>
+        <div class="active-filters">
+          <span class="filter-chip">
+            <span class="dot" style="background: #4CAF50"></span>
+            Groceries
+            <span>×</span>
+          </span>
+          <span class="filter-chip">Expenses <span>×</span></span>
+        </div>
+        <div class="transaction-preview">
+          <div class="month-header">
+            <span>March 2026</span>
+            <span>$132</span>
+          </div>
+          <div class="tx-row">
+            <div class="tx-dot" style="background: #4CAF50"></div>
+            <div class="tx-info">
+              <div class="tx-name">Groceries</div>
+              <div class="tx-merchant">Whole Foods</div>
+            </div>
+            <div class="tx-amount">$45.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option B: Icon-Forward -->
+    <div class="mockup option-b">
+      <div class="mockup-label">Option B: Icon-Forward</div>
+      <div class="mockup-desc">Unified background bar. Filter as prominent icon button with accent color.</div>
+      <div class="phone-frame">
+        <div class="search-row">
+          <div class="search-area">
+            <div class="search-icon-box">
+              <span class="icon">&#x1F50D;</span>
+            </div>
+            <input type="text" placeholder="Search">
+          </div>
+          <button class="filter-btn">
+            &#9881;
+            <span class="badge">2</span>
+          </button>
+        </div>
+        <div class="active-filters">
+          <span class="filter-chip">
+            <span class="dot" style="background: #4CAF50"></span>
+            Groceries
+            <span>×</span>
+          </span>
+          <span class="filter-chip">Expenses <span>×</span></span>
+        </div>
+        <div class="transaction-preview">
+          <div class="month-header">
+            <span>March 2026</span>
+            <span>$132</span>
+          </div>
+          <div class="tx-row">
+            <div class="tx-dot" style="background: #4CAF50"></div>
+            <div class="tx-info">
+              <div class="tx-name">Groceries</div>
+              <div class="tx-merchant">Whole Foods</div>
+            </div>
+            <div class="tx-amount">$45.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option C: Accent Border -->
+    <div class="mockup option-c">
+      <div class="mockup-label">Option C: Accent Glow</div>
+      <div class="mockup-desc">Gradient accent border draws attention. Search icon uses brand color.</div>
+      <div class="phone-frame">
+        <div class="search-container">
+          <div class="search-row">
+            <div class="search-area">
+              <span class="icon">&#x1F50D;</span>
+              <input type="text" placeholder="Search transactions...">
+            </div>
+            <span class="divider"></span>
+            <button class="filter-btn">
+              Filter
+              <span class="badge">2</span>
+            </button>
+          </div>
+        </div>
+        <div class="active-filters">
+          <span class="filter-chip">
+            <span class="dot" style="background: #4CAF50"></span>
+            Groceries
+            <span>×</span>
+          </span>
+          <span class="filter-chip">Expenses <span>×</span></span>
+        </div>
+        <div class="transaction-preview">
+          <div class="month-header">
+            <span>March 2026</span>
+            <span>$132</span>
+          </div>
+          <div class="tx-row">
+            <div class="tx-dot" style="background: #4CAF50"></div>
+            <div class="tx-info">
+              <div class="tx-name">Groceries</div>
+              <div class="tx-merchant">Whole Foods</div>
+            </div>
+            <div class="tx-amount">$45.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="comparison">
+      <h3>Summary</h3>
+      <table>
+        <tr>
+          <th>Option</th>
+          <th>Style</th>
+          <th>Best For</th>
+        </tr>
+        <tr>
+          <td>A</td>
+          <td>Subtle border always visible</td>
+          <td>Clean, professional. Adds definition without being loud.</td>
+        </tr>
+        <tr>
+          <td>B <span class="rec">REC</span></td>
+          <td>Unified bar + icon button</td>
+          <td>Most discoverable. Filter stands out with accent color.</td>
+        </tr>
+        <tr>
+          <td>C</td>
+          <td>Accent gradient border</td>
+          <td>Premium feel. Brand-forward, draws eye to search area.</td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -2,7 +2,7 @@
  * BottomCTABar
  *
  * Bottom-anchored action bar for save actions.
- * Layout: [Draft] [Save $X.XX] [& New]
+ * Layout A: Full-width primary button + text links below
  */
 
 import React, { useEffect, useState } from 'react'
@@ -60,20 +60,7 @@ export function BottomCTABar({
 
   return (
     <View style={[styles.container, { paddingBottom: computedPaddingBottom }]}>
-      {/* Draft - text button */}
-      <Pressable
-        onPress={onSaveDraft}
-        style={({ pressed }) => [
-          styles.textButton,
-          { opacity: pressed ? OPACITY.pressed : 1 },
-        ]}
-      >
-        <Text style={[styles.textButtonLabel, { color: theme.semantic.textSecondary }]}>
-          Draft
-        </Text>
-      </Pressable>
-
-      {/* Save $X.XX - primary */}
+      {/* Primary: Save $X.XX - full width */}
       <Pressable
         onPress={onSave}
         disabled={!canSave}
@@ -90,51 +77,52 @@ export function BottomCTABar({
         </Text>
       </Pressable>
 
-      {/* & New - outlined secondary */}
-      <Pressable
-        onPress={onSaveAndNew}
-        disabled={!canSave}
-        style={({ pressed }) => [
-          styles.secondaryButton,
-          {
-            borderColor: canSave ? theme.semantic.border : theme.semantic.border + '60',
-            opacity: !canSave ? OPACITY.disabled : pressed ? OPACITY.pressed : 1,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.secondaryButtonLabel,
-            { color: canSave ? theme.semantic.text : theme.semantic.textSecondary },
+      {/* Secondary: Text links */}
+      <View style={styles.secondaryRow}>
+        <Pressable
+          onPress={onSaveAndNew}
+          disabled={!canSave}
+          style={({ pressed }) => [
+            styles.textButton,
+            { opacity: !canSave ? OPACITY.disabled : pressed ? OPACITY.pressed : 1 },
           ]}
         >
-          & New
-        </Text>
-      </Pressable>
+          <Text
+            style={[
+              styles.textButtonLabel,
+              { color: canSave ? theme.semantic.text : theme.semantic.textSecondary },
+            ]}
+          >
+            Save & New
+          </Text>
+        </Pressable>
+
+        <Text style={[styles.separator, { color: theme.semantic.textSecondary }]}>·</Text>
+
+        <Pressable
+          onPress={onSaveDraft}
+          style={({ pressed }) => [
+            styles.textButton,
+            { opacity: pressed ? OPACITY.pressed : 1 },
+          ]}
+        >
+          <Text style={[styles.textButtonLabel, { color: theme.semantic.textSecondary }]}>
+            Draft
+          </Text>
+        </Pressable>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
   },
-  textButton: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-  },
-  textButtonLabel: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.medium,
-  },
   primaryButton: {
-    flex: 1,
-    height: 48,
+    width: '100%',
+    height: 52,
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -143,16 +131,21 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
   },
-  secondaryButton: {
-    height: 48,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+  secondaryRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: spacing.sm,
   },
-  secondaryButtonLabel: {
-    fontSize: fontSize.md,
+  textButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  textButtonLabel: {
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+  },
+  separator: {
+    fontSize: fontSize.sm,
   },
 })
