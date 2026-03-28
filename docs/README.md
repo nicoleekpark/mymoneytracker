@@ -8,9 +8,11 @@
 
 | Role | Start Here |
 |------|------------|
-| **Product** | [overview.md](overview.md) → [prd/v1.md](prd/v1.md) |
-| **Developer** | [overview.md](overview.md) → [CLAUDE.md](../CLAUDE.md) → [adr/](adr/) |
-| **QA** | [qa/functional-plan.md](qa/functional-plan.md) |
+| **New Developer** | [getting-started/walkthrough.md](getting-started/walkthrough.md) |
+| **Contributor** | [guides/contributing.md](guides/contributing.md) → [guides/testing.md](guides/testing.md) |
+| **Product/Design** | [getting-started/overview.md](getting-started/overview.md) → [planning/prd-v1.md](planning/prd-v1.md) |
+| **Architecture** | [architecture/overview.md](architecture/overview.md) |
+| **QA** | [qa/test-plan.md](qa/test-plan.md) |
 
 ---
 
@@ -18,90 +20,111 @@
 
 ```
 docs/
-├── README.md          # This file
-├── overview.md        # Project overview
-├── glossary.md        # Term definitions
-├── ui-terminology.md  # UI component naming
-├── refactoring.md     # Refactoring tracker
-├── changelog.md       # Version history
-├── dev-tools.md       # Developer tools & commands
-├── performance-tracking.md  # Performance measurements
+├── README.md                    # This file
+├── todos.md                     # TODO tracker
 │
-├── prd/               # Product Requirements
-│   ├── v1.md          # V1 PRD (current)
-│   ├── v2.md          # V2 PRD (future)
-│   └── backlog.md     # Ideas & open questions
+├── getting-started/             # Onboarding
+│   ├── overview.md              # What is HoH? Goals, principles
+│   └── walkthrough.md           # Codebase walkthrough (1200+ lines)
 │
-├── adr/               # Architecture Decision Records
-│   ├── adr-0002-clean-architecture-adoption.md
-│   └── adr-template.md
+├── architecture/                # Technical architecture
+│   ├── overview.md              # Architecture overview
+│   └── adr/                     # Architecture Decision Records
+│       ├── template.md
+│       └── 0002-clean-architecture.md
 │
-└── qa/                # Quality Assurance
-    ├── functional-plan.md
-    ├── functional-report.md
-    ├── design-plan.md
-    └── design-report.md
+├── guides/                      # How-to guides
+│   ├── contributing.md          # PR workflow, code standards
+│   ├── deployment.md            # App Store publishing
+│   └── testing.md               # Test patterns, running tests
+│
+├── reference/                   # Reference material
+│   ├── glossary.md              # Domain terminology
+│   ├── ui-terminology.md        # UI component naming
+│   ├── design-system.md         # Color tokens, typography, styles
+│   └── dev-tools.md             # Developer tools & commands
+│
+├── planning/                    # Product planning
+│   ├── prd-v1.md                # V1 requirements (current)
+│   ├── prd-v2.md                # V2 vision (future)
+│   ├── backlog.md               # Ideas & open questions
+│   └── feature-specs/           # Detailed feature specs
+│       ├── notifications.md
+│       ├── price-tracker.md
+│       └── settings.md
+│
+├── qa/                          # Quality Assurance
+│   ├── test-plan.md             # Functional test cases
+│   ├── design-checklist.md      # Visual consistency checks
+│   └── test-reports/            # Test results
+│       ├── functional.md
+│       └── design.md
+│
+└── archive/                     # Historical documents
+    ├── changelog.md             # Version history
+    └── refactoring-2026-03.md   # Completed refactoring
 ```
 
 ---
 
 ## Key Documents
 
+### Getting Started
 | Document | Purpose |
 |----------|---------|
-| [overview.md](overview.md) | What is HoH Ledger? Goals, principles |
-| [prd/v1.md](prd/v1.md) | V1 requirements and user stories |
-| [prd/v2.md](prd/v2.md) | V2 vision (family, AI, sync) |
-| [prd/backlog.md](prd/backlog.md) | Feature ideas and open questions |
-| [changelog.md](changelog.md) | What changed in each version |
-| [glossary.md](glossary.md) | Domain terminology |
-| [ui-terminology.md](ui-terminology.md) | UI component naming & layout |
-| [refactoring.md](refactoring.md) | Refactoring tracker & progress |
-| [performance-tracking.md](performance-tracking.md) | Performance measurements |
+| [walkthrough.md](getting-started/walkthrough.md) | Comprehensive codebase tour for new developers |
+| [overview.md](getting-started/overview.md) | Product overview, goals, target users |
 
----
-
-## ADRs (Architecture Decision Records)
-
-ADRs document significant technical decisions with rationale.
-
-| ADR | Decision |
-|-----|----------|
-| [ADR-0002](adr/adr-0002-clean-architecture-adoption.md) | Clean Architecture adoption |
-
-**Creating a new ADR**: Copy [adr-template.md](adr/adr-template.md)
-
----
-
-## QA Documentation
-
+### Architecture
 | Document | Purpose |
 |----------|---------|
-| [functional-plan.md](qa/functional-plan.md) | Test cases for all features |
-| [functional-report.md](qa/functional-report.md) | Test results and bug tracking |
-| [design-plan.md](qa/design-plan.md) | Visual consistency checks |
-| [design-report.md](qa/design-report.md) | Design QA results |
+| [architecture/overview.md](architecture/overview.md) | Clean Architecture, layers, patterns |
+| [ADR-0002](architecture/adr/0002-clean-architecture.md) | Why we adopted Clean Architecture |
+
+### Guides
+| Document | Purpose |
+|----------|---------|
+| [contributing.md](guides/contributing.md) | PR workflow, code standards, adding features |
+| [testing.md](guides/testing.md) | Test patterns, running tests, mocking |
+| [deployment.md](guides/deployment.md) | App Store publishing |
+
+### Planning
+| Document | Purpose |
+|----------|---------|
+| [prd-v1.md](planning/prd-v1.md) | Current product requirements |
+| [prd-v2.md](planning/prd-v2.md) | Future vision (family, AI, sync) |
+| [backlog.md](planning/backlog.md) | Feature ideas and open questions |
+
+### Reference
+| Document | Purpose |
+|----------|---------|
+| [glossary.md](reference/glossary.md) | Domain terminology definitions |
+| [ui-terminology.md](reference/ui-terminology.md) | UI component naming conventions |
+| [design-system.md](reference/design-system.md) | Color tokens, typography, component styles |
+| [dev-tools.md](reference/dev-tools.md) | Developer tools and debug commands |
 
 ---
 
 ## Testing
 
-See [\_\_tests\_\_/README.md](../__tests__/README.md) for test setup and conventions.
+See [guides/testing.md](guides/testing.md) for comprehensive testing guide.
 
 ```bash
-npm test              # Run all tests
+npm test              # Run all tests (260 tests)
 npm run test:watch    # Watch mode
+npm run test:coverage # With coverage report
 ```
 
 ---
 
 ## Contributing
 
-**Adding a feature idea**: Add to [prd/backlog.md](prd/backlog.md)
+See [guides/contributing.md](guides/contributing.md) for full contribution guidelines.
 
-**Making an architectural decision**: Create ADR using [template](adr/adr-template.md)
-
-**Updating after a release**: Update [changelog.md](changelog.md)
+**Quick links**:
+- **Adding a feature idea**: [planning/backlog.md](planning/backlog.md)
+- **Making an architectural decision**: [architecture/adr/template.md](architecture/adr/template.md)
+- **Adding a TODO**: [todos.md](todos.md)
 
 ---
 

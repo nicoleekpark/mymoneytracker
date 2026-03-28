@@ -1,4 +1,4 @@
-import type { Notification, NotificationType, SystemNotificationSubtype } from '@/domain/notification'
+import type { Notification, NotificationType, SystemNotificationSubtype } from '@/core/domain/notification'
 
 /**
  * Database row representation of a notification.

@@ -26,39 +26,71 @@ npm run ios:run && npm run start:dev:ios
 
 ## Architecture
 
-The codebase follows **Clean Architecture** with explicit layer separation:
+The codebase follows **Clean Architecture** with 5 top-level folders:
 
 ```
 src/
 ├── app/                    # Expo Router screens (file-based routing)
+│
+├── core/                   # Business logic layer
+│   ├── domain/             # Pure types, models, schemas (NO external deps)
+│   │   ├── */types.ts      # Type definitions
+│   │   ├── */model.ts      # Domain models and factories
+│   │   ├── */schema.ts     # Zod schemas for runtime validation
+│   │   └── */repository.ts # Repository interfaces (NOT implementations)
+│   └── services/           # Application services (orchestrates domain + infrastructure)
+│       └── */service.ts    # Service functions (e.g., getActiveAccounts)
+│
 ├── features/               # Feature-specific components and hooks
 │   └── dashboard/          # Example: monthly/yearly/all-time views
-├── shared/                 # Cross-feature shared code
-│   ├── components/         # Reusable UI components
-│   ├── hooks/              # Shared React hooks
-│   ├── layout/             # Layout components (Screen, etc.)
-│   └── format/             # Formatting utilities (currency, date)
-├── domain/                 # Pure business logic (NO external dependencies)
-│   ├── */types.ts          # Type definitions
-│   ├── */model.ts          # Domain models and factories
-│   ├── */repository.ts     # Repository interfaces (NOT implementations)
-│   └── */usecase.ts        # Business logic operations
+│
 ├── infrastructure/         # External integrations
 │   ├── db/                 # SQLite utilities and migrations
 │   ├── repositories/       # Repository implementations (Sqlite*)
 │   └── mappers/            # Data transformation (DB row ↔ domain model)
-├── store/                  # Zustand state management
-├── providers/              # React context providers
-├── theme/                  # Tamagui design system
-└── config/                 # App configuration (categories, currencies)
+│
+└── shared/                 # Cross-cutting concerns
+    ├── components/         # Reusable UI components
+    ├── config/             # App configuration (categories, currencies)
+    ├── format/             # Formatting utilities (currency, date)
+    ├── hooks/              # Shared React hooks
+    ├── layout/             # Layout components (Screen, etc.)
+    ├── providers/          # React context providers
+    ├── store/              # Zustand state management
+    ├── theme/              # Tamagui design system
+    └── utils/              # Utility functions
+```
+
+### Layer Dependencies
+
+```
+features/ ──────► core/services/ ──────► infrastructure/
+                       │
+                       ▼
+                 core/domain/
+                 (pure types)
 ```
 
 ### Key Architectural Rules
 
-1. **Domain layer is pure**: `domain/` NEVER imports from `infrastructure/` - only defines interfaces
-2. **Repository pattern**: Domain defines interfaces, infrastructure implements them
-3. **Feature-first**: Code used by one feature stays in `features/xyz/`
-4. **Shared code**: Code used by multiple features goes in `shared/`
+1. **Domain layer is pure**: `core/domain/` NEVER imports from `infrastructure/` - only defines types, models, interfaces
+2. **Services orchestrate**: `core/services/` imports from both `core/domain/` (types) and `infrastructure/` (repos)
+3. **Features import services**: `features/` imports functions from `core/services/`, types from `core/domain/`
+4. **Repository pattern**: Domain defines interfaces, infrastructure implements them
+5. **Feature-first**: Code used by one feature stays in `features/xyz/`
+6. **Shared code**: Code used by multiple features goes in `shared/`
+
+### File Naming by Layer
+
+| Layer | Pattern | Purpose |
+|-------|---------|---------|
+| `core/domain/` | `*.types.ts` | Type definitions |
+| `core/domain/` | `*.model.ts` | Factory functions, validation |
+| `core/domain/` | `*.schema.ts` | Zod schemas for runtime validation |
+| `core/domain/` | `*.repository.ts` | Repository interfaces |
+| `core/services/` | `*.service.ts` | Orchestrates domain + infrastructure |
+| `infrastructure/` | `Sqlite*.ts` | Repository implementations |
+| `infrastructure/` | `*.mapper.ts` | DB row ↔ domain conversion |
 
 ## Database Migrations
 
@@ -79,7 +111,7 @@ After creating a migration, run `npm run db:migration:regen` to update the index
 
 ## Design System
 
-All views and components MUST follow these universal design rules. See `src/theme/tokens/viewStyles.ts` for pre-composed styles.
+All views and components MUST follow these universal design rules. See `src/shared/theme/tokens/viewStyles.ts` for pre-composed styles.
 
 ### Color Token Rules
 
@@ -91,7 +123,7 @@ All views and components MUST follow these universal design rules. See `src/them
 
 ```tsx
 // CORRECT - use StandardViewColors
-import { StandardViewColors } from '@/theme/tokens/viewStyles'
+import { StandardViewColors } from '@/shared/theme/tokens/viewStyles'
 type Props = { colors: StandardViewColors }
 
 // WRONG - don't create custom types with textMuted
@@ -107,7 +139,7 @@ type BadColors = { textMuted: string } // NEVER
 
 ```tsx
 // Import pre-composed styles
-import { componentStyles, numericStyles } from '@/theme/tokens/viewStyles'
+import { componentStyles, numericStyles } from '@/shared/theme/tokens/viewStyles'
 
 // Use for list rows
 <Text style={[componentStyles.listRow.amount, { color: colors.text }]}>

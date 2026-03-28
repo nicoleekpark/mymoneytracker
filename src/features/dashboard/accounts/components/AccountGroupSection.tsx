@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
 import type { AccountGroup, AccountsColors } from '../accounts.types'
 import { AccountRow } from './AccountRow'
 

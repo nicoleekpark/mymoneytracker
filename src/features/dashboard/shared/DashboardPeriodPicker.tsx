@@ -2,10 +2,10 @@ import { Picker } from '@react-native-picker/picker'
 import React, { useMemo, useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
 
-import { useHoHTheme } from '@/providers'
+import { useHoHTheme } from '@/shared/providers'
 
 import type { Period, Scope } from '../types'
-import { getMaxYearMonth, getMonthNameFull } from '../types'
+import { getMaxYearMonth, getMonthNameFull } from '../utils'
 import { createDashboardPeriodPickerStyles } from './DashboardPeriodPicker.styles'
 
 type Props = {

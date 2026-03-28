@@ -1,10 +1,10 @@
 import React from 'react'
 import { StyleSheet, TextInput, View } from 'react-native'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { useHoHTheme } from '@/providers'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { fontSize } from '@/theme/tokens/typography'
+import { useHoHTheme } from '@/shared/providers'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize } from '@/shared/theme/tokens/typography'
 
 type Props = {
   value: string

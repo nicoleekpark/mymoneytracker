@@ -1,5 +1,5 @@
-import { useHoHTheme } from '@/providers'
-import { fontSize } from '@/theme/tokens/typography'
+import { useHoHTheme } from '@/shared/providers'
+import { fontSize } from '@/shared/theme/tokens/typography'
 import { Link, Stack } from 'expo-router'
 import React, { useMemo } from 'react'
 import { StyleSheet, Text, View } from 'react-native'

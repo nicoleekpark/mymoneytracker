@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, ScrollView, Text, UIManager, View } from 'react-native'
-import { fontSize, displaySize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { CATEGORY_DOT_SIZE, SECTION_GAP } from '@/theme/tokens/viewStyles'
+import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { CATEGORY_DOT_SIZE, SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 
-import { FEATURE_FLAGS } from '@/config'
+import { FEATURE_FLAGS } from '@/shared/config'
+import { UNCATEGORIZED_KEY } from '@/core/domain/category'
 import { CategoryIcon, InfoSheet, SectionHeader } from '@/shared/components'
-import { formatUsdInt, formatCompactAmount } from '@/shared/format/currency'
+import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth, formatTrackingSince } from '@/shared/format/date'
 import { getCategoryMeta, getSubcategoryMeta } from '@/shared/format/category'
 
@@ -45,7 +46,7 @@ function aggregateCategories(categories: CategoryBreakdown[]): AggregatedCategor
   const byParent = new Map<string, AggregatedCategory>()
 
   for (const cat of categories) {
-    const parentKey = cat.categoryRef?.categoryKey ?? 'uncategorized'
+    const parentKey = cat.categoryRef?.categoryKey ?? UNCATEGORIZED_KEY
     const subKey = cat.categoryRef?.subCategoryKey
     const existing = byParent.get(parentKey)
 

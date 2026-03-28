@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getMonthlyFlowDollarForYear } from '@/domain/transaction/transaction.usecase'
+import { getMonthlyFlowDollarForYear } from '@/core/services/transaction'
 
 type YearlyHeroData = {
   // Current year data

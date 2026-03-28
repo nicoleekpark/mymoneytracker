@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
-import { useHoHTheme } from '@/providers'
+import { useHoHTheme } from '@/shared/providers'
 
 import type { Period, Scope } from '../types'
-import { formatPeriodLabelFull, isCurrentPeriod } from '../types'
+import { formatPeriodLabelFull, isCurrentPeriod } from '../utils'
 import { createDashboardToolbarStyles } from './DashboardToolbar.styles'
 import { ScopeChips } from './ScopeChips'
 

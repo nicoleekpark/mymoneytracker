@@ -1,5 +1,5 @@
-import { useHoHTheme } from '@/providers'
-import { spacing as spacingTokens } from '@/theme/tokens/spacing'
+import { useHoHTheme } from '@/shared/providers'
+import { spacing as spacingTokens } from '@/shared/theme/tokens/spacing'
 import React from 'react'
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native'
 

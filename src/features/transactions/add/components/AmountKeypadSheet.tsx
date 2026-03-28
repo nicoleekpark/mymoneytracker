@@ -24,12 +24,12 @@ import Animated, {
   SlideOutDown,
 } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { useHoHTheme } from '@/providers'
+import { useHoHTheme } from '@/shared/providers'
 import { ScalePressable } from '@/shared/components'
-import { fontSize, fontWeight, displaySize } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
-import { radius } from '@/theme/tokens/radius'
-import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/theme/tokens/viewStyles'
+import { fontSize, fontWeight, displaySize } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
+import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/shared/theme/tokens/viewStyles'
 
 // Component-specific size
 const KEY_HEIGHT = spacing['3xl'] // 48 - standard touch target

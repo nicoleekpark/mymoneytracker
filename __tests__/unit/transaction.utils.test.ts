@@ -7,8 +7,8 @@ import {
   slugify,
   getDaysInMonth,
   getYearProgressMonths
-} from '@/domain/transaction/transaction.utils'
-import type { Transaction } from '@/domain/transaction/transaction.types'
+} from '@/core/domain/transaction/transaction.utils'
+import type { Transaction } from '@/core/domain/transaction/transaction.types'
 
 const mockExpense: Transaction = {
   id: 'test-1',

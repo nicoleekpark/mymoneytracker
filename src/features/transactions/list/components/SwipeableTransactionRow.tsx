@@ -11,13 +11,13 @@ import Animated, {
 } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 
-import type { Transaction } from '@/domain/transaction'
-import { safeDate, TransactionType } from '@/domain/transaction'
+import type { Transaction } from '@/core/domain/transaction'
+import { safeDate, TransactionType } from '@/core/domain/transaction'
 import { formatCurrency } from '@/shared/format/currency'
 import { ymd, formatDayHeader } from '@/shared/format/date'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 const ACTION_WIDTH = 80
 const SWIPE_THRESHOLD = 60

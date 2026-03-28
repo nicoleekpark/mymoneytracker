@@ -1,122 +1,110 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// FEATURE SCREEN: Dashboard
+// This is the main dashboard screen - an "orchestrator" that composes
+// multiple sub-features (monthly, yearly, insights, assets, accounts).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── React & React Native ──────────────────────────────────────────────────
 import React, { useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { useHoHTheme } from '@/providers'
+// ─── App-wide Shared Code ──────────────────────────────────────────────────
+import { useHoHTheme } from '@/shared/providers'                    // Theme colors
 import { useThemeColors, useExtendedThemeColors } from '@/shared/hooks/useThemeColors'
-import { Screen } from '@/shared/layout/Screen'
+import { logError } from '@/shared/utils/logger'             // Centralized error logging
+import { Screen } from '@/shared/layout/Screen'              // Screen wrapper component
 
-import type { Period } from './types'
-import { MODES, getMaxYearMonth, ymIndex, clampMonth } from './types'
-import { createDashboardStyles, useDashboardStore } from './store'
+// ─── Feature-local Imports ─────────────────────────────────────────────────
+// These come from the same feature folder (./types, ./store, ./shared, etc.)
+import { MODES } from './types'
+import { useDashboardStore } from './store'  // Zustand store for dashboard state
+import { createDashboardStyles } from './shared'  // Memoized styles factory
+import { periodToYYYYMM } from './utils'  // Pure period formatting utility
 
+// ─── Sub-feature Components ────────────────────────────────────────────────
+// Each "body" is a complete sub-feature with its own data fetching
+import { DashboardHeader } from './shared/DashboardHeader'
 import { DashboardModeTabs } from './shared/DashboardModeTabs'
 import { DashboardPeriodPicker } from './shared/DashboardPeriodPicker'
-import { OverviewHeader } from './shared/OverviewHeader'
 import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
-import { getFamilyMembers } from '@/domain/asset'
+import { getFamilyMembers } from '@/core/services/asset'
 import { AccountsBody } from './accounts'
 import { AllBody } from './all'
-import { AssetsBody } from './assets'
-import { InsightsBody, InsightsHeader } from './insights'
+import { AssetsBody, useAssetsNavigation } from './assets'
+import { InsightsBody } from './insights'
 import { MonthlyBody } from './monthly/MonthlyBody'
 import { YearlyBody } from './yearly'
 
-function periodToMonthYYYYMM(p: Period): string {
-  if ('month' in p) {
-    return `${p.year}-${String(p.month).padStart(2, '0')}`
-  }
-  return `${p.year}-01`
-}
-
 export default function DashboardScreen() {
+  // ─── Step 1: Get Theme & Styles ────────────────────────────────────────────
   const theme = useHoHTheme()
-  const styles = useMemo(() => createDashboardStyles(theme), [theme])
+  const styles = useMemo(() => createDashboardStyles(theme), [theme]) // Memoized = only recreate if theme changes
 
-  // Memoized color objects to prevent unnecessary child re-renders
-  const standardColors = useThemeColors()
-  const extendedColors = useExtendedThemeColors()
+  // Color objects passed to child components (memoized to prevent re-renders)
+  const standardColors = useThemeColors()      // Basic colors (text, border, surface)
+  const extendedColors = useExtendedThemeColors() // + semantic colors (success, danger)
 
+  // ─── Step 2: Get State from Zustand Store ──────────────────────────────────
+  // useDashboardStore is a Zustand store (like useState but global)
   const {
-    mode,
-    scope,
-    period,
-    selectedMemberIds,
-    setMode,
-    setScope,
-    shiftPeriod,
-    setPeriod,
-    resetToToday,
-    setSelectedMemberIds,
-    canPrev,
-    canNext
+    mode,               // 'overview' | 'insights' | 'assets' | 'accounts'
+    scope,              // 'month' | 'year' | 'all'
+    period,             // { year: 2024, month: 3 }
+    selectedMemberIds,  // Which family members to filter by
+    setMode,            // Function to change mode
+    setScope,           // Function to change scope
+    shiftPeriod,        // Function to go prev/next period
+    setPeriod,          // Function to set specific period
+    resetToToday,       // Function to reset to current month
+    setSelectedMemberIds, // Function to set member filter
+    canPrev,            // Can navigate to previous period?
+    canNext             // Can navigate to next period?
   } = useDashboardStore()
 
-  // Get family members for filtering
-  const members = useMemo(() => {
+  // ─── Step 3: Fetch Data ────────────────────────────────────────────────────
+  // useState with lazy initializer - runs once on mount
+  const [members] = useState<ReturnType<typeof getFamilyMembers>>(() => {
     try {
       return getFamilyMembers()
-    } catch {
+    } catch (e) {
+      logError('Dashboard', e)
       return []
     }
-  }, [])
+  })
+
+  // Memoized member list for child components (avoids creating new array on every render)
+  const memberOptions = useMemo(
+    () => members.map(m => ({ id: m.id, nickname: m.nickname })),
+    [members]
+  )
 
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  // For Insights mode, always use monthly scope logic for navigation
-  const canGoPrev = mode === 'insights' ? true : canPrev()
-  const canGoNext = useMemo(() => {
-    if (mode === 'insights') {
-      const max = getMaxYearMonth()
-      const month = 'month' in period ? clampMonth(period.month) : 1
-      return ymIndex({ year: period.year, month }) < ymIndex(max)
-    }
-    return canNext()
-  }, [mode, period, canNext])
+  // ─── Step 4: Assets Navigation (data-driven) ─────────────────────────────
+  // Assets mode navigates only to years with recorded data (not calendar-based)
+  const assetsNav = useAssetsNavigation(period, setPeriod)
 
   function handleOpenPicker() {
     // Only block picker in overview mode when scope is 'all'
     if (mode === 'overview' && scope === 'all') return
+    // Block picker for assets mode (data-driven years only)
+    if (mode === 'assets') return
     setPickerOpen(true)
   }
 
-  // Shift period with monthly logic (used for Insights mode)
-  function shiftMonthlyPeriod(delta: -1 | 1) {
-    const y0 = period.year
-    const m0 = 'month' in period ? clampMonth(period.month) : 1
-    const m1 = m0 + delta
-
-    let newPeriod: Period
-    if (m1 < 1) {
-      newPeriod = { year: y0 - 1, month: 12 }
-    } else if (m1 > 12) {
-      newPeriod = { year: y0 + 1, month: 1 }
-    } else {
-      newPeriod = { year: y0, month: m1 }
-    }
-
-    // Clamp to max
-    const max = getMaxYearMonth()
-    const newMonth = 'month' in newPeriod ? newPeriod.month : 1
-    if (ymIndex({ year: newPeriod.year, month: newMonth }) > ymIndex(max)) {
-      newPeriod = { year: max.year, month: max.month }
-    }
-
-    setPeriod(newPeriod)
-  }
-
   function handleSwipeLeft() {
-    if (canGoNext) {
+    if (canNext()) {
       shiftPeriod(1)
     }
   }
 
   function handleSwipeRight() {
-    if (canGoPrev) {
+    if (canPrev()) {
       shiftPeriod(-1)
     }
   }
 
-  const monthYYYYMM = periodToMonthYYYYMM(period)
+  const monthYYYYMM = periodToYYYYMM(period)
 
   return (
     <Screen edges={[]} padded={false}>
@@ -127,87 +115,89 @@ export default function DashboardScreen() {
         styles={styles}
       />
 
-      {/* Overview Header - members + period + scope */}
-      {mode === 'overview' && (
-        <OverviewHeader
-          members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
-          selectedMemberIds={selectedMemberIds}
-          onSelectMembers={setSelectedMemberIds}
-          scope={scope}
-          period={period}
-          canPrev={canGoPrev}
-          canNext={canGoNext}
-          onPrev={() => shiftPeriod(-1)}
-          onNext={() => shiftPeriod(1)}
-          onOpenPicker={handleOpenPicker}
-          onToday={resetToToday}
-          onScopeChange={setScope}
-        />
-      )}
+      {/* ═══════════════════════════════════════════════════════════════════
+          UNIFIED HEADER
+          ┌─────────────────────────────────────────────────────────────┐
+          │  [Everyone] [Nicole] [Park]          <  Mar 2024  >         │
+          │                 ↑                         ↑                 │
+          │           members +                  period +               │
+          │        selectedMemberIds          canPrev/canNext           │ 
+          │        onSelectMembers            onPrev/onNext             │
+          │                                   onOpenPicker              │
+          ├─────────────────────────────────────────────────────────────┤
+          │                    Today    Monthly  Yearly  All            │
+          │                      ↑         ↑                            │
+          │              scopeTabsProps.onToday                         │
+          │              scopeTabsProps.scope                           │
+          │              scopeTabsProps.onScopeChange                   │
+          │              (only if showScopeTabs = true)                 │
+          └─────────────────────────────────────────────────────────────┘
+      ═══════════════════════════════════════════════════════════════════ */}
+      <DashboardHeader
+        // ─── Member Selection (same for all modes) ─────────────────────
+        members={memberOptions} // List of family members [{id, nickname}]
+        selectedMemberIds={selectedMemberIds} // Currently selected member IDs ([] = all)
+        onSelectMembers={setSelectedMemberIds} // Callback when user taps a member chip 
+        // ─── Period Display ────────────────────────────────────────────
+        // Assets: always 'year' | Others: use store's scope
+        scope={mode === 'assets' ? 'year' : scope}
+        period={period} // Current period from store {year: 2024, month: 3} or {year: 2024}
+        // ─── Navigation Arrows ─────────────────────────────────────────
+        // Assets: data-driven (only years with data)
+        // Others: calendar-driven (can't go past current month)
+        canPrev={mode === 'assets' ? assetsNav.canPrev : canPrev()}
+        canNext={mode === 'assets' ? assetsNav.canNext : canNext()}
+        onPrev={mode === 'assets' ? assetsNav.onPrev : () => shiftPeriod(-1)}
+        onNext={mode === 'assets' ? assetsNav.onNext : () => shiftPeriod(1)}
+        // ─── Period Picker (disabled for Assets) ───────────────────────
+        onOpenPicker={handleOpenPicker} // Opens month/year picker modal, disabled for Assets mode (see handleOpenPicker)
+        // ─── Scope Tabs (only Overview & Accounts) ─────────────────────
+        showScopeTabs={mode === 'overview' || mode === 'accounts'} // Only Overview and Accounts show the scope tabs
+        scopeTabsProps={ // When tabs shown: pass current scope + change handler + "Today" button
+          (mode === 'overview' || mode === 'accounts')
+            ? { scope, onScopeChange: setScope, onToday: resetToToday }
+            : undefined
+        }
+      />
 
-      {/* Insights mode - Monthly only with member selector */}
+      {/* Insights mode body */}
       {mode === 'insights' && (
-        <>
-          <InsightsHeader
-            members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
-            selectedMemberIds={selectedMemberIds}
-            onSelectMembers={setSelectedMemberIds}
-            period={period}
-            canPrev={canGoPrev}
-            canNext={canGoNext}
-            onPrev={() => shiftMonthlyPeriod(-1)}
-            onNext={() => shiftMonthlyPeriod(1)}
-            onOpenPicker={handleOpenPicker}
+        <View style={styles.body}>
+          <InsightsBody
+            monthYYYYMM={monthYYYYMM}
+            colors={standardColors}
           />
-          <View style={styles.body}>
-            <InsightsBody
-              monthYYYYMM={monthYYYYMM}
-              colors={standardColors}
-            />
-          </View>
-        </>
+        </View>
       )}
 
       {/* Assets mode - Net worth and asset tracking */}
       {mode === 'assets' && (
         <View style={styles.body}>
-          <AssetsBody colors={standardColors} />
+          <AssetsBody
+            colors={standardColors}
+            year={period.year}
+            selectedMemberIds={selectedMemberIds}
+          />
         </View>
       )}
 
-      {/* Accounts mode - Account activity tracking */}
+      {/* Accounts mode body */}
       {mode === 'accounts' && (
-        <>
-          <OverviewHeader
-            members={members.map(m => ({ id: m.id, nickname: m.nickname }))}
-            selectedMemberIds={selectedMemberIds}
-            onSelectMembers={setSelectedMemberIds}
-            scope={scope}
-            period={period}
-            canPrev={canGoPrev}
-            canNext={canGoNext}
-            onPrev={() => shiftPeriod(-1)}
-            onNext={() => shiftPeriod(1)}
-            onOpenPicker={handleOpenPicker}
-            onToday={resetToToday}
-            onScopeChange={setScope}
-          />
-          <SwipeGestureWrapper
-            onSwipeLeft={handleSwipeLeft}
-            onSwipeRight={handleSwipeRight}
-            canSwipeLeft={canGoNext}
-            canSwipeRight={canGoPrev}
-            enabled={scope !== 'all'}
-          >
-            <View style={styles.body}>
-              <AccountsBody
-                scope={scope}
-                period={period}
-                colors={standardColors}
-              />
-            </View>
-          </SwipeGestureWrapper>
-        </>
+        <SwipeGestureWrapper
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          canSwipeLeft={canNext()}
+          canSwipeRight={canPrev()}
+          enabled={scope !== 'all'}
+        >
+          <View style={styles.body}>
+            <AccountsBody
+              scope={scope}
+              period={period}
+              colors={standardColors}
+            />
+          </View>
+        </SwipeGestureWrapper>
       )}
 
       {/* Overview mode - scope-based content */}
@@ -215,34 +205,27 @@ export default function DashboardScreen() {
         <SwipeGestureWrapper
           onSwipeLeft={handleSwipeLeft}
           onSwipeRight={handleSwipeRight}
-          canSwipeLeft={canGoNext}
-          canSwipeRight={canGoPrev}
+          canSwipeLeft={canNext()}
+          canSwipeRight={canPrev()}
           enabled={scope !== 'all'}
         >
           <View style={styles.body}>
-            {/* Monthly - always mounted when scope is month or year for smooth transitions */}
-            {(scope === 'month' || scope === 'year') && (
-              <View style={scope === 'month' ? { flex: 1 } : { display: 'none' }}>
-                <MonthlyBody
-                  monthYYYYMM={monthYYYYMM}
-                  colors={extendedColors}
-                />
-              </View>
+            {scope === 'month' && (
+              <MonthlyBody
+                monthYYYYMM={monthYYYYMM}
+                colors={extendedColors}
+              />
             )}
-            {/* Yearly - always mounted when scope is month or year for smooth transitions */}
-            {(scope === 'month' || scope === 'year') && (
-              <View style={scope === 'year' ? { flex: 1 } : { display: 'none' }}>
-                <YearlyBody
-                  year={period.year}
-                  colors={standardColors}
-                  onMonthPress={(month) => {
-                    setPeriod({ year: period.year, month })
-                    setScope('month')
-                  }}
-                />
-              </View>
+            {scope === 'year' && (
+              <YearlyBody
+                year={period.year}
+                colors={standardColors}
+                onMonthPress={(month) => {
+                  setPeriod({ year: period.year, month })
+                  setScope('month')
+                }}
+              />
             )}
-            {/* All - only mounted when needed */}
             {scope === 'all' && (
               <AllBody colors={standardColors} />
             )}

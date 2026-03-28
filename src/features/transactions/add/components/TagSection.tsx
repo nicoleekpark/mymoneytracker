@@ -6,12 +6,12 @@
  * No duplication - selection toggles in-place.
  */
 
-import type { Tag } from '@/domain/tag'
-import { useHoHTheme } from '@/providers'
-import { useTagsStore } from '@/store'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import type { Tag } from '@/core/domain/tag'
+import { useHoHTheme } from '@/shared/providers'
+import { useTagsStore } from '@/shared/store'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useEffect, useRef, useState } from 'react'
 import {

@@ -1,6 +1,7 @@
+export { DashboardHeader } from './DashboardHeader'
 export { DashboardModeTabs } from './DashboardModeTabs'
 export { DashboardPeriodPicker } from './DashboardPeriodPicker'
+export { createDashboardStyles, type DashboardStyles } from './DashboardScreen.styles'
 export { DashboardToolbar } from './DashboardToolbar'
-export { OverviewHeader } from './OverviewHeader'
 export { ScopeChips } from './ScopeChips'
 export { SwipeGestureWrapper } from './SwipeGestureWrapper'

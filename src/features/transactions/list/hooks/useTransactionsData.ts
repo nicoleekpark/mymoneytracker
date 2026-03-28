@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
-import type { Transaction } from '@/domain/transaction'
-import { getTransactionsInRange } from '@/domain/transaction'
+import type { Transaction } from '@/core/domain/transaction'
+import { getTransactionsInRange } from '@/core/services/transaction'
 import { useAsyncDataWithDefault } from '@/shared/hooks'
 
 export type TransactionsPageData = Readonly<{

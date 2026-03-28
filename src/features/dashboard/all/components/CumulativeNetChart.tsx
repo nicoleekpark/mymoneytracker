@@ -3,10 +3,10 @@ import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
 import Svg, { Path, Line, Circle, Text as SvgText } from 'react-native-svg'
 
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import type { CumulativeNetData } from '@/domain/transaction/transaction.usecase'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import type { CumulativeNetData } from '@/core/services/transaction'
 
 type Colors = {
   text: string

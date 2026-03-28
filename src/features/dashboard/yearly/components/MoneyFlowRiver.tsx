@@ -2,12 +2,12 @@ import React, { useMemo } from 'react'
 import { Text, View } from 'react-native'
 import Svg, { Defs, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg'
 
-import type { CategoryRef } from '@/domain/category'
-import { CATEGORIES } from '@/config/categories.config'
+import type { CategoryRef } from '@/core/domain/category'
+import { CATEGORIES } from '@/shared/config/categories.config'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 export type MoneyFlowColors = Readonly<{
   text: string

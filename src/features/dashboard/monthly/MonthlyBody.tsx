@@ -1,22 +1,22 @@
-import { FEATURE_FLAGS } from '@/config'
+import { FEATURE_FLAGS } from '@/shared/config'
 import { SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
-import { displaySize, fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { SECTION_GAP } from '@/theme/tokens/viewStyles'
+import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 import { useRouter } from 'expo-router'
 import React, { useMemo } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import { useBudgetSummary } from './budget'
-import { MonthlyCalendar, type CalendarColors, type DailyFlow } from './calendar'
+import { MonthlyCalendar, type CalendarColors } from './calendar'
 import { useMonthlyDailyFlow } from './calendar/useMonthlyDailyFlow'
 import { MonthlyCategoryContent, MonthlyIncomeContent } from './category'
 import { useMonthlyProjection } from './projection'
 import { useMonthlySummary } from './useMonthlySummary'
 import { useMonthlyHeroData } from './useMonthlyHeroData'
-import { getMonthNameShort } from '../types/dashboard.types'
+import { getMonthNameShort } from '../utils'
 
 function buildMonthTitle(monthYYYYMM: string) {
   const [y, m] = monthYYYYMM.split('-')
@@ -30,13 +30,13 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   const { monthYYYYMM, colors } = props
   const router = useRouter()
 
-  const { loading, error, daily } = useMonthlyDailyFlow(monthYYYYMM)
+  const { error, daily } = useMonthlyDailyFlow(monthYYYYMM)
   const { data: budgetData } = useBudgetSummary(monthYYYYMM)
   const { data: projectionData } = useMonthlyProjection(monthYYYYMM)
   const { data: summaryData } = useMonthlySummary(monthYYYYMM)
   const { data: heroData } = useMonthlyHeroData(monthYYYYMM)
 
-  const title = useMemo(() => buildMonthTitle(monthYYYYMM), [monthYYYYMM])
+  const _title = useMemo(() => buildMonthTitle(monthYYYYMM), [monthYYYYMM])
 
   function onPressDay(ymd: string) {
     router.push({

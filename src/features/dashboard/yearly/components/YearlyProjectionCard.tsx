@@ -2,11 +2,10 @@ import React, { useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
 
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { componentStyles } from '@/theme/tokens/viewStyles'
-import type { YearlyProjection } from '@/domain/transaction/transaction.usecase'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import type { YearlyProjection } from '@/core/services/transaction'
 
 // Component-specific sizes
 const PROGRESS_BAR_HEIGHT = 6

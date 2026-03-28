@@ -2,9 +2,9 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { TextInput } from 'react-native'
 import { Keyboard } from 'react-native'
 
-import { CATEGORIES } from '@/config/categories.config'
-import type { CategoryRef } from '@/domain/category'
-import type { TransactionType } from '@/domain/transaction'
+import { CATEGORIES } from '@/shared/config/categories.config'
+import type { CategoryRef } from '@/core/domain/category'
+import type { TransactionType } from '@/core/domain/transaction'
 import { normalizeForSearch, scoreText } from '@/shared/utils/search'
 
 function buildCategoryLabel(cat: { name: string }): string {

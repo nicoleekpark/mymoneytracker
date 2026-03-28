@@ -2,8 +2,8 @@ import React, { useMemo } from 'react'
 import { Text, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 
-import { spacing } from '@/theme/tokens/spacing'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
 import type { CategorySlice } from './category.utils'
 import { formatUsdInt } from './category.utils'
@@ -34,8 +34,6 @@ export function MonthlyCategoryDonut(props: {
 
   const normalized = useMemo(() => {
     const xs = (props.slices ?? []).filter((s) => s.percent > 0)
-    // ✅ debug는 이렇게 (normalized 참조 금지)
-    // console.log(xs.map((x) => x.reactKey))
     const sum = xs.reduce((a, s) => a + s.percent, 0)
     if (sum <= 0) return []
     return xs.map((s) => ({ ...s, percent: clamp01(s.percent / sum) }))

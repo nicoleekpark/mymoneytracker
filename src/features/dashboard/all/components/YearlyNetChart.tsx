@@ -2,8 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { LayoutChangeEvent, Text, View } from 'react-native'
 import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg'
 
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import type { YearlyFlowDollar } from '@/domain/transaction/transaction.usecase'
+import { fontWeight } from '@/shared/theme/tokens/typography'
+import type { YearlyFlowDollar } from '@/core/services/transaction'
 
 type Colors = {
   text: string

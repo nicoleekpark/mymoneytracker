@@ -3,12 +3,12 @@ import { LayoutChangeEvent, PanResponder, Pressable, Text, View } from 'react-na
 import Svg, { Path, Circle, Line } from 'react-native-svg'
 
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 import type { MonthData } from '../hooks/useYearlyData'
-import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
+import { MONTH_NAMES_SHORT } from '../../utils'
 
 export type MonthlyCashflowColors = Readonly<{
   text: string

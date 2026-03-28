@@ -1,64 +1,68 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA FETCHING HOOK: Monthly Hero Data
+// Fetches summary data for the monthly dashboard "hero" section.
+// Uses the async pattern: useEffect + alive flag + { loading, error, data }
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// WHAT THIS HOOK PROVIDES:
+// ------------------------
+// - Current month's income, expense, net, savings rate
+// - Comparison with last month (if data exists)
+// - Time context (days elapsed, is current month, etc.)
+//
+// DATA FLOW:
+// ----------
+// useMonthlyHeroData(monthYYYYMM)
+//     ↓
+// getMonthlySummaryDollar() [current + previous month in parallel]
+//     ↓
+// transactionRepository.getExpenseTotalForMonth()
+//     ↓
+// SQLite query
+//     ↓
+// Returns { loading, error, data }
+//
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── React ──────────────────────────────────────────────────────────────────
 import { useEffect, useState } from 'react'
-import { getMonthlySummaryDollar, type MonthlySummaryDollar } from '@/domain/transaction/transaction.usecase'
+
+// ─── Application ──────────────────────────────────────────────────────────────
+import { getMonthlySummaryDollar } from '@/core/services/transaction'
+
+// ─── Utils ──────────────────────────────────────────────────────────────────
+import {
+  getMonthNameFromYYYYMM,
+  getPrevMonthYYYYMM,
+  getDaysInMonthFromYYYYMM,
+  getDaysElapsedInMonth,
+  isCurrentMonthYYYYMM,
+} from '../utils'
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 type MonthlyHeroData = {
   // Current month data
   netDollar: number
   incomeDollar: number
   expenseDollar: number
-  savingsRate: number
+  savingsRate: number          // Percentage (0-100): how much of income was saved
 
   // Comparison with last month
   lastMonthNetDollar: number | null
   netChangeDollar: number | null
-  hasLastMonthData: boolean
+  hasLastMonthData: boolean    // True if previous month has transactions
 
   // Time context
-  isCurrentMonth: boolean
-  daysElapsed: number
-  daysInMonth: number
-  monthName: string
-  lastMonthName: string
+  isCurrentMonth: boolean      // Is this the current calendar month?
+  daysElapsed: number          // Days passed in this month (1-31)
+  daysInMonth: number          // Total days in this month (28-31)
+  monthName: string            // "March", "April", etc.
+  lastMonthName: string        // Previous month's name for comparison label
 }
 
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December']
-
-function getMonthName(monthYYYYMM: string): string {
-  const [, m] = monthYYYYMM.split('-')
-  return MONTH_NAMES[Number(m) - 1] || ''
-}
-
-function getPrevMonth(monthYYYYMM: string): string {
-  const [y, m] = monthYYYYMM.split('-').map(Number)
-  if (m === 1) {
-    return `${y - 1}-12`
-  }
-  return `${y}-${String(m - 1).padStart(2, '0')}`
-}
-
-function getDaysInMonth(monthYYYYMM: string): number {
-  const [y, m] = monthYYYYMM.split('-').map(Number)
-  return new Date(y, m, 0).getDate()
-}
-
-function getDaysElapsed(monthYYYYMM: string): number {
-  const now = new Date()
-  const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-
-  if (monthYYYYMM !== currentYYYYMM) {
-    // Past month - all days elapsed
-    return getDaysInMonth(monthYYYYMM)
-  }
-
-  return now.getDate()
-}
-
-function isCurrentMonth(monthYYYYMM: string): boolean {
-  const now = new Date()
-  const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  return monthYYYYMM === currentYYYYMM
-}
+// ─── Default Data ───────────────────────────────────────────────────────────
+// Returned while loading or on error
 
 const DEFAULT_DATA: MonthlyHeroData = {
   netDollar: 0,
@@ -75,43 +79,74 @@ const DEFAULT_DATA: MonthlyHeroData = {
   lastMonthName: '',
 }
 
+// ─── Hook ───────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches monthly hero section data with comparison to previous month.
+ *
+ * @param monthYYYYMM - Month in "YYYY-MM" format (e.g., "2024-03")
+ * @returns { loading, error, data } - Standard async hook return
+ *
+ * @example
+ * ```tsx
+ * const { loading, error, data } = useMonthlyHeroData("2024-03")
+ *
+ * if (loading) return <Spinner />
+ * return <HeroSection net={data.netDollar} change={data.netChangeDollar} />
+ * ```
+ */
 export function useMonthlyHeroData(monthYYYYMM: string) {
+  // ─── State ──────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<MonthlyHeroData>(DEFAULT_DATA)
 
+  // ─── Effect: Fetch Data When Month Changes ──────────────────────────────────
   useEffect(() => {
-    let alive = true
+    let alive = true  // Prevents state updates after unmount
 
     async function run() {
       setLoading(true)
       setError(null)
 
       try {
-        const prevMonthYYYYMM = getPrevMonth(monthYYYYMM)
+        const prevMonthYYYYMM = getPrevMonthYYYYMM(monthYYYYMM)
 
-        // Fetch current and previous month in parallel
+        // ─── Fetch current and previous month in parallel ───────────────────
+        // Promise.all runs both requests concurrently for better performance
+        // Previous month uses .catch(() => null) to gracefully handle no data
         const [currentSummary, prevSummary] = await Promise.all([
           getMonthlySummaryDollar(monthYYYYMM),
           getMonthlySummaryDollar(prevMonthYYYYMM).catch(() => null)
         ])
 
-        if (!alive) return
+        if (!alive) return  // Component unmounted, abort
 
+        // ─── Extract current month values ───────────────────────────────────
         const netDollar = currentSummary.netCashFlowDollar
         const incomeDollar = currentSummary.incomeTotalDollar
         const expenseDollar = currentSummary.expenseTotalDollar
+
+        // Savings rate = (net / income) * 100
+        // Only calculate if there's income to avoid division by zero
         const savingsRate = incomeDollar > 0
           ? Math.round((netDollar / incomeDollar) * 100)
           : 0
 
+        // ─── Calculate comparison with last month ───────────────────────────
         const lastMonthNetDollar = prevSummary?.netCashFlowDollar ?? null
-        const hasLastMonthData = lastMonthNetDollar !== null &&
-          (prevSummary?.incomeTotalDollar ?? 0) > 0 || (prevSummary?.expenseTotalDollar ?? 0) > 0
+
+        // Has last month data if there were any transactions
+        const prevIncome = prevSummary?.incomeTotalDollar ?? 0
+        const prevExpense = prevSummary?.expenseTotalDollar ?? 0
+        const hasLastMonthData = lastMonthNetDollar !== null && (prevIncome > 0 || prevExpense > 0)
+
+        // Net change = this month's net - last month's net
         const netChangeDollar = hasLastMonthData
           ? netDollar - (lastMonthNetDollar ?? 0)
           : null
 
+        // ─── Build result object ────────────────────────────────────────────
         setData({
           netDollar,
           incomeDollar,
@@ -120,11 +155,11 @@ export function useMonthlyHeroData(monthYYYYMM: string) {
           lastMonthNetDollar,
           netChangeDollar,
           hasLastMonthData,
-          isCurrentMonth: isCurrentMonth(monthYYYYMM),
-          daysElapsed: getDaysElapsed(monthYYYYMM),
-          daysInMonth: getDaysInMonth(monthYYYYMM),
-          monthName: getMonthName(monthYYYYMM),
-          lastMonthName: getMonthName(prevMonthYYYYMM),
+          isCurrentMonth: isCurrentMonthYYYYMM(monthYYYYMM),
+          daysElapsed: getDaysElapsedInMonth(monthYYYYMM),
+          daysInMonth: getDaysInMonthFromYYYYMM(monthYYYYMM),
+          monthName: getMonthNameFromYYYYMM(monthYYYYMM),
+          lastMonthName: getMonthNameFromYYYYMM(prevMonthYYYYMM),
         })
       } catch (e) {
         if (!alive) return
@@ -137,10 +172,12 @@ export function useMonthlyHeroData(monthYYYYMM: string) {
     }
 
     run()
+
+    // Cleanup: mark as unmounted to prevent state updates
     return () => {
       alive = false
     }
-  }, [monthYYYYMM])
+  }, [monthYYYYMM])  // Re-run when month changes
 
   return { loading, error, data }
 }

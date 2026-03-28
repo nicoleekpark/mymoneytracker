@@ -1,7 +1,7 @@
-import type { UUID } from '@/domain/common/uuid'
-import type { CategoryDbId, CategoryRef, CategoryType } from '@/domain/category/category.types'
-import type { CategoryRepository } from '@/domain/category/category.repository'
-import { normalizeSubKeyFromDbKey } from '@/domain/category/category.model'
+import type { UUID } from '@/core/domain/common/uuid'
+import type { CategoryDbId, CategoryRef, CategoryType } from '@/core/domain/category/category.types'
+import type { CategoryRepository } from '@/core/domain/category/category.repository'
+import { normalizeSubKeyFromDbKey } from '@/core/domain/category/category.model'
 import type { DataSource } from '../db/DataSource'
 
 type CategoryRow = {

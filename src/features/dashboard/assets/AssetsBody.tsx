@@ -12,9 +12,9 @@ import {
 import { CategoryIcon, InfoSheet } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
-import { fontSize, displaySize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 import { useAssetsData } from './hooks/useAssetsData'
 
 // Enable LayoutAnimation on Android
@@ -36,7 +36,8 @@ export type AssetsColors = Readonly<{
 
 type Props = {
   colors: AssetsColors
-  initialYear?: number
+  year: number
+  selectedMemberIds: string[]
 }
 
 /**
@@ -235,129 +236,6 @@ function WealthGoalInfoSheet({
 }
 
 /**
- * Header row with member tabs (multi-select) and year navigation
- */
-function HeaderControls({
-  members,
-  selectedMemberIds,
-  onSelectMembers,
-  year,
-  canPrev,
-  canNext,
-  onPrevYear,
-  onNextYear,
-  colors,
-}: {
-  members: { id: string; nickname: string }[]
-  selectedMemberIds: string[]
-  onSelectMembers: (ids: string[]) => void
-  year: number
-  canPrev: boolean
-  canNext: boolean
-  onPrevYear: () => void
-  onNextYear: () => void
-  colors: AssetsColors
-}) {
-  const allSelected = selectedMemberIds.length === 0
-
-  function handleAllClick() {
-    // "All" click always results in empty array (All selected)
-    onSelectMembers([])
-  }
-
-  function handleMemberClick(memberId: string) {
-    if (selectedMemberIds.includes(memberId)) {
-      // Deselect this member
-      const next = selectedMemberIds.filter(id => id !== memberId)
-      onSelectMembers(next)
-    } else {
-      // Add this member to selection
-      onSelectMembers([...selectedMemberIds, memberId])
-    }
-  }
-
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      {/* Member tabs (multi-select) */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: spacing.sm }}
-        style={{ flex: 1 }}
-      >
-        <Pressable
-          onPress={handleAllClick}
-          style={{
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.sm,
-            borderRadius: radius.full,
-            backgroundColor: allSelected ? colors.text : 'transparent',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: allSelected ? colors.surface : colors.textSecondary,
-            }}
-          >
-            Everyone
-          </Text>
-        </Pressable>
-        {members.map((member) => {
-          const isSelected = selectedMemberIds.includes(member.id)
-          return (
-            <Pressable
-              key={member.id}
-              onPress={() => handleMemberClick(member.id)}
-              style={{
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.sm,
-                borderRadius: radius.full,
-                backgroundColor: isSelected ? colors.text : 'transparent',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: isSelected ? colors.surface : colors.textSecondary,
-                }}
-              >
-                {member.nickname}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </ScrollView>
-
-      {/* Year navigation */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.sm, width: '35%', minWidth: 120, maxWidth: 160 }}>
-        <Pressable
-          onPress={onPrevYear}
-          disabled={!canPrev}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={{ opacity: canPrev ? 1 : 0.2, padding: spacing.xs }}
-        >
-          <CategoryIcon name="chevron-left" size={18} color={colors.textSecondary} />
-        </Pressable>
-        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text, minWidth: 44, textAlign: 'center' }}>
-          {year}
-        </Text>
-        <Pressable
-          onPress={onNextYear}
-          disabled={!canNext}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={{ opacity: canNext ? 1 : 0.2, padding: spacing.xs }}
-        >
-          <CategoryIcon name="chevron-right" size={18} color={colors.textSecondary} />
-        </Pressable>
-      </View>
-    </View>
-  )
-}
-
-/**
  * Small info indicator for tappable items
  */
 function InfoIndicator({ color }: { color: string }) {
@@ -379,9 +257,8 @@ function InfoIndicator({ color }: { color: string }) {
   )
 }
 
-export function AssetsBody({ colors, initialYear }: Props) {
-  const currentYear = new Date().getFullYear()
-  const { data, selectMembers, selectYear } = useAssetsData(initialYear ?? currentYear)
+export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
+  const data = useAssetsData({ year, selectedMemberIds })
   const [showLiquidityInfo, setShowLiquidityInfo] = useState(false)
   const [showTiedUpInfo, setShowTiedUpInfo] = useState(false)
   const [showGoalModal, setShowGoalModal] = useState(false)
@@ -400,24 +277,6 @@ export function AssetsBody({ colors, initialYear }: Props) {
       }
       return next
     })
-  }
-
-  // Year navigation
-  const availableYears = data.availableYears
-  const currentYearIndex = availableYears.indexOf(data.year)
-  const canGoPrev = currentYearIndex < availableYears.length - 1
-  const canGoNext = currentYearIndex > 0
-
-  function handlePrevYear() {
-    if (canGoPrev && currentYearIndex + 1 < availableYears.length) {
-      selectYear(availableYears[currentYearIndex + 1])
-    }
-  }
-
-  function handleNextYear() {
-    if (canGoNext && currentYearIndex > 0) {
-      selectYear(availableYears[currentYearIndex - 1])
-    }
   }
 
   // Calculate breakdown data - organized by field with items
@@ -471,43 +330,6 @@ export function AssetsBody({ colors, initialYear }: Props) {
         startYearMonth={data.goalProgress.startYearMonth}
         targetNetWorth={data.goalProgress.startNetWorth + data.goalProgress.targetGrowth}
       />
-
-      {/* Sticky Header Controls */}
-      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
-        {data.members.length > 0 ? (
-          <HeaderControls
-            members={data.members.map(m => ({ id: m.id, nickname: m.nickname }))}
-            selectedMemberIds={data.selectedMemberIds}
-            onSelectMembers={selectMembers}
-            year={data.year}
-            canPrev={canGoPrev}
-            canNext={canGoNext}
-            onPrevYear={handlePrevYear}
-            onNextYear={handleNextYear}
-            colors={colors}
-          />
-        ) : (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg, paddingVertical: spacing.sm }}>
-            <Pressable
-              onPress={handlePrevYear}
-              disabled={!canGoPrev}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={{ opacity: canGoPrev ? 1 : 0.2, padding: spacing.xs }}
-            >
-              <CategoryIcon name="chevron-left" size={20} color={colors.textSecondary} />
-            </Pressable>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>{data.year}</Text>
-            <Pressable
-              onPress={handleNextYear}
-              disabled={!canGoNext}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={{ opacity: canGoNext ? 1 : 0.2, padding: spacing.xs }}
-            >
-              <CategoryIcon name="chevron-right" size={20} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-        )}
-      </View>
 
       <ScrollView
         style={{ flex: 1 }}

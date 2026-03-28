@@ -1,10 +1,10 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
-import { radius } from '@/theme/tokens/radius'
-import { CATEGORY_DOT_SIZE } from '@/theme/tokens/viewStyles'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
+import { CATEGORY_DOT_SIZE } from '@/shared/theme/tokens/viewStyles'
 
 import type { InsightsColors } from '../insights.types'
 

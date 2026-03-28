@@ -1,10 +1,11 @@
+import type { DraftRepository, DraftTransaction } from '@/core/domain/draft'
 import type { DataSource } from '../db/DataSource'
-import { rowToDraft, draftToRow, type DraftTransaction, type DraftRow } from '../mappers/draft.mapper'
+import { rowToDraft, draftToRow, type DraftRow } from '../mappers/draft.mapper'
 
 /**
  * SQLite implementation of DraftRepository.
  */
-export class SqliteDraftRepository {
+export class SqliteDraftRepository implements DraftRepository {
   constructor(private readonly dataSource: DataSource) {}
 
   /**

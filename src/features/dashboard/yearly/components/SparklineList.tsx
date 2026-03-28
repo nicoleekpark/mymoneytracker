@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native'
 
-import type { CategoryRef } from '@/domain/category'
-import { CATEGORIES } from '@/config/categories.config'
+import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
+import { CATEGORIES } from '@/shared/config/categories.config'
 import { CategoryIcon } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { UNCATEGORIZED_COLOR } from '@/shared/theme/tokens/viewStyles'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -327,7 +327,7 @@ export function SparklineList({ categories, totalExpense, colors, onCategoryPres
 
       {categories.map((cat, idx) => (
         <HorizontalBarRow
-          key={`${idx}-${cat.categoryRef?.categoryKey ?? 'uncategorized'}`}
+          key={`${idx}-${cat.categoryRef?.categoryKey ?? UNCATEGORIZED_KEY}`}
           data={cat}
           totalExpense={totalExpense}
           maxAmount={maxAmount}

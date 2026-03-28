@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { useHoHTheme } from '@/providers'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
+import { useHoHTheme } from '@/shared/providers'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { formatCurrency } from '@/shared/format/currency'
 import {
   searchItems,
   getLatestPriceForItemAtStore,
   getStoreByMerchant,
-  type TrackedItem,
-} from '@/domain/price-tracker'
+} from '@/core/services/price-tracker'
+import type { TrackedItem } from '@/core/domain/price-tracker'
 import { AmountKeypadSheet } from './AmountKeypadSheet'
 
 export type ItemEntry = {

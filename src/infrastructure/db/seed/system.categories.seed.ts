@@ -1,4 +1,4 @@
-import { CATEGORIES } from '@/config/categories.config'
+import { CATEGORIES } from '@/shared/config/categories.config'
 import { exec, queryFirst, withTransaction } from '../sqlite'
 import { uuid } from '@/shared/utils/uuid'
 import type { SeedReport } from './seed.report'

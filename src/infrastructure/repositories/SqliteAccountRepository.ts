@@ -1,6 +1,6 @@
-import type { UUID } from '@/domain/common/uuid'
-import type { Account } from '@/domain/account/account.types'
-import type { AccountRepository } from '@/domain/account/account.repository'
+import type { UUID } from '@/core/domain/common/uuid'
+import type { Account } from '@/core/domain/account/account.types'
+import type { AccountRepository } from '@/core/domain/account/account.repository'
 import type { DataSource } from '../db/DataSource'
 import { rowToAccount, type AccountRow } from '../mappers/account.mapper'
 

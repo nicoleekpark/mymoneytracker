@@ -6,9 +6,9 @@ import {
   getDailyFlowDollarForMonth,
   type MonthlySummaryDollar,
   type DailyFlowDollar
-} from '@/domain/transaction/transaction.usecase'
+} from '@/core/services/transaction'
 import { formatSignedUsdCompact } from '@/shared/format/currency'
-import { CATEGORIES } from '@/config/categories.config'
+import { CATEGORIES } from '@/shared/config/categories.config'
 
 import type {
   InsightsData,

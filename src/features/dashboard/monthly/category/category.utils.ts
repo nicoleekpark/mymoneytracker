@@ -1,5 +1,5 @@
-import { CATEGORIES } from '@/config/categories.config'
-import type { CategoryRef } from '@/domain/category'
+import { CATEGORIES } from '@/shared/config/categories.config'
+import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
 import { formatUsdInt } from '@/shared/format/currency'
 
 export type CategoryColors = Readonly<{
@@ -75,7 +75,7 @@ export function buildCategorySlices(args: {
     const label = findCategoryName(r.ref)
 
     const type = r.ref?.type ?? 'expense'
-    const catKey = r.ref?.categoryKey ?? 'uncategorized'
+    const catKey = r.ref?.categoryKey ?? UNCATEGORIZED_KEY
     const subKey = r.ref?.subCategoryKey ?? 'na'
 
     // ✅ React key must be unique

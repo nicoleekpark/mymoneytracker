@@ -1,4 +1,4 @@
-import { APP_CONFIG, FEATURE_FLAGS } from '@/config'
+import { APP_CONFIG, FEATURE_FLAGS } from '@/shared/config'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
@@ -11,11 +11,11 @@ import {
 import { migrate } from '@/infrastructure/db/migrate'
 import { exportDatabase } from '@/infrastructure/db/queries/export-db'
 import { runFixtures, runSystemSeeds, seedNotificationsStandalone, clearNotificationsStandalone, seedDraftsStandalone, clearDraftsStandalone } from '@/infrastructure/db/seed'
-import { useHoHTheme } from '@/providers'
-import { useDevStore, useDraftsStore, useNotificationsStore } from '@/store'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { useHoHTheme } from '@/shared/providers'
+import { useDevStore, useDraftsStore, useNotificationsStore } from '@/shared/store'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 // Component-specific sizes (not in global tokens)
 const APPBAR_HEIGHT = 56

@@ -6,14 +6,13 @@ import {
   BottomSheetScrollView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { useHoHTheme } from '@/providers'
-import { spacing } from '@/theme/tokens/spacing'
-import { radius } from '@/theme/tokens/radius'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { useHoHTheme } from '@/shared/providers'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { formatCurrency } from '@/shared/format/currency'
-import type { PricePointWithStore, TrackedItem } from '@/domain/price-tracker'
+import type { PricePointWithStore, TrackedItem } from '@/core/domain/price-tracker'
 
 type Props = {
   item: TrackedItem | null
@@ -33,7 +32,6 @@ export function ItemPriceHistorySheet({
   onDismiss,
 }: Props) {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
   const snapPoints = useMemo(() => ['70%'], [])
 
   const renderBackdrop = useCallback(

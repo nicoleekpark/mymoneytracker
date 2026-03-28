@@ -1,5 +1,4 @@
 export { InsightsBody } from './InsightsBody'
-export { InsightsHeader } from './InsightsHeader'
 export type {
   InsightsColors,
   InsightsData,

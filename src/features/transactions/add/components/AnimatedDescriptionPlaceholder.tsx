@@ -13,8 +13,8 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated'
-import { fontSize } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 const EXAMPLES = [
   'Coffee with Alex',

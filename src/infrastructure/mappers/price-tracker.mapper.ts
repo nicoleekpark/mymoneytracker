@@ -1,4 +1,4 @@
-import type { UUID } from '@/domain/common/uuid'
+import type { UUID } from '@/core/domain/common/uuid'
 import type {
   ItemCategory,
   PricePoint,
@@ -7,7 +7,7 @@ import type {
   StoreCategory,
   TrackedItem,
   TransactionItem,
-} from '@/domain/price-tracker/price-tracker.types'
+} from '@/core/domain/price-tracker/price-tracker.types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Row Types (snake_case to match database columns)

@@ -1,20 +1,21 @@
-import { CATEGORIES, CATEGORIES_INDEX } from '@/config'
-import { getActiveAccounts, resolveAccountIdByKey } from '@/domain/account'
-import type { UUID } from '@/domain/common/uuid'
-import type { Transaction, TransactionType } from '@/domain/transaction'
-import { addTransaction, getTransactionById, updateTransaction } from '@/domain/transaction/transaction.usecase'
+import { CATEGORIES, CATEGORIES_INDEX } from '@/shared/config'
+import { getActiveAccounts, resolveAccountIdByKey } from '@/core/services/account'
+import type { UUID } from '@/core/domain/common/uuid'
+import type { Transaction, TransactionType } from '@/core/domain/transaction'
+import { addTransaction, getTransactionById, updateTransaction } from '@/core/services/transaction'
 import {
   addTransactionItem,
   deleteTransactionItems,
   getTransactionItems,
   getStoreByMerchant,
   addPricePoint,
-} from '@/domain/price-tracker'
-import { useHoHTheme } from '@/providers'
+} from '@/core/services/price-tracker'
+import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon, ScalePressable } from '@/shared/components'
+import { logError } from '@/shared/utils/logger'
 import { muteColor } from '@/shared/utils/contrast'
 import { Screen } from '@/shared/layout/Screen'
-import { useDraftsStore, useLastTransactionStore, usePaymentFrequencyStore, useQuickChipsStore, SPECIAL_CHIP_KEYS, useSuggestionsStore } from '@/store'
+import { useDraftsStore, useLastTransactionStore, usePaymentFrequencyStore, useQuickChipsStore, SPECIAL_CHIP_KEYS, useSuggestionsStore } from '@/shared/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -40,9 +41,9 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated'
-import { displaySize, fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 // Standard row height
 const ROW_HEIGHT = spacing['3xl'] + spacing.xs // 52
@@ -523,7 +524,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       showToast(toastMsg)
       setTimeout(() => router.back(), 800)
     } catch (e: unknown) {
-      console.error(e)
+      logError('AddTransaction', e)
       const message = e instanceof Error ? e.message : 'Save failed'
       // 7A: Toast with error, keep form open
       showToast(message)
@@ -695,7 +696,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       showToast(`$${amount.amountDisplay} added`)
       resetForm()
     } catch (e: unknown) {
-      console.error(e)
+      logError('AddTransaction', e)
       const message = e instanceof Error ? e.message : 'Save failed'
       showToast(message)
     }

@@ -5,13 +5,13 @@
  * Compact single-line rows with time groupings.
  */
 
-import type { Notification, NotificationTab, TimeGroup } from '@/domain/notification'
-import { TIME_GROUP_LABELS, NOTIFICATION_TABS } from '@/domain/notification'
-import { useHoHTheme } from '@/providers'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { useNotificationsStore } from '@/store'
+import type { Notification, NotificationTab, TimeGroup } from '@/core/domain/notification'
+import { TIME_GROUP_LABELS, NOTIFICATION_TABS } from '@/core/domain/notification'
+import { useHoHTheme } from '@/shared/providers'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { useNotificationsStore } from '@/shared/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -302,7 +302,6 @@ export default function NotificationsScreen() {
 
 // Component-specific sizes
 const HEADER_BUTTON_SIZE = 32
-const TAB_HEIGHT = 44
 const BADGE_MIN_SIZE = 18
 const ICON_CONTAINER_SIZE = 32
 const UNREAD_DOT_SIZE = 6

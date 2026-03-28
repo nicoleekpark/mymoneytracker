@@ -2,8 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
 import Svg, { Rect, Line } from 'react-native-svg'
 
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 import type { InsightsColors, DailyOutflow } from '../insights.types'
 

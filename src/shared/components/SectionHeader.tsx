@@ -1,8 +1,8 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
-import type { BaseViewColors } from '@/theme/tokens/viewStyles'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import type { BaseViewColors } from '@/shared/theme/tokens/viewStyles'
 
 type Props = {
   title: string

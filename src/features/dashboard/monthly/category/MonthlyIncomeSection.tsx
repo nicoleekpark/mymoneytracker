@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
-import type { CategoryRef } from '@/domain/category'
-import { CATEGORIES } from '@/config/categories.config'
-import { CARD_SHADOW } from '@/theme/tokens'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { CATEGORY_DOT_SIZE, UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
+import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
+import { CATEGORIES } from '@/shared/config/categories.config'
+import { CARD_SHADOW } from '@/shared/theme/tokens'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { CATEGORY_DOT_SIZE, UNCATEGORIZED_COLOR } from '@/shared/theme/tokens/viewStyles'
 
 import type { CalendarColors } from '../calendar'
 import { formatUsdInt } from './category.utils'
@@ -136,7 +136,7 @@ export function MonthlyIncomeContent(props: ContentProps) {
             {displayRows.map((cat, idx) => {
               const percent = totalIncomeDollar > 0 ? (cat.totalDollar / totalIncomeDollar) * 100 : 0
               const barWidth = maxAmount > 0 ? (cat.totalDollar / maxAmount) * 100 : 0
-              const categoryKey = cat.categoryRef?.categoryKey ?? 'uncategorized'
+              const categoryKey = cat.categoryRef?.categoryKey ?? UNCATEGORIZED_KEY
               const catMeta = getCategoryMeta(cat.categoryRef)
               const hasSubcategories = cat.subcategories && cat.subcategories.length > 0
               const isExpanded = expandedCategories.has(categoryKey)

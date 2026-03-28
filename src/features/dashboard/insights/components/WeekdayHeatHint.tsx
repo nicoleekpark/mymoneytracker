@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, Pressable } from 'react-native'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
 
 import type { InsightsColors } from '../insights.types'
 

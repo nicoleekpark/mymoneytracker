@@ -1,8 +1,8 @@
 import { StyleSheet } from 'react-native'
 
-import type { useHoHTheme } from '@/providers'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
+import type { useHoHTheme } from '@/shared/providers'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 export function createScopeChipsStyles(theme: ReturnType<typeof useHoHTheme>) {
   return StyleSheet.create({

@@ -1,3 +1,6 @@
 export { AssetsBody } from './AssetsBody'
 export type { AssetsColors } from './AssetsBody'
 export { useAssetsData } from './hooks/useAssetsData'
+export type { UseAssetsDataParams, AssetsData } from './hooks/useAssetsData'
+export { useAssetsNavigation } from './hooks/useAssetsNavigation'
+export type { AssetsNavigationResult } from './hooks/useAssetsNavigation'

@@ -1,4 +1,4 @@
-import { getDailyFlowDollarForMonth } from '@/domain/transaction/transaction.usecase'
+import { getDailyFlowDollarForMonth } from '@/core/services/transaction'
 import { useEffect, useState } from 'react'
 
 export type DailyFlow = Readonly<{

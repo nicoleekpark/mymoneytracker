@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
 
-import { useHoHTheme } from '@/providers'
+import { useHoHTheme } from '@/shared/providers'
 
 import type { Scope } from '../types'
 import { createScopeChipsStyles } from './ScopeChips.styles'

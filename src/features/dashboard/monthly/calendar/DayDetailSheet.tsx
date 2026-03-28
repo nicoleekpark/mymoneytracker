@@ -7,12 +7,12 @@ import {
   type BottomSheetBackdropProps
 } from '@gorhom/bottom-sheet'
 
-import type { Transaction } from '@/domain/transaction/transaction.types'
+import type { Transaction } from '@/core/domain/transaction/transaction.types'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
 import type { CalendarColors } from './calendar.types'
-import { MONTH_NAMES_SHORT } from '../../types/dashboard.types'
+import { MONTH_NAMES_SHORT } from '../../utils'
 
 export type SelectedDay = {
   ymd: string

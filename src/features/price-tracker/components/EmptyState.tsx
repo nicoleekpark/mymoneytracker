@@ -1,9 +1,9 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { useHoHTheme } from '@/providers'
-import { spacing } from '@/theme/tokens/spacing'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { useHoHTheme } from '@/shared/providers'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
 export function EmptyState() {
   const theme = useHoHTheme()

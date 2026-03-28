@@ -1,6 +1,6 @@
-import { useHoHTheme } from '@/providers'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
+import { useHoHTheme } from '@/shared/providers'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 

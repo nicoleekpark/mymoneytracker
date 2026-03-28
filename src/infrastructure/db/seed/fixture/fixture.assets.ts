@@ -1,4 +1,4 @@
-import { exec, queryFirst, queryAll, withTransaction } from '../../sqlite'
+import { exec, queryFirst, withTransaction } from '../../sqlite'
 import { uuid } from '@/shared/utils/uuid'
 import type { SeedReport } from '../seed.report'
 

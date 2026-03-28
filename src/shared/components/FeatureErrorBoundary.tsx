@@ -1,9 +1,10 @@
 import React, { Component, type ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { useHoHTheme } from '@/providers'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
-import { radius } from '@/theme/tokens/radius'
+import { useHoHTheme } from '@/shared/providers'
+import { logger } from '@/shared/utils/logger'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
 
 type ErrorBoundaryState = {
   hasError: boolean
@@ -39,8 +40,11 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps, ErrorBoundaryStat
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(`[ErrorBoundary] ${this.props.featureName || 'Feature'} error:`, error)
-    console.error('Component stack:', errorInfo.componentStack)
+    const featureName = this.props.featureName || 'Feature'
+    logger.error('ErrorBoundary', `${featureName} crashed`, error)
+    if (__DEV__) {
+      logger.debug('ErrorBoundary', 'Component stack', { stack: errorInfo.componentStack })
+    }
     this.props.onError?.(error, errorInfo)
   }
 

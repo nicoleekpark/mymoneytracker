@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Keyboard } from 'react-native'
 
-import type { Account } from '@/domain/account'
-import { getActiveAccounts } from '@/domain/account'
+import type { Account } from '@/core/domain/account'
+import { getActiveAccounts } from '@/core/services/account'
 import { normalizeForSearch } from '@/shared/utils/search'
 
 export type AccountPickerState = Readonly<{

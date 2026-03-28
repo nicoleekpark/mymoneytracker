@@ -1,10 +1,10 @@
 import { Platform, StyleSheet } from 'react-native'
 
-import type { useHoHTheme } from '@/providers'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/theme/tokens/viewStyles'
+import type { useHoHTheme } from '@/shared/providers'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/shared/theme/tokens/viewStyles'
 
 // Platform-specific safe area padding
 const BOTTOM_PADDING_IOS = 34

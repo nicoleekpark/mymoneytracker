@@ -1,24 +1,9 @@
-import type { CategoryRef } from '@/domain/category/category.types'
-import type { TransactionType } from '@/domain/transaction/transaction.types'
+import type { CategoryRef } from '@/core/domain/category/category.types'
+import type { TransactionType } from '@/core/domain/transaction/transaction.types'
+import type { DraftTransaction } from '@/core/domain/draft'
 
-/**
- * Domain representation of a draft transaction.
- */
-export type DraftTransaction = {
-  id: string
-  type: TransactionType
-  item: string
-  amountCents: number
-  merchant?: string
-  note?: string
-  tags?: string[]
-  categoryRef?: CategoryRef
-  accountKey?: string
-  occurredAt: string // ISO string
-  receiptUri?: string
-  createdAt: string // ISO string
-  starred: boolean
-}
+// Re-export for backwards compatibility
+export type { DraftTransaction }
 
 /**
  * Database row representation of a draft.

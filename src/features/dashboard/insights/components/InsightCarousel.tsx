@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { View, Pressable, Dimensions, ScrollView, LayoutChangeEvent } from 'react-native'
 
-import { radius } from '@/theme/tokens/radius'
+import { radius } from '@/shared/theme/tokens/radius'
 
 import type { InsightsColors } from '../insights.types'
 

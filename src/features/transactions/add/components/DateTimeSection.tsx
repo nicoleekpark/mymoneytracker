@@ -1,9 +1,9 @@
-import { useHoHTheme } from '@/providers'
+import { useHoHTheme } from '@/shared/providers'
 import { Divider } from '@/shared/components'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
-import { radius } from '@/theme/tokens/radius'
-import { fontWeight } from '@/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { fontWeight } from '@/shared/theme/tokens/typography'
 
 import type { DateTimeState } from '../hooks/useDateTime'
 

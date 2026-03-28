@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react'
 import { Text, View, Switch, TextInput, ScrollView } from 'react-native'
 
-import { useHoHTheme } from '@/providers'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
-import { useThemeStore, useSettingsStore } from '@/store'
-import type { ThemeMode } from '@/theme'
+import { useHoHTheme } from '@/shared/providers'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { useThemeStore, useSettingsStore } from '@/shared/store'
+import type { ThemeMode } from '@/shared/theme'
 import { SegmentedControl } from '@/shared/components/SegmentedControl'
 import { Divider } from '@/shared/components'
 

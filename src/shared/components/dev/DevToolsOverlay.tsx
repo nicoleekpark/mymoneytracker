@@ -1,4 +1,4 @@
-import { APP_CONFIG } from '@/config'
+import { APP_CONFIG } from '@/shared/config'
 import {
   resetDbHardDropAllTables,
   seedDbMinimal,
@@ -6,12 +6,12 @@ import {
 import { migrate } from '@/infrastructure/db/migrate'
 import { exportDatabase } from '@/infrastructure/db/queries/export-db'
 import { runFixtures, runSystemSeeds, seedNotificationsStandalone, clearNotificationsStandalone, seedDraftsStandalone, clearDraftsStandalone } from '@/infrastructure/db/seed'
-import { useDraftsStore } from '@/store'
+import { useDraftsStore } from '@/shared/store'
 
-import { useHoHTheme } from '@/providers'
-import { useDevStore } from '@/store'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
+import { useHoHTheme } from '@/shared/providers'
+import { useDevStore } from '@/shared/store'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
 import React, { useMemo, useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

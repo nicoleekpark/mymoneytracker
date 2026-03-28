@@ -4,8 +4,8 @@ import { StyleSheet, View } from 'react-native'
 import type { Edge } from 'react-native-safe-area-context'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { useHoHTheme } from '@/providers'
-import { spacing } from '@/theme/tokens/spacing'
+import { useHoHTheme } from '@/shared/providers'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 type ScreenProps = Readonly<{
   children: React.ReactNode

@@ -5,13 +5,13 @@
  * Organized into sections: Frequently Used, Recent, All Accounts
  */
 
-import type { Account } from '@/domain/account'
-import { useHoHTheme } from '@/providers'
+import type { Account } from '@/core/domain/account'
+import { useHoHTheme } from '@/shared/providers'
 import { Screen } from '@/shared/layout/Screen'
-import { usePaymentFrequencyStore } from '@/store'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
+import { usePaymentFrequencyStore } from '@/shared/store'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useMemo } from 'react'
 import {

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { useHoHTheme } from '@/providers'
-import type { StandardViewColors } from '@/theme/tokens/viewStyles'
+import { useHoHTheme } from '@/shared/providers'
+import type { StandardViewColors } from '@/shared/theme/tokens/viewStyles'
 
 /**
  * Returns memoized theme colors for view components.

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 
-import type { CategoryRef } from '@/domain/category'
-import type { UUID } from '@/domain/common/uuid'
+import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
+import type { UUID } from '@/core/domain/common/uuid'
 import {
   getMonthlyFlowDollarForYear,
   getYearlyExpenseByCategoryDollar,
   getYearlyIncomeByCategoryDollar,
   type MonthlyFlowDollar
-} from '@/domain/transaction/transaction.usecase'
+} from '@/core/services/transaction'
 import { categoryRepository } from '@/infrastructure/repositories'
 
 export type SubCategoryBreakdown = Readonly<{
@@ -136,7 +136,7 @@ function aggregateByParentCategory(
       } else {
         byKey.set('__uncategorized__', {
           totalDollar: row.totalDollar,
-          categoryRef: { type: 'expense', categoryKey: 'uncategorized' },
+          categoryRef: { type: 'expense', categoryKey: UNCATEGORIZED_KEY },
           subcategories: new Map()
         })
       }

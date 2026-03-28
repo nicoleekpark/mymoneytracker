@@ -1,6 +1,6 @@
-import type { UUID } from '@/domain/common/uuid'
+import type { UUID } from '@/core/domain/common/uuid'
 import { uuid } from '@/shared/utils/uuid'
-import type { Transaction } from '@/domain/transaction/transaction.types'
+import type { Transaction } from '@/core/domain/transaction/transaction.types'
 import type {
   AccountActivityTotals,
   AllTimeExpenseByCategory,
@@ -17,8 +17,8 @@ import type {
   YearlyFlowTotal,
   YearlyIncomeByCategory,
   YearTotals,
-} from '@/domain/transaction/transaction.repository'
-import type { CategoryRepository } from '@/domain/category/category.repository'
+} from '@/core/domain/transaction/transaction.repository'
+import type { CategoryRepository } from '@/core/domain/category/category.repository'
 import type { DataSource } from '../db/DataSource'
 import {
   rowToTransaction,
@@ -26,36 +26,19 @@ import {
   type TransactionRow,
 } from '../mappers/transaction.mapper'
 
-type MonthlyTotalRow = Readonly<{
-  month: string
-  total_cents: number
-}>
-
-type DailyExpenseTotalRow = Readonly<{
-  day: string
-  total_cents: number
-}>
-
-type CategoryMonthlyTotalRow = Readonly<{
-  category_id: UUID | null
-  category_name: string | null
-  total_cents: number
-}>
-
-type DailyFlowTotalRow = Readonly<{
-  day: string
-  type: 'income' | 'expense'
-  total_cents: number
-  tx_count: number
-}>
-
-/**
- * Extended row type that includes tags from GROUP_CONCAT join.
- * Used by optimized list queries to avoid N+1 tag lookups.
- */
-type TransactionRowWithTags = TransactionRow & Readonly<{
-  tag_names: string | null
-}>
+// Internal row types and SQL fragments
+import type {
+  MonthlyTotalRow,
+  DailyExpenseTotalRow,
+  CategoryMonthlyTotalRow,
+  DailyFlowTotalRow,
+  TransactionRowWithTags,
+} from './transaction'
+import {
+  SELECT_WITH_TAGS,
+  INSERT_TRANSACTION,
+  UPDATE_TRANSACTION,
+} from './transaction'
 
 /**
  * SQLite implementation of TransactionRepository.
@@ -86,95 +69,50 @@ export class SqliteTransactionRepository implements TransactionRepository {
     })
   }
 
-  /**
-   * Base SELECT columns for transaction queries with tags.
-   * Uses LEFT JOIN with GROUP_CONCAT to get all tags in one query.
-   */
-  private readonly SELECT_WITH_TAGS = `
-    SELECT
-      t.id, t.key, t.occurred_at, t.type, t.item, t.amount_cents, t.currency,
-      t.account_id, t.category_id, t.merchant, t.note,
-      t.from_account_id, t.to_account_id, t.member_id, t.is_estimated,
-      GROUP_CONCAT(tags.name) as tag_names
-    FROM transactions t
-    LEFT JOIN transaction_tags tt ON t.id = tt.transaction_id
-    LEFT JOIN tags ON tt.tag_id = tags.id
-  `
-
   insert(tx: Transaction): void {
     const row = transactionToRow(tx, (ref) => this.categoryRepo.resolveCategoryId(ref))
     const now = new Date().toISOString()
 
-    this.dataSource.exec(
-      `
-      INSERT INTO transactions (
-        id, key, occurred_at, type, item,
-        amount_cents, currency,
-        account_id, from_account_id, to_account_id,
-        category_id, merchant, note, is_estimated,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        row.id,
-        row.key,
-        row.occurred_at,
-        row.type,
-        row.item,
-        row.amount_cents,
-        row.currency,
-        row.account_id,
-        row.from_account_id,
-        row.to_account_id,
-        row.category_id,
-        row.merchant,
-        row.note,
-        row.is_estimated,
-        now,
-        now,
-      ]
-    )
+    this.dataSource.exec(INSERT_TRANSACTION, [
+      row.id,
+      row.key,
+      row.occurred_at,
+      row.type,
+      row.item,
+      row.amount_cents,
+      row.currency,
+      row.account_id,
+      row.from_account_id,
+      row.to_account_id,
+      row.category_id,
+      row.merchant,
+      row.note,
+      row.is_estimated,
+      now,
+      now,
+    ])
   }
 
   update(tx: Transaction): void {
     const row = transactionToRow(tx, (ref) => this.categoryRepo.resolveCategoryId(ref))
     const now = new Date().toISOString()
 
-    this.dataSource.exec(
-      `
-      UPDATE transactions SET
-        occurred_at = ?,
-        type = ?,
-        item = ?,
-        amount_cents = ?,
-        currency = ?,
-        account_id = ?,
-        from_account_id = ?,
-        to_account_id = ?,
-        category_id = ?,
-        merchant = ?,
-        note = ?,
-        is_estimated = ?,
-        updated_at = ?
-      WHERE id = ?
-      `,
-      [
-        row.occurred_at,
-        row.type,
-        row.item,
-        row.amount_cents,
-        row.currency,
-        row.account_id,
-        row.from_account_id,
-        row.to_account_id,
-        row.category_id,
-        row.merchant,
-        row.note,
-        row.is_estimated,
-        now,
-        row.id,
-      ]
-    )
+    this.dataSource.exec(UPDATE_TRANSACTION, [
+      row.occurred_at,
+      row.type,
+      row.item,
+      row.amount_cents,
+      row.currency,
+      row.account_id,
+      row.from_account_id,
+      row.to_account_id,
+      row.category_id,
+      row.merchant,
+      row.note,
+      row.is_estimated,
+      now,
+      row.id,
+    ])
   }
 
   getById(id: string): Transaction | null {
@@ -198,7 +136,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
   list(limit = 200): Transaction[] {
     const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      ${this.SELECT_WITH_TAGS}
+      ${SELECT_WITH_TAGS}
       GROUP BY t.id
       ORDER BY t.occurred_at DESC, t.id DESC
       LIMIT ?;
@@ -211,7 +149,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
   listForDate(dateYYYYMMDD: string, limit = 50): Transaction[] {
     const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      ${this.SELECT_WITH_TAGS}
+      ${SELECT_WITH_TAGS}
       WHERE substr(t.occurred_at, 1, 10) = ?
         AND t.type IN ('income', 'expense')
       GROUP BY t.id
@@ -226,7 +164,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
   listInDateRange(fromDate: string, toDate: string, limit = 500): TransactionPage {
     const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      ${this.SELECT_WITH_TAGS}
+      ${SELECT_WITH_TAGS}
       WHERE t.occurred_at >= ?
         AND t.occurred_at <= ?
       GROUP BY t.id
@@ -372,7 +310,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
   listTransfersForMonth(monthYYYYMM: string, limit = 500): Transaction[] {
     const rows = this.dataSource.queryAll<TransactionRowWithTags>(
       `
-      ${this.SELECT_WITH_TAGS}
+      ${SELECT_WITH_TAGS}
       WHERE t.type = 'transfer'
         AND substr(t.occurred_at, 1, 7) = ?
       GROUP BY t.id

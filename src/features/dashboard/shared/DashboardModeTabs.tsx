@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
 
 import type { DashboardMode } from '../types'
-import type { DashboardStyles } from '../store'
+import type { DashboardStyles } from './DashboardScreen.styles'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 

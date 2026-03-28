@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getMonthlyProjection, type MonthlyProjection } from '@/domain/transaction/transaction.usecase'
+import { getMonthlyProjection, type MonthlyProjection } from '@/core/services/transaction'
 
 const DEFAULT_DATA: MonthlyProjection = {
   projectedExpense: 0,

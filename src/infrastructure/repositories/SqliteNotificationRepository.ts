@@ -1,4 +1,4 @@
-import type { Notification, CreateNotificationInput } from '@/domain/notification'
+import type { Notification, CreateNotificationInput } from '@/core/domain/notification'
 import type { DataSource } from '../db/DataSource'
 import {
   rowToNotification,

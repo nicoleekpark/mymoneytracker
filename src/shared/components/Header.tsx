@@ -1,5 +1,5 @@
-import { useHoHTheme } from '@/providers'
-import { textStyles } from '@/theme/tokens/typography'
+import { useHoHTheme } from '@/shared/providers'
+import { textStyles } from '@/shared/theme/tokens/typography'
 import React from 'react'
 import { Text, View, type StyleProp, type ViewStyle } from 'react-native'
 

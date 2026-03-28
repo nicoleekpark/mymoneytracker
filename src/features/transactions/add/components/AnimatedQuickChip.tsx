@@ -16,9 +16,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { CategoryIcon } from '@/shared/components'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 

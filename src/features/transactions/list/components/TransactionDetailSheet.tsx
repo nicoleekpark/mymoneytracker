@@ -9,25 +9,27 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { CATEGORIES } from '@/config'
-import type { Transaction } from '@/domain/transaction'
-import { safeDate } from '@/domain/transaction'
-import { getActiveAccounts } from '@/domain/account'
+import { CATEGORIES } from '@/shared/config'
+import type { Transaction } from '@/core/domain/transaction'
+import { safeDate } from '@/core/domain/transaction'
+import { getActiveAccounts } from '@/core/services/account'
 import {
   getTransactionItems,
   getItemById,
   getPriceHistoryForItem,
   getLowestPriceForItem,
-  type TransactionItem,
-  type TrackedItem,
-  type PricePointWithStore,
-} from '@/domain/price-tracker'
-import { useHoHTheme } from '@/providers'
+} from '@/core/services/price-tracker'
+import type {
+  TransactionItem,
+  TrackedItem,
+  PricePointWithStore,
+} from '@/core/domain/price-tracker'
+import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
-import { radius } from '@/theme/tokens/radius'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
 import { ItemPriceHistorySheet } from '@/features/price-tracker'
 
 type Props = {

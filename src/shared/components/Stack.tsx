@@ -1,4 +1,4 @@
-import { spacing } from '@/theme/tokens'
+import { spacing } from '@/shared/theme/tokens'
 import React from 'react'
 import { ScrollView, View, type ScrollViewProps, type ViewProps, StyleSheet } from 'react-native'
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { searchItems, type TrackedItem } from '@/domain/price-tracker'
+import { searchItems } from '@/core/services/price-tracker'
+import type { TrackedItem } from '@/core/domain/price-tracker'
 
 /**
  * Debounced search hook for tracked items.

@@ -1,8 +1,8 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 type MemberTabsColors = {
   primary: string

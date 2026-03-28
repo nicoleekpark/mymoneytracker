@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { LayoutAnimation, Pressable, StyleSheet, Text, View } from 'react-native'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { spacing } from '@/theme/tokens/spacing'
-import { radius } from '@/theme/tokens/radius'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
 import type { SectionSummary, SectionKey, AccountsColors } from '../accounts.types'
 import { SummaryCard } from './SummaryCard'
 

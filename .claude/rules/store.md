@@ -1,5 +1,5 @@
 ---
-globs: ["src/store/**/*.ts"]
+globs: ["src/shared/store/**/*.ts"]
 ---
 
 # Zustand Store Rules
@@ -23,4 +23,4 @@ Guidelines:
 - One store per concern (theme, notifications, drafts)
 - Keep stores flat, avoid deep nesting
 - Actions are methods on the store, not separate functions
-- Export from `store/index.ts`
+- Export from `shared/store/index.ts`

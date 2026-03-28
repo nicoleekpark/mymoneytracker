@@ -1,4 +1,17 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo } from 'react'
+import { logError } from '@/shared/utils/logger'
+import {
+  createEmptySummary,
+  type FamilyMember,
+  type AssetSummary,
+  type AssetTrendPoint,
+  type AssetField,
+  type AssetCategory,
+  type AssetItem,
+  ASSET_FIELD_NAMES,
+  getCategoryMeta,
+  isLiquidifiableCategory,
+} from '@/core/domain/asset'
 import {
   getFamilyMembers,
   getSummary,
@@ -10,18 +23,8 @@ import {
   getGoal,
   getYearsWithData,
   getBalancesForMonth,
-  createEmptySummary,
-  type FamilyMember,
-  type AssetSummary,
-  type AssetTrendPoint,
-  type AssetField,
-  type AssetCategory,
-  type AssetItem,
   type AssetProjection,
-  ASSET_FIELD_NAMES,
-  getCategoryMeta,
-  isLiquidifiableCategory,
-} from '@/domain/asset'
+} from '@/core/services/asset'
 
 export type AssetFieldGroup = {
   field: AssetField
@@ -140,20 +143,21 @@ function filterItemsByMembers(
   )
 }
 
-export function useAssetsData(initialYear?: number) {
+export type UseAssetsDataParams = {
+  year: number
+  selectedMemberIds: string[]
+}
+
+export function useAssetsData({ year, selectedMemberIds }: UseAssetsDataParams) {
   const currentYear = new Date().getFullYear()
-  const [selectedYear, setSelectedYear] = useState(initialYear ?? currentYear)
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const data = useMemo((): AssetsData => {
     try {
-      const isCurrentYear = selectedYear === currentYear
+      const isCurrentYear = year === currentYear
       // For current year, use current month; for past years, use December
       const yearMonth = isCurrentYear
         ? getCurrentYearMonth()
-        : `${selectedYear}-12`
+        : `${year}-12`
       const members = getFamilyMembers()
 
       // Get available years with data
@@ -230,11 +234,11 @@ export function useAssetsData(initialYear?: number) {
       }
 
       // Get goal and progress for selected year (always household-level)
-      const goal = getGoal(selectedYear)
-      const progress = getGoalProgress(selectedYear, undefined) // Goals are household-level
+      const goal = getGoal(year)
+      const progress = getGoalProgress(year, undefined) // Goals are household-level
 
       // Get start of year summary
-      const startYearMonth = goal?.startYearMonth ?? `${selectedYear}-01`
+      const startYearMonth = goal?.startYearMonth ?? `${year}-01`
       let startSummary: AssetSummary
       let startNetWorth: number
 
@@ -279,7 +283,7 @@ export function useAssetsData(initialYear?: number) {
       if (!isCurrentYear && goal) {
         isCompleted = true
         // For past years, use household total for goal comparison
-        const yearEndSummary = getSummary(`${selectedYear}-12`, undefined)
+        const yearEndSummary = getSummary(`${year}-12`, undefined)
         finalGrowth = yearEndSummary.netWorth - goal.startNetWorth
         achievedTarget = finalGrowth >= goal.targetGrowth
       }
@@ -301,7 +305,7 @@ export function useAssetsData(initialYear?: number) {
       let projection: AssetProjection | null = null
       if (isCurrentYear) {
         try {
-          const proj = getAssetProjection(selectedYear, undefined)
+          const proj = getAssetProjection(year, undefined)
           if (proj.monthsElapsed > 0) {
             projection = proj
           }
@@ -357,7 +361,7 @@ export function useAssetsData(initialYear?: number) {
       return {
         members,
         selectedMemberIds,
-        year: selectedYear,
+        year: year,
         isCurrentYear,
         availableYears,
         summary,
@@ -372,7 +376,7 @@ export function useAssetsData(initialYear?: number) {
             : progress.progressPercent,
           onTrack: isCompleted ? achievedTarget : progress.onTrack,
           startNetWorth: startNetWorth,
-          startYearMonth: progress.goal?.startYearMonth ?? `${selectedYear}-01`,
+          startYearMonth: progress.goal?.startYearMonth ?? `${year}-01`,
           isCompleted,
           finalGrowth,
           achievedTarget,
@@ -382,24 +386,10 @@ export function useAssetsData(initialYear?: number) {
         yearMonth,
       }
     } catch (e) {
-      console.error('Error loading assets data:', e)
+      logError('AssetsData', e)
       throw e
     }
-  }, [selectedMemberIds, selectedYear, currentYear])
+  }, [year, selectedMemberIds, currentYear])
 
-  const selectMembers = useCallback((memberIds: string[]) => {
-    setSelectedMemberIds(memberIds)
-  }, [])
-
-  const selectYear = useCallback((year: number) => {
-    setSelectedYear(year)
-  }, [])
-
-  return {
-    data,
-    loading,
-    error,
-    selectMembers,
-    selectYear,
-  }
+  return data
 }

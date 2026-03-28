@@ -1,12 +1,7 @@
 import { create } from 'zustand'
 
 import type { DashboardMode, Period, Scope } from '../types'
-import {
-  clampMonth,
-  formatPeriodLabel,
-  getMaxYearMonth,
-  ymIndex
-} from '../types'
+import { clampMonth, formatPeriodLabel, getMaxYearMonth, ymIndex } from '../utils'
 
 export type DashboardState = {
   mode: DashboardMode
@@ -33,8 +28,7 @@ type DashboardSelectors = {
 export type DashboardStore = DashboardState & DashboardActions & DashboardSelectors
 
 function normalizeForScope(scope: Scope, p: Period): Period {
-  if (scope === 'all') return { year: p.year }
-  if (scope === 'year') return { year: p.year }
+  if (scope === 'all' || scope === 'year') return { year: p.year }
 
   // When switching to month scope without a month:
   // - Current year → current month
@@ -95,12 +89,16 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
 
   // Actions
   setMode: (mode) => {
-    // Insights mode requires monthly scope - ensure period has month
+    const state = get()
+    const max = getMaxYearMonth()
+
     if (mode === 'insights') {
-      const state = get()
-      const max = getMaxYearMonth()
+      // Insights mode requires monthly scope - ensure period has month
       const month = 'month' in state.period ? clampMonth(state.period.month) : max.month
       set({ mode, scope: 'month', period: { year: state.period.year, month } })
+    } else if (mode === 'assets') {
+      // Assets mode uses yearly scope
+      set({ mode, scope: 'year', period: { year: state.period.year } })
     } else {
       set({ mode })
     }

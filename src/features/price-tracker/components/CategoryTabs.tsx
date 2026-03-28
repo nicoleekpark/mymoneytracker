@@ -1,9 +1,9 @@
 import React from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useHoHTheme } from '@/providers'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
+import { useHoHTheme } from '@/shared/providers'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
 type Tab = {
   key: string

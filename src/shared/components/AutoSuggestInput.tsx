@@ -5,8 +5,8 @@
  * Suggestions appear below the input with dividers, expanding the section.
  */
 
-import { useHoHTheme } from '@/providers'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
+import { useHoHTheme } from '@/shared/providers'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Pressable,

@@ -1,6 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React from 'react'
-import { UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
+import { UNCATEGORIZED_COLOR } from '@/shared/theme/tokens/viewStyles'
 
 type CategoryIconProps = {
   name: string

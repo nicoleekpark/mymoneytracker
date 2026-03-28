@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import type { CategoryRef } from '@/domain/category'
-import type { UUID } from '@/domain/common/uuid'
+import type { CategoryRef } from '@/core/domain/category'
+import type { UUID } from '@/core/domain/common/uuid'
 import {
   getAllTimeSummaryDollar,
   getAllTimeExpenseByCategoryDollar,
@@ -14,7 +14,7 @@ import {
   type YearlyFlowDollar,
   type PersonalBests,
   type CumulativeNetData
-} from '@/domain/transaction/transaction.usecase'
+} from '@/core/services/transaction'
 import { categoryRepository } from '@/infrastructure/repositories'
 
 export type CategoryBreakdown = Readonly<{

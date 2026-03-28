@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { displaySize, fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { CATEGORY_DOT_SIZE, SECTION_GAP, UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
+import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { CATEGORY_DOT_SIZE, SECTION_GAP, UNCATEGORIZED_COLOR } from '@/shared/theme/tokens/viewStyles'
 
-import type { CategoryRef } from '@/domain/category'
-import { CATEGORIES } from '@/config/categories.config'
-import { FEATURE_FLAGS } from '@/config'
+import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
+import { CATEGORIES } from '@/shared/config/categories.config'
+import { FEATURE_FLAGS } from '@/shared/config'
 import { SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
@@ -390,7 +390,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
             {displayExpenseCategories.map((cat, idx) => {
               const percent = totalExpense > 0 ? (cat.totalDollar / totalExpense) * 100 : 0
               const barWidth = maxExpenseAmount > 0 ? (cat.totalDollar / maxExpenseAmount) * 100 : 0
-              const categoryKey = cat.categoryRef?.categoryKey ?? 'uncategorized'
+              const categoryKey = cat.categoryRef?.categoryKey ?? UNCATEGORIZED_KEY
               const catMeta = getCategoryMeta(cat.categoryRef)
               const hasSubcategories = cat.subcategories && cat.subcategories.length > 0
               const isExpanded = expandedExpenseCategories.has(categoryKey)
@@ -527,7 +527,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
               {displayIncomeCategories.map((cat, idx) => {
                 const percent = totalIncome > 0 ? (cat.totalDollar / totalIncome) * 100 : 0
                 const barWidth = maxIncomeAmount > 0 ? (cat.totalDollar / maxIncomeAmount) * 100 : 0
-                const categoryKey = cat.categoryRef?.categoryKey ?? 'uncategorized'
+                const categoryKey = cat.categoryRef?.categoryKey ?? UNCATEGORIZED_KEY
                 const catMeta = getCategoryMeta(cat.categoryRef)
                 const hasSubcategories = cat.subcategories && cat.subcategories.length > 0
                 const isExpanded = expandedIncomeCategories.has(categoryKey)

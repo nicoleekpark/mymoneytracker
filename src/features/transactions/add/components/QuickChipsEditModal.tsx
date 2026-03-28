@@ -4,16 +4,16 @@
  * Modal for editing quick action chips - add, remove, reorder.
  */
 
-import { CATEGORIES } from '@/config'
-import type { Account } from '@/domain/account'
-import { useHoHTheme } from '@/providers'
+import { CATEGORIES } from '@/shared/config'
+import type { Account } from '@/core/domain/account'
+import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
-import { useQuickChipsStore, SPECIAL_CHIP_KEYS, type QuickChipConfig } from '@/store'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { useQuickChipsStore, SPECIAL_CHIP_KEYS, type QuickChipConfig } from '@/shared/store'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import React, { useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import {
   Modal,
   Pressable,

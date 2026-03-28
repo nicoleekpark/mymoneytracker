@@ -1,7 +1,8 @@
-import { centsToDollars, dollarsToCents } from '@/domain/common/money'
-import type { UUID } from '@/domain/common/uuid'
-import type { CategoryDbId, CategoryRef } from '@/domain/category/category.types'
-import type { Transaction, TransactionType } from '@/domain/transaction/transaction.types'
+import { centsToDollars, dollarsToCents } from '@/core/domain/common/money'
+import type { UUID } from '@/core/domain/common/uuid'
+import type { CategoryDbId, CategoryRef } from '@/core/domain/category/category.types'
+import type { Transaction, TransactionType } from '@/core/domain/transaction/transaction.types'
+import { parseTransactionType } from '@/core/domain/transaction/transaction.schema'
 
 /**
  * Database row representation of a transaction.
@@ -36,22 +37,6 @@ export type CategoryRefResolver = (categoryDbId: UUID) => CategoryRef
 export type CategoryIdResolver = (ref?: CategoryRef) => CategoryDbId | null
 
 /**
- * Valid transaction types for runtime validation
- */
-const VALID_TRANSACTION_TYPES: TransactionType[] = ['expense', 'income', 'transfer']
-
-/**
- * Validate transaction type from database (guards against data corruption)
- */
-function validateTransactionType(type: string): TransactionType {
-  if (!VALID_TRANSACTION_TYPES.includes(type as TransactionType)) {
-    console.warn(`[TransactionMapper] Invalid type "${type}", defaulting to "expense"`)
-    return 'expense'
-  }
-  return type as TransactionType
-}
-
-/**
  * Convert a database row to a domain Transaction object.
  */
 export function rowToTransaction(
@@ -59,8 +44,8 @@ export function rowToTransaction(
   resolveCategoryRef: CategoryRefResolver,
   tags?: string[]
 ): Transaction {
-  // Validate enum at runtime to catch data corruption
-  const validatedType = validateTransactionType(row.type)
+  // Validate enum at runtime using Zod schema
+  const validatedType = parseTransactionType(row.type)
 
   const base = {
     id: row.id,

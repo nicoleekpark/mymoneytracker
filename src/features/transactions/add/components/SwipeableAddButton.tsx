@@ -21,9 +21,9 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 
 type SwipeableAddButtonProps = {
   label: string

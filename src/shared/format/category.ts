@@ -1,6 +1,6 @@
-import { CATEGORIES } from '@/config/categories.config'
-import { UNCATEGORIZED_COLOR } from '@/theme/tokens/viewStyles'
-import type { CategoryType } from '@/domain/category/category.types'
+import { CATEGORIES } from '@/shared/config/categories.config'
+import { UNCATEGORIZED_COLOR } from '@/shared/theme/tokens/viewStyles'
+import type { CategoryType } from '@/core/domain/category/category.types'
 
 export type CategoryMeta = {
   name: string

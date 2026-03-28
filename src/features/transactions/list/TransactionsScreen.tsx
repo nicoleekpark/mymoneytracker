@@ -1,16 +1,17 @@
-import { CATEGORIES } from '@/config'
-import { getActiveAccounts } from '@/domain/account'
-import type { Transaction } from '@/domain/transaction'
-import { isExpense, removeTransaction, restoreTransaction, safeDate } from '@/domain/transaction'
-import { useHoHTheme } from '@/providers'
+import { CATEGORIES } from '@/shared/config'
+import { getActiveAccounts } from '@/core/services/account'
+import type { Transaction } from '@/core/domain/transaction'
+import { isExpense, safeDate } from '@/core/domain/transaction'
+import { removeTransaction, restoreTransaction } from '@/core/services/transaction'
+import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
-import { fontSize, fontWeight, letterSpacing } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
-import { CATEGORY_DOT_SIZE_SM, FONT_SIZE_TINY } from '@/theme/tokens/viewStyles'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { CATEGORY_DOT_SIZE_SM, FONT_SIZE_TINY } from '@/shared/theme/tokens/viewStyles'
 import { formatCurrency } from '@/shared/format/currency'
 import { formatDayHeader, formatMonthSectionTitle, monthKey, ymd } from '@/shared/format/date'
-import { useDraftsStore } from '@/store'
+import { useDraftsStore } from '@/shared/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useFocusEffect } from '@react-navigation/native'
@@ -330,7 +331,7 @@ export default function TransactionsScreen() {
         })
         didAutoScrollRef.current = true
       } catch (e) {
-        console.error(e)
+        // Scroll error - non-critical, ignore silently
       }
     }, 150)
   }, [focusDate, sections])
@@ -582,7 +583,7 @@ export default function TransactionsScreen() {
                   viewPosition: 0
                 })
               } catch (e) {
-                console.error(e)
+                // Scroll error - non-critical, ignore silently
               }
             }, 120)
           }}

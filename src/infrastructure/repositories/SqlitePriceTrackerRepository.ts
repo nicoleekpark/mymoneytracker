@@ -1,4 +1,4 @@
-import type { UUID } from '@/domain/common/uuid'
+import type { UUID } from '@/core/domain/common/uuid'
 import type {
   AddItemInput,
   AddPricePointInput,
@@ -10,15 +10,15 @@ import type {
   Store,
   TrackedItem,
   TransactionItem,
-} from '@/domain/price-tracker/price-tracker.types'
-import type { PriceTrackerRepository } from '@/domain/price-tracker/price-tracker.repository'
+} from '@/core/domain/price-tracker/price-tracker.types'
+import type { PriceTrackerRepository } from '@/core/domain/price-tracker/price-tracker.repository'
 import {
   createPricePoint,
   createStore,
   createTrackedItem,
   createTransactionItem,
   normalizeItemName,
-} from '@/domain/price-tracker/price-tracker.model'
+} from '@/core/domain/price-tracker/price-tracker.model'
 import type { DataSource } from '../db/DataSource'
 import {
   rowToPricePoint,

@@ -1,6 +1,6 @@
 import { exec, queryFirst, withTransaction } from '../sqlite'
 import { uuid } from '@/shared/utils/uuid'
-import { SYSTEM_TAGS } from '@/config'
+import { SYSTEM_TAGS } from '@/shared/config'
 import type { SeedReport } from './seed.report'
 
 type TagRow = {

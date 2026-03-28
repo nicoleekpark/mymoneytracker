@@ -1,4 +1,4 @@
-import type { Account, AccountKind } from '@/domain/account'
+import type { Account, AccountKind } from '@/core/domain/account'
 
 /**
  * Activity data for a single account within a period

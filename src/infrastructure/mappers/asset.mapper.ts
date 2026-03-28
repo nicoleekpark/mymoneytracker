@@ -3,12 +3,12 @@ import type {
   AssetItem,
   AssetBalance,
   AssetGoal,
-} from '@/domain/asset/asset.types'
+} from '@/core/domain/asset/asset.types'
 import {
-  normalizeFamilyMemberRole,
-  normalizeAssetField,
-  normalizeAssetCategory,
-} from '@/domain/asset/asset.model'
+  parseFamilyMemberRole,
+  parseAssetField,
+  parseAssetCategory,
+} from '@/core/domain/asset/asset.schema'
 
 // Database row types
 export type FamilyMemberRow = {
@@ -46,13 +46,13 @@ export type AssetGoalRow = {
   start_year_month: string | null
 }
 
-// Row to domain mappers
+// Row to domain mappers (using Zod schemas for runtime validation)
 export function rowToFamilyMember(row: FamilyMemberRow): FamilyMember {
   return {
     id: row.id,
     name: row.name,
     nickname: row.nickname,
-    role: normalizeFamilyMemberRole(row.role),
+    role: parseFamilyMemberRole(row.role),
     sortOrder: row.sort_order,
     isActive: row.is_active === 1,
   }
@@ -61,8 +61,8 @@ export function rowToFamilyMember(row: FamilyMemberRow): FamilyMember {
 export function rowToAssetItem(row: AssetItemRow): AssetItem {
   return {
     id: row.id,
-    field: normalizeAssetField(row.field),
-    category: normalizeAssetCategory(row.category),
+    field: parseAssetField(row.field),
+    category: parseAssetCategory(row.category),
     name: row.name,
     memberId: row.member_id,
     isLiquidifiable: row.is_liquidifiable === 1,

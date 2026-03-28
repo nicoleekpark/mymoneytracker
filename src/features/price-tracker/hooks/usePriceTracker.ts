@@ -4,8 +4,8 @@ import {
   getItemPriceSummariesDollar,
   getStores,
   type ItemPriceSummaryDollar,
-  type Store,
-} from '@/domain/price-tracker'
+} from '@/core/services/price-tracker'
+import type { Store } from '@/core/domain/price-tracker'
 
 /**
  * Main data hook for price tracker screen.

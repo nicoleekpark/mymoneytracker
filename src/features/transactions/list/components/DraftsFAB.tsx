@@ -6,18 +6,17 @@
  * Tap action: Navigate to Transactions with "Drafts" filter selected.
  */
 
-import { useHoHTheme } from '@/providers'
-import { useDraftsStore } from '@/store'
-import { fontSize, fontWeight } from '@/theme/tokens/typography'
-import { radius } from '@/theme/tokens/radius'
-import { spacing } from '@/theme/tokens/spacing'
+import { useHoHTheme } from '@/shared/providers'
+import { useDraftsStore } from '@/shared/store'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated'
 
 type DraftsFABProps = {

@@ -37,15 +37,6 @@ export function formatSignedUsdInt(amount: number) {
 //   return formatSignedUsdInt(Math.abs(incomeDollar))
 // }
 
-function formatExpenseInt(expense: number) {
-  const v = Math.round(Math.abs(expense))
-  return v > 0 ? `($ ${v})` : ''
-}
-function formatIncomeInt(income: number) {
-  const v = Math.round(Math.abs(income))
-  return v > 0 ? `+$ ${v}` : ''
-}
-
 export function parseYYYYMM(monthYYYYMM: string): { year: number; month: number } {
   const [y, m] = monthYYYYMM.split('-')
   return { year: Number(y), month: Number(m) }

@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite'
+import { logger } from '@/shared/utils/logger'
 import { getDbName } from './config'
 
 export const db = SQLite.openDatabaseSync(getDbName())
@@ -57,7 +58,7 @@ export function execMany(sql: string) {
     try {
       exec(stmt.endsWith(';') ? stmt : stmt + ';')
     } catch (e) {
-      console.error('[execMany] failed statement:', stmt)
+      logger.error('SQLite', `execMany failed on statement: ${stmt}`)
       throw e
     }
   }
