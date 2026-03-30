@@ -24,6 +24,35 @@ export class SqliteAccountRepository implements AccountRepository {
 
 Export singleton from `repositories/index.ts`.
 
+## Error Handling Conventions
+
+Repository methods follow these patterns for not-found cases:
+
+| Method Pattern | Return Type | When Not Found | Rationale |
+|----------------|-------------|----------------|-----------|
+| `getById(id)` | `T \| null` | Return `null` | Caller may legitimately check for non-existent IDs |
+| `getByKey(key)` | `T` | Throw `Error` | Keys are expected to exist; missing = programming error |
+| `find*(...)` | `T \| null` | Return `null` | Search may not find results |
+| `list*(...)` | `T[]` | Return `[]` | Empty list is valid result |
+
+**Examples:**
+```tsx
+// Returns null - ID might not exist
+getById(id: UUID): Account | null {
+  const row = this.dataSource.queryFirst<AccountRow>(`SELECT * FROM accounts WHERE id = ?`, [id])
+  return row ? rowToAccount(row) : null
+}
+
+// Throws - key must exist (e.g., from config)
+getByKey(key: string): Account {
+  const row = this.dataSource.queryFirst<AccountRow>(`SELECT * FROM accounts WHERE key = ?`, [key])
+  if (!row) throw new Error(`Account not found for key=${key}`)
+  return rowToAccount(row)
+}
+```
+
+**Logging:** Use `logger.warn()` for recoverable issues (e.g., invalid JSON), `logger.error()` for unexpected failures.
+
 ## Mappers
 
 Name: `{entity}.mapper.ts`

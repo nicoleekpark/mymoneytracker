@@ -168,6 +168,9 @@ export default function NotificationsScreen() {
         styles.row,
         pressed && { backgroundColor: theme.semantic.surfaceAlt },
       ]}
+      accessibilityRole="button"
+      accessibilityLabel={`${notification.title}. ${notification.message}${notification.read ? '' : '. Unread'}`}
+      accessibilityHint="Tap to view details. Long press to dismiss"
     >
       {renderIcon(notification)}
       <View style={styles.rowContent}>
@@ -220,7 +223,13 @@ export default function NotificationsScreen() {
     <View style={[styles.container, { backgroundColor: theme.semantic.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={10}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <FontAwesome name="chevron-left" size={16} color={theme.semantic.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>
@@ -230,7 +239,7 @@ export default function NotificationsScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabsContainer, { borderBottomColor: theme.semantic.border }]}>
+      <View style={[styles.tabsContainer, { borderBottomColor: theme.semantic.border }]} accessibilityRole="tablist">
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab
           return (
@@ -241,6 +250,9 @@ export default function NotificationsScreen() {
                 styles.tab,
                 { borderBottomColor: isActive ? theme.semantic.primary : 'transparent' },
               ]}
+              accessibilityRole="tab"
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected: isActive }}
             >
               <Text
                 style={[

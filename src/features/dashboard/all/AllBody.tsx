@@ -315,6 +315,9 @@ export function AllBody({ colors }: Props) {
                     onPress={() => setShowSavingsInfo(true)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Lifetime savings rate. Tap for more info"
+                    accessibilityHint="Shows explanation of how savings rate is calculated"
                   >
                     <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
                       Lifetime savings rate
@@ -338,6 +341,9 @@ export function AllBody({ colors }: Props) {
                     onPress={() => setShowSavingsInfo(true)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Lifetime savings rate. Tap for more info"
+                    accessibilityHint="Shows explanation of how savings rate is calculated"
                   >
                     <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
                       Lifetime savings rate
@@ -561,6 +567,9 @@ export function AllBody({ colors }: Props) {
                     onPress={() => hasSubcategories && toggleExpenseCategory(categoryKey)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                     disabled={!hasSubcategories}
+                    accessibilityRole={hasSubcategories ? 'button' : 'text'}
+                    accessibilityLabel={`${catMeta.name}, ${formatUsdInt(cat.amount)}, ${Math.round(percent)} percent${hasSubcategories ? '. Tap to expand subcategories' : ''}`}
+                    accessibilityState={{ expanded: isExpanded }}
                   >
                     <View style={{ width: CATEGORY_DOT_SIZE, height: CATEGORY_DOT_SIZE, borderRadius: radius.full, backgroundColor: catMeta.color }} />
                     <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
@@ -664,6 +673,8 @@ export function AllBody({ colors }: Props) {
             <Pressable
               onPress={() => setShowAllExpense(!showAllExpense)}
               style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
+              accessibilityRole="button"
+              accessibilityLabel={showAllExpense ? 'Show fewer expense categories' : `Show all ${allExpenseCategories.length} expense categories`}
             >
               <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                 {showAllExpense ? 'Show less' : `Show all ${allExpenseCategories.length} categories`}
@@ -698,6 +709,9 @@ export function AllBody({ colors }: Props) {
                     onPress={() => hasSubcategories && toggleIncomeCategory(categoryKey)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                     disabled={!hasSubcategories}
+                    accessibilityRole={hasSubcategories ? 'button' : 'text'}
+                    accessibilityLabel={`${catMeta.name}, ${formatUsdInt(cat.amount)}, ${Math.round(percent)} percent${hasSubcategories ? '. Tap to expand subcategories' : ''}`}
+                    accessibilityState={{ expanded: isExpanded }}
                   >
                     <View style={{ width: CATEGORY_DOT_SIZE, height: CATEGORY_DOT_SIZE, borderRadius: radius.full, backgroundColor: catMeta.color }} />
                     <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
@@ -801,6 +815,8 @@ export function AllBody({ colors }: Props) {
             <Pressable
               onPress={() => setShowAllIncome(!showAllIncome)}
               style={{ marginTop: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center' }}
+              accessibilityRole="button"
+              accessibilityLabel={showAllIncome ? 'Show fewer income categories' : `Show all ${allIncomeCategories.length} income categories`}
             >
               <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                 {showAllIncome ? 'Show less' : `Show all ${allIncomeCategories.length} categories`}

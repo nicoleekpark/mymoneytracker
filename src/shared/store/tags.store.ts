@@ -2,6 +2,7 @@
  * Tags Store
  *
  * Manages user-created tags and provides access to premade tags.
+ * Persists custom tags to SQLite via app_settings table.
  */
 
 import type { Tag, TagCategory } from '@/core/domain/tag'
@@ -9,9 +10,15 @@ import { SYSTEM_TAGS, OCCURRENCE_TAGS } from '@/core/domain/tag'
 import { uuid } from '@/shared/utils/uuid'
 import { create } from 'zustand'
 
+// Lazy import to avoid circular dependency / test issues
+const getStorage = () => require('@/infrastructure/db/settingsStorage') as typeof import('@/infrastructure/db/settingsStorage')
+
 type TagsState = {
   /** User-created custom tags */
   customTags: Tag[]
+
+  /** Hydration state */
+  _hydrated: boolean
 
   /** Create a new custom tag */
   createTag: (name: string, category?: TagCategory) => Tag
@@ -27,6 +34,9 @@ type TagsState = {
 
   /** Check if a tag name already exists */
   tagExists: (name: string) => boolean
+
+  /** Hydrate from storage */
+  _hydrate: () => void
 }
 
 /**
@@ -44,8 +54,18 @@ function createPremadeTags(names: readonly string[], category: TagCategory): Tag
 const QUICK_TAGS = createPremadeTags(SYSTEM_TAGS, 'quick')
 const OCCURRENCE_TAG_OBJECTS = createPremadeTags(OCCURRENCE_TAGS, 'occurrence')
 
+function persistTags(customTags: Tag[]): void {
+  try {
+    const { setStoredValue, STORAGE_KEYS } = getStorage()
+    setStoredValue(STORAGE_KEYS.TAGS, customTags)
+  } catch {
+    // Storage not available (tests, etc.)
+  }
+}
+
 export const useTagsStore = create<TagsState>((set, get) => ({
   customTags: [],
+  _hydrated: false,
 
   createTag: (name, category = 'custom') => {
     const trimmedName = name.trim().toLowerCase()
@@ -65,17 +85,21 @@ export const useTagsStore = create<TagsState>((set, get) => ({
       createdAt: new Date().toISOString(),
     }
 
-    set((state) => ({
-      customTags: [...state.customTags, newTag],
-    }))
+    set((state) => {
+      const newCustomTags = [...state.customTags, newTag]
+      persistTags(newCustomTags)
+      return { customTags: newCustomTags }
+    })
 
     return newTag
   },
 
   deleteTag: (id) => {
-    set((state) => ({
-      customTags: state.customTags.filter((t) => t.id !== id),
-    }))
+    set((state) => {
+      const newCustomTags = state.customTags.filter((t) => t.id !== id)
+      persistTags(newCustomTags)
+      return { customTags: newCustomTags }
+    })
   },
 
   getAllTags: () => {
@@ -95,4 +119,22 @@ export const useTagsStore = create<TagsState>((set, get) => ({
       (t) => t.name.toLowerCase() === normalizedName
     )
   },
+
+  _hydrate: () => {
+    if (get()._hydrated) return
+    try {
+      const { getStoredValue, STORAGE_KEYS } = getStorage()
+      const stored = getStoredValue<Tag[]>(STORAGE_KEYS.TAGS)
+      if (stored && Array.isArray(stored)) {
+        set({ customTags: stored, _hydrated: true })
+      } else {
+        set({ _hydrated: true })
+      }
+    } catch {
+      // Storage not available (tests, etc.)
+      set({ _hydrated: true })
+    }
+  },
 }))
+
+// Note: Hydration happens lazily - call _hydrate() after DB is initialized

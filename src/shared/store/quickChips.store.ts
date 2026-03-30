@@ -2,10 +2,13 @@
  * Quick Chips Store
  *
  * Stores user's preferred quick action chips for the Add Transaction screen.
- * TODO: Add SQLite persistence if needed.
+ * Persists to SQLite via app_settings table.
  */
 
 import { create } from 'zustand'
+
+// Lazy import to avoid circular dependency / test issues
+const getStorage = () => require('@/infrastructure/db/settingsStorage') as typeof import('@/infrastructure/db/settingsStorage')
 
 export type QuickChipConfig = {
   type: 'category' | 'payment' | 'special'
@@ -18,11 +21,14 @@ export const SPECIAL_CHIP_KEYS = {
   REPEAT_LAST: 'repeat_last',
 } as const
 
-type QuickChipsState = {
-  // Expense chips (category keys + payment keys)
+type PersistedChips = {
   expenseChips: QuickChipConfig[]
-  // Income chips
   incomeChips: QuickChipConfig[]
+}
+
+type QuickChipsState = PersistedChips & {
+  // Hydration state
+  _hydrated: boolean
 
   // Actions
   setExpenseChips: (chips: QuickChipConfig[]) => void
@@ -31,6 +37,7 @@ type QuickChipsState = {
   removeChip: (type: 'expense' | 'income', chipKey: string, subCategoryKey?: string) => void
   moveChip: (type: 'expense' | 'income', fromIndex: number, toIndex: number) => void
   resetToDefaults: () => void
+  _hydrate: () => void
 }
 
 // Default chips
@@ -47,25 +54,46 @@ const DEFAULT_INCOME_CHIPS: QuickChipConfig[] = [
   { type: 'category', key: 'income' },
 ]
 
+function persistChips(state: PersistedChips): void {
+  try {
+    const { setStoredValue, STORAGE_KEYS } = getStorage()
+    setStoredValue(STORAGE_KEYS.QUICK_CHIPS, state)
+  } catch {
+    // Storage not available (tests, etc.)
+  }
+}
+
 export const useQuickChipsStore = create<QuickChipsState>((set, get) => ({
   expenseChips: DEFAULT_EXPENSE_CHIPS,
   incomeChips: DEFAULT_INCOME_CHIPS,
+  _hydrated: false,
 
-  setExpenseChips: (chips) => set({ expenseChips: chips }),
-  setIncomeChips: (chips) => set({ incomeChips: chips }),
+  setExpenseChips: (chips) => {
+    set({ expenseChips: chips })
+    persistChips({ expenseChips: chips, incomeChips: get().incomeChips })
+  },
+
+  setIncomeChips: (chips) => {
+    set({ incomeChips: chips })
+    persistChips({ expenseChips: get().expenseChips, incomeChips: chips })
+  },
 
   addChip: (type, chip) => {
     const key = type === 'expense' ? 'expenseChips' : 'incomeChips'
     const current = get()[key]
     // Don't add duplicates (check subcategory too)
     if (current.some(c => c.key === chip.key && c.type === chip.type && c.subCategoryKey === chip.subCategoryKey)) return
-    set({ [key]: [...current, chip] })
+    const newChips = [...current, chip]
+    set({ [key]: newChips })
+    persistChips({ expenseChips: get().expenseChips, incomeChips: get().incomeChips })
   },
 
   removeChip: (type, chipKey, subCategoryKey) => {
     const key = type === 'expense' ? 'expenseChips' : 'incomeChips'
     const current = get()[key]
-    set({ [key]: current.filter(c => !(c.key === chipKey && c.subCategoryKey === subCategoryKey)) })
+    const newChips = current.filter(c => !(c.key === chipKey && c.subCategoryKey === subCategoryKey))
+    set({ [key]: newChips })
+    persistChips({ expenseChips: get().expenseChips, incomeChips: get().incomeChips })
   },
 
   moveChip: (type, fromIndex, toIndex) => {
@@ -74,10 +102,36 @@ export const useQuickChipsStore = create<QuickChipsState>((set, get) => ({
     const [item] = current.splice(fromIndex, 1)
     current.splice(toIndex, 0, item)
     set({ [key]: current })
+    persistChips({ expenseChips: get().expenseChips, incomeChips: get().incomeChips })
   },
 
-  resetToDefaults: () => set({
-    expenseChips: DEFAULT_EXPENSE_CHIPS,
-    incomeChips: DEFAULT_INCOME_CHIPS,
-  }),
+  resetToDefaults: () => {
+    set({
+      expenseChips: DEFAULT_EXPENSE_CHIPS,
+      incomeChips: DEFAULT_INCOME_CHIPS,
+    })
+    persistChips({ expenseChips: DEFAULT_EXPENSE_CHIPS, incomeChips: DEFAULT_INCOME_CHIPS })
+  },
+
+  _hydrate: () => {
+    if (get()._hydrated) return
+    try {
+      const { getStoredValue, STORAGE_KEYS } = getStorage()
+      const stored = getStoredValue<PersistedChips>(STORAGE_KEYS.QUICK_CHIPS)
+      if (stored) {
+        set({
+          expenseChips: stored.expenseChips ?? DEFAULT_EXPENSE_CHIPS,
+          incomeChips: stored.incomeChips ?? DEFAULT_INCOME_CHIPS,
+          _hydrated: true,
+        })
+      } else {
+        set({ _hydrated: true })
+      }
+    } catch {
+      // Storage not available (tests, etc.)
+      set({ _hydrated: true })
+    }
+  },
 }))
+
+// Note: Hydration happens lazily - call _hydrate() after DB is initialized

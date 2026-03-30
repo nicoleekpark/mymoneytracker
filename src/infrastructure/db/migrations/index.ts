@@ -22,6 +22,8 @@ import { m20260211100300_add_member_id_to_transactions } from './20260211100300_
 import { m20260211100400_add_goal_start_month } from './20260211100400_add_goal_start_month'
 import { m20260227100000_add_is_estimated_to_transactions } from './20260227100000_add_is_estimated_to_transactions'
 import { m20260310100000_create_price_tracker } from './20260310100000_create_price_tracker'
+import { m20260330114044_add_notifications_dismissed } from './20260330114044_add_notifications_dismissed'
+import { m20260330115902_create_app_settings } from './20260330115902_create_app_settings'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
@@ -42,5 +44,7 @@ export const MIGRATIONS: Migration[] = [
   m20260211100300_add_member_id_to_transactions,
   m20260211100400_add_goal_start_month,
   m20260227100000_add_is_estimated_to_transactions,
-  m20260310100000_create_price_tracker
+  m20260310100000_create_price_tracker,
+  m20260330114044_add_notifications_dismissed,
+  m20260330115902_create_app_settings
 ]

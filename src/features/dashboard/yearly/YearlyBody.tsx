@@ -407,6 +407,9 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                     onPress={() => hasSubcategories && toggleExpenseCategory(categoryKey)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                     disabled={!hasSubcategories}
+                    accessibilityRole={hasSubcategories ? 'button' : 'text'}
+                    accessibilityLabel={`${catMeta.name}, ${formatUsdInt(cat.totalDollar)}, ${Math.round(percent)} percent${hasSubcategories ? '. Tap to expand subcategories' : ''}`}
+                    accessibilityState={{ expanded: isExpanded }}
                   >
                     <View style={{ width: CATEGORY_DOT_SIZE, height: CATEGORY_DOT_SIZE, borderRadius: radius.full, backgroundColor: catMeta.color }} />
                     <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
@@ -544,6 +547,9 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                       onPress={() => hasSubcategories && toggleIncomeCategory(categoryKey)}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                       disabled={!hasSubcategories}
+                      accessibilityRole={hasSubcategories ? 'button' : 'text'}
+                      accessibilityLabel={`${catMeta.name}, ${formatUsdInt(cat.totalDollar)}, ${Math.round(percent)} percent${hasSubcategories ? '. Tap to expand subcategories' : ''}`}
+                      accessibilityState={{ expanded: isExpanded }}
                     >
                       <View style={{ width: CATEGORY_DOT_SIZE, height: CATEGORY_DOT_SIZE, borderRadius: radius.full, backgroundColor: catMeta.color }} />
                       <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>

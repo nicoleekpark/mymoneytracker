@@ -25,10 +25,10 @@ export class SqliteNotificationRepository {
    */
   list(): Notification[] {
     const rows = this.dataSource.queryAll<NotificationRow>(
-      `SELECT id, type, title, message, read, created_at, read_at,
+      `SELECT id, type, title, message, read, dismissed, created_at, read_at,
               sender_id, sender_name, sender_avatar
        FROM notifications
-       WHERE sender_avatar IS NULL OR sender_avatar != '1'
+       WHERE dismissed = 0
        ORDER BY created_at DESC;`
     )
     return rows.map(rowToNotification)
@@ -39,10 +39,10 @@ export class SqliteNotificationRepository {
    */
   listUnread(): Notification[] {
     const rows = this.dataSource.queryAll<NotificationRow>(
-      `SELECT id, type, title, message, read, created_at, read_at,
+      `SELECT id, type, title, message, read, dismissed, created_at, read_at,
               sender_id, sender_name, sender_avatar
        FROM notifications
-       WHERE read = 0 AND (sender_avatar IS NULL OR sender_avatar != '1')
+       WHERE read = 0 AND dismissed = 0
        ORDER BY created_at DESC;`
     )
     return rows.map(rowToNotification)
@@ -53,7 +53,7 @@ export class SqliteNotificationRepository {
    */
   getById(id: string): Notification | null {
     const row = this.dataSource.queryFirst<NotificationRow>(
-      `SELECT id, type, title, message, read, created_at, read_at,
+      `SELECT id, type, title, message, read, dismissed, created_at, read_at,
               sender_id, sender_name, sender_avatar
        FROM notifications WHERE id = ? LIMIT 1;`,
       [id]
@@ -76,16 +76,17 @@ export class SqliteNotificationRepository {
     const row = notificationToRow(notification)
     this.dataSource.exec(
       `INSERT INTO notifications (
-        id, type, title, message, read, created_at, read_at,
+        id, type, title, message, read, dismissed, created_at, read_at,
         sender_id, sender_name, sender_avatar
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         row.id,
         row.type,
         row.title,
         row.message,
         row.read,
+        row.dismissed,
         row.created_at,
         row.read_at,
         row.sender_id,
@@ -122,7 +123,7 @@ export class SqliteNotificationRepository {
    */
   dismiss(id: string): void {
     this.dataSource.exec(
-      `UPDATE notifications SET sender_avatar = '1' WHERE id = ?;`,
+      `UPDATE notifications SET dismissed = 1 WHERE id = ?;`,
       [id]
     )
   }
@@ -140,7 +141,7 @@ export class SqliteNotificationRepository {
   getUnreadCount(): number {
     const result = this.dataSource.queryFirst<{ count: number }>(
       `SELECT COUNT(*) as count FROM notifications
-       WHERE read = 0 AND (sender_avatar IS NULL OR sender_avatar != '1');`
+       WHERE read = 0 AND dismissed = 0;`
     )
     return result?.count ?? 0
   }
@@ -153,8 +154,7 @@ export class SqliteNotificationRepository {
     const cutoff = new Date(Date.now() - withinHours * 60 * 60 * 1000).toISOString()
     const result = this.dataSource.queryFirst<{ count: number }>(
       `SELECT COUNT(*) as count FROM notifications
-       WHERE sender_id = ? AND created_at > ?
-       AND (sender_avatar IS NULL OR sender_avatar != '1');`,
+       WHERE sender_id = ? AND created_at > ? AND dismissed = 0;`,
       [subtype, cutoff]
     )
     return (result?.count ?? 0) > 0

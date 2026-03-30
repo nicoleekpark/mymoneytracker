@@ -1,6 +1,7 @@
 import type { CategoryRef } from '@/core/domain/category/category.types'
 import type { TransactionType } from '@/core/domain/transaction/transaction.types'
 import type { DraftTransaction } from '@/core/domain/draft'
+import { logger } from '@/shared/utils/logger'
 
 // Re-export for backwards compatibility
 export type { DraftTransaction }
@@ -49,8 +50,12 @@ export function rowToDraft(row: DraftRow): DraftTransaction {
       if (Array.isArray(parsed) && parsed.length > 0) {
         tags = parsed
       }
-    } catch {
-      // Invalid JSON, ignore
+    } catch (e) {
+      logger.warn('DraftMapper', 'Failed to parse tags JSON, defaulting to empty', {
+        draftId: row.id,
+        rawTags: row.tags,
+        error: e instanceof Error ? e.message : String(e),
+      })
     }
   }
 

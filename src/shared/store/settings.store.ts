@@ -2,29 +2,81 @@
  * Settings Store
  *
  * Manages app settings including notification preferences.
- * Phase 1: Budget alert threshold (in-memory, no persistence)
+ * Persists to SQLite via app_settings table.
  */
 
 import { create } from 'zustand'
 
-type SettingsState = {
-  // Budget alert settings
+// Lazy import to avoid circular dependency / test issues
+const getStorage = () => require('@/infrastructure/db/settingsStorage') as typeof import('@/infrastructure/db/settingsStorage')
+
+type PersistedSettings = {
   budgetAlertEnabled: boolean
-  budgetAlertThreshold: number // Percentage (0-100), default 80%
-  monthlyBudget: number // In cents, 0 = not set
+  budgetAlertThreshold: number
+  monthlyBudget: number
+}
+
+type SettingsState = PersistedSettings & {
+  // Hydration state
+  _hydrated: boolean
 
   // Actions
   setBudgetAlertEnabled: (enabled: boolean) => void
   setBudgetAlertThreshold: (threshold: number) => void
   setMonthlyBudget: (amountCents: number) => void
+  _hydrate: () => void
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+const DEFAULT_SETTINGS: PersistedSettings = {
   budgetAlertEnabled: true,
   budgetAlertThreshold: 80,
   monthlyBudget: 0,
+}
 
-  setBudgetAlertEnabled: (enabled) => set({ budgetAlertEnabled: enabled }),
-  setBudgetAlertThreshold: (threshold) => set({ budgetAlertThreshold: Math.max(0, Math.min(100, threshold)) }),
-  setMonthlyBudget: (amountCents) => set({ monthlyBudget: Math.max(0, amountCents) }),
+function persistSettings(state: PersistedSettings): void {
+  const { setStoredValue, STORAGE_KEYS } = getStorage()
+  setStoredValue(STORAGE_KEYS.SETTINGS, state)
+}
+
+export const useSettingsStore = create<SettingsState>((set, get) => ({
+  ...DEFAULT_SETTINGS,
+  _hydrated: false,
+
+  setBudgetAlertEnabled: (enabled) => {
+    set({ budgetAlertEnabled: enabled })
+    const { budgetAlertEnabled, budgetAlertThreshold, monthlyBudget } = get()
+    persistSettings({ budgetAlertEnabled, budgetAlertThreshold, monthlyBudget })
+  },
+
+  setBudgetAlertThreshold: (threshold) => {
+    const clamped = Math.max(0, Math.min(100, threshold))
+    set({ budgetAlertThreshold: clamped })
+    const { budgetAlertEnabled, budgetAlertThreshold, monthlyBudget } = get()
+    persistSettings({ budgetAlertEnabled, budgetAlertThreshold, monthlyBudget })
+  },
+
+  setMonthlyBudget: (amountCents) => {
+    set({ monthlyBudget: Math.max(0, amountCents) })
+    const { budgetAlertEnabled, budgetAlertThreshold, monthlyBudget } = get()
+    persistSettings({ budgetAlertEnabled, budgetAlertThreshold, monthlyBudget })
+  },
+
+  _hydrate: () => {
+    if (get()._hydrated) return
+    try {
+      const { getStoredValue, STORAGE_KEYS } = getStorage()
+      const stored = getStoredValue<PersistedSettings>(STORAGE_KEYS.SETTINGS)
+      if (stored) {
+        set({ ...stored, _hydrated: true })
+      } else {
+        set({ _hydrated: true })
+      }
+    } catch {
+      // Storage not available (tests, etc.)
+      set({ _hydrated: true })
+    }
+  },
 }))
+
+// Note: Hydration happens lazily - call _hydrate() after DB is initialized
+// This is typically done in the app's root layout component

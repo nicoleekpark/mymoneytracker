@@ -14,6 +14,7 @@ describe('notification.mapper', () => {
         title: 'Budget Alert',
         message: 'You have exceeded your food budget',
         read: 1,
+        dismissed: 0,
         created_at: '2024-03-15T10:00:00.000Z',
         read_at: '2024-03-15T11:00:00.000Z',
         sender_id: 'budget_alert',
@@ -41,6 +42,7 @@ describe('notification.mapper', () => {
         title: 'Review Drafts',
         message: 'You have 3 pending drafts',
         read: 0,
+        dismissed: 0,
         created_at: '2024-03-15T10:00:00.000Z',
         read_at: null,
         sender_id: 'draft_reminder',
@@ -62,11 +64,12 @@ describe('notification.mapper', () => {
         title: 'Dismissed Alert',
         message: 'This was dismissed',
         read: 1,
+        dismissed: 1,
         created_at: '2024-03-15T10:00:00.000Z',
         read_at: '2024-03-15T11:00:00.000Z',
         sender_id: null,
         sender_name: null,
-        sender_avatar: '1',
+        sender_avatar: null,
       }
 
       const notification = rowToNotification(row)
@@ -82,6 +85,7 @@ describe('notification.mapper', () => {
         title: 'Test',
         message: 'Test message',
         read: 0,
+        dismissed: 0,
         created_at: '2024-03-15T10:00:00.000Z',
         read_at: null,
         sender_id: null,
@@ -101,6 +105,7 @@ describe('notification.mapper', () => {
         title: 'Generic Alert',
         message: 'Something happened',
         read: 0,
+        dismissed: 0,
         created_at: '2024-03-15T10:00:00.000Z',
         read_at: null,
         sender_id: null,
@@ -174,7 +179,8 @@ describe('notification.mapper', () => {
 
       const row = notificationToRow(notification)
 
-      expect(row.sender_avatar).toBe('1')
+      expect(row.dismissed).toBe(1)
+      expect(row.sender_avatar).toBeNull()
     })
 
     it('handles notification without optional fields', () => {
@@ -204,6 +210,7 @@ describe('notification.mapper', () => {
         title: 'Roundtrip Test',
         message: 'Testing roundtrip conversion',
         read: 0,
+        dismissed: 0,
         created_at: '2024-03-15T10:00:00.000Z',
         read_at: null,
         sender_id: 'test_subtype',

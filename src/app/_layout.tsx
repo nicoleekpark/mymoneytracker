@@ -24,6 +24,9 @@ import { TAB_BAR_HEIGHT } from '@/shared/theme/tokens/viewStyles' // Layout cons
 
 import { initDbPragmas, migrate, runSystemSeeds } from '@/infrastructure/db' // DB setup functions
 import { runAppLaunchTriggers } from '@/core/services/notification' // Checks for notifications on launch
+import { useSettingsStore } from '@/shared/store/settings.store' // Settings persistence
+import { useTagsStore } from '@/shared/store/tags.store' // Tags persistence
+import { useQuickChipsStore } from '@/shared/store/quickChips.store' // Quick chips persistence
 import { DraftsFAB } from '@/features/transactions/list/components/DraftsFAB' // Floating action button
 import { logError } from '@/shared/utils/logger' // Centralized error logging
 
@@ -72,7 +75,13 @@ export default function RootLayout() {
       migrate()               // 2. Run all pending migrations (create/update tables)
       runSystemSeeds()        // 3. Seed default data (categories, accounts)
       runAppLaunchTriggers()  // 4. Check for notifications (budget alerts, draft reminders)
-      setDbReady(true)        // 5. Signal: DB is ready!
+
+      // 5. Hydrate Zustand stores from SQLite persistence
+      useSettingsStore.getState()._hydrate()
+      useTagsStore.getState()._hydrate()
+      useQuickChipsStore.getState()._hydrate()
+
+      setDbReady(true)        // 6. Signal: DB is ready!
     } catch (e) {
       logError('Database', e)
       setDbError(e)           // Store error for display

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, StyleSheet, Text, View } from 'react-native'
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useHoHTheme } from '@/shared/providers'
@@ -57,17 +57,29 @@ export default function PriceTrackerScreen() {
     return result
   }, [items, searchQuery, activeCategory])
 
+  // Track if sheet should be presented (set after data is ready)
+  const [shouldPresentSheet, setShouldPresentSheet] = useState(false)
+
+  // Present sheet only after state updates have been applied
+  useEffect(() => {
+    if (shouldPresentSheet && selectedItem) {
+      sheetRef.current?.present()
+      setShouldPresentSheet(false)
+    }
+  }, [shouldPresentSheet, selectedItem])
+
   const handleItemPress = useCallback((summary: ItemPriceSummaryDollar) => {
     const item = summary.item
-    setSelectedItem(item)
 
     // Load full price history
     const history = getPriceHistoryForItem(item.id, 50)
     const lowest = getLowestPriceForItem(item.id)
+
+    // Set all state at once, then trigger sheet presentation
+    setSelectedItem(item)
     setSelectedPriceHistory(history)
     setSelectedLowestPrice(lowest)
-
-    sheetRef.current?.present()
+    setShouldPresentSheet(true)
   }, [])
 
   const handleSheetDismiss = useCallback(() => {

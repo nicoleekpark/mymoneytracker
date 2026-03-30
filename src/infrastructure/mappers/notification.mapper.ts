@@ -10,15 +10,14 @@ export type NotificationRow = {
   title: string
   message: string
   read: number // 0 or 1
+  dismissed: number // 0 or 1
   created_at: string
   read_at: string | null
   // Phase 1: Using sender_id to store subtype (repurposing unused field)
   sender_id: string | null
   // Store metadata as JSON in sender_name field (repurposing)
   sender_name: string | null
-  // Phase 1: We'll add a 'dismissed' concept by checking if read_at is set
-  // For dismissed, we'll use sender_avatar field (repurposing)
-  sender_avatar: string | null // '1' = dismissed, null = not dismissed
+  sender_avatar: string | null
 }
 
 /**
@@ -42,7 +41,7 @@ export function rowToNotification(row: NotificationRow): Notification {
     message: row.message,
     createdAt: row.created_at,
     read: row.read === 1,
-    dismissed: row.sender_avatar === '1',
+    dismissed: row.dismissed === 1,
     metadata,
   }
 }
@@ -57,10 +56,11 @@ export function notificationToRow(notification: Notification): NotificationRow {
     title: notification.title,
     message: notification.message,
     read: notification.read ? 1 : 0,
+    dismissed: notification.dismissed ? 1 : 0,
     created_at: notification.createdAt,
     read_at: notification.read ? new Date().toISOString() : null,
     sender_id: notification.subtype ?? null,
     sender_name: notification.metadata ? JSON.stringify(notification.metadata) : null,
-    sender_avatar: notification.dismissed ? '1' : null,
+    sender_avatar: null,
   }
 }

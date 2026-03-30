@@ -24,9 +24,8 @@ export const HoHThemeProvider = ({ children, initialMode }: Props) => {
   const systemMode = (useColorScheme() as ThemeMode | null) ?? null
   const userMode = useThemeStore((t) => t.mode)
 
-  // TODO const effectiveMode: ThemeMode = userMode ?? systemMode ?? initialMode ?? 'dark' is correct
-  // const effectiveMode: ThemeMode = userMode ?? systemMode ?? initialMode ?? 'dark'
-  const effectiveMode: ThemeMode = userMode ?? initialMode ?? systemMode ?? 'dark'
+  // Priority: user preference > system theme > initial prop > dark fallback
+  const effectiveMode: ThemeMode = userMode ?? systemMode ?? initialMode ?? 'dark'
 
   const theme = useMemo(() => THEMES[effectiveMode], [effectiveMode])
 
