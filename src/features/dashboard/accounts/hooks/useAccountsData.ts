@@ -49,9 +49,13 @@ import type { Account } from '@/core/domain/account'
 
 // ─── Application ──────────────────────────────────────────────────────────────
 import { getActiveAccounts } from '@/core/services/account'
-
-// ─── Infrastructure (Tech Debt: should go through domain use-case) ──────────
-import { transactionRepository } from '@/infrastructure/repositories'
+import {
+  getAccountActivityForMonth,
+  getAccountActivityForYear,
+  getAccountActivityAllTime,
+  getAccountBalanceBeforeDate,
+  getAccountBalanceAtEndOfMonth,
+} from '@/core/services/transaction'
 
 // ─── Feature Types ──────────────────────────────────────────────────────────
 import type { AccountActivity, AccountGroup, SectionKey, SectionSummary } from '../accounts.types'
@@ -131,36 +135,36 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
     if (scope === 'month') {
       // Monthly: fetch activity for specific month
       const monthYYYYMM = formatMonthYYYYMM(year, month)
-      const activities = transactionRepository.listAccountActivityForMonth(monthYYYYMM)
+      const activities = getAccountActivityForMonth(monthYYYYMM)
       activityMap = new Map(activities.map(a => [a.accountId, {
-        expenseCents: a.expenseCents,
-        incomeCents: a.incomeCents,
-        transferOutCents: a.transferOutCents,
-        transferInCents: a.transferInCents,
+        expenseCents: Math.round(a.expenseDollar * 100),
+        incomeCents: Math.round(a.incomeDollar * 100),
+        transferOutCents: Math.round(a.transferOutDollar * 100),
+        transferInCents: Math.round(a.transferInDollar * 100),
         transactionCount: a.transactionCount,
       }]))
       periodLabel = `${getMonthNameFull(month)} ${year}`
 
     } else if (scope === 'year') {
       // Yearly: fetch activity for entire year
-      const activities = transactionRepository.listAccountActivityForYear(year)
+      const activities = getAccountActivityForYear(year)
       activityMap = new Map(activities.map(a => [a.accountId, {
-        expenseCents: a.expenseCents,
-        incomeCents: a.incomeCents,
-        transferOutCents: a.transferOutCents,
-        transferInCents: a.transferInCents,
+        expenseCents: Math.round(a.expenseDollar * 100),
+        incomeCents: Math.round(a.incomeDollar * 100),
+        transferOutCents: Math.round(a.transferOutDollar * 100),
+        transferInCents: Math.round(a.transferInDollar * 100),
         transactionCount: a.transactionCount,
       }]))
       periodLabel = String(year)
 
     } else {
       // All time: fetch activity across all time
-      const activities = transactionRepository.listAccountActivityAllTime()
+      const activities = getAccountActivityAllTime()
       activityMap = new Map(activities.map(a => [a.accountId, {
-        expenseCents: a.expenseCents,
-        incomeCents: a.incomeCents,
-        transferOutCents: a.transferOutCents,
-        transferInCents: a.transferInCents,
+        expenseCents: Math.round(a.expenseDollar * 100),
+        incomeCents: Math.round(a.incomeDollar * 100),
+        transferOutCents: Math.round(a.transferOutDollar * 100),
+        transferInCents: Math.round(a.transferInDollar * 100),
         transactionCount: a.transactionCount,
       }]))
       periodLabel = 'All Time'
@@ -188,28 +192,22 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
         const monthYYYYMM = formatMonthYYYYMM(year, month)
         const firstDayOfMonth = getFirstDayOfMonth(year, month)
 
-        const startBalanceCents = transactionRepository.getAccountBalanceBeforeDate(account.id, firstDayOfMonth)
-        startBalance = startBalanceCents / 100
-
-        const endBalanceCents = transactionRepository.getAccountBalanceAtEndOfMonth(account.id, monthYYYYMM)
-        endBalance = endBalanceCents / 100
+        startBalance = getAccountBalanceBeforeDate(account.id, firstDayOfMonth)
+        endBalance = getAccountBalanceAtEndOfMonth(account.id, monthYYYYMM)
 
       } else if (scope === 'year') {
         // Yearly: start balance = before Jan 1, end balance = end of Dec
         const firstDayOfYear = `${year}-01-01`
-        const startBalanceCents = transactionRepository.getAccountBalanceBeforeDate(account.id, firstDayOfYear)
-        startBalance = startBalanceCents / 100
+        startBalance = getAccountBalanceBeforeDate(account.id, firstDayOfYear)
 
         const endOfYear = `${year}-12`
-        const endBalanceCents = transactionRepository.getAccountBalanceAtEndOfMonth(account.id, endOfYear)
-        endBalance = endBalanceCents / 100
+        endBalance = getAccountBalanceAtEndOfMonth(account.id, endOfYear)
 
       } else {
         // All time: just show current balance (no start balance)
         const now = new Date()
         const currentMonth = formatMonthYYYYMM(now.getFullYear(), now.getMonth() + 1)
-        const endBalanceCents = transactionRepository.getAccountBalanceAtEndOfMonth(account.id, currentMonth)
-        endBalance = endBalanceCents / 100
+        endBalance = getAccountBalanceAtEndOfMonth(account.id, currentMonth)
       }
 
       return {

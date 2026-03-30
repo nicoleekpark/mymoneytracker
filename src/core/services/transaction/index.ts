@@ -43,6 +43,12 @@ export {
   getAllTimeSummaryDollar,
   getDistinctMonthCount,
   getFirstTransactionDate,
+  // Account Activity
+  getAccountActivityForMonth,
+  getAccountActivityForYear,
+  getAccountActivityAllTime,
+  getAccountBalanceBeforeDate,
+  getAccountBalanceAtEndOfMonth,
 } from './transaction.aggregations'
 
 export type {
@@ -62,6 +68,8 @@ export type {
   AllTimeExpenseByCategoryDollar,
   AllTimeIncomeByCategoryDollar,
   AllTimeSummaryDollar,
+  // Account activity types
+  AccountActivityDollar,
 } from './transaction.aggregations'
 
 // ─────────────────────────────────────────────────────────────────────────────

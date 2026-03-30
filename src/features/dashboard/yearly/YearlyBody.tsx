@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -90,18 +90,23 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
   const [showAllExpense, setShowAllExpense] = useState(false)
   const [showAllIncome, setShowAllIncome] = useState(false)
 
-  // Sync with default when data changes
-  const [hasExpenseInitialized, setHasExpenseInitialized] = useState(false)
-  if (!hasExpenseInitialized && defaultExpenseExpanded.size > 0) {
-    setExpandedExpenseCategories(defaultExpenseExpanded)
-    setHasExpenseInitialized(true)
-  }
+  // Sync expanded categories with default when data changes
+  const expenseInitRef = useRef(false)
+  const incomeInitRef = useRef(false)
 
-  const [hasIncomeInitialized, setHasIncomeInitialized] = useState(false)
-  if (!hasIncomeInitialized && defaultIncomeExpanded.size > 0) {
-    setExpandedIncomeCategories(defaultIncomeExpanded)
-    setHasIncomeInitialized(true)
-  }
+  useEffect(() => {
+    if (!expenseInitRef.current && defaultExpenseExpanded.size > 0) {
+      setExpandedExpenseCategories(defaultExpenseExpanded)
+      expenseInitRef.current = true
+    }
+  }, [defaultExpenseExpanded])
+
+  useEffect(() => {
+    if (!incomeInitRef.current && defaultIncomeExpanded.size > 0) {
+      setExpandedIncomeCategories(defaultIncomeExpanded)
+      incomeInitRef.current = true
+    }
+  }, [defaultIncomeExpanded])
 
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1

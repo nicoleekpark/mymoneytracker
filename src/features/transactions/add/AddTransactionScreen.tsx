@@ -102,15 +102,34 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   const [toastKey, setToastKey] = useState(0)
 
   const showToast = (message: string) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current)
+    }
     setToastMessage(message)
     setToastKey((k) => k + 1)
-    setTimeout(() => setToastMessage(null), TOAST_DURATION)
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), TOAST_DURATION)
   }
 
   const descInputRef = useRef<TextInput>(null)
   const noteInputRef = useRef<TextInput>(null)
   const merchantInputRef = useRef<TextInput>(null)
   const scrollRef = useRef<ScrollView>(null)
+
+  // Timeout refs for cleanup
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup all timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
+      if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
+      if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current)
+    }
+  }, [])
 
   // Transaction type
   const [type, setType] = useState<TransactionType>('expense')
@@ -244,75 +263,86 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
   // Load transaction data if editing existing transaction
   useEffect(() => {
-    if (editingTransactionId) {
-      getTransactionById(editingTransactionId).then((tx) => {
-        if (tx) {
-          setEditingTransaction(tx)
-          setType(tx.type)
-          setDescription(tx.item || '')
-          setMerchant(tx.merchant || '')
-          setNote(tx.note || '')
+    if (!editingTransactionId) return
 
-          // Convert amount from dollars to cents
-          const amountCents = Math.round(tx.money.amount * 100)
-          amount.setAmountCents(amountCents)
+    let cancelled = false
 
-          // Find account key by ID
-          const accounts = getActiveAccounts()
-          const acc = accounts.find((a) => a.id === tx.accountId)
-          if (acc) {
-            account.setAccountKey(acc.key)
-          }
+    getTransactionById(editingTransactionId).then((tx) => {
+      if (cancelled || !tx) return
 
-          // Set category
-          if (tx.category) {
-            category.setCategoryRef({
-              type: tx.type,
-              categoryKey: tx.category.categoryKey ?? '',
-              subCategoryKey: tx.category.subCategoryKey,
-            })
-          }
+      setEditingTransaction(tx)
+      setType(tx.type)
+      setDescription(tx.item || '')
+      setMerchant(tx.merchant || '')
+      setNote(tx.note || '')
 
-          // Set date
-          dateTime.setOccurredAt(tx.occurredAt)
+      // Convert amount from dollars to cents
+      const amountCents = Math.round(tx.money.amount * 100)
+      amount.setAmountCents(amountCents)
 
-          // Set tags
-          if (tx.tags && tx.tags.length > 0) {
-            setTags(tx.tags)
-          }
+      // Find account key by ID
+      const accounts = getActiveAccounts()
+      const acc = accounts.find((a) => a.id === tx.accountId)
+      if (acc) {
+        account.setAccountKey(acc.key)
+      }
 
-          // Set estimated
-          if (tx.isEstimated) {
-            setIsEstimated(true)
-          }
+      // Set category
+      if (tx.category) {
+        category.setCategoryRef({
+          type: tx.type,
+          categoryKey: tx.category.categoryKey ?? '',
+          subCategoryKey: tx.category.subCategoryKey,
+        })
+      }
 
-          // Load transaction items if any
-          const txItems = getTransactionItems(editingTransactionId)
-          if (txItems.length > 0) {
-            setItemizedItems(
-              txItems.map((ti) => ({
-                id: ti.id,
-                name: ti.name,
-                priceCents: ti.priceCents,
-                quantity: ti.quantity,
-                unit: ti.unit,
-                itemId: ti.itemId,
-              }))
-            )
-            setItemizedExpanded(true)
-          }
+      // Set date
+      dateTime.setOccurredAt(tx.occurredAt)
 
-          // Expand more details if has optional fields
-          if (tx.tags && tx.tags.length > 0) {
-            setMoreDetailsExpanded(true)
-          }
+      // Set tags
+      if (tx.tags && tx.tags.length > 0) {
+        setTags(tx.tags)
+      }
 
-          // Scroll to top after loading edit data
-          setTimeout(() => {
-            scrollRef.current?.scrollTo({ y: 0, animated: false })
-          }, 150)
+      // Set estimated
+      if (tx.isEstimated) {
+        setIsEstimated(true)
+      }
+
+      // Load transaction items if any
+      const txItems = getTransactionItems(editingTransactionId)
+      if (txItems.length > 0) {
+        setItemizedItems(
+          txItems.map((ti) => ({
+            id: ti.id,
+            name: ti.name,
+            priceCents: ti.priceCents,
+            quantity: ti.quantity,
+            unit: ti.unit,
+            itemId: ti.itemId,
+          }))
+        )
+        setItemizedExpanded(true)
+      }
+
+      // Expand more details if has optional fields
+      if (tx.tags && tx.tags.length > 0) {
+        setMoreDetailsExpanded(true)
+      }
+
+      // Scroll to top after loading edit data
+      scrollTimeoutRef.current = setTimeout(() => {
+        if (!cancelled) {
+          scrollRef.current?.scrollTo({ y: 0, animated: false })
         }
-      })
+      }, 150)
+    })
+
+    return () => {
+      cancelled = true
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
     }
   }, [editingTransactionId])
 
@@ -328,9 +358,11 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         return
       }
       // Small delay to let the content render
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true })
       }, 100)
+
+      return () => clearTimeout(timeoutId)
     }
   }, [moreDetailsExpanded])
 
@@ -399,7 +431,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     if (!cleanedDescription && !cleanedMerchant) {
       showToast('Add a description or merchant')
       setHighlightIdentifier(true)
-      setTimeout(() => setHighlightIdentifier(false), 2000)
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
+      }
+      highlightTimeoutRef.current = setTimeout(() => setHighlightIdentifier(false), 2000)
       return
     }
 
@@ -522,7 +557,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       // Show toast then close modal
       const toastMsg = editingTransaction ? `$${amount.amountDisplay} updated` : `$${amount.amountDisplay} added`
       showToast(toastMsg)
-      setTimeout(() => router.back(), 800)
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current)
+      }
+      navigationTimeoutRef.current = setTimeout(() => router.back(), 800)
     } catch (e: unknown) {
       logError('AddTransaction', e)
       const message = e instanceof Error ? e.message : 'Save failed'
@@ -565,7 +603,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
     // Show toast then close modal
     showToast('Saved as draft')
-    setTimeout(() => router.back(), 800)
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current)
+    }
+    navigationTimeoutRef.current = setTimeout(() => router.back(), 800)
   }
 
   // Reset form for "Add Another"
@@ -785,7 +826,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   // Trigger brief highlight on parent field row
   const triggerHighlight = (field: 'category' | 'account') => {
     setHighlightedField(field)
-    setTimeout(() => setHighlightedField(null), 250)
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current)
+    }
+    highlightTimeoutRef.current = setTimeout(() => setHighlightedField(null), 250)
   }
 
   // Quick chip selection handler

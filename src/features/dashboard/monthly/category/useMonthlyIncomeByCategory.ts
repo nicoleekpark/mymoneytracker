@@ -1,6 +1,6 @@
 import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
 import type { UUID } from '@/core/domain/common/uuid'
-import { categoryRepository } from '@/infrastructure/repositories'
+import { getCategoryRefByDbId } from '@/core/services/category'
 import {
   getMonthlyIncomeByCategoryDollar,
   getMonthlySummaryDollar
@@ -51,7 +51,7 @@ function aggregateByParentCategory(
       continue
     }
 
-    const ref = categoryRepository.resolveCategoryRefFromDbId(row.categoryId)
+    const ref = getCategoryRefByDbId(row.categoryId)
     const parentKey = ref.categoryKey
     const subKey = ref.subCategoryKey
 

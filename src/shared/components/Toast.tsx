@@ -5,7 +5,7 @@
  * Usage: const { showToast, ToastContainer } = useToast()
  */
 
-import React, { createContext, useCallback, useContext, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { StyleSheet, Text } from 'react-native'
 import Animated, {
   FadeIn,
@@ -30,11 +30,25 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [key, setKey] = useState(0)
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const showToast = useCallback((msg: string) => {
+    // Clear any existing timeout to prevent stale updates
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
     setMessage(msg)
     setKey((k) => k + 1)
-    setTimeout(() => setMessage(null), TOAST_DURATION)
+    timeoutRef.current = setTimeout(() => setMessage(null), TOAST_DURATION)
+  }, [])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
   }, [])
 
   return (

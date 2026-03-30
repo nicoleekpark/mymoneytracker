@@ -151,6 +151,7 @@ export default function TransactionsScreen() {
   const didAutoScrollRef = useRef(false)
   const detailSheetRef = useRef<BottomSheetModal>(null)
   const filterSheetRef = useRef<BottomSheetModal>(null)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data, refetch, loadMore, isLoadingMore } = useTransactionsData()
   const { items, hasMore } = data
@@ -320,7 +321,7 @@ export default function TransactionsScreen() {
     const target = findScrollTarget(sections, focusDate)
     if (!target) return
 
-    setTimeout(() => {
+    scrollTimeoutRef.current = setTimeout(() => {
       try {
         pendingScrollRef.current = { sectionIndex: target.sectionIndex, itemIndex: target.itemIndex }
         listRef.current?.scrollToLocation({
@@ -330,10 +331,16 @@ export default function TransactionsScreen() {
           viewPosition: 0.05
         })
         didAutoScrollRef.current = true
-      } catch (e) {
+      } catch {
         // Scroll error - non-critical, ignore silently
       }
     }, 150)
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
   }, [focusDate, sections])
 
   // Handle row tap - open detail sheet

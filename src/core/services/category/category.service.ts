@@ -7,10 +7,10 @@ import type { UUID } from '@/core/domain/common/uuid'
 import type { CategoryRef } from '@/core/domain/category'
 import { categoryRepository } from '@/infrastructure/repositories'
 
-export async function getCategoryDbId(ref?: CategoryRef): Promise<UUID | null> {
+export function getCategoryDbId(ref?: CategoryRef): UUID | null {
   return categoryRepository.resolveCategoryId(ref)
 }
 
-export async function getCategoryRefByDbId(id: UUID): Promise<CategoryRef> {
+export function getCategoryRefByDbId(id: UUID): CategoryRef {
   return categoryRepository.resolveCategoryRefFromDbId(id)
 }

@@ -134,6 +134,7 @@ export interface TransactionRepository {
 
   // Tags
   saveTags(transactionId: UUID, tagNames: string[]): void
+  deleteTags(transactionId: UUID): void
 
   // Account activity aggregations
   listAccountActivityForMonth(monthYYYYMM: string): AccountActivityTotals[]

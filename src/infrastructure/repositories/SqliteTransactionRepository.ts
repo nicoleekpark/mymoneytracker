@@ -656,26 +656,40 @@ export class SqliteTransactionRepository implements TransactionRepository {
   /**
    * Save tags for a transaction.
    * Creates tags in the tags table if they don't exist.
+   * Wrapped in a transaction to ensure atomicity.
    */
   saveTags(transactionId: UUID, tagNames: string[]): void {
     if (!tagNames || tagNames.length === 0) return
 
-    for (const name of tagNames) {
-      const trimmed = name.trim().toLowerCase()
-      if (!trimmed) continue
+    this.dataSource.withTransaction(() => {
+      for (const name of tagNames) {
+        const trimmed = name.trim().toLowerCase()
+        if (!trimmed) continue
 
-      // Find or create tag
-      let tagId = this.findTagIdByName(trimmed)
-      if (!tagId) {
-        tagId = this.createTag(trimmed)
+        // Find or create tag
+        let tagId = this.findTagIdByName(trimmed)
+        if (!tagId) {
+          tagId = this.createTag(trimmed)
+        }
+
+        // Insert into junction table (ignore if already exists)
+        this.dataSource.exec(
+          `INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)`,
+          [transactionId, tagId]
+        )
       }
+    })
+  }
 
-      // Insert into junction table (ignore if already exists)
-      this.dataSource.exec(
-        `INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)`,
-        [transactionId, tagId]
-      )
-    }
+  /**
+   * Delete all tags for a transaction.
+   * Used before re-saving tags to ensure clean state.
+   */
+  deleteTags(transactionId: UUID): void {
+    this.dataSource.exec(
+      `DELETE FROM transaction_tags WHERE transaction_id = ?`,
+      [transactionId]
+    )
   }
 
   /**

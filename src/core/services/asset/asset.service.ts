@@ -247,14 +247,14 @@ export function getAssetProjection(year?: number, memberId?: string | null): Ass
   const goal = getGoal(targetYear)
   const startYearMonth = goal?.startYearMonth ?? `${targetYear}-01`
 
-  // Calculate months elapsed from start
-  const [startYear, startMonthStr] = startYearMonth.split('-').map(Number)
-  const startMonthIndex = (startYear - targetYear) * 12 + startMonthStr
-  const currentMonthIndex = isCurrentYear ? currentMonth : 12
+  // Parse start month with validation
+  const parts = startYearMonth.split('-')
+  const startMonthNum = parts.length >= 2 ? parseInt(parts[1], 10) : 1
+  const validStartMonth = isNaN(startMonthNum) ? 1 : Math.max(1, Math.min(12, startMonthNum))
 
   // For past years, use 12 months; for current year, use months so far
   const monthsElapsed = isCurrentYear
-    ? Math.max(0, currentMonth - startMonthStr + 1)
+    ? Math.max(0, currentMonth - validStartMonth + 1)
     : 12
   const monthsRemaining = 12 - monthsElapsed
 

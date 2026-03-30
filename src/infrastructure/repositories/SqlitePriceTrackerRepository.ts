@@ -489,62 +489,165 @@ export class SqlitePriceTrackerRepository implements PriceTrackerRepository {
   // ─────────────────────────────────────────────────────────────────────────────
 
   listItemPriceSummaries(limit = 50): ItemPriceSummary[] {
-    // Get items with price point counts
-    const items = this.dataSource.queryAll<TrackedItemRow & { price_point_count: number }>(
+    // Fetch items with their latest and lowest prices in a single query
+    // Uses window functions to avoid N+1 queries
+    type ItemSummaryRow = TrackedItemRow & {
+      price_point_count: number
+      // Latest price fields (prefixed with latest_)
+      latest_pp_id: string | null
+      latest_store_id: string | null
+      latest_price_cents: number | null
+      latest_quantity: number | null
+      latest_occurred_at: string | null
+      latest_transaction_id: string | null
+      latest_note: string | null
+      latest_pp_created_at: string | null
+      latest_store_name: string | null
+      latest_store_category: string | null
+      latest_store_color: string | null
+      // Lowest price fields (prefixed with lowest_)
+      lowest_pp_id: string | null
+      lowest_store_id: string | null
+      lowest_price_cents: number | null
+      lowest_quantity: number | null
+      lowest_occurred_at: string | null
+      lowest_transaction_id: string | null
+      lowest_note: string | null
+      lowest_pp_created_at: string | null
+      lowest_store_name: string | null
+      lowest_store_category: string | null
+      lowest_store_color: string | null
+    }
+
+    const rows = this.dataSource.queryAll<ItemSummaryRow>(
       `
-      SELECT ti.*, COUNT(pp.id) AS price_point_count
-      FROM tracked_items ti
-      LEFT JOIN price_points pp ON ti.id = pp.item_id
-      WHERE ti.is_archived = 0
-      GROUP BY ti.id
-      ORDER BY ti.is_favorite DESC, price_point_count DESC, ti.name ASC
-      LIMIT ?
+      WITH item_stats AS (
+        SELECT
+          ti.*,
+          COUNT(pp.id) AS price_point_count
+        FROM tracked_items ti
+        LEFT JOIN price_points pp ON ti.id = pp.item_id
+        WHERE ti.is_archived = 0
+        GROUP BY ti.id
+        ORDER BY ti.is_favorite DESC, price_point_count DESC, ti.name ASC
+        LIMIT ?
+      ),
+      latest_prices AS (
+        SELECT
+          pp.item_id,
+          pp.id AS pp_id,
+          pp.store_id,
+          pp.price_cents,
+          pp.quantity,
+          pp.occurred_at,
+          pp.transaction_id,
+          pp.note,
+          pp.created_at AS pp_created_at,
+          s.name AS store_name,
+          s.category AS store_category,
+          s.color AS store_color,
+          ROW_NUMBER() OVER (PARTITION BY pp.item_id ORDER BY pp.occurred_at DESC) AS rn
+        FROM price_points pp
+        JOIN stores s ON pp.store_id = s.id
+        WHERE pp.item_id IN (SELECT id FROM item_stats)
+      ),
+      lowest_prices AS (
+        SELECT
+          pp.item_id,
+          pp.id AS pp_id,
+          pp.store_id,
+          pp.price_cents,
+          pp.quantity,
+          pp.occurred_at,
+          pp.transaction_id,
+          pp.note,
+          pp.created_at AS pp_created_at,
+          s.name AS store_name,
+          s.category AS store_category,
+          s.color AS store_color,
+          ROW_NUMBER() OVER (PARTITION BY pp.item_id ORDER BY (pp.price_cents * 1.0 / pp.quantity) ASC) AS rn
+        FROM price_points pp
+        JOIN stores s ON pp.store_id = s.id
+        WHERE pp.item_id IN (SELECT id FROM item_stats)
+      )
+      SELECT
+        i.*,
+        lp.pp_id AS latest_pp_id,
+        lp.store_id AS latest_store_id,
+        lp.price_cents AS latest_price_cents,
+        lp.quantity AS latest_quantity,
+        lp.occurred_at AS latest_occurred_at,
+        lp.transaction_id AS latest_transaction_id,
+        lp.note AS latest_note,
+        lp.pp_created_at AS latest_pp_created_at,
+        lp.store_name AS latest_store_name,
+        lp.store_category AS latest_store_category,
+        lp.store_color AS latest_store_color,
+        lo.pp_id AS lowest_pp_id,
+        lo.store_id AS lowest_store_id,
+        lo.price_cents AS lowest_price_cents,
+        lo.quantity AS lowest_quantity,
+        lo.occurred_at AS lowest_occurred_at,
+        lo.transaction_id AS lowest_transaction_id,
+        lo.note AS lowest_note,
+        lo.pp_created_at AS lowest_pp_created_at,
+        lo.store_name AS lowest_store_name,
+        lo.store_category AS lowest_store_category,
+        lo.store_color AS lowest_store_color
+      FROM item_stats i
+      LEFT JOIN latest_prices lp ON i.id = lp.item_id AND lp.rn = 1
+      LEFT JOIN lowest_prices lo ON i.id = lo.item_id AND lo.rn = 1
+      ORDER BY i.is_favorite DESC, i.price_point_count DESC, i.name ASC
       `,
       [limit]
     )
 
-    return items.map((item) => {
-      const trackedItem = rowToTrackedItem(item)
+    return rows.map((row) => {
+      const item = rowToTrackedItem(row)
 
-      // Get latest price
-      const latestRow = this.dataSource.queryFirst<PricePointWithStoreRow>(
-        `
-        SELECT
-          pp.*,
-          s.name AS store_name,
-          s.category AS store_category,
-          s.color AS store_color
-        FROM price_points pp
-        JOIN stores s ON pp.store_id = s.id
-        WHERE pp.item_id = ?
-        ORDER BY pp.occurred_at DESC
-        LIMIT 1
-        `,
-        [item.id]
-      )
+      // Build latest price if present
+      let latestPrice: PricePointWithStore | undefined
+      if (row.latest_pp_id) {
+        latestPrice = rowToPricePointWithStore({
+          id: row.latest_pp_id,
+          item_id: row.id,
+          store_id: row.latest_store_id!,
+          price_cents: row.latest_price_cents!,
+          quantity: row.latest_quantity!,
+          occurred_at: row.latest_occurred_at!,
+          transaction_id: row.latest_transaction_id,
+          note: row.latest_note,
+          created_at: row.latest_pp_created_at!,
+          store_name: row.latest_store_name!,
+          store_category: row.latest_store_category!,
+          store_color: row.latest_store_color,
+        })
+      }
 
-      // Get lowest price (price per unit)
-      const lowestRow = this.dataSource.queryFirst<PricePointWithStoreRow>(
-        `
-        SELECT
-          pp.*,
-          s.name AS store_name,
-          s.category AS store_category,
-          s.color AS store_color
-        FROM price_points pp
-        JOIN stores s ON pp.store_id = s.id
-        WHERE pp.item_id = ?
-        ORDER BY (pp.price_cents / pp.quantity) ASC
-        LIMIT 1
-        `,
-        [item.id]
-      )
+      // Build lowest price if present
+      let lowestPrice: PricePointWithStore | undefined
+      if (row.lowest_pp_id) {
+        lowestPrice = rowToPricePointWithStore({
+          id: row.lowest_pp_id,
+          item_id: row.id,
+          store_id: row.lowest_store_id!,
+          price_cents: row.lowest_price_cents!,
+          quantity: row.lowest_quantity!,
+          occurred_at: row.lowest_occurred_at!,
+          transaction_id: row.lowest_transaction_id,
+          note: row.lowest_note,
+          created_at: row.lowest_pp_created_at!,
+          store_name: row.lowest_store_name!,
+          store_category: row.lowest_store_category!,
+          store_color: row.lowest_store_color,
+        })
+      }
 
       return {
-        item: trackedItem,
-        latestPrice: latestRow ? rowToPricePointWithStore(latestRow) : undefined,
-        lowestPrice: lowestRow ? rowToPricePointWithStore(lowestRow) : undefined,
-        pricePointCount: item.price_point_count,
+        item,
+        latestPrice,
+        lowestPrice,
+        pricePointCount: row.price_point_count,
       }
     })
   }

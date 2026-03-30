@@ -4,8 +4,13 @@
 // WHY: Keeps routing separate from business logic. Feature can be tested alone.
 // ═══════════════════════════════════════════════════════════════════════════
 import DashboardScreen from '@/features/dashboard/DashboardScreen'
+import { FeatureErrorBoundary } from '@/shared/components'
 
 // Named "index.tsx" = default screen for (tabs) folder = first tab shown
 export default function DashboardRoute() {
-  return <DashboardScreen />  // All the real work happens in DashboardScreen
+  return (
+    <FeatureErrorBoundary featureName="Dashboard">
+      <DashboardScreen />
+    </FeatureErrorBoundary>
+  )
 }

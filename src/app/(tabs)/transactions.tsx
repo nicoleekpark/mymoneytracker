@@ -5,7 +5,12 @@
 // using useLocalSearchParams() hook.
 // ═══════════════════════════════════════════════════════════════════════════
 import TransactionsScreen from '@/features/transactions/list/TransactionsScreen'
+import { FeatureErrorBoundary } from '@/shared/components'
 
 export default function TransactionsRoute() {
-  return <TransactionsScreen />
+  return (
+    <FeatureErrorBoundary featureName="Transactions">
+      <TransactionsScreen />
+    </FeatureErrorBoundary>
+  )
 }

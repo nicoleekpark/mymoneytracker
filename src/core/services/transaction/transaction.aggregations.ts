@@ -350,3 +350,81 @@ export async function getFirstTransactionDate(): Promise<Date | null> {
 export async function getDistinctMonthCount(): Promise<number> {
   return transactionRepository.countDistinctMonths()
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Account Activity Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type AccountActivityDollar = Readonly<{
+  accountId: UUID
+  expenseDollar: number
+  incomeDollar: number
+  transferOutDollar: number
+  transferInDollar: number
+  transactionCount: number
+}>
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Account Activity Aggregations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Get account activity for a specific month
+ */
+export function getAccountActivityForMonth(monthYYYYMM: string): AccountActivityDollar[] {
+  const rows = transactionRepository.listAccountActivityForMonth(monthYYYYMM)
+  return rows.map((r) => ({
+    accountId: r.accountId,
+    expenseDollar: centsToDollars(r.expenseCents),
+    incomeDollar: centsToDollars(r.incomeCents),
+    transferOutDollar: centsToDollars(r.transferOutCents),
+    transferInDollar: centsToDollars(r.transferInCents),
+    transactionCount: r.transactionCount,
+  }))
+}
+
+/**
+ * Get account activity for a specific year
+ */
+export function getAccountActivityForYear(year: number): AccountActivityDollar[] {
+  const rows = transactionRepository.listAccountActivityForYear(year)
+  return rows.map((r) => ({
+    accountId: r.accountId,
+    expenseDollar: centsToDollars(r.expenseCents),
+    incomeDollar: centsToDollars(r.incomeCents),
+    transferOutDollar: centsToDollars(r.transferOutCents),
+    transferInDollar: centsToDollars(r.transferInCents),
+    transactionCount: r.transactionCount,
+  }))
+}
+
+/**
+ * Get account activity all time
+ */
+export function getAccountActivityAllTime(): AccountActivityDollar[] {
+  const rows = transactionRepository.listAccountActivityAllTime()
+  return rows.map((r) => ({
+    accountId: r.accountId,
+    expenseDollar: centsToDollars(r.expenseCents),
+    incomeDollar: centsToDollars(r.incomeCents),
+    transferOutDollar: centsToDollars(r.transferOutCents),
+    transferInDollar: centsToDollars(r.transferInCents),
+    transactionCount: r.transactionCount,
+  }))
+}
+
+/**
+ * Get account balance before a specific date (in dollars)
+ */
+export function getAccountBalanceBeforeDate(accountId: UUID, dateYYYYMMDD: string): number {
+  const balanceCents = transactionRepository.getAccountBalanceBeforeDate(accountId, dateYYYYMMDD)
+  return centsToDollars(balanceCents)
+}
+
+/**
+ * Get account balance at end of month (in dollars)
+ */
+export function getAccountBalanceAtEndOfMonth(accountId: UUID, monthYYYYMM: string): number {
+  const balanceCents = transactionRepository.getAccountBalanceAtEndOfMonth(accountId, monthYYYYMM)
+  return centsToDollars(balanceCents)
+}

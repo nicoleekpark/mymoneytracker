@@ -15,7 +15,7 @@ import {
   type PersonalBests,
   type CumulativeNetData
 } from '@/core/services/transaction'
-import { categoryRepository } from '@/infrastructure/repositories'
+import { getCategoryRefByDbId } from '@/core/services/category'
 
 export type CategoryBreakdown = Readonly<{
   categoryId: UUID | null
@@ -98,7 +98,7 @@ export function useAllTimeData() {
         const expenseByCategory: CategoryBreakdown[] = expenseByCat.map(r => ({
           categoryId: r.categoryId,
           categoryRef: r.categoryId
-            ? categoryRepository.resolveCategoryRefFromDbId(r.categoryId)
+            ? getCategoryRefByDbId(r.categoryId)
             : undefined,
           totalDollar: r.totalDollar
         }))
@@ -107,7 +107,7 @@ export function useAllTimeData() {
         const incomeByCategory: CategoryBreakdown[] = incomeByCat.map(r => ({
           categoryId: r.categoryId,
           categoryRef: r.categoryId
-            ? categoryRepository.resolveCategoryRefFromDbId(r.categoryId)
+            ? getCategoryRefByDbId(r.categoryId)
             : undefined,
           totalDollar: r.totalDollar
         }))

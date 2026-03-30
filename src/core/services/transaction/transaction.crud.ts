@@ -189,7 +189,8 @@ export async function updateTransaction(
 
   transactionRepository.update(tx)
 
-  // Update tags
+  // Update tags - always delete existing tags first, then save new ones
+  transactionRepository.deleteTags(tx.id)
   if (input.tags && input.tags.length > 0) {
     transactionRepository.saveTags(tx.id, input.tags)
   }

@@ -8,7 +8,7 @@ import {
   getYearlyIncomeByCategoryDollar,
   type MonthlyFlowDollar
 } from '@/core/services/transaction'
-import { categoryRepository } from '@/infrastructure/repositories'
+import { getCategoryRefByDbId } from '@/core/services/category'
 
 export type SubCategoryBreakdown = Readonly<{
   subCategoryKey: string
@@ -143,7 +143,7 @@ function aggregateByParentCategory(
       continue
     }
 
-    const ref = categoryRepository.resolveCategoryRefFromDbId(row.categoryId)
+    const ref = getCategoryRefByDbId(row.categoryId)
     const parentKey = ref.categoryKey
     const subKey = ref.subCategoryKey
 
