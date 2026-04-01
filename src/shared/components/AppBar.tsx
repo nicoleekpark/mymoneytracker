@@ -34,9 +34,13 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [devMenuOpen, setDevMenuOpen] = useState(false)
 
-  // Get notification count (Phase 1: notifications only, drafts moved to FAB)
+  // Get notification count
   const unreadCount = useNotificationsStore((s) => s.getUnreadCount())
   const hasNotifications = unreadCount > 0
+
+  // Get draft count
+  const draftCount = useDraftsStore((s) => s.drafts.length)
+  const hasDrafts = draftCount > 0
 
   // Dev tools
   const devToolsVisible = useDevStore((s) => s.devToolsVisible)
@@ -150,6 +154,10 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
     setDevMenuOpen(false)
   }
 
+  const handleDraftsPress = () => {
+    router.push({ pathname: '/transactions', params: { showDrafts: 'only' } })
+  }
+
   const handleBellPress = () => {
     router.push('/notifications')
   }
@@ -214,17 +222,39 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
 
         {/* Actions */}
         <View style={styles.actions}>
+          {/* Drafts */}
+          {hasDrafts && (
+            <Pressable
+              onPress={handleDraftsPress}
+              style={styles.iconBtn}
+              hitSlop={8}
+              accessibilityLabel={`${draftCount} drafts`}
+              accessibilityRole="button"
+            >
+              <FontAwesome name="pencil-square-o" size={20} color={theme.semantic.warning} />
+              <View style={[styles.badge, { backgroundColor: theme.semantic.warning }]}>
+                <Text style={[styles.badgeText, { color: theme.semantic.onWarning }]}>{draftCount}</Text>
+              </View>
+            </Pressable>
+          )}
+
           {/* Bell */}
           <Pressable
             onPress={handleBellPress}
             style={styles.iconBtn}
             hitSlop={8}
-            accessibilityLabel="Notifications"
+            accessibilityLabel={hasNotifications ? `${unreadCount} notifications` : 'Notifications'}
             accessibilityRole="button"
           >
-            <FontAwesome name="bell-o" size={20} color={theme.semantic.textSecondary} />
+            <FontAwesome
+              name="bell-o"
+              size={20}
+              color={hasNotifications ? theme.semantic.danger : theme.semantic.textSecondary}
+            />
             {hasNotifications && (
-              <View style={[styles.dot, { backgroundColor: theme.semantic.danger }]} />
+              <View style={[styles.badge, { backgroundColor: theme.semantic.danger }]}>
+                <Text style={[styles.badgeText, { color: '#fff' }]}>{unreadCount}</Text>
+              </View>
             )}
           </Pressable>
 
@@ -432,13 +462,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     position: 'relative',
   },
-  dot: {
+  badge: {
     position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    width: spacing.sm,
-    height: spacing.sm,
-    borderRadius: radius.sm,
+    top: 2,
+    right: 2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: fontWeight.bold,
   },
   avatar: {
     width: AVATAR_SIZE,

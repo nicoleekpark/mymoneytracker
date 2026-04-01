@@ -44,7 +44,7 @@ const CHART_HEIGHT = 160
 const CHART_AREA_HEIGHT = 140
 const PADDING_TOP = 16
 const PADDING_LEFT = 50
-const PADDING_RIGHT = 16
+const PADDING_RIGHT = 32 // Extra padding for last label
 const LABEL_AREA_HEIGHT = 20
 
 function formatFullMonth(monthStr: string): string {
@@ -152,11 +152,13 @@ function formatLabelForPeriod(monthStr: string, period: PeriodKey, index: number
   }
 
   if (period === 'ALL') {
+    // Show first, last, and middle point with "Mon 'YY" format
     if (index === 0 || index === total - 1) {
       return `${monthName} '${year.slice(2)}`
     }
-    if (monthIndex === 0) {
-      return `'${year.slice(2)}`
+    // For longer ranges, show a middle label
+    if (total > 6 && index === Math.floor(total / 2)) {
+      return `${monthName} '${year.slice(2)}`
     }
     return ''
   }
@@ -380,6 +382,10 @@ export function CumulativeNetChart({ data, colors }: Props) {
             {points.map((pt, i) => {
               const label = formatLabelForPeriod(pt.month, selectedPeriod, i, points.length)
               if (!label) return null
+              // Adjust text anchor: first label left-aligned, last label right-aligned, others centered
+              const isFirst = i === 0
+              const isLast = i === points.length - 1
+              const textAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle'
               return (
                 <SvgText
                   key={i}
@@ -388,7 +394,7 @@ export function CumulativeNetChart({ data, colors }: Props) {
                   fill={colors.textSecondary}
                   fontSize={10}
                   fontWeight={fontWeight.medium}
-                  textAnchor="middle"
+                  textAnchor={textAnchor}
                 >
                   {label}
                 </SvgText>

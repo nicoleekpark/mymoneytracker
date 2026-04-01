@@ -143,9 +143,10 @@ function findScrollTarget(sections: DaySection[], focusDate?: string) {
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
-  const params = useLocalSearchParams<{ focusDate?: string; accountId?: string }>()
+  const params = useLocalSearchParams<{ focusDate?: string; accountId?: string; showDrafts?: string }>()
   const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
   const accountIdFilter = typeof params.accountId === 'string' ? params.accountId : undefined
+  const showDraftsOnly = params.showDrafts === 'only'
 
   const listRef = useRef<SectionList<TransactionOrDraft, DaySection>>(null)
   const didAutoScrollRef = useRef(false)
@@ -158,7 +159,11 @@ export default function TransactionsScreen() {
 
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [filters, setFilters] = useState<TransactionFilters>(DEFAULT_FILTERS)
+  // Initialize filters - if coming from drafts FAB, show drafts by default
+  const [filters, setFilters] = useState<TransactionFilters>(() => ({
+    ...DEFAULT_FILTERS,
+    showDrafts: showDraftsOnly,
+  }))
 
   // Drafts store
   const { drafts, loadDrafts, isLoaded: draftsLoaded } = useDraftsStore()
@@ -254,15 +259,23 @@ export default function TransactionsScreen() {
     } as TransactionOrDraft))
   }, [filters.showDrafts, drafts, accounts])
 
-  // Merge transactions and drafts
+  // Merge transactions and drafts (only for timeline mode)
   const allItems: TransactionOrDraft[] = useMemo(() => {
     if (!filters.showDrafts) return items
+    // In grouped mode, don't merge drafts into timeline - they'll be shown separately
+    if (filters.draftViewMode === 'grouped') return items
+    // In timeline mode, merge drafts into the list
     return [...items, ...draftsAsTransactions]
-  }, [items, filters.showDrafts, draftsAsTransactions])
+  }, [items, filters.showDrafts, filters.draftViewMode, draftsAsTransactions])
 
   // Apply all filters
   const filteredItems: TransactionOrDraft[] = useMemo(() => {
     let result = allItems
+
+    // If showDraftsOnly mode (from FAB), only show drafts
+    if (showDraftsOnly && filters.showDrafts) {
+      result = result.filter(tx => tx.isDraft === true)
+    }
 
     // Filter by accountId (from URL params)
     if (accountIdFilter) {
@@ -283,9 +296,53 @@ export default function TransactionsScreen() {
     }
 
     return result
-  }, [allItems, accountIdFilter, filters.types, filters.categoryKeys])
+  }, [allItems, accountIdFilter, filters.types, filters.categoryKeys, showDraftsOnly, filters.showDrafts])
 
-  const sections = useMemo(() => buildDaySections(filteredItems, debouncedQuery), [filteredItems, debouncedQuery])
+  // Build sections - add drafts section at top when in grouped mode
+  const sections = useMemo(() => {
+    // Filter drafts by search query if present
+    const q = debouncedQuery.trim().toLowerCase()
+    const filteredDrafts = q
+      ? draftsAsTransactions.filter((tx) => {
+          const item = displayItem(tx).toLowerCase()
+          const note = String(tx.note ?? '').toLowerCase()
+          const merchant = String(tx.merchant ?? '').toLowerCase()
+          return item.includes(q) || note.includes(q) || merchant.includes(q)
+        })
+      : draftsAsTransactions
+
+    // If showDraftsOnly mode, only show drafts (no timeline sections)
+    if (showDraftsOnly && filters.showDrafts && filteredDrafts.length > 0) {
+      const draftsSection: DaySection = {
+        key: 'drafts',
+        dayTitle: `${filteredDrafts.length} pending`,
+        monthKey: 'drafts',
+        monthTitle: 'DRAFTS',
+        monthTotal: 0,
+        dayTotal: 0,
+        data: filteredDrafts,
+      }
+      return [draftsSection]
+    }
+
+    const baseSections = buildDaySections(filteredItems, debouncedQuery)
+
+    // If grouped mode and showing drafts, prepend a drafts section
+    if (filters.showDrafts && filters.draftViewMode === 'grouped' && filteredDrafts.length > 0) {
+      const draftsSection: DaySection = {
+        key: 'drafts',
+        dayTitle: `${filteredDrafts.length} pending`,
+        monthKey: 'drafts',
+        monthTitle: 'DRAFTS',
+        monthTotal: 0,
+        dayTotal: 0,
+        data: filteredDrafts,
+      }
+      return [draftsSection, ...baseSections]
+    }
+
+    return baseSections
+  }, [filteredItems, debouncedQuery, filters.showDrafts, filters.draftViewMode, draftsAsTransactions, showDraftsOnly])
 
   // Get filtered account name for display
   const filteredAccountName = accountIdFilter ? accountNameById.get(accountIdFilter) : null

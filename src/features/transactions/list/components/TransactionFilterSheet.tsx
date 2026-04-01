@@ -4,16 +4,23 @@
  * Bottom sheet for filtering transactions by type, category, etc.
  */
 
-import React, { useCallback, useMemo } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
+import {
+  BottomSheetBackdrop,
+  BottomSheetFooter,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  type BottomSheetFooterProps,
+} from '@gorhom/bottom-sheet'
+import React, { useCallback, useMemo } from 'react'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { CATEGORIES } from '@/shared/config'
 import { useHoHTheme } from '@/shared/providers'
-import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
-import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
 export type TransactionType = 'expense' | 'income' | 'transfer'
 export type DraftViewMode = 'grouped' | 'timeline'
@@ -54,7 +61,8 @@ export function TransactionFilterSheet({
   onDismiss,
 }: TransactionFilterSheetProps) {
   const theme = useHoHTheme()
-  const snapPoints = useMemo(() => ['85%'], [])
+  const insets = useSafeAreaInsets()
+  const snapPoints = useMemo(() => ['90%'], [])
 
   const handleApply = () => {
     sheetRef.current?.dismiss()
@@ -65,6 +73,40 @@ export function TransactionFilterSheet({
       <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []
+  )
+
+  const activeCount =
+    filters.types.length + filters.categoryKeys.length + (filters.showDrafts ? 1 : 0)
+
+  // Tab bar height + some padding to ensure button is fully visible
+  // const TAB_BAR_HEIGHT = 5
+  const footerBottomPadding = Math.max(insets.bottom)
+
+  const renderFooter = useCallback(
+    (props: BottomSheetFooterProps) => (
+      <BottomSheetFooter {...props} bottomInset={0}>
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: theme.semantic.surface,
+              borderTopColor: theme.semantic.border,
+              paddingBottom: footerBottomPadding,
+            },
+          ]}
+        >
+          <Pressable
+            onPress={handleApply}
+            style={[styles.applyBtn, { backgroundColor: theme.semantic.primary }]}
+          >
+            <Text style={[styles.applyBtnText, { color: theme.semantic.onPrimary }]}>
+              Apply{activeCount > 0 ? ` (${activeCount})` : ''}
+            </Text>
+          </Pressable>
+        </View>
+      </BottomSheetFooter>
+    ),
+    [theme, activeCount, handleApply, footerBottomPadding]
   )
 
   const toggleType = (type: TransactionType) => {
@@ -89,25 +131,23 @@ export function TransactionFilterSheet({
     onFiltersChange(DEFAULT_FILTERS)
   }
 
-  const activeCount =
-    filters.types.length + filters.categoryKeys.length + (filters.showDrafts ? 1 : 0)
-
   // Get unique expense categories
-  const expenseCategories = useMemo(
-    () => CATEGORIES.filter((c) => c.type === 'expense'),
-    []
-  )
+  const expenseCategories = useMemo(() => CATEGORIES.filter((c) => c.type === 'expense'), [])
 
   return (
     <BottomSheetModal
       ref={sheetRef}
       snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
+      footerComponent={renderFooter}
       onDismiss={onDismiss}
       backgroundStyle={{ backgroundColor: theme.semantic.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.semantic.border }}
     >
-      <BottomSheetView style={styles.container}>
+      <BottomSheetScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.title, { color: theme.semantic.text }]}>Filters</Text>
@@ -118,203 +158,205 @@ export function TransactionFilterSheet({
           )}
         </View>
 
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* Transaction Type */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-              Type
-            </Text>
-            <View style={styles.chipRow}>
-              {TYPE_OPTIONS.map((opt) => {
-                const selected = filters.types.includes(opt.key)
-                return (
-                  <Pressable
-                    key={opt.key}
-                    onPress={() => toggleType(opt.key)}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: selected
-                          ? theme.semantic.primarySoft
-                          : theme.semantic.surfaceAlt,
-                        borderColor: selected ? theme.semantic.primary : theme.semantic.border,
-                      },
-                    ]}
-                  >
-                    <FontAwesome
-                      name={opt.icon as any}
-                      size={12}
-                      color={selected ? theme.semantic.primary : theme.semantic.textSecondary}
-                    />
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: selected ? theme.semantic.primary : theme.semantic.text },
-                      ]}
-                    >
-                      {opt.label}
-                    </Text>
-                  </Pressable>
-                )
-              })}
-            </View>
-          </View>
-
-          {/* Categories */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-              Category
-            </Text>
-            <View style={styles.chipRow}>
-              {expenseCategories.map((cat) => {
-                const selected = filters.categoryKeys.includes(cat.key)
-                return (
-                  <Pressable
-                    key={cat.key}
-                    onPress={() => toggleCategory(cat.key)}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: selected
-                          ? theme.semantic.primarySoft
-                          : theme.semantic.surfaceAlt,
-                        borderColor: selected ? theme.semantic.primary : theme.semantic.border,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[styles.categoryDot, { backgroundColor: cat.color }]}
-                    />
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: selected ? theme.semantic.primary : theme.semantic.text },
-                      ]}
-                    >
-                      {cat.name}
-                    </Text>
-                  </Pressable>
-                )
-              })}
-            </View>
-          </View>
-
-          {/* Drafts */}
-          {draftCount > 0 && (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-                Drafts ({draftCount})
-              </Text>
-              <View style={styles.chipRow}>
+        {/* Transaction Type */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>Type</Text>
+          <View style={styles.chipRow}>
+            {TYPE_OPTIONS.map((opt) => {
+              const selected = filters.types.includes(opt.key)
+              return (
                 <Pressable
-                  onPress={toggleDrafts}
+                  key={opt.key}
+                  onPress={() => toggleType(opt.key)}
                   style={[
                     styles.chip,
                     {
-                      backgroundColor: filters.showDrafts
-                        ? theme.semantic.warningSoft
+                      backgroundColor: selected
+                        ? theme.semantic.primarySoft
                         : theme.semantic.surfaceAlt,
-                      borderColor: filters.showDrafts
-                        ? theme.semantic.warning
-                        : theme.semantic.border,
+                      borderColor: selected ? theme.semantic.primary : theme.semantic.border,
                     },
                   ]}
                 >
                   <FontAwesome
-                    name="eye"
+                    name={opt.icon as any}
                     size={12}
-                    color={filters.showDrafts ? theme.semantic.warning : theme.semantic.textSecondary}
+                    color={selected ? theme.semantic.primary : theme.semantic.textSecondary}
                   />
                   <Text
                     style={[
                       styles.chipText,
-                      { color: filters.showDrafts ? theme.semantic.warning : theme.semantic.text },
+                      { color: selected ? theme.semantic.primary : theme.semantic.text },
                     ]}
                   >
-                    {filters.showDrafts ? 'Showing' : 'Hidden'}
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        </View>
+
+        {/* Categories */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+            Category
+          </Text>
+          <View style={styles.chipRow}>
+            {expenseCategories.map((cat) => {
+              const selected = filters.categoryKeys.includes(cat.key)
+              return (
+                <Pressable
+                  key={cat.key}
+                  onPress={() => toggleCategory(cat.key)}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: selected
+                        ? theme.semantic.primarySoft
+                        : theme.semantic.surfaceAlt,
+                      borderColor: selected ? theme.semantic.primary : theme.semantic.border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
+                  <Text
+                    style={[
+                      styles.chipText,
+                      { color: selected ? theme.semantic.primary : theme.semantic.text },
+                    ]}
+                  >
+                    {cat.name}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        </View>
+
+        {/* Drafts */}
+        {draftCount > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+              Drafts ({draftCount})
+            </Text>
+            <View style={styles.chipRow}>
+              <Pressable
+                onPress={toggleDrafts}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: filters.showDrafts
+                      ? theme.semantic.warningSoft
+                      : theme.semantic.surfaceAlt,
+                    borderColor: filters.showDrafts
+                      ? theme.semantic.warning
+                      : theme.semantic.border,
+                  },
+                ]}
+              >
+                <FontAwesome
+                  name="eye"
+                  size={12}
+                  color={filters.showDrafts ? theme.semantic.warning : theme.semantic.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.chipText,
+                    { color: filters.showDrafts ? theme.semantic.warning : theme.semantic.text },
+                  ]}
+                >
+                  {filters.showDrafts ? 'Showing' : 'Hidden'}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Draft View Mode - only show when drafts are visible */}
+            {filters.showDrafts && (
+              <View style={[styles.chipRow, { marginTop: spacing.sm }]}>
+                <Pressable
+                  onPress={() => onFiltersChange({ ...filters, draftViewMode: 'grouped' })}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor:
+                        filters.draftViewMode === 'grouped'
+                          ? theme.semantic.primarySoft
+                          : theme.semantic.surfaceAlt,
+                      borderColor:
+                        filters.draftViewMode === 'grouped'
+                          ? theme.semantic.primary
+                          : theme.semantic.border,
+                    },
+                  ]}
+                >
+                  <FontAwesome
+                    name="list"
+                    size={12}
+                    color={
+                      filters.draftViewMode === 'grouped'
+                        ? theme.semantic.primary
+                        : theme.semantic.textSecondary
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.chipText,
+                      {
+                        color:
+                          filters.draftViewMode === 'grouped'
+                            ? theme.semantic.primary
+                            : theme.semantic.text,
+                      },
+                    ]}
+                  >
+                    Grouped at top
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => onFiltersChange({ ...filters, draftViewMode: 'timeline' })}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor:
+                        filters.draftViewMode === 'timeline'
+                          ? theme.semantic.primarySoft
+                          : theme.semantic.surfaceAlt,
+                      borderColor:
+                        filters.draftViewMode === 'timeline'
+                          ? theme.semantic.primary
+                          : theme.semantic.border,
+                    },
+                  ]}
+                >
+                  <FontAwesome
+                    name="calendar"
+                    size={12}
+                    color={
+                      filters.draftViewMode === 'timeline'
+                        ? theme.semantic.primary
+                        : theme.semantic.textSecondary
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.chipText,
+                      {
+                        color:
+                          filters.draftViewMode === 'timeline'
+                            ? theme.semantic.primary
+                            : theme.semantic.text,
+                      },
+                    ]}
+                  >
+                    In timeline
                   </Text>
                 </Pressable>
               </View>
-
-              {/* Draft View Mode - only show when drafts are visible */}
-              {filters.showDrafts && (
-                <View style={[styles.chipRow, { marginTop: spacing.sm }]}>
-                  <Pressable
-                    onPress={() => onFiltersChange({ ...filters, draftViewMode: 'grouped' })}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: filters.draftViewMode === 'grouped'
-                          ? theme.semantic.primarySoft
-                          : theme.semantic.surfaceAlt,
-                        borderColor: filters.draftViewMode === 'grouped'
-                          ? theme.semantic.primary
-                          : theme.semantic.border,
-                      },
-                    ]}
-                  >
-                    <FontAwesome
-                      name="list"
-                      size={12}
-                      color={filters.draftViewMode === 'grouped' ? theme.semantic.primary : theme.semantic.textSecondary}
-                    />
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: filters.draftViewMode === 'grouped' ? theme.semantic.primary : theme.semantic.text },
-                      ]}
-                    >
-                      Grouped at top
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => onFiltersChange({ ...filters, draftViewMode: 'timeline' })}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: filters.draftViewMode === 'timeline'
-                          ? theme.semantic.primarySoft
-                          : theme.semantic.surfaceAlt,
-                        borderColor: filters.draftViewMode === 'timeline'
-                          ? theme.semantic.primary
-                          : theme.semantic.border,
-                      },
-                    ]}
-                  >
-                    <FontAwesome
-                      name="calendar"
-                      size={12}
-                      color={filters.draftViewMode === 'timeline' ? theme.semantic.primary : theme.semantic.textSecondary}
-                    />
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: filters.draftViewMode === 'timeline' ? theme.semantic.primary : theme.semantic.text },
-                      ]}
-                    >
-                      In timeline
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          )}
-
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
-
-        {/* Apply Button */}
-        <View style={styles.footer}>
-          <Pressable
-            onPress={handleApply}
-            style={[styles.applyBtn, { backgroundColor: theme.semantic.primary }]}
-          >
-            <Text style={[styles.applyBtnText, { color: theme.semantic.onPrimary }]}>
-              Apply{activeCount > 0 ? ` (${activeCount})` : ''}
-            </Text>
-          </Pressable>
-        </View>
-      </BottomSheetView>
+            )}
+          </View>
+        )}
+      </BottomSheetScrollView>
     </BottomSheetModal>
   )
 }
@@ -358,9 +400,12 @@ export function getActiveFilterChips(filters: TransactionFilters): ActiveFilterC
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: spacing.xl,
+    paddingBottom: 100, // Extra space for sticky footer
   },
   header: {
     flexDirection: 'row',
@@ -377,9 +422,6 @@ const styles = StyleSheet.create({
   clearBtn: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-  },
-  scroll: {
-    flex: 1,
   },
   section: {
     paddingTop: spacing.lg,
@@ -418,8 +460,9 @@ const styles = StyleSheet.create({
     height: spacing.lg,
   },
   footer: {
-    paddingVertical: spacing.lg,
-    paddingBottom: spacing['2xl'],
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
   },
   applyBtn: {
     paddingVertical: spacing.md,

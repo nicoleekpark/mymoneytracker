@@ -32,11 +32,17 @@ type NotificationsState = {
   /** Delete a notification permanently */
   removeNotification: (id: string) => void
 
-  /** Get unread count */
+  /** Get unread count (excludes draft reminders) */
   getUnreadCount: () => number
 
-  /** Get unread notifications */
+  /** Get unread notifications (excludes draft reminders) */
   getUnread: () => Notification[]
+
+  /** Get draft reminder count */
+  getDraftCount: () => number
+
+  /** Get draft reminders */
+  getDraftReminders: () => Notification[]
 
   /** Check if a recent notification of subtype exists (prevents duplicates) */
   hasRecentBySubtype: (subtype: string, withinHours?: number) => boolean
@@ -116,11 +122,21 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   },
 
   getUnreadCount: () => {
-    return get().notifications.filter((n) => !n.read).length
+    // Exclude draft reminders from unread count
+    return get().notifications.filter((n) => !n.read && n.subtype !== 'draft_reminder').length
   },
 
   getUnread: () => {
-    return get().notifications.filter((n) => !n.read)
+    // Exclude draft reminders from unread list
+    return get().notifications.filter((n) => !n.read && n.subtype !== 'draft_reminder')
+  },
+
+  getDraftCount: () => {
+    return get().notifications.filter((n) => n.subtype === 'draft_reminder').length
+  },
+
+  getDraftReminders: () => {
+    return get().notifications.filter((n) => n.subtype === 'draft_reminder')
   },
 
   hasRecentBySubtype: (subtype, withinHours = 24) => {

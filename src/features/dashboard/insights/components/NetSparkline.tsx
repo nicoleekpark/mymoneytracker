@@ -97,14 +97,14 @@ export function NetSparkline({ data, baseline, colors }: Props) {
   }, [data])
 
   // Calculate points for SVG
-  const { points, linePath, areaPath, baselineY } = useMemo(() => {
+  const { points, linePath, areaPath, baselineY, zeroY } = useMemo(() => {
     if (sortedData.length < 2) {
-      return { points: [], linePath: '', areaPath: '', baselineY: AXIS_Y }
+      return { points: [], linePath: '', areaPath: '', baselineY: AXIS_Y, zeroY: AXIS_Y }
     }
 
     const values = sortedData.map(d => d.net)
-    const minVal = Math.min(...values, baseline)
-    const maxVal = Math.max(...values, baseline)
+    const minVal = Math.min(...values, baseline, 0) // Include 0 in range for proper zero line
+    const maxVal = Math.max(...values, baseline, 0)
     const range = maxVal - minVal || 1
 
     const mapY = (val: number) => {
@@ -120,8 +120,9 @@ export function NetSparkline({ data, baseline, colors }: Props) {
     const line = generateSmoothPath(pts)
     const area = line + ` L${chartWidth},${AXIS_Y} L0,${AXIS_Y} Z`
     const blY = mapY(baseline)
+    const zy = mapY(0) // Calculate where y=0 is on the chart
 
-    return { points: pts, linePath: line, areaPath: area, baselineY: blY }
+    return { points: pts, linePath: line, areaPath: area, baselineY: blY, zeroY: zy }
   }, [sortedData, baseline, chartWidth])
 
   // Handle tap to select closest point
@@ -182,6 +183,17 @@ export function NetSparkline({ data, baseline, colors }: Props) {
       {/* Chart */}
       <Pressable onPress={handlePress}>
         <Svg width={chartWidth} height={CHART_HEIGHT} viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}>
+          {/* Zero reference line */}
+          <Line
+            x1={0}
+            y1={zeroY}
+            x2={chartWidth}
+            y2={zeroY}
+            stroke={colors.textSecondary}
+            strokeWidth={1}
+            opacity={0.3}
+          />
+
           {/* Baseline reference line */}
           <Line
             x1={0}
@@ -221,10 +233,10 @@ export function NetSparkline({ data, baseline, colors }: Props) {
                 x1={selectedPoint.x}
                 y1={selectedPoint.y}
                 x2={selectedPoint.x}
-                y2={AXIS_Y}
-                stroke={colors.textSecondary}
-                strokeWidth={1}
-                opacity={0.5}
+                y2={zeroY}
+                stroke={selectedData && selectedData.net >= 0 ? colors.success : colors.danger}
+                strokeWidth={2}
+                opacity={0.6}
               />
               <Circle
                 cx={selectedPoint.x}

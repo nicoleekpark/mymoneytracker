@@ -30,7 +30,7 @@ export type Notification = {
 }
 
 // Simplified tabs for Phase 1
-export type NotificationTab = 'all' | 'unread'
+export type NotificationTab = 'all' | 'unread' | 'drafts'
 
 /**
  * Tab configuration - Phase 1 (simplified)
@@ -38,6 +38,7 @@ export type NotificationTab = 'all' | 'unread'
 export const NOTIFICATION_TABS: { key: NotificationTab; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'unread', label: 'Unread' },
+  { key: 'drafts', label: 'Drafts' },
 ]
 
 /**

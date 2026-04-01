@@ -221,8 +221,10 @@ export default function DashboardScreen() {
                 year={period.year}
                 colors={standardColors}
                 onMonthPress={(month) => {
-                  setPeriod({ year: period.year, month })
+                  // Important: set scope FIRST, then period
+                  // Otherwise normalizeForScope('year', ...) drops the month
                   setScope('month')
+                  setPeriod({ year: period.year, month })
                 }}
               />
             )}

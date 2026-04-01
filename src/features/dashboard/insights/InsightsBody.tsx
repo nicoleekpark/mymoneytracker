@@ -39,7 +39,7 @@ function TypicalInfoSheet({
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
-      snapPoints={['35%']}
+      snapPoints={['45%']}
     >
       <View style={{ marginBottom: spacing.md }}>
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>

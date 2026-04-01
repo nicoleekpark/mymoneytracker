@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Modal, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 
+import { InfoSheet } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -75,7 +76,7 @@ function InfoButton({ onPress, color }: { onPress: () => void; color: string }) 
   )
 }
 
-function InfoModal({
+function ProjectionInfoSheet({
   visible,
   onClose,
   title,
@@ -89,51 +90,24 @@ function InfoModal({
   colors: Colors
 }) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: spacing['2xl'],
-        }}
-        onPress={onClose}
-      >
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: radius.xl,
-            padding: spacing.xl,
-            width: '100%',
-            maxWidth: 320,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
-          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.lg }}>
-            {title}
-          </Text>
-          {content.map((line, i) => (
-            <Text key={i} style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: LINE_HEIGHT_MD, marginBottom: spacing.sm }}>
-              {line}
-            </Text>
-          ))}
-          <Pressable
-            onPress={onClose}
-            style={{
-              marginTop: spacing.lg,
-              backgroundColor: colors.text,
-              borderRadius: radius.md,
-              paddingVertical: spacing.md,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.surface }}>Got it</Text>
-          </Pressable>
-        </View>
-      </Pressable>
-    </Modal>
+    <InfoSheet
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textSecondary: colors.textSecondary,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={['40%']}
+    >
+      {content.map((line, i) => (
+        <Text key={i} style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: LINE_HEIGHT_MD, marginBottom: spacing.sm }}>
+          {line}
+        </Text>
+      ))}
+    </InfoSheet>
   )
 }
 
@@ -175,7 +149,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
       }}
     >
       {/* Info Modals */}
-      <InfoModal
+      <ProjectionInfoSheet
         visible={showIncomeInfo}
         onClose={() => setShowIncomeInfo(false)}
         title="How Income is Projected"
@@ -186,7 +160,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
         ]}
         colors={colors}
       />
-      <InfoModal
+      <ProjectionInfoSheet
         visible={showExpenseInfo}
         onClose={() => setShowExpenseInfo(false)}
         title="How Expense is Projected"
@@ -197,7 +171,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
         ]}
         colors={colors}
       />
-      <InfoModal
+      <ProjectionInfoSheet
         visible={showSavingsInfo}
         onClose={() => setShowSavingsInfo(false)}
         title="How Savings is Projected"
@@ -208,7 +182,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
         ]}
         colors={colors}
       />
-      <InfoModal
+      <ProjectionInfoSheet
         visible={showVsLastYearInfo}
         onClose={() => setShowVsLastYearInfo(false)}
         title="Comparison to Last Year"

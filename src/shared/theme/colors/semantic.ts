@@ -33,6 +33,7 @@ export const semanticLight: SemanticColors = {
 
   warning: PALETTE.warning.light,
   warningSoft: PALETTE.warning.lightSoft,
+  onWarning: '#FFFFFF',  // white text on dark amber
 
   danger: PALETTE.expense.light,     // warm terracotta
   dangerSoft: PALETTE.expense.lightSoft,
@@ -71,6 +72,7 @@ export const semanticDark: SemanticColors = {
 
   warning: PALETTE.warning.dark,
   warningSoft: PALETTE.warning.darkSoft,
+  onWarning: '#070D12',  // dark text on light golden
 
   danger: PALETTE.expense.dark,      // soft peach
   dangerSoft: PALETTE.expense.darkSoft,

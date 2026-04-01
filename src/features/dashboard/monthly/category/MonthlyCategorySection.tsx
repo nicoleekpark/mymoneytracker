@@ -153,6 +153,9 @@ export function MonthlyCategoryContent(props: ContentProps) {
                     onPress={() => hasSubcategories && toggleCategory(categoryKey)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
                     disabled={!hasSubcategories}
+                    accessibilityRole={hasSubcategories ? 'button' : 'text'}
+                    accessibilityLabel={`${catMeta.name}, ${formatUsdInt(cat.totalDollar)}, ${Math.round(percent)} percent${hasSubcategories ? '. Tap to expand subcategories' : ''}`}
+                    accessibilityState={{ expanded: isExpanded }}
                   >
                     <View style={{ width: CATEGORY_DOT_SIZE, height: CATEGORY_DOT_SIZE, borderRadius: radius.full, backgroundColor: catMeta.color }} />
                     <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
@@ -164,6 +167,14 @@ export function MonthlyCategoryContent(props: ContentProps) {
                     <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                       {Math.round(percent)}%
                     </Text>
+                    {/* Chevron indicator - fixed width container for alignment */}
+                    <View style={{ width: 20, alignItems: 'center' }}>
+                      {hasSubcategories && (
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
+                          {isExpanded ? '▼' : '▶'}
+                        </Text>
+                      )}
+                    </View>
                   </Pressable>
 
                   {/* Bar - neutral color */}
@@ -212,6 +223,8 @@ export function MonthlyCategoryContent(props: ContentProps) {
                               <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
                                 {Math.round(subPercent)}%
                               </Text>
+                              {/* Spacer for alignment with parent rows */}
+                              <View style={{ width: 20 }} />
                             </View>
                             {/* Subcategory bar */}
                             <View

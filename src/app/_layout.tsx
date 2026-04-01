@@ -20,14 +20,13 @@ import { ToastProvider } from '@/shared/components'      // Toast notification c
 import { ScrollView, Text, View } from 'react-native'    // Basic RN components for error UI
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography' // Design tokens
 import { spacing } from '@/shared/theme/tokens/spacing' // Spacing tokens
-import { TAB_BAR_HEIGHT } from '@/shared/theme/tokens/viewStyles' // Layout constants
 
 import { initDbPragmas, migrate, runSystemSeeds } from '@/infrastructure/db' // DB setup functions
 import { runAppLaunchTriggers } from '@/core/services/notification' // Checks for notifications on launch
 import { useSettingsStore } from '@/shared/store/settings.store' // Settings persistence
 import { useTagsStore } from '@/shared/store/tags.store' // Tags persistence
 import { useQuickChipsStore } from '@/shared/store/quickChips.store' // Quick chips persistence
-import { DraftsFAB } from '@/features/transactions/list/components/DraftsFAB' // Floating action button
+import { useDraftsStore } from '@/shared/store/drafts.store' // Drafts persistence
 import { logError } from '@/shared/utils/logger' // Centralized error logging
 
 import { TamaguiProvider } from 'tamagui'                // UI framework provider
@@ -80,6 +79,7 @@ export default function RootLayout() {
       useSettingsStore.getState()._hydrate()
       useTagsStore.getState()._hydrate()
       useQuickChipsStore.getState()._hydrate()
+      useDraftsStore.getState().loadDrafts() // Load drafts for FAB visibility
 
       setDbReady(true)        // 6. Signal: DB is ready!
     } catch (e) {
@@ -163,7 +163,7 @@ function RootLayoutNav() {
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
                 {/* Settings screen (pushes on top of tabs) */}
-                <Stack.Screen name="settings" />
+                <Stack.Screen name="settings" options={{ headerShown: false }} />
 
                 {/* Add transaction - slides up as modal */}
                 <Stack.Screen
@@ -195,13 +195,6 @@ function RootLayoutNav() {
                 />
               </Stack>
 
-              {/* ─── Global Floating Action Button ─────────────────────── */}
-              {/* Placed OUTSIDE Stack = appears on ALL screens */}
-              {/* Shows draft count badge, tapping goes to transactions */}
-              <DraftsFAB
-                onPress={() => router.push('/transactions')}
-                bottomOffset={TAB_BAR_HEIGHT} // Position above tab bar
-              />
             </TamaguiProvider>
           </ToastProvider>
         </BottomSheetModalProvider>

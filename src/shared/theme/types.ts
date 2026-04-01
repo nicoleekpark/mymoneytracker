@@ -20,6 +20,7 @@ export type SemanticColors = {
 
   warning: string
   warningSoft: string
+  onWarning: string  // text color on warning background
 
   danger: string
   dangerSoft: string

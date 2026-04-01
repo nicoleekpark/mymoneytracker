@@ -1,8 +1,8 @@
 /**
  * NotificationsScreen
  *
- * Phase 1: System notifications only with tabs: All, Unread
- * Compact single-line rows with time groupings.
+ * Phase 1: System notifications with tabs: All, Unread, Drafts
+ * Drafts tab separates draft reminders from system notifications.
  */
 
 import type { Notification, NotificationTab, TimeGroup } from '@/core/domain/notification'
@@ -11,7 +11,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { useNotificationsStore } from '@/shared/store'
+import { useNotificationsStore, useDraftsStore } from '@/shared/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -24,45 +24,82 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+// Draft age groupings
+type DraftAgeGroup = '7days' | '14days' | 'older'
+const DRAFT_AGE_LABELS: Record<DraftAgeGroup, string> = {
+  '7days': 'Older than 7 days',
+  '14days': 'Older than 14 days',
+  'older': 'Older than 30 days',
+}
+
 export default function NotificationsScreen() {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
   const [activeTab, setActiveTab] = useState<NotificationTab>('all')
 
-  // Store
+  // Notifications store
   const notifications = useNotificationsStore((s) => s.notifications)
   const isLoaded = useNotificationsStore((s) => s.isLoaded)
   const loadNotifications = useNotificationsStore((s) => s.loadNotifications)
   const markAsRead = useNotificationsStore((s) => s.markAsRead)
   const dismissNotification = useNotificationsStore((s) => s.dismissNotification)
-  const getUnread = useNotificationsStore((s) => s.getUnread)
 
-  // Load notifications from SQLite on mount
+  // Drafts store - for actual draft count
+  const actualDrafts = useDraftsStore((s) => s.drafts)
+  const draftsLoaded = useDraftsStore((s) => s.isLoaded)
+  const loadDrafts = useDraftsStore((s) => s.loadDrafts)
+
+  // Load notifications and drafts on mount
   useEffect(() => {
     if (!isLoaded) {
       loadNotifications()
     }
-  }, [isLoaded, loadNotifications])
+    if (!draftsLoaded) {
+      loadDrafts()
+    }
+  }, [isLoaded, loadNotifications, draftsLoaded, loadDrafts])
+
+  // Separate draft reminders from other notifications
+  const { draftReminders, systemNotifications } = useMemo(() => {
+    const drafts: Notification[] = []
+    const system: Notification[] = []
+
+    notifications.forEach((n) => {
+      if (n.subtype === 'draft_reminder') {
+        drafts.push(n)
+      } else {
+        system.push(n)
+      }
+    })
+
+    return { draftReminders: drafts, systemNotifications: system }
+  }, [notifications])
 
   // Tab configuration with counts
   const tabs = useMemo(() => {
-    const unreadCount = getUnread().length
+    const unreadCount = systemNotifications.filter((n) => !n.read).length
+    // Use actual draft count from drafts store, not draft reminder notifications
+    const draftCount = actualDrafts.length
+
     return NOTIFICATION_TABS.map((tab) => ({
       ...tab,
-      count: tab.key === 'unread' ? unreadCount : undefined,
+      count: tab.key === 'unread' ? unreadCount : tab.key === 'drafts' ? draftCount : undefined,
+      isWarning: tab.key === 'drafts', // Use warning color for drafts badge
     }))
-  }, [getUnread, notifications])
+  }, [systemNotifications, actualDrafts])
 
   // Filter notifications based on active tab
   const filteredItems = useMemo(() => {
     switch (activeTab) {
       case 'unread':
-        return getUnread()
+        return systemNotifications.filter((n) => !n.read)
+      case 'drafts':
+        return draftReminders
       case 'all':
       default:
-        return notifications
+        return systemNotifications
     }
-  }, [activeTab, notifications, getUnread])
+  }, [activeTab, systemNotifications, draftReminders])
 
   // Helper to group items by time
   const groupByTime = (items: Notification[]): Record<TimeGroup, Notification[]> => {
@@ -98,10 +135,45 @@ export default function NotificationsScreen() {
     return groups
   }
 
-  // Group notifications by time
+  // Helper to group drafts by age
+  const groupDraftsByAge = (items: Notification[]): Record<DraftAgeGroup, Notification[]> => {
+    const now = new Date()
+    const day7Ago = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const day14Ago = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+    const day30Ago = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const groups: Record<DraftAgeGroup, Notification[]> = {
+      '7days': [],
+      '14days': [],
+      'older': [],
+    }
+
+    items.forEach((item) => {
+      const date = new Date(item.createdAt)
+      if (date >= day7Ago) {
+        // Less than 7 days old - shouldn't have reminders yet, but include anyway
+        groups['7days'].push(item)
+      } else if (date >= day14Ago) {
+        groups['7days'].push(item)
+      } else if (date >= day30Ago) {
+        groups['14days'].push(item)
+      } else {
+        groups['older'].push(item)
+      }
+    })
+
+    return groups
+  }
+
+  // Group notifications
   const groupedNotifications = useMemo(() => {
     return groupByTime(filteredItems)
   }, [filteredItems])
+
+  // Group drafts by age
+  const groupedDrafts = useMemo(() => {
+    return groupDraftsByAge(draftReminders)
+  }, [draftReminders])
 
   // Format relative time
   const formatTime = (timestamp: string): string => {
@@ -146,6 +218,11 @@ export default function NotificationsScreen() {
   // Handle swipe to dismiss
   const handleDismiss = (notification: Notification) => {
     dismissNotification(notification.id)
+  }
+
+  // Navigate to transactions with drafts filter enabled
+  const handleGoToTransactions = () => {
+    router.push('/transactions?showDrafts=only')
   }
 
   // Render icon
@@ -216,8 +293,55 @@ export default function NotificationsScreen() {
     )
   }
 
+  // Render draft age group section
+  const renderDraftAgeGroup = (group: DraftAgeGroup, items: Notification[]) => {
+    if (items.length === 0) return null
+
+    return (
+      <View key={group} style={styles.section}>
+        <Text style={[styles.sectionHeader, { color: theme.semantic.textSecondary }]}>
+          {DRAFT_AGE_LABELS[group]}
+        </Text>
+        {items.map(renderNotificationRow)}
+      </View>
+    )
+  }
+
+  // Render drafts summary card - shows actual draft count from drafts store
+  const renderDraftsSummary = () => {
+    if (actualDrafts.length === 0) return null
+
+    return (
+      <View style={[styles.draftsSummary, { backgroundColor: theme.semantic.surfaceAlt }]}>
+        <Text style={[styles.draftsSummaryTitle, { color: theme.semantic.textSecondary }]}>
+          Pending review
+        </Text>
+        <Text style={[styles.draftsSummaryValue, { color: theme.semantic.warning }]}>
+          {actualDrafts.length} {actualDrafts.length === 1 ? 'draft' : 'drafts'}
+        </Text>
+        <Pressable onPress={handleGoToTransactions} hitSlop={8}>
+          <Text style={[styles.draftsSummaryAction, { color: theme.semantic.primary }]}>
+            Go to Transactions →
+          </Text>
+        </Pressable>
+      </View>
+    )
+  }
+
   // Check if there are any notifications
   const hasNotifications = filteredItems.length > 0
+
+  // Empty state message based on tab
+  const getEmptyStateMessage = () => {
+    switch (activeTab) {
+      case 'unread':
+        return "You're all caught up!"
+      case 'drafts':
+        return 'No draft reminders'
+      default:
+        return 'Notifications will appear here'
+    }
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.semantic.background }]}>
@@ -266,7 +390,12 @@ export default function NotificationsScreen() {
                 {tab.label}
               </Text>
               {tab.count !== undefined && tab.count > 0 && (
-                <View style={[styles.badge, { backgroundColor: theme.semantic.danger }]}>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: tab.isWarning ? theme.semantic.warning : theme.semantic.danger },
+                  ]}
+                >
                   <Text style={[styles.badgeText, { color: '#fff' }]}>{tab.count}</Text>
                 </View>
               )}
@@ -281,31 +410,57 @@ export default function NotificationsScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {hasNotifications ? (
-          <>
-            {renderTimeGroup('today', groupedNotifications.today)}
-            {renderTimeGroup('yesterday', groupedNotifications.yesterday)}
-            {renderTimeGroup('last7days', groupedNotifications.last7days)}
-            {renderTimeGroup('last30days', groupedNotifications.last30days)}
-            {renderTimeGroup('older', groupedNotifications.older)}
-          </>
+        {activeTab === 'drafts' ? (
+          // Drafts tab content
+          hasNotifications ? (
+            <>
+              {renderDraftsSummary()}
+              {renderDraftAgeGroup('7days', groupedDrafts['7days'])}
+              {renderDraftAgeGroup('14days', groupedDrafts['14days'])}
+              {renderDraftAgeGroup('older', groupedDrafts['older'])}
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <FontAwesome
+                name="file-text-o"
+                size={48}
+                color={theme.semantic.textSecondary}
+                style={{ opacity: 0.5, marginBottom: spacing.lg }}
+              />
+              <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
+                No draft reminders
+              </Text>
+              <Text style={[styles.emptyText, { color: theme.semantic.textSecondary }]}>
+                Drafts older than 7 days will appear here
+              </Text>
+            </View>
+          )
         ) : (
-          <View style={styles.emptyState}>
-            <FontAwesome
-              name="bell-o"
-              size={48}
-              color={theme.semantic.textSecondary}
-              style={{ opacity: 0.5, marginBottom: spacing.lg }}
-            />
-            <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
-              No notifications
-            </Text>
-            <Text style={[styles.emptyText, { color: theme.semantic.textSecondary }]}>
-              {activeTab === 'unread'
-                ? "You're all caught up!"
-                : "Notifications will appear here"}
-            </Text>
-          </View>
+          // All and Unread tabs content
+          hasNotifications ? (
+            <>
+              {renderTimeGroup('today', groupedNotifications.today)}
+              {renderTimeGroup('yesterday', groupedNotifications.yesterday)}
+              {renderTimeGroup('last7days', groupedNotifications.last7days)}
+              {renderTimeGroup('last30days', groupedNotifications.last30days)}
+              {renderTimeGroup('older', groupedNotifications.older)}
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <FontAwesome
+                name="bell-o"
+                size={48}
+                color={theme.semantic.textSecondary}
+                style={{ opacity: 0.5, marginBottom: spacing.lg }}
+              />
+              <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
+                No notifications
+              </Text>
+              <Text style={[styles.emptyText, { color: theme.semantic.textSecondary }]}>
+                {getEmptyStateMessage()}
+              </Text>
+            </View>
+          )
         )}
       </ScrollView>
     </View>
@@ -439,5 +594,23 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.md,
     textAlign: 'center',
+  },
+  // Drafts summary card
+  draftsSummary: {
+    borderRadius: radius.lg,
+    margin: spacing.lg,
+    padding: spacing.lg,
+  },
+  draftsSummaryTitle: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.sm,
+  },
+  draftsSummaryValue: {
+    fontSize: fontSize.xl + 4,
+    fontWeight: fontWeight.bold,
+  },
+  draftsSummaryAction: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.md,
   },
 })

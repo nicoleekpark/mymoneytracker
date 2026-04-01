@@ -280,6 +280,12 @@ export function MonthlyCashflowChart({
   const startXRef = useRef<number | null>(null)
   const prevLockedIndexRef = useRef<number | null>(null) // Track previous locked index for tap comparison
 
+  // Keep refs in sync with state for use in panResponder callbacks (avoids stale closures)
+  const selectedIndexRef = useRef<number | null>(null)
+  const isLockedRef = useRef(false)
+  selectedIndexRef.current = selectedIndex
+  isLockedRef.current = isLocked
+
   // Calculate month index from X position
   const getMonthFromX = useCallback(
     (x: number) => {
@@ -296,6 +302,7 @@ export function MonthlyCashflowChart({
   )
 
   // Pan responder for drag and tap interaction
+  // Uses refs (selectedIndexRef, isLockedRef) to avoid stale closure issues
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -304,8 +311,8 @@ export function MonthlyCashflowChart({
         onPanResponderGrant: evt => {
           startXRef.current = evt.nativeEvent.locationX
           isDraggingRef.current = false
-          // Store current locked index before updating
-          prevLockedIndexRef.current = isLocked ? selectedIndex : null
+          // Store current locked index before updating (use refs for current values)
+          prevLockedIndexRef.current = isLockedRef.current ? selectedIndexRef.current : null
           const x = evt.nativeEvent.locationX
           const newIdx = getMonthFromX(x)
           setSelectedIndex(newIdx)
@@ -340,8 +347,8 @@ export function MonthlyCashflowChart({
               setSelectedIndex(tappedIdx)
             }
           } else {
-            // Was dragging - clear selection unless locked
-            if (!isLocked) {
+            // Was dragging - clear selection unless locked (use ref for current value)
+            if (!isLockedRef.current) {
               setSelectedIndex(null)
             }
           }
@@ -350,12 +357,13 @@ export function MonthlyCashflowChart({
         onPanResponderTerminate: () => {
           isDraggingRef.current = false
           startXRef.current = null
-          if (!isLocked) {
+          // Use ref for current isLocked value
+          if (!isLockedRef.current) {
             setSelectedIndex(null)
           }
         }
       }),
-    [getMonthFromX, isLocked, selectedIndex]
+    [getMonthFromX]  // Removed isLocked and selectedIndex - using refs instead
   )
 
   const handleLayout = useCallback((e: LayoutChangeEvent) => {

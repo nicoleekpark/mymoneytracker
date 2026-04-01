@@ -49,7 +49,7 @@ function formatDayLabel(ymd: string, dayNum: number) {
 function getTxDisplayName(tx: Transaction): string {
   if (tx.item && tx.item.trim()) return tx.item.trim()
   if (tx.merchant && tx.merchant.trim()) return tx.merchant.trim()
-  return tx.type === 'income' ? 'Income' : 'Expense'
+  return 'No description'
 }
 
 export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(

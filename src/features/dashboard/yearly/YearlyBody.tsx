@@ -421,6 +421,14 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                     <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                       {Math.round(percent)}%
                     </Text>
+                    {/* Chevron indicator - fixed width container for alignment */}
+                    <View style={{ width: 20, alignItems: 'center' }}>
+                      {hasSubcategories && (
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
+                          {isExpanded ? '▼' : '▶'}
+                        </Text>
+                      )}
+                    </View>
                   </Pressable>
 
                   {/* Bar - neutral color */}
@@ -469,6 +477,8 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                               <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
                                 {Math.round(subPercent)}%
                               </Text>
+                              {/* Spacer for alignment with parent rows */}
+                              <View style={{ width: 20 }} />
                             </View>
                             {/* Subcategory bar */}
                             <View
@@ -561,6 +571,14 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                       <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
                         {Math.round(percent)}%
                       </Text>
+                      {/* Chevron indicator - fixed width container for alignment */}
+                      <View style={{ width: 20, alignItems: 'center' }}>
+                        {hasSubcategories && (
+                          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
+                            {isExpanded ? '▼' : '▶'}
+                          </Text>
+                        )}
+                      </View>
                     </Pressable>
 
                     {/* Bar - neutral color */}
@@ -609,6 +627,8 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
                                 <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
                                   {Math.round(subPercent)}%
                                 </Text>
+                                {/* Spacer for alignment with parent rows */}
+                                <View style={{ width: 20 }} />
                               </View>
                               {/* Subcategory bar */}
                               <View
