@@ -1,4 +1,5 @@
 import type { Notification, NotificationType, SystemNotificationSubtype } from '@/core/domain/notification'
+import { tryParseJson } from '@/shared/utils/json'
 
 /**
  * Database row representation of a notification.
@@ -24,14 +25,12 @@ export type NotificationRow = {
  * Convert a database row to a domain Notification.
  */
 export function rowToNotification(row: NotificationRow): Notification {
-  let metadata: Record<string, unknown> | undefined
-  if (row.sender_name) {
-    try {
-      metadata = JSON.parse(row.sender_name)
-    } catch {
-      // Invalid JSON, ignore
-    }
-  }
+  // Parse metadata using shared utility
+  const metadata = tryParseJson<Record<string, unknown>>(
+    row.sender_name,
+    'NotificationMapper',
+    row.id
+  ) ?? undefined
 
   return {
     id: row.id,

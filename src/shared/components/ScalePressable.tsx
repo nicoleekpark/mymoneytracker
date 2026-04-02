@@ -12,6 +12,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated'
+import { SPRING_CONFIG, SCALE_VALUES } from '@/shared/theme/tokens/animation'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
@@ -22,7 +23,7 @@ type ScalePressableProps = PressableProps & {
 }
 
 export function ScalePressable({
-  scaleValue = 0.96,
+  scaleValue = SCALE_VALUES.press,
   children,
   style,
   onPressIn,
@@ -36,18 +37,12 @@ export function ScalePressable({
   }))
 
   const handlePressIn = (e: Parameters<NonNullable<PressableProps['onPressIn']>>[0]) => {
-    scale.value = withSpring(scaleValue, {
-      damping: 15,
-      stiffness: 400,
-    })
+    scale.value = withSpring(scaleValue, SPRING_CONFIG.press)
     onPressIn?.(e)
   }
 
   const handlePressOut = (e: Parameters<NonNullable<PressableProps['onPressOut']>>[0]) => {
-    scale.value = withSpring(1, {
-      damping: 15,
-      stiffness: 400,
-    })
+    scale.value = withSpring(1, SPRING_CONFIG.press)
     onPressOut?.(e)
   }
 

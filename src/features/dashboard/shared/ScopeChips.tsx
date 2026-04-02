@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
 
 import { useHoHTheme } from '@/shared/providers'
+import { SPRING_CONFIG, SCALE_VALUES } from '@/shared/theme/tokens/animation'
 
 import type { Scope } from '../types'
 import { createScopeChipsStyles } from './ScopeChips.styles'
@@ -38,11 +39,11 @@ function AnimatedChip({
   }))
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 400 })
+    scale.value = withSpring(SCALE_VALUES.pressDeep, SPRING_CONFIG.press)
   }
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 400 })
+    scale.value = withSpring(1, SPRING_CONFIG.press)
   }
 
   return (

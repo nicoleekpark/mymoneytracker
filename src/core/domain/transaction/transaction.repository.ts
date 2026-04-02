@@ -20,6 +20,12 @@ export type MonthlyExpenseByCategory = Readonly<{
   totalCents: number
 }>
 
+export type MonthlyIncomeByCategory = Readonly<{
+  categoryId: UUID | null
+  categoryName: string | null
+  totalCents: number
+}>
+
 export type DailyFlowTotal = Readonly<{
   day: string // YYYY-MM-DD
   type: 'income' | 'expense'
@@ -105,7 +111,7 @@ export interface TransactionRepository {
   listMonthlyExpenseTotals(limitMonths?: number): MonthlyExpenseTotal[]
   listDailyExpenseTotalsForMonth(monthYYYYMM: string): DailyExpenseTotal[]
   listMonthlyExpenseByCategory(monthYYYYMM: string): MonthlyExpenseByCategory[]
-  listMonthlyIncomeByCategory(monthYYYYMM: string): MonthlyExpenseByCategory[]
+  listMonthlyIncomeByCategory(monthYYYYMM: string): MonthlyIncomeByCategory[]
   listTransfersForMonth(monthYYYYMM: string, limit?: number): Transaction[]
   listDailyFlowTotalsForMonth(monthYYYYMM: string): DailyFlowTotal[]
   listDailyFlowTotalsWithCountForMonth(monthYYYYMM: string): DailyFlowTotalWithCount[]

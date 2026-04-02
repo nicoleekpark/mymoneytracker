@@ -1,7 +1,8 @@
 import type { CategoryRef } from '@/core/domain/category/category.types'
 import type { TransactionType } from '@/core/domain/transaction/transaction.types'
 import type { DraftTransaction } from '@/core/domain/draft'
-import { logger } from '@/shared/utils/logger'
+import { parseCategoryType } from '@/core/domain/category/category.schema'
+import { tryParseJsonArray } from '@/shared/utils/json'
 
 // Re-export for backwards compatibility
 export type { DraftTransaction }
@@ -33,31 +34,19 @@ export type DraftRow = {
  * Convert a database row to a domain DraftTransaction.
  */
 export function rowToDraft(row: DraftRow): DraftTransaction {
+  // Use Zod parse for type safety instead of unsafe cast
   const categoryRef: CategoryRef | undefined =
     row.category_type && row.category_key
       ? {
-          type: row.category_type as 'expense' | 'income',
+          type: parseCategoryType(row.category_type),
           categoryKey: row.category_key,
           subCategoryKey: row.subcategory_key ?? undefined,
         }
       : undefined
 
-  // Parse tags from JSON
-  let tags: string[] | undefined
-  if (row.tags) {
-    try {
-      const parsed = JSON.parse(row.tags)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        tags = parsed
-      }
-    } catch (e) {
-      logger.warn('DraftMapper', 'Failed to parse tags JSON, defaulting to empty', {
-        draftId: row.id,
-        rawTags: row.tags,
-        error: e instanceof Error ? e.message : String(e),
-      })
-    }
-  }
+  // Parse tags using shared utility
+  const parsedTags = tryParseJsonArray<string>(row.tags, 'DraftMapper', row.id)
+  const tags = parsedTags.length > 0 ? parsedTags : undefined
 
   return {
     id: row.id,

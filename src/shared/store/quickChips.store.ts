@@ -1,8 +1,10 @@
 /**
  * Quick Chips Store
  *
+ * @persistence SQLITE - Persisted to app_settings table via settingsStorage.
+ * @scope PERMANENT - User's chip preferences survive app restarts.
+ *
  * Stores user's preferred quick action chips for the Add Transaction screen.
- * Persists to SQLite via app_settings table.
  */
 
 import { create } from 'zustand'

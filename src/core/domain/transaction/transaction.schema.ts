@@ -40,12 +40,16 @@ export const TransactionRowSchema = z.object({
 
 /**
  * Parse and validate transaction type from unknown input.
- * Returns validated value or falls back to 'expense'.
+ *
+ * Fallback Strategy: Returns 'expense' on invalid input.
+ * Rationale: Expenses are the most common transaction type.
+ * Defaulting to expense is conservative (shows money going out),
+ * making errors visible rather than hiding them.
  */
 export function parseTransactionType(value: unknown): z.infer<typeof TransactionTypeSchema> {
   const result = TransactionTypeSchema.safeParse(value)
   if (result.success) return result.data
-  return 'expense' // Safe fallback
+  return 'expense'
 }
 
 /**

@@ -16,8 +16,9 @@ export interface CategoryRepository {
 
   /**
    * DB (FK leaf id) -> Domain (ref keys)
+   * Returns null if category not found (deleted/orphaned)
    */
-  resolveCategoryRefFromDbId(categoryDbId: UUID): CategoryRef
+  resolveCategoryRefFromDbId(categoryDbId: UUID): CategoryRef | null
 
   /**
    * Batch resolve multiple category IDs to CategoryRefs.

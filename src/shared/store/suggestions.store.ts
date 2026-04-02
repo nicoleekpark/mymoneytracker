@@ -1,8 +1,10 @@
 /**
  * Suggestions Store
  *
+ * @persistence SQLITE - Persisted to suggestions table via suggestionsRepository.
+ * @scope PERMANENT - Learns from usage over time.
+ *
  * Stores historical transaction data for auto-suggestions.
- * Persists to SQLite for data to survive app restarts.
  * Tracks items, merchants, and tags with frequency for smart ordering.
  */
 

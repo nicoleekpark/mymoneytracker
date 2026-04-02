@@ -1,15 +1,11 @@
 /**
  * Dev Store
  *
+ * @persistence IN-MEMORY - Not persisted, intentionally resets on restart.
+ * @scope SESSION - Dev tools visibility within current session.
+ *
  * Manages dev tools visibility state.
- * Allows toggling dev tools on/off dynamically.
- *
- * Toggle methods:
- * - Long-press on AppBar logo (HoH) - 500ms
- * - Programmatic via toggleDevTools()
- *
- * Note: State resets on app restart (no persistence).
- * This is intentional - dev tools should default to visible in dev builds.
+ * Toggle: Long-press AppBar logo (500ms) or programmatic toggleDevTools().
  */
 
 import { create } from 'zustand'

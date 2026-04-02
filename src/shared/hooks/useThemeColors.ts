@@ -44,7 +44,7 @@ export function useExtendedThemeColors(): ExtendedViewColors {
       text: theme.semantic.text,
       textSecondary: theme.semantic.textSecondary,
       border: theme.semantic.border,
-      surface: theme.semantic.background,
+      surface: theme.semantic.surface, // Fixed: was incorrectly using background
       surfaceAlt: theme.semantic.surfaceAlt,
       primary: theme.semantic.primary,
       success: theme.semantic.success,

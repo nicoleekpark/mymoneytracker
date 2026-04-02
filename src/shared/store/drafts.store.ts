@@ -1,3 +1,12 @@
+/**
+ * Drafts Store
+ *
+ * @persistence SQLITE - Persisted to drafts table via draftRepository.
+ * @scope SESSION - Hydrated on app start, synced to DB on changes.
+ *
+ * Manages pending transaction drafts that haven't been finalized.
+ */
+
 import type { CategoryRef } from '@/core/domain/category'
 import type { TransactionType } from '@/core/domain/transaction'
 import { draftRepository } from '@/infrastructure/repositories'

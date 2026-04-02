@@ -9,3 +9,11 @@ export type CategoryRef = Readonly<{
 }>
 
 export type CategoryDbId = UUID
+
+/**
+ * Category index type - maps category types to their keys and subcategory keys.
+ * Used to validate CategoryRef at runtime.
+ */
+export type CategoryIndex = Readonly<
+  Record<CategoryType, Readonly<Record<string, readonly string[]>>>
+>

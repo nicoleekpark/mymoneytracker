@@ -1,4 +1,4 @@
-import type { CategoryIndex } from '@/shared/config/categories.index'
+import type { CategoryIndex } from '@/core/domain/category'
 import { assertValidCategoryRef } from '@/core/domain/category'
 import type { Transaction } from './transaction.types'
 

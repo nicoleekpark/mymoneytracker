@@ -17,13 +17,11 @@ type CategoryRow = {
 export class SqliteCategoryRepository implements CategoryRepository {
   constructor(private readonly dataSource: DataSource) {}
 
-  private getCategoryRowById(id: UUID): CategoryRow {
-    const row = this.dataSource.queryFirst<CategoryRow>(
+  private getCategoryRowById(id: UUID): CategoryRow | null {
+    return this.dataSource.queryFirst<CategoryRow>(
       `SELECT id, key, type, parent_id FROM categories WHERE id = ? LIMIT 1;`,
       [id]
     )
-    if (!row) throw new Error(`Category not found: ${id}`)
-    return row
   }
 
   getIdByKey(categoryKey: string): UUID {
@@ -67,12 +65,14 @@ export class SqliteCategoryRepository implements CategoryRepository {
     return this.getIdByKey(ref.categoryKey)
   }
 
-  resolveCategoryRefFromDbId(categoryDbId: UUID): CategoryRef {
+  resolveCategoryRefFromDbId(categoryDbId: UUID): CategoryRef | null {
     const leaf = this.getCategoryRowById(categoryDbId)
+    if (!leaf) return null // Category not found (deleted/orphaned)
 
     // If leaf has a parent, leaf is a subcategory
     if (leaf.parent_id) {
       const parent = this.getCategoryRowById(leaf.parent_id)
+      if (!parent) return null // Parent not found
 
       return {
         type: parent.type,

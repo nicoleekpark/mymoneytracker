@@ -98,7 +98,7 @@ export function useAllTimeData() {
         const expenseByCategory: CategoryBreakdown[] = expenseByCat.map(r => ({
           categoryId: r.categoryId,
           categoryRef: r.categoryId
-            ? getCategoryRefByDbId(r.categoryId)
+            ? getCategoryRefByDbId(r.categoryId) ?? undefined
             : undefined,
           totalDollar: r.totalDollar
         }))
@@ -107,7 +107,7 @@ export function useAllTimeData() {
         const incomeByCategory: CategoryBreakdown[] = incomeByCat.map(r => ({
           categoryId: r.categoryId,
           categoryRef: r.categoryId
-            ? getCategoryRefByDbId(r.categoryId)
+            ? getCategoryRefByDbId(r.categoryId) ?? undefined
             : undefined,
           totalDollar: r.totalDollar
         }))

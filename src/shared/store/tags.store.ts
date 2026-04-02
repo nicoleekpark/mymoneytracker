@@ -1,8 +1,10 @@
 /**
  * Tags Store
  *
- * Manages user-created tags and provides access to premade tags.
- * Persists custom tags to SQLite via app_settings table.
+ * @persistence SQLITE - Persisted to app_settings table via settingsStorage.
+ * @scope PERMANENT - User's custom tags survive app restarts.
+ *
+ * Manages user-created tags and provides access to premade system tags.
  */
 
 import type { Tag, TagCategory } from '@/core/domain/tag'

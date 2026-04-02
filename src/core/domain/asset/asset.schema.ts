@@ -51,30 +51,39 @@ export const AssetItemSchema = z.object({
 
 /**
  * Parse and validate asset field from unknown input.
- * Returns validated value or falls back to 'current_assets'.
+ *
+ * Fallback Strategy: Returns 'current_assets' on invalid input.
+ * Rationale: Current assets (cash, investments) are most common.
+ * More conservative than fixed_assets, less alarming than liabilities.
  */
 export function parseAssetField(value: unknown): z.infer<typeof AssetFieldSchema> {
   const result = AssetFieldSchema.safeParse(value)
   if (result.success) return result.data
-  return 'current_assets' // Safe fallback
+  return 'current_assets'
 }
 
 /**
  * Parse and validate asset category from unknown input.
- * Returns validated value or falls back to 'other'.
+ *
+ * Fallback Strategy: Returns 'other' on invalid input.
+ * Rationale: 'other' is the most generic category, making no assumptions.
+ * Consistent with account.schema.ts fallback pattern.
  */
 export function parseAssetCategory(value: unknown): z.infer<typeof AssetCategorySchema> {
   const result = AssetCategorySchema.safeParse(value)
   if (result.success) return result.data
-  return 'other' // Safe fallback
+  return 'other'
 }
 
 /**
  * Parse and validate family member role from unknown input.
- * Returns validated value or falls back to 'parent'.
+ *
+ * Fallback Strategy: Returns 'parent' on invalid input.
+ * Rationale: Parents are account owners with full access.
+ * Defaulting to child would incorrectly restrict permissions.
  */
 export function parseFamilyMemberRole(value: unknown): z.infer<typeof FamilyMemberRoleSchema> {
   const result = FamilyMemberRoleSchema.safeParse(value)
   if (result.success) return result.data
-  return 'parent' // Safe fallback
+  return 'parent'
 }

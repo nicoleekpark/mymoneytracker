@@ -1,5 +1,4 @@
-import type { CategoryIndex } from '@/shared/config'
-import type { CategoryRef, CategoryType } from './category.types'
+import type { CategoryRef, CategoryType, CategoryIndex } from './category.types'
 
 /** when "food.eating_out", normalize it to "eating_out" */
 export function normalizeSubKeyFromDbKey(dbKey: string): string {

@@ -11,6 +11,6 @@ export function getCategoryDbId(ref?: CategoryRef): UUID | null {
   return categoryRepository.resolveCategoryId(ref)
 }
 
-export function getCategoryRefByDbId(id: UUID): CategoryRef {
+export function getCategoryRefByDbId(id: UUID): CategoryRef | null {
   return categoryRepository.resolveCategoryRefFromDbId(id)
 }

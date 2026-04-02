@@ -6,6 +6,7 @@
  */
 
 import { queryFirst, exec } from './sqlite'
+import { tryParseJson } from '@/shared/utils/json'
 
 type SettingsRow = {
   key: string
@@ -25,11 +26,7 @@ export function getStoredValue<T>(key: string): T | null {
 
   if (!row) return null
 
-  try {
-    return JSON.parse(row.value) as T
-  } catch {
-    return null
-  }
+  return tryParseJson<T>(row.value, 'SettingsStorage', key)
 }
 
 /**

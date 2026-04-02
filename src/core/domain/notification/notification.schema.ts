@@ -16,7 +16,7 @@ export const SystemNotificationSubtypeSchema = z.enum([
   'anomaly_detected',
 ])
 
-export const NotificationTabSchema = z.enum(['all', 'unread'])
+export const NotificationTabSchema = z.enum(['all', 'unread', 'drafts'])
 
 export const TimeGroupSchema = z.enum(['today', 'yesterday', 'last7days', 'last30days', 'older'])
 

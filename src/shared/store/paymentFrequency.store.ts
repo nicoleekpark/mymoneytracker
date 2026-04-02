@@ -1,6 +1,9 @@
 /**
  * Payment Frequency Store
  *
+ * @persistence IN-MEMORY - Not persisted, resets on app restart.
+ * @scope SESSION - Tracks usage within current session only.
+ *
  * Tracks payment method usage frequency for auto-selecting the most-used method.
  */
 

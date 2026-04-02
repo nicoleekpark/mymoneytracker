@@ -12,6 +12,28 @@ import { checkBudgetAlert } from '@/core/services/notification'
 import { transactionRepository } from '@/infrastructure/repositories'
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Max length limits for user input strings (prevents DB bloat and display issues) */
+const INPUT_LIMITS = {
+  MERCHANT: 100,
+  NOTE: 500,
+  ITEM: 200,
+} as const
+
+/**
+ * Sanitize and truncate user input string.
+ * Trims whitespace and enforces max length.
+ */
+function sanitizeInput(value: string | undefined, maxLength: number): string | undefined {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  if (trimmed.length === 0) return undefined
+  return trimmed.slice(0, maxLength)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -50,10 +72,10 @@ export async function addTransaction(
     key: txKey,
     occurredAt,
     type: input.type,
-    item: input.item,
+    item: sanitizeInput(input.item, INPUT_LIMITS.ITEM) ?? input.item,
     money: { amount: input.amount, currency: 'USD' },
-    merchant: input.merchant?.trim(),
-    note: input.note?.trim(),
+    merchant: sanitizeInput(input.merchant, INPUT_LIMITS.MERCHANT),
+    note: sanitizeInput(input.note, INPUT_LIMITS.NOTE),
     category: input.category,
     tags: input.tags,
     isEstimated: input.isEstimated,
@@ -164,10 +186,10 @@ export async function updateTransaction(
     key: existingTx.key, // Preserve original key
     occurredAt,
     type: input.type,
-    item: input.item,
+    item: sanitizeInput(input.item, INPUT_LIMITS.ITEM) ?? input.item,
     money: { amount: input.amount, currency: 'USD' },
-    merchant: input.merchant?.trim(),
-    note: input.note?.trim(),
+    merchant: sanitizeInput(input.merchant, INPUT_LIMITS.MERCHANT),
+    note: sanitizeInput(input.note, INPUT_LIMITS.NOTE),
     category: input.category,
     tags: input.tags,
     isEstimated: input.isEstimated,

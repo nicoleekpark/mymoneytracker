@@ -11,6 +11,7 @@ import type {
   MonthlyExpenseByCategory,
   MonthlyExpenseTotal,
   MonthlyFlowTotal,
+  MonthlyIncomeByCategory,
   TransactionPage,
   TransactionRepository,
   YearlyExpenseByCategory,
@@ -283,7 +284,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }))
   }
 
-  listMonthlyIncomeByCategory(monthYYYYMM: string): MonthlyExpenseByCategory[] {
+  listMonthlyIncomeByCategory(monthYYYYMM: string): MonthlyIncomeByCategory[] {
     const rows = this.dataSource.queryAll<CategoryMonthlyTotalRow>(
       `
       SELECT

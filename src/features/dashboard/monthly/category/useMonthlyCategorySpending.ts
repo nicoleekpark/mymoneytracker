@@ -52,6 +52,8 @@ function aggregateByParentCategory(
     }
 
     const ref = getCategoryRefByDbId(row.categoryId)
+    if (!ref) continue // Skip orphaned transactions with deleted categories
+
     const parentKey = ref.categoryKey
     const subKey = ref.subCategoryKey
 

@@ -1,8 +1,10 @@
 /**
  * Settings Store
  *
- * Manages app settings including notification preferences.
- * Persists to SQLite via app_settings table.
+ * @persistence SQLITE - Persisted to app_settings table via settingsStorage.
+ * @scope PERMANENT - Survives app restarts, user preferences.
+ *
+ * Manages app settings including notification preferences and budget config.
  */
 
 import { create } from 'zustand'

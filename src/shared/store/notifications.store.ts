@@ -1,11 +1,15 @@
 /**
  * Notifications Store
  *
- * Phase 1: System notifications only, persisted to SQLite.
- * Manages notification state including read/unread status.
+ * @persistence SQLITE - Persisted to notifications table via notificationRepository.
+ * @scope PERMANENT - Survives app restarts, user-facing data.
+ *
+ * Phase 1: System notifications only.
+ * Manages notification state including read/unread/dismissed status.
  */
 
 import type { Notification, CreateNotificationInput } from '@/core/domain/notification'
+import { NOTIFICATION_SUBTYPES } from '@/core/domain/notification'
 import { notificationRepository } from '@/infrastructure/repositories'
 import { logError } from '@/shared/utils/logger'
 import { create } from 'zustand'
@@ -123,20 +127,20 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
   getUnreadCount: () => {
     // Exclude draft reminders from unread count
-    return get().notifications.filter((n) => !n.read && n.subtype !== 'draft_reminder').length
+    return get().notifications.filter((n) => !n.read && n.subtype !== NOTIFICATION_SUBTYPES.DRAFT_REMINDER).length
   },
 
   getUnread: () => {
     // Exclude draft reminders from unread list
-    return get().notifications.filter((n) => !n.read && n.subtype !== 'draft_reminder')
+    return get().notifications.filter((n) => !n.read && n.subtype !== NOTIFICATION_SUBTYPES.DRAFT_REMINDER)
   },
 
   getDraftCount: () => {
-    return get().notifications.filter((n) => n.subtype === 'draft_reminder').length
+    return get().notifications.filter((n) => n.subtype === NOTIFICATION_SUBTYPES.DRAFT_REMINDER).length
   },
 
   getDraftReminders: () => {
-    return get().notifications.filter((n) => n.subtype === 'draft_reminder')
+    return get().notifications.filter((n) => n.subtype === NOTIFICATION_SUBTYPES.DRAFT_REMINDER)
   },
 
   hasRecentBySubtype: (subtype, withinHours = 24) => {

@@ -1,7 +1,7 @@
 // Domain layer - Category (pure types, models, interfaces)
 // Use cases moved to @/core/services/category
 
-export type { CategoryRef, CategoryType } from './category.types'
+export type { CategoryRef, CategoryType, CategoryIndex } from './category.types'
 
 export { assertValidCategoryRef, normalizeSubKeyFromDbKey } from './category.model'
 

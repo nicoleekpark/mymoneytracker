@@ -47,22 +47,28 @@ export const AccountRowSchema = z.object({
 
 /**
  * Parse and validate account nature from unknown input.
- * Returns validated value or falls back to 'asset'.
+ *
+ * Fallback Strategy: Returns 'asset' on invalid input.
+ * Rationale: Most accounts are assets (checking, savings, cash).
+ * Liability accounts (credit cards, loans) are less common.
  */
 export function parseAccountNature(value: unknown): z.infer<typeof AccountNatureSchema> {
   const result = AccountNatureSchema.safeParse(value)
   if (result.success) return result.data
-  return 'asset' // Safe fallback
+  return 'asset'
 }
 
 /**
  * Parse and validate account kind from unknown input.
- * Returns validated value or falls back to 'other'.
+ *
+ * Fallback Strategy: Returns 'other' on invalid input.
+ * Rationale: 'other' is the most generic kind, making no assumptions
+ * about the account's behavior or features.
  */
 export function parseAccountKind(value: unknown): z.infer<typeof AccountKindSchema> {
   const result = AccountKindSchema.safeParse(value)
   if (result.success) return result.data
-  return 'other' // Safe fallback
+  return 'other'
 }
 
 /**

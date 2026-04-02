@@ -1,9 +1,8 @@
-import type { CategoryType } from '@/core/domain/category'
+import type { CategoryType, CategoryIndex } from '@/core/domain/category'
 import { CATEGORIES } from './categories.config'
 
-export type CategoryIndex = Readonly<
-  Record<CategoryType, Readonly<Record<string, readonly string[]>>>
->
+// Re-export CategoryIndex for backwards compatibility
+export type { CategoryIndex } from '@/core/domain/category'
 
 function buildCategoryIndex(): CategoryIndex {
   const base: Record<CategoryType, Record<string, string[]>> = {

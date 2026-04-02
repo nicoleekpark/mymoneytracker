@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -141,8 +141,8 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
   const maxExpenseAmount = allExpenseCategories.length > 0 ? allExpenseCategories[0].totalDollar : 0
   const maxIncomeAmount = allIncomeCategories.length > 0 ? allIncomeCategories[0].totalDollar : 0
 
-  // Toggle category expansion for expenses
-  const toggleExpenseCategory = (categoryKey: string) => {
+  // Toggle category expansion for expenses (memoized to prevent child re-renders)
+  const toggleExpenseCategory = useCallback((categoryKey: string) => {
     setExpandedExpenseCategories(prev => {
       const next = new Set(prev)
       if (next.has(categoryKey)) {
@@ -152,10 +152,10 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
       }
       return next
     })
-  }
+  }, [])
 
-  // Toggle category expansion for income
-  const toggleIncomeCategory = (categoryKey: string) => {
+  // Toggle category expansion for income (memoized to prevent child re-renders)
+  const toggleIncomeCategory = useCallback((categoryKey: string) => {
     setExpandedIncomeCategories(prev => {
       const next = new Set(prev)
       if (next.has(categoryKey)) {
@@ -165,7 +165,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
       }
       return next
     })
-  }
+  }, [])
 
   if (loading) {
     return (

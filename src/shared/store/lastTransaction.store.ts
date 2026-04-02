@@ -1,6 +1,9 @@
 /**
  * Last Transaction Store
  *
+ * @persistence IN-MEMORY - Not persisted, resets on app restart.
+ * @scope SESSION - Only valid during current app session.
+ *
  * Stores the last saved transaction for "Repeat Last" functionality.
  */
 

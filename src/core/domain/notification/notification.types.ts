@@ -15,6 +15,17 @@ export type SystemNotificationSubtype =
   | 'inactivity_nudge'  // No transactions for X days
   | 'anomaly_detected'  // Unusual spending pattern
 
+/**
+ * Constants for notification subtypes.
+ * Use these instead of string literals to prevent typos.
+ */
+export const NOTIFICATION_SUBTYPES = {
+  DRAFT_REMINDER: 'draft_reminder',
+  BUDGET_ALERT: 'budget_alert',
+  INACTIVITY_NUDGE: 'inactivity_nudge',
+  ANOMALY_DETECTED: 'anomaly_detected',
+} as const satisfies Record<string, SystemNotificationSubtype>
+
 export type Notification = {
   id: string
   type: NotificationType

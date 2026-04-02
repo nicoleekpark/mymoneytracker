@@ -1,3 +1,12 @@
+/**
+ * Theme Store
+ *
+ * @persistence IN-MEMORY - Not persisted, resets on app restart.
+ * @scope SESSION - Follows system theme by default.
+ *
+ * Manages light/dark mode preference.
+ */
+
 import type { ThemeMode } from '@/shared/theme'
 import { create } from 'zustand'
 

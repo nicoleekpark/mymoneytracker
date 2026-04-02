@@ -33,7 +33,7 @@ export type TransactionRow = Readonly<{
  * Category resolver function type.
  * Used to decouple the mapper from direct repo imports.
  */
-export type CategoryRefResolver = (categoryDbId: UUID) => CategoryRef
+export type CategoryRefResolver = (categoryDbId: UUID) => CategoryRef | null
 export type CategoryIdResolver = (ref?: CategoryRef) => CategoryDbId | null
 
 /**
@@ -54,7 +54,7 @@ export function rowToTransaction(
     type: validatedType,
     item: row.item && row.item !== 'Not added' ? row.item : undefined,
     money: { amount: centsToDollars(row.amount_cents), currency: row.currency },
-    category: row.category_id ? resolveCategoryRef(row.category_id) : undefined,
+    category: row.category_id ? resolveCategoryRef(row.category_id) ?? undefined : undefined,
     merchant: row.merchant ?? undefined,
     note: row.note ?? undefined,
     memberId: row.member_id ?? undefined,
