@@ -275,6 +275,14 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
                 borderRadius: radius.sm,
                 overflow: 'hidden'
               }}
+              accessibilityRole="progressbar"
+              accessibilityValue={{
+                min: 0,
+                max: 100,
+                now: Math.round(budgetBarWidth),
+                text: `${Math.round(budgetBarWidth)}% of budget spent`
+              }}
+              accessibilityLabel={`Budget progress: ${formatUsdInt(budgetData.spentDollar)} of ${formatUsdInt(budgetData.budgetDollar)} spent`}
             >
               <View
                 style={{

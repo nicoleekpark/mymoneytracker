@@ -1,7 +1,7 @@
 # HoH Ledger - Refactoring Items
 
 > Generated: 2026-04-01
-> Last Updated: 2026-04-01
+> Last Updated: 2026-04-03
 
 This document catalogs refactoring opportunities identified through comprehensive codebase analysis. Items are prioritized based on: **Clean Code**, **Security**, **Scalability**, **Maintainability**, **Modularity**, **DRY**, and **Industry Best Practices**.
 
@@ -101,8 +101,8 @@ This document catalogs refactoring opportunities identified through comprehensiv
 **Status:** BACKLOG - Requires design review
 
 **Location:**
-- `src/features/dashboard/monthly/MonthlyBody.tsx` (399 lines)
-- `src/features/dashboard/yearly/YearlyBody.tsx` (685 lines)
+- `src/features/dashboard/monthly/MonthlyBody.tsx` (~406 lines)
+- `src/features/dashboard/yearly/YearlyBody.tsx` (~684 lines)
 
 **Issue:** Components mix 5+ concerns: hero display, stats rows, budget section, calendar, categories.
 
@@ -143,9 +143,9 @@ This follows React best practices: let errors propagate to the UI layer where th
 **Issue:** Invalid JSON silently failed without logging.
 
 **Fix Applied:**
-- Added `logger.warn()` calls to both files
-- Now logs key/context, raw value snippet, and error message
-- Consistent with `draft.mapper.ts` pattern
+- Updated both files to use `tryParseJson()` from `json.ts`
+- Shared utility logs key/context, raw value snippet, and error message
+- Consistent logging across all JSON parsing in mappers and settings
 
 ---
 
@@ -195,16 +195,19 @@ const getStorage = () => require('@/infrastructure/db/settingsStorage') as typeo
 
 ### 11. ⏸️ Duplicate Cents-to-Dollars Mapping Pattern
 **Tags:** `DRY` `maintainability`
-**Status:** DEFERRED - Low impact
+**Status:** NO ACTION NEEDED
 
 **Location:**
 - `src/core/services/transaction/transaction.aggregations.ts` (~8+ instances)
-- `src/core/services/transaction/transaction.insights.ts`
-- `src/core/services/price-tracker/price-tracker.service.ts`
 
 **Issue:** Repeated mapping pattern with `centsToDollars()`.
 
-**Why Deferred:** Each mapping has slightly different field names (month vs day, totalDollar vs incomeDollar). A generic utility would require complex type gymnastics. The pattern is simple and readable as-is.
+**Resolution:** Each mapping has different field names (month vs day, totalDollar vs incomeDollar vs expenseDollar). A generic utility would require:
+- Complex TypeScript generics with keyof mappings
+- Runtime field name configuration
+- More code than the inline pattern
+
+The current pattern is explicit, readable, and type-safe. Adding abstraction would reduce clarity without meaningful DRY benefit.
 
 ---
 
@@ -267,18 +270,23 @@ const getStorage = () => require('@/infrastructure/db/settingsStorage') as typeo
 
 ### 16. ⏸️ Hydration Pattern Duplication
 **Tags:** `DRY` `maintainability`
-**Status:** DEFERRED - Significant refactor
+**Status:** NO ACTION NEEDED
 
 **Location:** Settings, Tags, QuickChips stores
 
 **Issue:** Identical hydration patterns.
 
-**Why Deferred:** Creating `createPersistedStore()` would require:
-- Complex TypeScript generics
+**Resolution:** Creating `createPersistedStore()` would require:
+- Complex TypeScript generics for state shape + actions
 - Testing the utility itself
-- Migrating existing stores
-- Risk of breaking working code
-The current pattern is clear and each store is isolated.
+- Migrating 3 existing stores
+- Risk of introducing bugs in working code
+
+The current pattern is:
+- Clear and explicit (easy to understand)
+- Isolated (changes to one store don't affect others)
+- Well-documented with `@persistence` JSDoc tags
+- Only 3 stores use this pattern (not enough to justify abstraction)
 
 ---
 
@@ -297,19 +305,24 @@ The current pattern is clear and each store is isolated.
 
 ---
 
-### 18. ⏸️ Inconsistent Null Coercion in Mappers
+### 18. ✅ Inconsistent Null Coercion in Mappers
 **Tags:** `consistency` `maintainability`
-**Status:** DEFERRED - Documentation task
+**Status:** FIXED (2026-04-02)
 
 **Location:** All mapper files
 
-**Issue:** Mixed approaches for null/undefined, booleans, tags.
+**Issue:** Mixed approaches for null/undefined, booleans, tags - no documentation.
 
-**Why Deferred:** The patterns are context-dependent:
-- DB uses `null`, domain uses `undefined` (intentional)
-- SQLite stores booleans as 0/1 (standard)
-- Tags as JSON array is the standard (comma-split was legacy)
-Should document patterns in mapper header comments when touching those files.
+**Fix Applied:** Added coercion convention documentation to all mappers:
+- `transaction.mapper.ts` - Full table of DB→Domain conversions
+- `draft.mapper.ts` - Documents JSON array and enum handling
+- `asset.mapper.ts` - Documents boolean and enum handling
+- `notification.mapper.ts` - Documents Phase 1 schema repurposing
+
+Patterns are now documented and intentional:
+- DB `null` → Domain `undefined` (standard)
+- SQLite `0/1` → Domain `boolean` (standard)
+- Tags as JSON array (standard, comma-split was legacy)
 
 ---
 
@@ -327,18 +340,21 @@ Should document patterns in mapper header comments when touching those files.
 
 ---
 
-### 20. ⏸️ Accessibility Gaps
+### 20. ✅ Accessibility Gaps
 **Tags:** `accessibility` `best-practice`
-**Status:** DEFERRED - Requires UI audit
+**Status:** FIXED (2026-04-02)
 
-**Location:** Dashboard components (MonthlyBody, YearlyBody, DailyOutflowBars)
+**Location:** Dashboard components
 
-**Issues:**
-- Calendar days missing `accessibilityLabel`
-- Progress bars missing proper a11y attributes
-- Buttons missing count in label
+**Issues Fixed:**
+- Calendar days: Added `accessibilityRole="button"`, `accessibilityLabel` with day details, `accessibilityState`
+- Budget progress bar: Added `accessibilityRole="progressbar"`, `accessibilityValue` with min/max/now/text
+- DailyOutflowBars chart: Added `accessibilityRole="image"`, `accessibilityLabel` with chart summary
 
-**Why Deferred:** Requires comprehensive UI audit and testing with VoiceOver/TalkBack. Should be tackled as dedicated accessibility sprint.
+**Files Updated:**
+- `MonthlyCalendar.tsx` - Each day cell now announces day number, amounts, transaction count
+- `MonthlyBody.tsx` - Budget bar announces spent/total and percentage
+- `DailyOutflowBars.tsx` - Chart announces total spending, days with data, spike count
 
 ---
 
@@ -480,11 +496,11 @@ Should document patterns in mapper header comments when touching those files.
 | Priority | Total | Fixed | No Action | Deferred | Remaining |
 |----------|-------|-------|-----------|----------|-----------|
 | 🔴 Critical | 4 | 4 ✅ | 0 | 0 | 0 |
-| 🟠 High | 6 | 2 ✅ | 1 | 3 ⏸️ | 0 |
-| 🟡 Medium | 10 | 5 ✅ | 1 | 4 ⏸️ | 0 |
+| 🟠 High | 6 | 2 ✅ | 0 | 4 ⏸️ | 0 |
+| 🟡 Medium | 10 | 7 ✅ | 3 | 0 | 0 |
 | 🟢 Low | 10 | 5 ✅ | 3 | 2 ⏸️ | 0 |
 
-**Total: 30 items | 16 fixed | 5 no action | 9 deferred | 0 remaining**
+**Total: 30 items | 18 fixed | 6 no action | 6 deferred | 0 remaining**
 
 ### What Was Fixed
 
@@ -496,14 +512,16 @@ Should document patterns in mapper header comments when touching those files.
 
 **High (addressed):**
 7. ✅ Missing Error Handling - Confirmed correctly handled at hook level
-8. ✅ Silent JSON Parsing - Added logging to notification.mapper.ts and settingsStorage.ts
+8. ✅ Silent JSON Parsing - Updated to use shared `tryParseJson()` utility with logging
 
 **Medium (fixed):**
 12. ✅ Duplicate JSON Parsing - Created `tryParseJson()` utility in `json.ts`
 13. ✅ Duplicate Animation Pattern - Created `SPRING_CONFIG` and `SCALE_VALUES` tokens
 14. ✅ Missing useCallback - Added to YearlyBody toggle handlers
 17. ✅ Magic String Notification Subtype - Added `NOTIFICATION_SUBTYPES` constant
+18. ✅ Null Coercion Docs - Added coercion convention tables to all mappers
 19. ✅ Unsafe Type Casts - Updated draft.mapper to use `parseCategoryType()`
+20. ✅ Accessibility Gaps - Added a11y attributes to calendar, budget bar, chart
 
 **Low (fixed):**
 24. ✅ Color Hook Inconsistency - Fixed surface mapping in useExtendedThemeColors
@@ -518,14 +536,14 @@ Should document patterns in mapper header comments when touching those files.
 
 ---
 
-## Recommended Next Steps
+## Remaining Deferred Items (6)
 
-**Design Review Needed:**
-- #6 + #9 + #23: Component decomposition with style extraction and opacity tokens
+**High Priority (design/arch review needed):**
+- #5: Async/Await Inconsistency - Breaking change risk
+- #6: Component Decomposition - Needs design review
+- #9: Inline Styles - Should combine with #6
+- #10: Lazy Require Pattern - Architecture review needed
 
-**Architecture Review Needed:**
-- #10: Lazy require pattern resolution
-- #16: Store hydration pattern consolidation
-
-**Future Sprint (Accessibility):**
-- #20: Dashboard accessibility audit
+**Low Priority:**
+- #22: Timestamp Inconsistency - Low impact
+- #23: Hardcoded Opacity - UI task, combine with #6

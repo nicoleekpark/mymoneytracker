@@ -1,3 +1,20 @@
+/**
+ * Asset Mapper
+ *
+ * Converts between SQLite rows and domain Asset objects.
+ *
+ * ## Coercion Conventions
+ *
+ * | DB Type | Domain Type | Conversion |
+ * |---------|-------------|------------|
+ * | `null` | `null` | Passed through (memberId can be null) |
+ * | `number` (0/1) | `boolean` | `row.is_active === 1` |
+ * | `string` (enum) | Typed enum | `parseAssetField(row.field)` |
+ *
+ * ## Validation
+ * - All enum fields use Zod parse functions for runtime validation
+ */
+
 import type {
   FamilyMember,
   AssetItem,

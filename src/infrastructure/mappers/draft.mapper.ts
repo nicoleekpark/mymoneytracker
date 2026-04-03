@@ -1,3 +1,22 @@
+/**
+ * Draft Mapper
+ *
+ * Converts between SQLite rows and domain DraftTransaction objects.
+ *
+ * ## Coercion Conventions
+ *
+ * | DB Type | Domain Type | Conversion |
+ * |---------|-------------|------------|
+ * | `null` | `undefined` | `row.merchant ?? undefined` |
+ * | `number` (0/1) | `boolean` | `row.starred === 1` |
+ * | `string` (JSON) | `string[]` | `tryParseJsonArray(row.tags)` |
+ * | `string` (enum) | Typed enum | `parseCategoryType(row.category_type)` |
+ *
+ * ## Validation
+ * - Category type uses Zod parse for runtime validation
+ * - Tags use safe JSON parsing with logging on failure
+ */
+
 import type { CategoryRef } from '@/core/domain/category/category.types'
 import type { TransactionType } from '@/core/domain/transaction/transaction.types'
 import type { DraftTransaction } from '@/core/domain/draft'

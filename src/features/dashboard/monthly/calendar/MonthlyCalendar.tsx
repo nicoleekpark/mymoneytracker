@@ -210,10 +210,27 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
     // Get semantic color style for amount
     const amountStyle = hasActivity ? getAmountStyle(v!.net, colors) : null
 
+    // Build accessibility label
+    const a11yParts: string[] = [`Day ${dayNum}`]
+    if (isToday) a11yParts.push('today')
+    if (hasActivity && v) {
+      if (v.income > 0) a11yParts.push(`income ${formatCompactUsd(v.income)}`)
+      if (v.expense > 0) a11yParts.push(`expense ${formatCompactUsd(v.expense)}`)
+      a11yParts.push(`net ${v.net >= 0 ? 'positive' : 'negative'} ${formatCompactUsd(Math.abs(v.net))}`)
+      a11yParts.push(`${v.txCount} transaction${v.txCount !== 1 ? 's' : ''}`)
+    } else {
+      a11yParts.push('no transactions')
+    }
+    if (isZeroSpend) a11yParts.push('zero spend day')
+    const a11yLabel = a11yParts.join(', ')
+
     return (
       <View key={cellKey} style={wrapperStyle}>
         <Pressable
           onPress={() => handleDayPress(ymd, dayNum)}
+          accessibilityRole="button"
+          accessibilityLabel={a11yLabel}
+          accessibilityState={{ selected: isSelected }}
           style={{
             height: CELL_HEIGHT,
             backgroundColor: bgColor,

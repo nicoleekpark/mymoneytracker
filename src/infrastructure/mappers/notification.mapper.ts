@@ -1,3 +1,21 @@
+/**
+ * Notification Mapper
+ *
+ * Converts between SQLite rows and domain Notification objects.
+ *
+ * ## Coercion Conventions
+ *
+ * | DB Type | Domain Type | Conversion |
+ * |---------|-------------|------------|
+ * | `null` | `undefined` | `row.sender_id \|\| undefined` |
+ * | `number` (0/1) | `boolean` | `row.read === 1` |
+ * | `string` (JSON) | `Record` | `tryParseJson(row.sender_name)` |
+ *
+ * ## Schema Notes (Phase 1)
+ * - `sender_id` repurposed to store subtype
+ * - `sender_name` repurposed to store metadata JSON
+ */
+
 import type { Notification, NotificationType, SystemNotificationSubtype } from '@/core/domain/notification'
 import { tryParseJson } from '@/shared/utils/json'
 

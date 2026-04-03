@@ -1,3 +1,23 @@
+/**
+ * Transaction Mapper
+ *
+ * Converts between SQLite rows and domain Transaction objects.
+ *
+ * ## Coercion Conventions
+ *
+ * | DB Type | Domain Type | Conversion |
+ * |---------|-------------|------------|
+ * | `null` | `undefined` | DB null → domain undefined |
+ * | `number` (0/1) | `boolean` | `row.is_estimated === 1` |
+ * | `number` (cents) | `Money` | `centsToDollars(row.amount_cents)` |
+ * | `string` (enum) | Typed enum | `parseTransactionType(row.type)` |
+ * | `string` (ISO) | `string` | Pass through (dates stay as ISO strings) |
+ *
+ * ## Validation
+ * - Enum fields use Zod parse functions for runtime validation
+ * - Invalid enums fall back to safe defaults (see schema files)
+ */
+
 import { centsToDollars, dollarsToCents } from '@/core/domain/common/money'
 import type { UUID } from '@/core/domain/common/uuid'
 import type { CategoryDbId, CategoryRef } from '@/core/domain/category/category.types'

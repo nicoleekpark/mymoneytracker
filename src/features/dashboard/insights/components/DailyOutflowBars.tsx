@@ -132,6 +132,11 @@ export function DailyOutflowBars({ data, monthYYYYMM, colors }: Props) {
   // Selected day info
   const selectedAmount = selectedDay !== null ? dayAmountMap.get(selectedDay) : null
 
+  // Build accessibility summary
+  const totalSpent = data.reduce((sum, d) => sum + d.amount, 0)
+  const daysWithSpending = data.filter(d => d.amount > 0).length
+  const spikeDays = data.filter(d => d.amount >= spikeThreshold).length
+
   return (
     <View onLayout={handleLayout}>
       {/* Header row: label + selected day amount */}
@@ -146,7 +151,11 @@ export function DailyOutflowBars({ data, monthYYYYMM, colors }: Props) {
         )}
       </View>
 
-      <Pressable onPress={handlePress}>
+      <Pressable
+        onPress={handlePress}
+        accessibilityRole="image"
+        accessibilityLabel={`Daily spending chart for ${daysInMonth} days. ${daysWithSpending} days with spending, total ${formatAmount(totalSpent)}. ${spikeDays} high spending days. Tap to see daily amounts.`}
+      >
         <Svg width={chartWidth} height={CHART_HEIGHT} viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}>
         {/* Axis line */}
         <Line
