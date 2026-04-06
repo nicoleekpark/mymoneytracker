@@ -156,7 +156,7 @@ export function YearlyNetChart({ data, colors }: Props) {
               fontWeight={fontWeight.bold}
               textAnchor="middle"
             >
-              {bar.net >= 0 ? '+' : ''}{formatCompactAmount(bar.net)}
+              {bar.net >= 0 ? '+' : '-'}{formatCompactAmount(Math.abs(bar.net))}
             </SvgText>
             {/* YTD indicator */}
             {bar.isCurrentYear && (

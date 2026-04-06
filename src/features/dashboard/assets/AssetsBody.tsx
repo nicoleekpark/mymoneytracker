@@ -361,7 +361,7 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
               <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
                 Change since {data.isCurrentYear ? 'Jan 1' : `start of ${data.year}`}{' '}
                 <Text style={{ fontWeight: fontWeight.semibold, color: data.yearlySnapshot.growth >= 0 ? colors.success : colors.danger }}>
-                  {data.yearlySnapshot.growth >= 0 ? '+' : ''}{formatUsdInt(data.yearlySnapshot.growth)}
+                  {data.yearlySnapshot.growth >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(data.yearlySnapshot.growth))}
                 </Text>
               </Text>
             </View>

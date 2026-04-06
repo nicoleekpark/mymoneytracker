@@ -1,3 +1,4 @@
+export * from './opacity'
 export * from './radius'
 export * from './shadow'
 export * from './spacing'

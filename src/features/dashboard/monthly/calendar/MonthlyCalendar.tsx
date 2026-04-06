@@ -297,7 +297,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
                 color: amountStyle.color
               }}
             >
-              {v!.net >= 0 ? '+' : ''}{formatCompactUsd(v!.net)}
+              {v!.net >= 0 ? '+' : '-'}{formatCompactUsd(Math.abs(v!.net))}
             </Text>
           </View>
         )}

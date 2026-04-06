@@ -320,7 +320,7 @@ export function YearlyProjectionCard({ year, data, colors }: Props) {
               textAlign: 'center',
             }}
           >
-            {projectedSavings >= 0 ? '+' : ''}{formatUsdInt(projectedSavings)}
+            {projectedSavings >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(projectedSavings))}
           </Text>
 
           {/* Sub label */}

@@ -277,7 +277,7 @@ export function MoneyFlowRiver({ incomeByCategory, expenseByCategory, netAmount,
           fontWeight="bold"
           fill={netAmount >= 0 ? colors.success : colors.danger}
         >
-          {netAmount >= 0 ? '+' : ''}{formatUsdInt(netAmount)}
+          {netAmount >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(netAmount))}
         </SvgText>
       </Svg>
 

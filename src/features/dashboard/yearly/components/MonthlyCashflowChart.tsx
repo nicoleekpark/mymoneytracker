@@ -403,7 +403,7 @@ export function MonthlyCashflowChart({
               Out <Text style={{ fontWeight: fontWeight.semibold, color: colors.danger }}>{formatUsdInt(selectedData.expenseDollar)}</Text>
             </Text>
             <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
-              Net <Text style={{ fontWeight: fontWeight.semibold, color: colors.text }}>{selectedData.netDollar >= 0 ? '+' : ''}{formatUsdInt(selectedData.netDollar)}</Text>
+              Net <Text style={{ fontWeight: fontWeight.semibold, color: colors.text }}>{selectedData.netDollar >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(selectedData.netDollar))}</Text>
             </Text>
           </View>
           {/* Navigate to month link */}

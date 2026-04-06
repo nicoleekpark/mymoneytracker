@@ -303,7 +303,7 @@ export function CumulativeNetChart({ data, colors }: Props) {
                 Month net
               </Text>
               <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: selectedPoint.net >= 0 ? colors.success : colors.danger }}>
-                {selectedPoint.net >= 0 ? '+' : ''}{formatUsdInt(selectedPoint.net)}
+                {selectedPoint.net >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(selectedPoint.net))}
               </Text>
             </View>
           </>

@@ -294,7 +294,7 @@ export function AllBody({ colors }: Props) {
                 letterSpacing: -1
               }}
             >
-              {data.netAmount >= 0 ? '+' : ''}{formatUsdInt(data.netAmount)}
+              {data.netAmount >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(data.netAmount))}
             </Text>
 
             {/* Supporting: Current streak (only if positive streak) */}

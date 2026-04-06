@@ -8,6 +8,7 @@
 import { fontSize, fontWeight, displaySize } from './typography'
 import { spacing } from './spacing'
 import { radius } from './radius'
+import { opacity } from './opacity'
 
 // -----------------------------------------------------------------------------
 // Standard Color Types - USE THESE FOR ALL VIEWS
@@ -112,7 +113,7 @@ export const componentStyles = {
     divider: {
       height: 1,
       marginBottom: spacing.lg,
-      opacity: 0.5,
+      opacity: opacity.divider,
     },
   },
 
@@ -224,7 +225,7 @@ export const componentStyles = {
     },
     placeholder: {
       fontSize: fontSize.sm,
-      opacity: 0.5,
+      opacity: opacity.divider,
     },
   },
 
@@ -239,7 +240,7 @@ export const componentStyles = {
       borderWidth: 1,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      opacity: 0.6,
+      opacity: opacity.tertiary,
     },
     text: {
       fontSize: FONT_SIZE_TINY,  // 9px - below minimum scale for tiny indicators
@@ -269,7 +270,7 @@ export const componentStyles = {
   chartLabel: {
     axis: {
       fontSize: fontSize.xs,
-      opacity: 0.7,
+      opacity: opacity.muted,
     },
     value: {
       fontSize: fontSize.xs,
