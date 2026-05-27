@@ -1,4 +1,6 @@
-
+// Re-export from canonical locations for backward compatibility
+export { parseYYYYMM, getDaysInMonthFromYYYYMM as daysInMonthFromYYYYMM } from '../utils/period.utils'
+export { getDaysInMonth } from '@/core/domain/transaction'
 
 // 0=Sun..6=Sat
 export function firstWeekdayIndex(year: number, month1to12: number): number {
@@ -24,24 +26,4 @@ export function formatSignedUsdInt(amount: number) {
   const s = `$ ${abs}`
   if (amount < 0) return `(${s})`
   return s
-}
-
-// // expense를 괄호로 보여주고 싶으면 이렇게 호출
-// // formatExpenseInt(expenseDollar) => "($ 16)"
-// export function formatExpenseInt(expenseDollar: number) {
-//   return formatSignedUsdInt(-Math.abs(expenseDollar))
-// }
-
-// // income은 그냥
-// export function formatIncomeInt(incomeDollar: number) {
-//   return formatSignedUsdInt(Math.abs(incomeDollar))
-// }
-
-export function parseYYYYMM(monthYYYYMM: string): { year: number; month: number } {
-  const [y, m] = monthYYYYMM.split('-')
-  return { year: Number(y), month: Number(m) }
-}
-
-export function daysInMonth(year: number, month1to12: number): number {
-  return new Date(year, month1to12, 0).getDate()
 }

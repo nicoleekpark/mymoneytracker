@@ -1,6 +1,3 @@
-export { InsightCard } from './InsightCard'
-export { InsightCarousel } from './InsightCarousel'
 export { NetSparkline } from './NetSparkline'
-export { WeekdayHeatHint } from './WeekdayHeatHint'
 export { CategoryDeltaBar } from './CategoryDeltaBar'
 export { DailyOutflowBars } from './DailyOutflowBars'

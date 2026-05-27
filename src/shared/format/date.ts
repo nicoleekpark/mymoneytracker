@@ -100,12 +100,9 @@ export function formatTrackingSince(date: Date | null): string {
   return `Tracking since ${monthName} ${date.getFullYear()}`
 }
 
-/**
- * Get number of days in a given month.
- */
-export function getDaysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate()
-}
+// getDaysInMonth moved to @/core/domain/transaction/transaction.utils.ts
+// Re-export for backward compatibility
+export { getDaysInMonth } from '@/core/domain/transaction'
 
 /**
  * Get months elapsed between two dates.

@@ -1,4 +1,3 @@
-export { MonthlyCategoryDonut, type DonutColors } from './MonthlyCategoryDonut'
 export { MonthlyCategorySection, MonthlyCategoryContent } from './MonthlyCategorySection'
 export { MonthlyIncomeSection, MonthlyIncomeContent } from './MonthlyIncomeSection'
 export { useMonthlyCategorySpending, type CategorySpendingRow, type SubCategoryBreakdown } from './useMonthlyCategorySpending'

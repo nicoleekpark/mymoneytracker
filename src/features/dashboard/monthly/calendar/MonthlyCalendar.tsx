@@ -7,7 +7,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import type { BottomSheetModal } from '@gorhom/bottom-sheet'
 
-import { daysInMonth, firstWeekdayIndex, parseYYYYMM } from '../monthly.utils'
+import { getDaysInMonth } from '@/core/domain/transaction'
+import { parseYYYYMM } from '@/features/dashboard/utils/period.utils'
+import { firstWeekdayIndex } from '../monthly.utils'
 import type { CalendarColors, DailyFlow } from './calendar.types'
 import { DayDetailSheet, type SelectedDay } from './DayDetailSheet'
 
@@ -98,7 +100,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
   }, [daily])
 
   const { first, dim } = useMemo(() => {
-    return { first: firstWeekdayIndex(year, month), dim: daysInMonth(year, month) }
+    return { first: firstWeekdayIndex(year, month), dim: getDaysInMonth(year, month) }
   }, [year, month])
 
   const todayYMD = useMemo(() => new Date().toISOString().slice(0, 10), [])
