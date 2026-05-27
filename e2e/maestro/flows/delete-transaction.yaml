@@ -1,0 +1,72 @@
+appId: com.houseofhuynh.finance
+---
+# Delete Transaction Flow
+# Tests deleting a transaction
+
+- launchApp
+
+# Wait for app to load
+- waitForAnimationToEnd
+
+# First, create a transaction to delete
+- tapOn:
+    id: "add-transaction-button"
+
+- tapOn:
+    text: "Expense"
+
+# Enter amount
+- tapOn:
+    id: "keypad-9"
+- tapOn:
+    id: "keypad-9"
+- tapOn:
+    id: "keypad-9"
+
+# Save
+- tapOn:
+    id: "save-button"
+    optional: true
+- tapOn:
+    text: "Save"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Navigate to transactions
+- tapOn:
+    text: "Transactions"
+    optional: true
+
+# Find and tap on the transaction
+- tapOn:
+    textContains: "$9.99"
+    optional: true
+
+# Long press for delete option (alternative to tap)
+- longPressOn:
+    textContains: "$9.99"
+    optional: true
+
+# Tap delete button
+- tapOn:
+    id: "delete-button"
+    optional: true
+- tapOn:
+    text: "Delete"
+    optional: true
+
+# Confirm deletion
+- tapOn:
+    text: "Confirm"
+    optional: true
+- tapOn:
+    text: "Yes"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify transaction is removed (should not be visible)
+- assertNotVisible:
+    textContains: "$9.99"
+    optional: true

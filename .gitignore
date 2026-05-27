@@ -31,7 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -50,4 +52,22 @@ db_exports/
 .claude/settings.json
 .claude/projects/
 
+tmp/
+temporary.md
 
+# Test coverage reports
+coverage/
+
+# Logs
+*.log
+
+# IDE
+.idea/
+
+# Build outputs
+*.apk
+*.ipa
+*.aab
+
+# Windows
+Thumbs.db

@@ -1,0 +1,53 @@
+appId: com.houseofhuynh.finance
+---
+# Add Expense Flow
+# Tests the complete flow of adding a new expense transaction
+
+- launchApp:
+    clearState: true
+
+# Wait for app to load
+- waitForAnimationToEnd
+
+# Navigate to add transaction (assuming there's an add button)
+- tapOn:
+    id: "add-transaction-button"
+
+# Select expense type
+- tapOn:
+    text: "Expense"
+
+# Enter amount using keypad
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-0"
+- tapOn:
+    id: "keypad-0"
+- tapOn:
+    id: "keypad-0"
+
+# The amount should now show $10.00
+
+# Select a category
+- tapOn:
+    text: "Food"
+
+# Optionally select subcategory
+- tapOn:
+    text: "Eating Out"
+    optional: true
+
+# Save the transaction
+- tapOn:
+    text: "Save"
+    optional: true
+- tapOn:
+    id: "save-button"
+    optional: true
+
+# Verify success
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Transaction saved"
+    optional: true

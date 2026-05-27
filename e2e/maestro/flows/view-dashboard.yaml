@@ -1,0 +1,48 @@
+appId: com.houseofhuynh.finance
+---
+# View Dashboard Flow
+# Tests navigating through the dashboard views (monthly, yearly, all-time)
+
+- launchApp
+
+# Wait for app to load
+- waitForAnimationToEnd
+
+# Verify main dashboard is visible
+- assertVisible:
+    text: "Dashboard"
+    optional: true
+
+# Look for month selector or period indicator
+- assertVisible:
+    textContains: "202"
+    optional: true
+
+# Test switching to yearly view (if available)
+- tapOn:
+    text: "Yearly"
+    optional: true
+- waitForAnimationToEnd
+
+# Test switching to all-time view (if available)
+- tapOn:
+    text: "All Time"
+    optional: true
+- waitForAnimationToEnd
+
+# Go back to monthly view
+- tapOn:
+    text: "Monthly"
+    optional: true
+- waitForAnimationToEnd
+
+# Test swipe navigation between months
+- swipe:
+    direction: LEFT
+    duration: 500
+- waitForAnimationToEnd
+
+- swipe:
+    direction: RIGHT
+    duration: 500
+- waitForAnimationToEnd

@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 export default {
   preset: 'jest-expo',
+  testEnvironment: 'jsdom',
   testMatch: ['**/__tests__/**/*.test.ts?(x)'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

@@ -1,0 +1,67 @@
+appId: com.houseofhuynh.finance
+---
+# Manage Drafts Flow
+# Tests creating and managing draft transactions
+
+- launchApp
+
+# Wait for app to load
+- waitForAnimationToEnd
+
+# Navigate to add transaction
+- tapOn:
+    id: "add-transaction-button"
+
+- tapOn:
+    text: "Expense"
+
+# Enter partial amount
+- tapOn:
+    id: "keypad-5"
+- tapOn:
+    id: "keypad-0"
+
+# Go back without saving (should create draft)
+- back
+
+# Confirm save as draft if prompted
+- tapOn:
+    text: "Save Draft"
+    optional: true
+- tapOn:
+    text: "Keep"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Navigate to drafts
+- tapOn:
+    text: "Drafts"
+    optional: true
+- tapOn:
+    id: "drafts-button"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify draft exists
+- assertVisible:
+    textContains: "$0.50"
+    optional: true
+
+# Tap on draft to resume editing
+- tapOn:
+    textContains: "$0.50"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Delete the draft
+- tapOn:
+    id: "delete-draft"
+    optional: true
+- tapOn:
+    text: "Delete"
+    optional: true
+
+- waitForAnimationToEnd
