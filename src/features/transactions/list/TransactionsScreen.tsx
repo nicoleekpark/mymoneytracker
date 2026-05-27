@@ -774,6 +774,16 @@ export default function TransactionsScreen() {
                   ? `No transactions found for ${filteredAccountName}.`
                   : 'Add your first transaction to start tracking.'}
               </Text>
+              {!filteredAccountName && (
+                <TouchableOpacity
+                  onPress={() => router.push('/(modal)/add-transaction')}
+                  style={[styles.emptyStateCTA, { backgroundColor: theme.semantic.primary }]}
+                  accessibilityLabel="Add first transaction"
+                >
+                  <FontAwesome name="plus" size={14} color="#fff" />
+                  <Text style={styles.emptyStateCTAText}>Add Transaction</Text>
+                </TouchableOpacity>
+              )}
             </View>
           }
           ListFooterComponent={
@@ -956,6 +966,20 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: fontSize.md,
     textAlign: 'center'
+  },
+  emptyStateCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.lg
+  },
+  emptyStateCTAText: {
+    color: '#fff',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold
   },
 
   dayBar: {

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { LayoutAnimation, Platform, Pressable, ScrollView, Text, UIManager, View } from 'react-native'
+import { ActivityIndicator, LayoutAnimation, Platform, Pressable, ScrollView, Text, UIManager, View } from 'react-native'
 import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -243,7 +243,7 @@ export function AllBody({ colors }: Props) {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
-        <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }

@@ -5,7 +5,7 @@ import { spacing } from '@/shared/theme/tokens/spacing'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 import { useRouter } from 'expo-router'
 import React, { useMemo } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 
 import { DashboardHero, StatsRow } from '../shared'
 import { BudgetProgressBar } from './components'
@@ -22,10 +22,13 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   const { monthYYYYMM, colors } = props
   const router = useRouter()
 
-  const { error, daily } = useMonthlyDailyFlow(monthYYYYMM)
-  const { data: budgetData } = useBudgetSummary(monthYYYYMM)
-  const { data: summaryData } = useMonthlySummary(monthYYYYMM)
-  const { data: heroData } = useMonthlyHeroData(monthYYYYMM)
+  const { loading: loadingDaily, error, daily } = useMonthlyDailyFlow(monthYYYYMM)
+  const { loading: loadingBudget, data: budgetData } = useBudgetSummary(monthYYYYMM)
+  const { loading: loadingSummary, data: summaryData } = useMonthlySummary(monthYYYYMM)
+  const { loading: loadingHero, data: heroData } = useMonthlyHeroData(monthYYYYMM)
+
+  // Show loading state while fetching primary data
+  const isLoading = loadingHero || loadingSummary
 
   function onPressDay(ymd: string) {
     router.push({
@@ -45,6 +48,15 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
 
   // Feature flag for hero variant
   const heroVariant = FEATURE_FLAGS.heroVariant === 'optionA' ? 'optionA' : 'optionB'
+
+  // Show loading state while fetching primary data
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: spacing['3xl'] }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    )
+  }
 
   return (
     <ScrollView

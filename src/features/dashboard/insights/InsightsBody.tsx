@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { InfoSheet, SectionHeader } from '@/shared/components'
 import { fontSize, fontWeight, displaySize, letterSpacing } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -76,7 +76,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
-        <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }

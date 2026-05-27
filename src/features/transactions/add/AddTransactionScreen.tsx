@@ -20,6 +20,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -42,6 +43,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { FONT_SIZE_TINY } from '@/shared/theme/tokens/viewStyles'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 
@@ -75,10 +77,10 @@ type QuickChip = {
   color: string
 }
 
-const TRANSACTION_TYPES: { key: TransactionType; label: string }[] = [
+const TRANSACTION_TYPES: { key: TransactionType; label: string; disabled?: boolean }[] = [
   { key: 'expense', label: 'Expense' },
   { key: 'income', label: 'Income' },
-  { key: 'transfer', label: 'Transfer' },
+  { key: 'transfer', label: 'Transfer', disabled: true },
 ]
 
 const TOAST_DURATION = 1500
@@ -153,6 +155,8 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   const [descriptionFocused, setDescriptionFocused] = useState(false)
   const [highlightedField, setHighlightedField] = useState<'category' | 'account' | null>(null)
   const [highlightIdentifier, setHighlightIdentifier] = useState(false) // Highlight description + merchant
+  const [highlightAccount, setHighlightAccount] = useState(false) // Highlight account when validation fails
+  const [isLoadingEdit, setIsLoadingEdit] = useState(false) // Loading state for edit mode
 
   // Quick chips store
   const { expenseChips, incomeChips } = useQuickChipsStore()
@@ -266,6 +270,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     if (!editingTransactionId) return
 
     let cancelled = false
+    setIsLoadingEdit(true)
 
     getTransactionById(editingTransactionId).then((tx) => {
       if (cancelled || !tx) return
@@ -336,6 +341,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           scrollRef.current?.scrollTo({ y: 0, animated: false })
         }
       }, 150)
+    }).finally(() => {
+      if (!cancelled) {
+        setIsLoadingEdit(false)
+      }
     })
 
     return () => {
@@ -440,6 +449,11 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
     if (!account.accountKey) {
       showToast('Please select a payment method')
+      setHighlightAccount(true)
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
+      }
+      highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
       return
     }
 
@@ -641,6 +655,11 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
     if (!account.accountKey) {
       showToast('Please select a payment method')
+      setHighlightAccount(true)
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
+      }
+      highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
       return
     }
 
@@ -898,8 +917,8 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* Drag Handle */}
         <View style={styles.dragHandleContainer}>
@@ -917,29 +936,43 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         <View style={[styles.typeTabs, { borderBottomColor: theme.semantic.border }]}>
           {TRANSACTION_TYPES.map((t) => {
             const selected = t.key === type
+            const isDisabled = t.disabled === true
             return (
               <Pressable
                 key={t.key}
                 onPress={() => {
+                  if (isDisabled) return
                   setType(t.key)
                   category.resetCategory()
                 }}
                 style={[
                   styles.typeTab,
-                  { borderBottomColor: selected ? theme.semantic.primary : 'transparent' }
+                  { borderBottomColor: selected && !isDisabled ? theme.semantic.primary : 'transparent' },
+                  isDisabled && { opacity: 0.5 }
                 ]}
               >
-                <Text
-                  style={[
-                    styles.typeTabText,
-                    {
-                      color: selected ? theme.semantic.text : theme.semantic.textSecondary,
-                      fontWeight: selected ? '700' : '500',
-                    }
-                  ]}
-                >
-                  {t.label}
-                </Text>
+                <View style={styles.typeTabContent}>
+                  <Text
+                    style={[
+                      styles.typeTabText,
+                      {
+                        color: isDisabled
+                          ? theme.semantic.textSecondary
+                          : selected
+                            ? theme.semantic.text
+                            : theme.semantic.textSecondary,
+                        fontWeight: selected && !isDisabled ? '700' : '500',
+                      }
+                    ]}
+                  >
+                    {t.label}
+                  </Text>
+                  {isDisabled && (
+                    <View style={[styles.comingSoonBadge, { backgroundColor: theme.semantic.surfaceAlt }]}>
+                      <Text style={[styles.comingSoonText, { color: theme.semantic.textSecondary }]}>Soon</Text>
+                    </View>
+                  )}
+                </View>
               </Pressable>
             )
           })}
@@ -953,6 +986,16 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
+          {/* Loading state for edit mode */}
+          {isLoadingEdit && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.semantic.primary} />
+              <Text style={[styles.loadingText, { color: theme.semantic.textSecondary }]}>
+                Loading transaction...
+              </Text>
+            </View>
+          )}
+
           {/* Hero Amount - Tap to open keypad sheet */}
           <View style={styles.heroAmount}>
             <Pressable onPress={() => setShowKeypadSheet(true)} style={styles.amountTouchable}>
@@ -1111,6 +1154,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                   styles.fieldRow,
                   styles.fieldRowNoBorder,
                   highlightedField === 'account' && { backgroundColor: theme.semantic.primary + '15' },
+                  highlightAccount && { backgroundColor: theme.semantic.warning + '15' },
                 ]}
               >
                 <Text style={[styles.fieldLabel, { color: account.selectedAccount ? theme.semantic.textSecondary : theme.semantic.text }]}>
@@ -1421,6 +1465,19 @@ const styles = StyleSheet.create({
   typeTabText: {
     fontSize: fontSize.md,
   },
+  typeTabContent: {
+    alignItems: 'center',
+  },
+  comingSoonBadge: {
+    marginTop: spacing.xs - 2,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 1,
+    borderRadius: radius.xs,
+  },
+  comingSoonText: {
+    fontSize: FONT_SIZE_TINY,
+    fontWeight: fontWeight.medium,
+  },
   content: {
     paddingHorizontal: spacing.lg, // 16px - matches AppBar and Screen default
     paddingTop: spacing.xl,
@@ -1669,5 +1726,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
     textAlign: 'center',
+  },
+  // Loading state
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing['3xl'] * 2,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.sm,
   },
 })

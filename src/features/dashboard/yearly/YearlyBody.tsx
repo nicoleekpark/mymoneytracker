@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 import { FEATURE_FLAGS } from '@/shared/config'
@@ -114,7 +114,7 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
-        <Text style={{ color: colors.text, opacity: 0.7 }}>Loading...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
