@@ -65,7 +65,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
     // Map rows to transactions
     return rows.map((r) => {
       const tags = r.tag_names ? r.tag_names.split(',') : undefined
-      const categoryResolver = (id: UUID) => categoryMap.get(id)!
+      const categoryResolver = (id: UUID) => categoryMap.get(id) ?? null
       return rowToTransaction(r, categoryResolver, tags)
     })
   }
@@ -94,6 +94,19 @@ export class SqliteTransactionRepository implements TransactionRepository {
     ])
   }
 
+  /**
+   * Insert transaction with tags atomically.
+   * Wraps insert + saveTags in a single transaction for data integrity.
+   */
+  insertWithTags(tx: Transaction, tags?: string[]): void {
+    this.dataSource.withTransaction(() => {
+      this.insert(tx)
+      if (tags && tags.length > 0) {
+        this.saveTags(tx.id, tags)
+      }
+    })
+  }
+
   update(tx: Transaction): void {
     const row = transactionToRow(tx, (ref) => this.categoryRepo.resolveCategoryId(ref))
     const now = new Date().toISOString()
@@ -114,6 +127,20 @@ export class SqliteTransactionRepository implements TransactionRepository {
       now,
       row.id,
     ])
+  }
+
+  /**
+   * Update transaction with tags atomically.
+   * Wraps update + deleteTags + saveTags in a single transaction for data integrity.
+   */
+  updateWithTags(tx: Transaction, tags?: string[]): void {
+    this.dataSource.withTransaction(() => {
+      this.update(tx)
+      this.deleteTags(tx.id)
+      if (tags && tags.length > 0) {
+        this.saveTags(tx.id, tags)
+      }
+    })
   }
 
   getById(id: string): Transaction | null {

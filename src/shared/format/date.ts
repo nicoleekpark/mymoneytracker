@@ -1,3 +1,5 @@
+import { currentMonthYYYYMM } from '@/core/domain/transaction'
+
 /**
  * Pad a number to 2 digits with leading zero
  */
@@ -6,10 +8,11 @@ export function pad2(n: number): string {
 }
 
 /**
- * Get month key in YYYY-MM format
+ * Get month key in YYYY-MM format.
+ * Delegates to currentMonthYYYYMM from domain layer for consistency.
  */
 export function monthKey(d: Date): string {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`
+  return currentMonthYYYYMM(d)
 }
 
 /**

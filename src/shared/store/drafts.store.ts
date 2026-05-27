@@ -86,8 +86,8 @@ export const useDraftsStore = create<DraftsState>((set, get) => ({
       set((state) => ({ drafts: [newDraft, ...state.drafts] }))
     } catch (error) {
       logError('Drafts', error)
-      // Still update local state for UX
-      set((state) => ({ drafts: [newDraft, ...state.drafts] }))
+      // Don't update local state on DB failure - prevents desync
+      throw error
     }
   },
 
@@ -104,9 +104,8 @@ export const useDraftsStore = create<DraftsState>((set, get) => ({
       }))
     } catch (error) {
       logError('Drafts', error)
-      set((state) => ({
-        drafts: state.drafts.map((d) => (d.id === id ? updated : d)),
-      }))
+      // Don't update local state on DB failure - prevents desync
+      throw error
     }
   },
 
@@ -118,9 +117,8 @@ export const useDraftsStore = create<DraftsState>((set, get) => ({
       }))
     } catch (error) {
       logError('Drafts', error)
-      set((state) => ({
-        drafts: state.drafts.filter((d) => d.id !== id),
-      }))
+      // Don't update local state on DB failure - prevents desync
+      throw error
     }
   },
 
@@ -138,11 +136,8 @@ export const useDraftsStore = create<DraftsState>((set, get) => ({
       }))
     } catch (error) {
       logError('Drafts', error)
-      set((state) => ({
-        drafts: state.drafts.map((d) =>
-          d.id === id ? { ...d, starred: !d.starred } : d
-        ),
-      }))
+      // Don't update local state on DB failure - prevents desync
+      throw error
     }
   },
 
@@ -152,7 +147,8 @@ export const useDraftsStore = create<DraftsState>((set, get) => ({
       set({ drafts: [] })
     } catch (error) {
       logError('Drafts', error)
-      set({ drafts: [] })
+      // Don't update local state on DB failure - prevents desync
+      throw error
     }
   },
 }))

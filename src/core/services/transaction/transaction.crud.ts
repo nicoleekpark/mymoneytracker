@@ -96,12 +96,8 @@ export async function addTransaction(
           accountId: input.accountId,
         })
 
-  transactionRepository.insert(tx)
-
-  // Persist tags to junction table
-  if (input.tags && input.tags.length > 0) {
-    transactionRepository.saveTags(tx.id, input.tags)
-  }
+  // Insert transaction + tags atomically
+  transactionRepository.insertWithTags(tx, input.tags)
 
   // Check budget alert after expense transactions
   if (tx.type === 'expense') {
@@ -209,13 +205,8 @@ export async function updateTransaction(
           accountId: input.accountId,
         })
 
-  transactionRepository.update(tx)
-
-  // Update tags - always delete existing tags first, then save new ones
-  transactionRepository.deleteTags(tx.id)
-  if (input.tags && input.tags.length > 0) {
-    transactionRepository.saveTags(tx.id, input.tags)
-  }
+  // Update transaction + tags atomically
+  transactionRepository.updateWithTags(tx, input.tags)
 
   // Check budget alert after expense transactions
   if (tx.type === 'expense') {
@@ -241,10 +232,6 @@ export async function removeTransaction(id: UUID): Promise<void> {
  * Re-inserts the full transaction object (including its original ID).
  */
 export async function restoreTransaction(tx: Transaction): Promise<void> {
-  transactionRepository.insert(tx)
-
-  // Restore tags if present
-  if (tx.tags && tx.tags.length > 0) {
-    transactionRepository.saveTags(tx.id, tx.tags)
-  }
+  // Restore transaction + tags atomically
+  transactionRepository.insertWithTags(tx, tx.tags)
 }
