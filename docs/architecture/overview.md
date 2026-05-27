@@ -217,15 +217,12 @@ const colors: StandardViewColors = { text, textSecondary, ... }
    - Rationale: Strict DI adds boilerplate without significant testability benefit
    - If needed later: Inject repositories as parameters to use-cases
 
-### Medium Priority
-2. **Repository Tests Missing** - 260 unit tests exist but no repository integration tests
-3. **No Query Builder** - SQL strings duplicated
-
 ### Low Priority
-4. **Inconsistent Exception Handling** - Mixed strategies
-5. **No Input Validation Layer** - Trust form inputs
-6. **No Caching** - Every render triggers DB queries
-7. **Inconsistent Barrel File Exports** - Some use `export *`, others use explicit exports
+2. **No Query Builder** - SQL strings duplicated
+3. **Inconsistent Exception Handling** - Mixed strategies
+4. **No Input Validation Layer** - Trust form inputs
+5. **No Caching** - Every render triggers DB queries
+6. **Inconsistent Barrel File Exports** - Some use `export *`, others use explicit exports
    - Recommendation: Standardize on explicit exports for better API control
 
 ---
@@ -285,11 +282,19 @@ Mapper: centsToDollars()
 ```
 __tests__/
 ├── unit/
-│   ├── mapper/       # Row ↔ Domain conversion tests
 │   ├── model/        # Domain model logic tests
+│   ├── services/     # Service layer tests
+│   ├── store/        # Zustand store tests
 │   ├── schema/       # Zod schema validation tests
-│   └── services/     # Service layer tests
-└── integration/      # DB + full stack tests (placeholder)
+│   ├── mapper/       # Row ↔ Domain conversion tests
+│   ├── hooks/        # React hook tests
+│   └── components/   # Component tests
+├── integration/
+│   ├── setup/        # Test database setup
+│   └── repository/   # Repository integration tests
+e2e/
+└── maestro/          # Mobile E2E tests
+    └── flows/        # Maestro YAML flows
 ```
 
-**Current coverage:** 260 tests across 25 suites
+**Current coverage:** 553 tests across 36 suites (~78% coverage)

@@ -7,8 +7,9 @@
 ## Overview
 
 The project uses **Jest** with `jest-expo` for testing. Current status:
-- **260 tests** across **25 test suites**
-- Covers mappers, schemas, models, services, and utilities
+- **553 tests** across **36 test suites**
+- **~78% code coverage**
+- Covers models, services, stores, schemas, mappers, hooks, components, and repositories
 
 ---
 
@@ -23,6 +24,15 @@ npm run test:watch
 
 # With coverage report
 npm run test:coverage
+
+# Run specific test file
+npm test -- --testPathPattern="transaction.crud"
+
+# Run specific directory
+npm test -- --testPathPattern="__tests__/unit/model"
+
+# Run integration tests only
+npm test -- --testPathPattern="__tests__/integration"
 ```
 
 ---
@@ -31,40 +41,47 @@ npm run test:coverage
 
 ```
 __tests__/
-├── unit/                           # Pure function tests
-│   ├── mapper/                     # DB ↔ domain conversion
-│   │   ├── account.mapper.test.ts
-│   │   ├── asset.mapper.test.ts
-│   │   ├── transaction.mapper.test.ts
-│   │   ├── draft.mapper.test.ts
-│   │   ├── notification.mapper.test.ts
-│   │   └── price-tracker.mapper.test.ts
-│   ├── model/                      # Domain model logic
+├── setup.ts                          # Jest setup file
+├── unit/
+│   ├── model/                        # Domain model tests
 │   │   ├── account.model.test.ts
 │   │   ├── asset.model.test.ts
-│   │   └── money.test.ts
-│   ├── schema/                     # Zod validation tests
-│   │   ├── account.schema.test.ts
-│   │   ├── asset.schema.test.ts
-│   │   ├── category.schema.test.ts
-│   │   ├── notification.schema.test.ts
-│   │   ├── price-tracker.schema.test.ts
-│   │   ├── tag.schema.test.ts
-│   │   └── transaction.schema.test.ts
-│   ├── services/                   # Service layer tests
+│   │   ├── category.model.test.ts
+│   │   ├── money.test.ts
+│   │   └── transaction.model.test.ts
+│   ├── services/                     # Service layer tests
 │   │   ├── account.service.test.ts
 │   │   ├── asset.service.test.ts
 │   │   ├── notification.service.test.ts
 │   │   ├── transaction.aggregations.test.ts
+│   │   ├── transaction.crud.test.ts
 │   │   ├── transaction.insights.test.ts
 │   │   └── transaction.projections.test.ts
-│   ├── format.currency.test.ts
-│   ├── format.date.test.ts
-│   └── transaction.utils.test.ts
-├── integration/                    # Tests with DB or multiple modules
-│   └── *.test.ts
-├── setup.ts                        # Jest setup (mocks, globals)
-└── README.md
+│   ├── store/                        # Zustand store tests
+│   │   ├── drafts.store.test.ts
+│   │   └── settings.store.test.ts
+│   ├── schema/                       # Zod schema tests
+│   │   └── *.schema.test.ts
+│   ├── mapper/                       # Data mapper tests
+│   │   └── *.mapper.test.ts
+│   ├── hooks/                        # React hook tests
+│   │   ├── useAmountKeypad.test.ts
+│   │   └── useAsyncData.test.ts
+│   ├── components/                   # Component tests
+│   │   ├── CategoryIcon.test.tsx
+│   │   ├── ScalePressable.test.tsx
+│   │   └── SectionHeader.test.tsx
+│   └── format.*.test.ts              # Formatter tests
+└── integration/
+    ├── setup/
+    │   ├── testDatabase.ts           # In-memory SQLite setup
+    │   └── testFixtures.ts           # Test data fixtures
+    └── repository/
+        └── transaction.repository.test.ts
+
+e2e/
+└── maestro/
+    └── flows/                        # E2E test flows (YAML)
 ```
 
 ---
@@ -86,211 +103,145 @@ Test pure functions in isolation, no I/O or React.
 
 ### Integration Tests
 
-Test multiple modules together, may include database.
+Test repositories with real SQLite database (in-memory).
 
 **Location**: `__tests__/integration/`
 
 **What to test**:
-- Repository + database interactions
-- Full use case flows
+- Repository CRUD operations
+- Aggregation queries
 - Data consistency across layers
+- Transaction atomicity
 
-### E2E Tests (Future)
+### Hook Tests
 
-Full user flow testing with Detox or Maestro.
+Test React hooks with `@testing-library/react`.
 
-**Location**: `e2e/`
+**Location**: `__tests__/unit/hooks/`
+
+**What to test**:
+- State transitions
+- Loading/error states
+- Refetch behavior
+- Cleanup on unmount
+
+### Component Tests
+
+Test React Native components with `@testing-library/react-native`.
+
+**Location**: `__tests__/unit/components/`
+
+**What to test**:
+- Rendering with props
+- User interactions
+- Accessibility
+
+### E2E Tests
+
+Full user flow testing with Maestro.
+
+**Location**: `e2e/maestro/flows/`
+
+**What to test**:
+- Add transaction flow
+- Edit/delete transactions
+- Navigation between screens
 
 ---
 
 ## Writing Tests
 
-### Basic Pattern
+### Service Test Pattern (with mocks)
 
 ```typescript
-// __tests__/unit/example.test.ts
-import { myFunction } from '@/core/domain/example'
-
-describe('myFunction', () => {
-  it('should return expected result', () => {
-    const result = myFunction(input)
-    expect(result).toBe(expected)
-  })
-
-  it('should handle edge case', () => {
-    expect(() => myFunction(null)).toThrow()
-  })
-})
-```
-
-### Path Aliases
-
-Use `@/` for src imports (configured in `jest.config.js`):
-
-```typescript
-// Correct - use path alias
-import { isExpense } from '@/core/domain/transaction/transaction.utils'
-
-// Avoid - relative paths
-import { isExpense } from '../../../src/core/domain/transaction/transaction.utils'
-```
-
----
-
-## Testing Patterns by Layer
-
-### Mapper Tests
-
-Test DB row ↔ domain model conversion:
-
-```typescript
-// __tests__/unit/mapper/account.mapper.test.ts
-import { AccountMapper } from '@/infrastructure/mappers/account.mapper'
-
-describe('AccountMapper', () => {
-  describe('toDomain', () => {
-    it('converts DB row to domain model', () => {
-      const row = {
-        id: 'uuid-123',
-        name: 'Checking',
-        type: 'checking',
-        balance_cents: 10050,
-        is_archived: 0,
-        created_at: '2026-01-15T10:00:00Z',
-      }
-
-      const account = AccountMapper.toDomain(row)
-
-      expect(account.id).toBe('uuid-123')
-      expect(account.name).toBe('Checking')
-      expect(account.balanceCents).toBe(10050)
-      expect(account.isArchived).toBe(false)
-      expect(account.createdAt).toBeInstanceOf(Date)
-    })
-  })
-
-  describe('toDatabase', () => {
-    it('converts domain model to DB row', () => {
-      const account = {
-        id: 'uuid-123',
-        name: 'Checking',
-        type: 'checking',
-        balanceCents: 10050,
-        isArchived: false,
-        createdAt: new Date('2026-01-15T10:00:00Z'),
-      }
-
-      const row = AccountMapper.toDatabase(account)
-
-      expect(row.balance_cents).toBe(10050)
-      expect(row.is_archived).toBe(0)
-      expect(row.created_at).toBe('2026-01-15T10:00:00.000Z')
-    })
-  })
-})
-```
-
-### Schema Tests
-
-Test Zod validation rules:
-
-```typescript
-// __tests__/unit/schema/account.schema.test.ts
-import { AccountSchema } from '@/core/domain/account/account.schema'
-
-describe('AccountSchema', () => {
-  it('validates correct account', () => {
-    const valid = {
-      id: 'uuid-123',
-      name: 'Checking',
-      type: 'checking',
-      balanceCents: 10050,
-    }
-
-    expect(() => AccountSchema.parse(valid)).not.toThrow()
-  })
-
-  it('rejects empty name', () => {
-    const invalid = {
-      id: 'uuid-123',
-      name: '',
-      type: 'checking',
-      balanceCents: 0,
-    }
-
-    expect(() => AccountSchema.parse(invalid)).toThrow()
-  })
-
-  it('rejects invalid account type', () => {
-    const invalid = {
-      id: 'uuid-123',
-      name: 'Account',
-      type: 'invalid-type',
-      balanceCents: 0,
-    }
-
-    expect(() => AccountSchema.parse(invalid)).toThrow()
-  })
-})
-```
-
-### Service Tests
-
-Test service functions with mocked repositories:
-
-```typescript
-// __tests__/unit/services/account.service.test.ts
-import { getActiveAccounts } from '@/core/services/account/account.service'
-
-// Mock the repository
 jest.mock('@/infrastructure/repositories', () => ({
-  accountRepository: {
-    listActive: jest.fn(),
+  transactionRepository: {
+    insertWithTags: jest.fn(),
+    getById: jest.fn(),
   },
 }))
 
-import { accountRepository } from '@/infrastructure/repositories'
+import { addTransaction } from '@/core/services/transaction'
+import { transactionRepository } from '@/infrastructure/repositories'
 
-describe('getActiveAccounts', () => {
+const mockInsert = transactionRepository.insertWithTags as jest.MockedFunction<
+  typeof transactionRepository.insertWithTags
+>
+
+describe('addTransaction', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  it('returns active accounts from repository', () => {
-    const mockAccounts = [
-      { id: '1', name: 'Checking', isArchived: false },
-      { id: '2', name: 'Savings', isArchived: false },
-    ]
+  it('creates transaction with generated ID', () => {
+    const input = { type: 'expense', amountCents: 1000, ... }
 
-    ;(accountRepository.listActive as jest.Mock).mockReturnValue(mockAccounts)
+    addTransaction(input)
 
-    const result = getActiveAccounts()
-
-    expect(result).toEqual(mockAccounts)
-    expect(accountRepository.listActive).toHaveBeenCalledTimes(1)
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ amountCents: 1000 }),
+      []
+    )
   })
 })
 ```
 
-### Model Tests
-
-Test domain model factories and validation:
+### Integration Test Pattern (with real DB)
 
 ```typescript
-// __tests__/unit/model/account.model.test.ts
-import { createAccount } from '@/core/domain/account/account.model'
+import { createTestDataSource, initTestSchema } from '../setup/testDatabase'
+import { seedTestAccounts } from '../setup/testFixtures'
 
-describe('createAccount', () => {
-  it('creates account with generated ID', () => {
-    const account = createAccount({
-      name: 'Checking',
-      type: 'checking',
+describe('TransactionRepository', () => {
+  let ds: TestDataSource
+
+  beforeEach(() => {
+    ds = createTestDataSource()
+    initTestSchema(ds)
+    seedTestAccounts(ds)
+  })
+
+  afterEach(() => {
+    ds.close()
+  })
+
+  it('inserts and retrieves transaction', () => {
+    // Test with real SQLite
+  })
+})
+```
+
+### Hook Test Pattern
+
+```typescript
+import { renderHook, act, waitFor } from '@testing-library/react'
+import { useMyHook } from '@/shared/hooks/useMyHook'
+
+describe('useMyHook', () => {
+  it('returns expected state', async () => {
+    const { result } = renderHook(() => useMyHook())
+
+    await waitFor(() => {
+      expect(result.current.data).toBe(expected)
     })
+  })
+})
+```
 
-    expect(account.id).toBeDefined()
-    expect(account.name).toBe('Checking')
-    expect(account.balanceCents).toBe(0)
-    expect(account.isArchived).toBe(false)
+### Component Test Pattern
+
+```typescript
+import { render, screen, fireEvent } from '@testing-library/react-native'
+import { MyComponent } from '@/shared/components/MyComponent'
+
+describe('MyComponent', () => {
+  it('handles press', () => {
+    const onPress = jest.fn()
+    render(<MyComponent onPress={onPress} />)
+
+    fireEvent.press(screen.getByText('Button'))
+
+    expect(onPress).toHaveBeenCalled()
   })
 })
 ```
@@ -310,72 +261,108 @@ jest.mock('@/infrastructure/repositories', () => ({
 }))
 ```
 
-### Mock Dates
+### Mock UUID
 
 ```typescript
-beforeEach(() => {
-  jest.useFakeTimers()
-  jest.setSystemTime(new Date('2026-03-15'))
-})
-
-afterEach(() => {
-  jest.useRealTimers()
-})
+jest.mock('@/shared/utils/uuid', () => ({
+  uuid: () => 'mock-uuid-123',
+}))
 ```
 
-### Mock UUID Generation
+### Mock React Native
 
 ```typescript
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-123',
+jest.mock('react-native', () => ({
+  Keyboard: { dismiss: jest.fn() },
+  Platform: { OS: 'ios' },
 }))
 ```
 
 ---
 
-## Best Practices
+## E2E Tests (Maestro)
 
-1. **Test behavior, not implementation** - Focus on what the function does, not how
-2. **One assertion per test** (when reasonable) - Makes failures easier to diagnose
-3. **Use descriptive test names** - Should read like requirements
-4. **Arrange-Act-Assert pattern** - Clear test structure
-5. **Keep tests independent** - Each test should run in isolation
-6. **Clean up after tests** - Reset mocks, clear timers
+### Install Maestro
+
+```bash
+curl -Ls "https://get.maestro.mobile.dev" | bash
+```
+
+### Run E2E Tests
+
+```bash
+# Run all flows
+maestro test e2e/maestro/flows/
+
+# Run specific flow
+maestro test e2e/maestro/flows/add-expense.yaml
+
+# Run with recording
+maestro record e2e/maestro/flows/add-expense.yaml
+```
+
+### Flow Example
+
+```yaml
+appId: com.houseofhuynh.finance
+---
+- launchApp
+- tapOn:
+    id: "add-transaction-button"
+- tapOn:
+    text: "Expense"
+- tapOn:
+    id: "keypad-5"
+- tapOn:
+    id: "keypad-0"
+- assertVisible:
+    text: "$0.50"
+```
+
+---
+
+## Coverage Targets
+
+| Area | Current | Target |
+|------|---------|--------|
+| Overall | ~78% | 85%+ |
+| Services | ~85% | 90%+ |
+| Mappers | 100% | 100% |
+| Schemas | 100% | 100% |
+| Stores | 100% | 100% |
 
 ---
 
 ## Common Issues
 
-### Path Alias Not Working
+### "Cannot find module 'react-native'" errors
 
-Ensure `jest.config.js` has `moduleNameMapper`:
-
-```javascript
-moduleNameMapper: {
-  '^@/(.*)$': '<rootDir>/src/$1',
-}
-```
-
-### Async Test Timeout
-
-Increase timeout for slow tests:
+The jest-expo preset handles React Native mocking. For specific modules:
 
 ```typescript
-it('handles slow operation', async () => {
-  // test code
-}, 10000)  // 10 second timeout
+jest.mock('react-native', () => ({
+  Keyboard: { dismiss: jest.fn() },
+}))
 ```
 
-### Mock Not Resetting
+### "act() warning" in hook tests
 
-Always clear mocks in `beforeEach`:
+Use `waitFor()` for async operations:
 
 ```typescript
-beforeEach(() => {
-  jest.clearAllMocks()
+await waitFor(() => {
+  expect(result.current.loading).toBe(false)
 })
+```
+
+### Integration tests failing with SQLite errors
+
+Ensure better-sqlite3 is installed:
+
+```bash
+npm install --save-dev better-sqlite3 @types/better-sqlite3
 ```
 
 ---
 
-**Last Updated**: March 2026
+**Last Updated**: May 2026

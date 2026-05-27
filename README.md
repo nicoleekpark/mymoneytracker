@@ -1,113 +1,96 @@
-# Project Overview
+# HoH Finance Tracker
 
-HoH Finance Tracker is a cross-platform personal finance app built with Expo/React Native and Tamagui. It supports iOS, Android, and web. The app uses expo-sqlite for local data persistence with a custom migration system.
-
-# Developor Guide
-
-## Step 1. Developer Environment Setup
-
-### Install required softwares
-```bash
-$ node --version
-v22.14.0
-
-$ npm --version
-10.9.2
-
-$ git --version
-git version 2.39.5 (Apple Git-154)
-```
-
-## Step 2. Create a Project and Set Up
-
-```bash
-# Create an expo app - npx command executes without installing
-$ npx create-expo-app@latest hoh_finance-tracker --template tabs
-
-Need to install the following packages:
-create-expo-app@3.5.3
-Ok to proceed? (y) y
-
-Creating an Expo project using the tabs template.
-
-✔ Downloaded and extracted project files.
-> npm install
-npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
-npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
-npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
-npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
-
-added 732 packages, and audited 733 packages in 16s
-
-63 packages are looking for funding
-  run `npm fund` for details
-
-found 0 vulnerabilities
-
-✅ Your project is ready!
+A personal finance app built with React Native that helps you track expenses, manage budgets, and gain insights into your spending habits.
 
 ---
-# install Tamagui
-$ npm install tamagui @tamagui/config @tamagui/babel-plugin
+
+## Features
+
+### Transaction Management
+- **Quick Entry** - Add expenses, income, and transfers in seconds
+- **Smart Categories** - 20+ expense categories with subcategories (Housing, Food, Lifestyle, Health, etc.)
+- **Multiple Accounts** - Track checking, savings, credit cards, and cash
+- **Drafts** - Save incomplete transactions and finish them later
+- **Tags** - Add custom tags for detailed filtering
+
+### Dashboard & Analytics
+- **Monthly View** - Calendar heatmap showing daily spending patterns
+- **Yearly View** - Month-by-month cash flow comparison
+- **All-Time View** - Cumulative net worth tracking
+- **Insights** - Category breakdowns, spending trends, and budget alerts
+
+### Budget Tracking
+- **Monthly Budget** - Set spending limits and track progress
+- **Budget Alerts** - Get notified when approaching budget limits
+- **Category Analysis** - See where your money goes
+
+### Additional Features
+- **Price Tracker** - Track grocery and item prices over time
+- **Asset Tracking** - Monitor savings, investments, and property
+- **Offline-First** - All data stored locally on device
+- **Dark Mode** - Full dark mode support
 
 ---
-# Install sqlite
-$ npx expo install expo-sqlite
 
-# Install dev client build (iOS)
-$ eas build -p ios --profile development
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | React Native + Expo SDK 54 |
+| UI | Tamagui Design System |
+| Database | SQLite (expo-sqlite) |
+| State | Zustand |
+| Validation | Zod |
+| Navigation | Expo Router (file-based) |
+
+---
+
+## Screenshots
+
+> *Screenshots coming soon*
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/                # Screens (Expo Router)
+├── core/               # Business logic
+│   ├── domain/         # Models, types, schemas
+│   └── services/       # Application services
+├── features/           # Feature modules
+│   ├── dashboard/      # Dashboard views
+│   ├── transactions/   # Add/Edit/List transactions
+│   └── price-tracker/  # Price tracking feature
+├── infrastructure/     # Database, repositories, mappers
+└── shared/             # Reusable components, hooks, utils
 ```
 
-### Update config so `@/` route points `src/` 
-```bash
-# In tsconfig.json
+---
 
-"compilerOptions": {
-    "strict": true,
-    "paths": {
-      "@/*": [
-        "./src/*" # changed from "./*"
-      ]
-    }
-}
-```
+## Documentation
 
-### Update necessary files pointing the right path
-```bash
-# In _layout.tsx
+| Document | Description |
+|----------|-------------|
+| [Development Guide](docs/guides/development.md) | Setup, commands, and development workflow |
+| [Architecture](docs/architecture/overview.md) | Technical architecture and design decisions |
+| [Testing](docs/guides/testing.md) | Test suite documentation and coverage |
+| [All Docs](docs/README.md) | Full documentation index |
 
-../assets/fonts/ -> ../../assets/fonts/
+---
 
-const [loaded, error] = useFonts({
-    SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
-```
+## Quality
 
+| Metric | Value |
+|--------|-------|
+| Test Suites | 36 |
+| Tests | 553 |
+| Code Coverage | ~78% |
+| TypeScript | Strict mode |
 
-## Commands
+---
 
-```bash
-# Run on iOS simulator with Expo Go (fastest, UI-only)
-npm run start:ios
+## License
 
-# Run on iOS with dev-client (required for SQLite/native features)
-npm run start:dev:ios
-
-# Rebuild native iOS (needed when adding/updating native modules)
-npm run ios:run && npm run start:dev:ios
-
-# Create a new database migration
-npm run db:migration:new <migration_name>
-
-# Regenerate migrations index
-npm run db:migration:regen
-
-# Export simulator database for inspection
-npm run db:dev:pull
-
-# Delete the app (reset the whole db)
-$ xcrun simctl uninstall booted com.houseofhuynh.finance
-```
+Private project - All rights reserved.

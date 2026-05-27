@@ -8,7 +8,7 @@
 
 | Role | Start Here |
 |------|------------|
-| **New Developer** | [getting-started/walkthrough.md](getting-started/walkthrough.md) |
+| **New Developer** | [guides/development.md](guides/development.md) → [getting-started/walkthrough.md](getting-started/walkthrough.md) |
 | **Contributor** | [guides/contributing.md](guides/contributing.md) → [guides/testing.md](guides/testing.md) |
 | **Product/Design** | [getting-started/overview.md](getting-started/overview.md) → [planning/prd-v1.md](planning/prd-v1.md) |
 | **Architecture** | [architecture/overview.md](architecture/overview.md) |
@@ -34,6 +34,7 @@ docs/
 │       └── 0002-clean-architecture.md
 │
 ├── guides/                      # How-to guides
+│   ├── development.md           # Setup and development workflow
 │   ├── contributing.md          # PR workflow, code standards
 │   ├── deployment.md            # App Store publishing
 │   └── testing.md               # Test patterns, running tests
@@ -62,7 +63,9 @@ docs/
 │
 └── archive/                     # Historical documents
     ├── changelog.md             # Version history
-    └── refactoring-2026-03.md   # Completed refactoring
+    ├── refactoring-2026-03.md   # Completed refactoring
+    ├── CODE_AUDIT_2026-03-30.md # Code audit (March 2026)
+    └── REFACTORING_ITEMS.md     # Refactoring tracker (April 2026)
 ```
 
 ---
@@ -84,6 +87,7 @@ docs/
 ### Guides
 | Document | Purpose |
 |----------|---------|
+| [development.md](guides/development.md) | Setup, commands, development workflow |
 | [contributing.md](guides/contributing.md) | PR workflow, code standards, adding features |
 | [testing.md](guides/testing.md) | Test patterns, running tests, mocking |
 | [deployment.md](guides/deployment.md) | App Store publishing |
@@ -110,9 +114,9 @@ docs/
 See [guides/testing.md](guides/testing.md) for comprehensive testing guide.
 
 ```bash
-npm test              # Run all tests (260 tests)
+npm test              # Run all tests (553 tests)
 npm run test:watch    # Watch mode
-npm run test:coverage # With coverage report
+npm run test:coverage # With coverage report (~78% coverage)
 ```
 
 ---
@@ -128,4 +132,4 @@ See [guides/contributing.md](guides/contributing.md) for full contribution guide
 
 ---
 
-**Last Updated**: March 2026
+**Last Updated**: May 2026
