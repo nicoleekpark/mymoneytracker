@@ -1,6 +1,6 @@
-# HoH Ledger v1 - App Store Publishing Guide
+# MyMoneyTracker v1 - App Store Publishing Guide
 
-> Preparing HoH Ledger for initial App Store release
+> Preparing MyMoneyTracker for initial App Store release
 
 ---
 
@@ -43,7 +43,7 @@
 
 ### 2. App Configuration
 - [x] Update `app.json`:
-  - [x] `name`: "HoH Ledger"
+  - [x] `name`: "MyMoneyTracker"
   - [x] `slug`: "hoh-ledger"
   - [x] `version`: "1.0.0"
   - [x] `ios.bundleIdentifier`: "com.houseofhuynh.finance"
@@ -183,9 +183,9 @@ Capture these screens for App Store listing:
 
 ### App Description Template
 ```
-HoH Ledger - Your Personal Finance Tracker
+MyMoneyTracker - Your Personal Finance App
 
-Track your spending, income, and transfers with ease. HoH Ledger helps you understand where your money goes with beautiful visualizations and smart insights.
+Track your spending, income, and transfers with ease. MyMoneyTracker helps you understand where your money goes with beautiful visualizations and smart insights.
 
 Features:
 • Dashboard with monthly, yearly, and all-time views

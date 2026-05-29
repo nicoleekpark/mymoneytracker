@@ -1,6 +1,6 @@
 # Testing Guide
 
-> How to write and run tests in HoH Ledger.
+> How to write and run tests in MyMoneyTracker.
 
 ---
 

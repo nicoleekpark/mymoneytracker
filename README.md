@@ -1,10 +1,10 @@
-# HoH Finance Tracker
+# MyMoneyTracker
 
 > A privacy-first personal finance app with offline-first architecture, built with React Native and Clean Architecture principles.
 
 <p align="center">
   <!-- SCREENSHOT: App icon or hero image showing 3 screens side by side (Dashboard, Add Transaction, Transactions List) -->
-  <img src="assets/screenshots/hero.png" alt="HoH Finance Tracker" width="800"/>
+  <img src="assets/screenshots/hero.png" alt="MyMoneyTracker" width="800"/>
 </p>
 
 ---

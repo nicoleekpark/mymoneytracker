@@ -21,7 +21,7 @@
 
 ## Overview
 
-v2 transforms HoH Finance Tracker from a **single-user offline app** into a **shared financial system** for families and co-owners, enhanced with **AI-powered insights**. The core philosophy remains: **manual, intentional tracking**, but now with collaborative features and intelligent pattern recognition.
+v2 transforms MyMoneyTracker from a **single-user offline app** into a **shared financial system** for families and co-owners, enhanced with **AI-powered insights**. The core philosophy remains: **manual, intentional tracking**, but now with collaborative features and intelligent pattern recognition.
 
 **Key Additions**:
 - Family & multi-user support (up to 6 members)

@@ -1,6 +1,6 @@
 # Maestro E2E Tests
 
-End-to-end tests for HoH Finance Tracker using [Maestro](https://maestro.mobile.dev/).
+End-to-end tests for MyMoneyTracker using [Maestro](https://maestro.mobile.dev/).
 
 ## Prerequisites
 

@@ -1,6 +1,6 @@
 # Glossary
 
-This document defines key terms, conventions, and domain concepts used throughout the HoH Finance Tracker codebase.
+This document defines key terms, conventions, and domain concepts used throughout the MyMoneyTracker codebase.
 
 *Last updated: March 2026*
 ---

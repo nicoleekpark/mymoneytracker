@@ -1,4 +1,4 @@
-# HoH Ledger - Code Audit Report
+# MyMoneyTracker - Code Audit Report
 
 **Date:** 2026-03-30
 **Auditor:** Senior Software Engineer & Architect
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-The HoH Ledger codebase demonstrates **solid architectural discipline** with Clean Architecture correctly implemented. The domain layer is pure, the repository pattern is properly applied, and the codebase is well-organized with 329 source files across 82 directories.
+The MyMoneyTracker codebase demonstrates **solid architectural discipline** with Clean Architecture correctly implemented. The domain layer is pure, the repository pattern is properly applied, and the codebase is well-organized with 329 source files across 82 directories.
 
 **Overall Grade: B+**
 

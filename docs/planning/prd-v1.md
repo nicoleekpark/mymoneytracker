@@ -21,12 +21,12 @@
 
 ## Overview
 
-**Product Name**: HoH Finance Tracker
+**Product Name**: MyMoneyTracker
 **Working Name**: Subject to change
 
 ### Product Description
 
-HoH Finance Tracker is a cross-platform personal finance application designed for **manual, intentional financial tracking**. Unlike automatic bank-sync apps, HoH empowers users to consciously log every transaction, building awareness and control over their spending habits.
+MyMoneyTracker is a cross-platform personal finance application designed for **manual, intentional financial tracking**. Unlike automatic bank-sync apps, HoH empowers users to consciously log every transaction, building awareness and control over their spending habits.
 
 **Core Philosophy**:
 - **Offline-first**: All data stored locally using expo-sqlite
@@ -48,7 +48,7 @@ Many people struggle with financial awareness not because they lack tools, but b
 
 ### Our Solution
 
-HoH Finance Tracker provides:
+MyMoneyTracker provides:
 1. **Visual Clarity**: Google Calendar-inspired daily cash flow view
 2. **Manual Intentionality**: Conscious transaction logging builds awareness
 3. **Immediate Start**: No signup, no bank linking, no learning curve
@@ -489,7 +489,7 @@ What v1 explicitly **will NOT** include:
 
 ### Product Questions
 
-1. **Product Name**: "HoH Finance Tracker" is placeholder - needs final decision
+1. **Product Name**: "MyMoneyTracker" is placeholder - needs final decision
 2. **Cash Flow Tab**: What should this view show differently from Overview?
 3. **Budget Granularity**: Should we support per-category budgets in v1 or wait for v2?
 4. **Graph Visual Language**: Should we use consistent colors across all charts?

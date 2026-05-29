@@ -1,6 +1,6 @@
 # Design QA Test Plan
 
-Visual and design consistency checks for HoH Ledger.
+Visual and design consistency checks for MyMoneyTracker.
 
 ---
 

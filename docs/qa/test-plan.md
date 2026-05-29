@@ -1,10 +1,10 @@
-# HoH Ledger - QA Test Plan
+# MyMoneyTracker - QA Test Plan
 
 > **Version:** 1.0
 > **Last Updated:** 2026-03-05
 > **App Version:** SDK 54 (Expo)
 
-This document outlines all testable features, expected behaviors, and edge cases for the HoH Finance Tracker app. Use this as a checklist for manual QA testing before releases.
+This document outlines all testable features, expected behaviors, and edge cases for the MyMoneyTracker app. Use this as a checklist for manual QA testing before releases.
 
 ---
 

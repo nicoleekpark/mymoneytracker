@@ -1,12 +1,12 @@
-# HoH Ledger Architecture Overview
+# MyMoneyTracker Architecture Overview
 
-> Comprehensive technical documentation of the HoH Ledger codebase architecture
+> Comprehensive technical documentation of the MyMoneyTracker codebase architecture
 
 ---
 
 ## 1. High-Level Architecture
 
-HoH Ledger is a cross-platform personal finance application built on **Clean Architecture** principles with explicit layer separation:
+MyMoneyTracker is a cross-platform personal finance application built on **Clean Architecture** principles with explicit layer separation:
 
 ```
 ┌─────────────────────────────────────────────────────────┐

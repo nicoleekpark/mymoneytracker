@@ -1,6 +1,6 @@
 # Contributing Guide
 
-> Guidelines for contributing to HoH Ledger.
+> Guidelines for contributing to MyMoneyTracker.
 
 ---
 

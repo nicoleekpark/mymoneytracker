@@ -1,4 +1,4 @@
-# HoH Ledger - Refactoring Items
+# MyMoneyTracker - Refactoring Items
 
 > Generated: 2026-04-01
 > Last Updated: 2026-04-03

@@ -1,4 +1,4 @@
-# HoH Ledger - Claude Code Commands
+# MyMoneyTracker - Claude Code Commands
 
 Show this guide: `/how-to`
 

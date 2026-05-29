@@ -1,4 +1,4 @@
-# Design QA Test Report - HoH Ledger
+# Design QA Test Report - MyMoneyTracker
 
 > **Test Date:** 2026-03-05
 > **Tester:** Claude (Static Code Analysis)

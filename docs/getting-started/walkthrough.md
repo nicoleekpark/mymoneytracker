@@ -1,4 +1,4 @@
-# HoH Ledger Codebase Walkthrough
+# MyMoneyTracker Codebase Walkthrough
 
 Welcome to the team! I'll walk you through this codebase the way I wish someone had walked me through it. We'll start from when the app launches and follow the code all the way down to the database.
 

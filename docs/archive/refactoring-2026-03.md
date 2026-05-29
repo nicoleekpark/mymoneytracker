@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This refactoring improved the HoH Ledger codebase across 8 phases, focusing on:
+This refactoring improved the MyMoneyTracker codebase across 8 phases, focusing on:
 - **Performance**: Fixed N+1 queries (Phase 1 - completed earlier)
 - **Code Reuse**: Extracted shared components and hooks (Phase 2)
 - **Maintainability**: Split large files into focused modules (Phase 3)

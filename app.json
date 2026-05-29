@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "HoH Ledger",
-    "slug": "hoh-ledger",
+    "name": "MyMoneyTracker",
+    "slug": "hoh-money-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "hohledger",
+    "scheme": "hohmoneytracker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,12 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.houseofhuynh.finance",
+      "bundleIdentifier": "com.houseofhuynh.moneytracker",
       "buildNumber": "1",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "HoH Ledger uses your camera to scan receipts.",
-        "NSPhotoLibraryUsageDescription": "HoH Ledger accesses your photos to import receipt images."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

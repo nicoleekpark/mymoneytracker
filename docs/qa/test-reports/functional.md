@@ -1,4 +1,4 @@
-# QA Test Report - HoH Ledger
+# QA Test Report - MyMoneyTracker
 
 > **Test Date:** 2026-03-05
 > **Tester:** Claude (Automated Code Review)

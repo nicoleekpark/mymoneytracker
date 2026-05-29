@@ -1,6 +1,6 @@
-# HoH Ledger Documentation
+# MyMoneyTracker Documentation
 
-> Centralized documentation for HoH Finance Tracker.
+> Centralized documentation for MyMoneyTracker.
 
 ---
 

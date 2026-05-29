@@ -1,4 +1,4 @@
-# HoH Finance Tracker — Overview
+# MyMoneyTracker — Overview
 
 > A cross-platform personal finance app for manual, intentional money tracking.
 

@@ -51,10 +51,10 @@
 
 ### Q1: Final Product Name
 
-**Current**: "HoH Finance Tracker" (placeholder)
+**Current**: "MyMoneyTracker" (placeholder)
 
 **Options**:
-- HoH Finance
+- MyMoneyTracker
 - HoH Wallet
 - CashFlow
 - Manual Money

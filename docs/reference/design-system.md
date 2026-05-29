@@ -1,6 +1,6 @@
 # Design System Reference
 
-> Visual design rules and component styling for HoH Ledger.
+> Visual design rules and component styling for MyMoneyTracker.
 
 ---
 
