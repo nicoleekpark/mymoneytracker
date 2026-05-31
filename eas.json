@@ -19,6 +19,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "ios": {
+        "distribution": "store"
+      },
       "env": {
         "EXPO_PUBLIC_DEV_TOOLS": "false"
       }

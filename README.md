@@ -9,7 +9,7 @@
 
 ---
 
-## Why I Built This
+## Motivation
 
 Most finance apps require cloud accounts and share data with third parties. I wanted a **privacy-first** solution that:
 
@@ -18,6 +18,17 @@ Most finance apps require cloud accounts and share data with third parties. I wa
 - Provides **real insights** into spending patterns, not just lists of transactions
 
 This project also served as a deep dive into **Clean Architecture** in a React Native context, with a focus on testability and maintainability.
+
+---
+
+## Quick Start
+
+```bash
+git clone <repository-url>
+cd hoh_ledger
+npm install
+npm run start:dev:ios    # iOS with SQLite
+```
 
 ---
 
@@ -84,20 +95,6 @@ Understand your spending patterns with visual analytics and smart alerts.
 
 ---
 
-### Price Tracker
-
-Track prices of groceries and household items over time to find the best deals.
-
-<p align="center">
-  <!-- SCREENSHOT: Price Tracker list view -->
-  <img src="assets/screenshots/price-tracker.png" alt="Price Tracker" width="280"/>
-  &nbsp;&nbsp;
-  <!-- SCREENSHOT: Price history chart for an item -->
-  <img src="assets/screenshots/price-history.png" alt="Price History" width="280"/>
-</p>
-
----
-
 ## Technical Highlights
 
 ### Clean Architecture
@@ -106,7 +103,9 @@ Track prices of groceries and household items over time to find the best deals.
 ┌─────────────────────────────────────────┐
 │           UI Layer (Screens)            │
 ├─────────────────────────────────────────┤
-│         Features (Hooks, Components)    │
+│      Features (Hooks, Components)       │
+├─────────────────────────────────────────┤
+│      Services (Business Logic)          │  ← Orchestrates domain + infra
 ├─────────────────────────────────────────┤
 │      Domain (Pure Types, Models)        │  ← No external dependencies
 ├─────────────────────────────────────────┤
@@ -115,6 +114,7 @@ Track prices of groceries and household items over time to find the best deals.
 ```
 
 - **Domain layer is 100% pure** - Zero infrastructure imports
+- **Services layer orchestrates** - Combines domain models with repositories
 - **Repository pattern** - Swappable data layer
 - **Feature-first organization** - Self-contained feature modules
 
@@ -175,11 +175,16 @@ src/
 
 ## Documentation
 
-For detailed technical documentation:
-
-- [Development Guide](docs/guides/development.md) - Setup and commands
-- [Architecture](docs/architecture/overview.md) - Technical deep dive
-- [Testing Guide](docs/guides/testing.md) - Test patterns and coverage
+| Document | Purpose |
+|----------|---------|
+| [CLAUDE.md](CLAUDE.md) | Architecture rules, coding guidelines |
+| [Development Guide](docs/guides/development.md) | Setup, commands, troubleshooting |
+| [Architecture](docs/architecture/overview.md) | System design, layers, patterns |
+| [Testing Guide](docs/guides/testing.md) | Test patterns, mocking, coverage |
+| [Deployment](docs/guides/deployment.md) | App Store publishing |
+| [Roadmap](docs/ROADMAP.md) | Future features (v2, v3) |
+| [Glossary](docs/reference/glossary.md) | Domain terminology |
+| [UI Terminology](docs/reference/ui-terminology.md) | Component naming conventions |
 
 ---
 
@@ -198,8 +203,6 @@ For detailed technical documentation:
 | Quick Chips | `quick-chips.png` | Quick chips row |
 | Insights | `insights.png` | Spending patterns view |
 | Budget Alert | `budget-alert.png` | Budget progress with alert |
-| Price Tracker | `price-tracker.png` | Item list view |
-| Price History | `price-history.png` | Price chart for item |
 
 Place screenshots in `assets/screenshots/` folder.
 
