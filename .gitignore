@@ -42,7 +42,6 @@ yarn-error.*
 /ios
 /android
 
-Notes.md
 db_exports/
 *.db
 *.db-wal
@@ -71,3 +70,6 @@ coverage/
 
 # Windows
 Thumbs.db
+
+# Local markdown files 
+*.dev.md
