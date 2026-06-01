@@ -14,7 +14,6 @@
     "ios:reset": "npm run ios:uninstall && expo prebuild --clean",
     "db:migration:new": "node scripts/create-migration.js",
     "db:migration:regen": "node scripts/create-migration.js --regen",
-    "db:export:sim": "./scripts/export-db-from-simulator.sh",
     "db:dev:pull": "./scripts/dbpull.sh",
     "db:reset": "./scripts/db-reset.sh",
     "android": "expo run:android",
