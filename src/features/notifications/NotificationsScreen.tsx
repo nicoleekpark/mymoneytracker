@@ -212,7 +212,7 @@ export default function NotificationsScreen() {
     if (!notification.read) {
       markAsRead(notification.id)
     }
-    // TODO: Navigate to related content based on subtype
+    // v2: Navigate to related content based on subtype
   }
 
   // Handle swipe to dismiss

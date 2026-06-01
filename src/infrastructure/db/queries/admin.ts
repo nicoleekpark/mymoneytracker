@@ -67,7 +67,7 @@ export function resetDbHardDropAllTables(): void {
 }
 
 export function seedDbMinimal(): void {
-  // TODO: seed categories/accounts/transactions
+  // Not used in production - placeholder for dev seeding
   return
 }
 

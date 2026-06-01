@@ -149,7 +149,7 @@ export function ItemPriceHistorySheet({
             <Pressable
               style={[styles.ctaButton, { backgroundColor: theme.semantic.surfaceAlt }]}
               onPress={() => {
-                // TODO: Navigate to full history
+                // v1.x: Navigate to full history (Price Tracker completion)
               }}
             >
               <FontAwesome name="line-chart" size={14} color={theme.semantic.primary as string} />

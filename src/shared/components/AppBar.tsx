@@ -174,16 +174,16 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
     setMenuOpen(false)
     switch (action) {
       case 'search':
-        // TODO: Open search
+        // v2: Open search
         break
       case 'messages':
-        // TODO: Open messages (v2)
+        // v2: Open messages
         break
       case 'settings':
         router.push('/settings')
         break
       case 'signout':
-        // TODO: Sign out
+        // v2: Sign out
         break
     }
   }

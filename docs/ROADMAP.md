@@ -22,6 +22,7 @@ Future feature ideas for MyMoneyTracker.
 | Feature | Description |
 |---------|-------------|
 | **Family Sharing** | Multi-user (up to 6), role-based permissions |
+| **Family Messaging** | In-app chat between family members |
 | **Cloud Sync** | Optional sync across devices |
 | **Transaction Editing** | Edit past transactions with audit trail |
 | **Recurring Transactions** | Templates for rent, subscriptions, bills |
@@ -50,7 +51,7 @@ Future feature ideas for MyMoneyTracker.
 | Feature | Reason |
 |---------|--------|
 | Bank Sync | Privacy-first philosophy |
-| Social Features | Financial privacy concerns |
+| Public Social Features | Financial privacy concerns (family-only messaging OK) |
 | Tax Categorization | Requires CPA expertise |
 | Cryptocurrency | Too complex/volatile |
 
