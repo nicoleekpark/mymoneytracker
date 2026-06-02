@@ -32,9 +32,11 @@ BUNDLE_ID="${IOS_BUNDLE_ID:-${EXPO_PUBLIC_IOS_BUNDLE_ID:-com.houseofhuynh.financ
 # DB name
 DB_ENV="${DB_ENV:-dev}"
 if [[ "${DB_ENV}" == "prod" ]]; then
-  DB_NAME="hoh_fi_prod.db"
+  DB_NAME="mmt_prod.db"
+elif [[ "${DB_ENV}" == "staging" ]]; then
+  DB_NAME="mmt_staging.db"
 else
-  DB_NAME="hoh_fi_dev.db"
+  DB_NAME="mmt_dev.db"
 fi
 
 get_app_container() {

@@ -17,6 +17,4 @@ export type FeatureFlags = Readonly<{
 
   // Developer tools
   devTools: boolean
-  devSeedNotifications: boolean  // Auto-seed mock notifications in dev
-  devSeedSuggestions: boolean    // Auto-seed suggestion data in dev
 }>

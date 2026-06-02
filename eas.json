@@ -14,7 +14,8 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_DEV_TOOLS": "true"
+        "EXPO_PUBLIC_DEV_TOOLS": "false",
+        "EXPO_PUBLIC_DB_ENV": "staging"
       }
     },
     "production": {
@@ -23,7 +24,8 @@
         "distribution": "store"
       },
       "env": {
-        "EXPO_PUBLIC_DEV_TOOLS": "false"
+        "EXPO_PUBLIC_DEV_TOOLS": "false",
+        "EXPO_PUBLIC_DB_ENV": "prod"
       }
     }
   },

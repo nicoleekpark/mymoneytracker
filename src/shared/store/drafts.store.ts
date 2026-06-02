@@ -28,14 +28,14 @@ export type DraftTransaction = {
   occurredAt: string // ISO string
   receiptUri?: string
   createdAt: string // ISO string
-  starred?: boolean
+  starred: boolean
 }
 
 // Convert store type to repository type
 function toDbDraft(draft: DraftTransaction): DraftTransactionDB {
   return {
     ...draft,
-    starred: draft.starred ?? false,
+    starred: draft.starred,
   }
 }
 
@@ -47,11 +47,14 @@ function fromDbDraft(draft: DraftTransactionDB): DraftTransaction {
   }
 }
 
+/** Input for adding a draft - starred defaults to false */
+type AddDraftInput = Omit<DraftTransaction, 'id' | 'createdAt' | 'starred'> & { starred?: boolean }
+
 type DraftsState = {
   drafts: DraftTransaction[]
   isLoaded: boolean
   loadDrafts: () => void
-  addDraft: (draft: Omit<DraftTransaction, 'id' | 'createdAt'>) => void
+  addDraft: (draft: AddDraftInput) => void
   updateDraft: (id: string, updates: Partial<Omit<DraftTransaction, 'id' | 'createdAt'>>) => void
   removeDraft: (id: string) => void
   getDraft: (id: string) => DraftTransaction | undefined

@@ -1,10 +1,9 @@
 // ESLint Configuration for HoH Ledger
-// Uses Expo's recommended config with TypeScript support
+// Uses TypeScript ESLint for type-safe linting
 
 module.exports = {
   root: true,
   extends: [
-    'expo',
     'plugin:@typescript-eslint/recommended',
   ],
   parser: '@typescript-eslint/parser',
@@ -22,10 +21,6 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-require-imports': 'off', // Allow require() for lazy imports
-
-    // React
-    'react/react-in-jsx-scope': 'off',
-    'react-hooks/exhaustive-deps': 'warn',
 
     // General
     'no-console': ['warn', { allow: ['warn', 'error'] }],

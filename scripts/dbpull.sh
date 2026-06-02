@@ -53,9 +53,11 @@ fi
 DB_NAME="${DB_NAME:-}"
 if [[ -z "${DB_NAME}" ]]; then
   if [[ "${DB_ENV}" == "prod" ]]; then
-    DB_NAME="hoh_fi_prod.db"
+    DB_NAME="mmt_prod.db"
+  elif [[ "${DB_ENV}" == "staging" ]]; then
+    DB_NAME="mmt_staging.db"
   else
-    DB_NAME="hoh_fi_dev.db"
+    DB_NAME="mmt_dev.db"
   fi
 fi
 

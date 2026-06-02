@@ -10,18 +10,27 @@ MyMoneyTracker is a cross-platform personal finance app built with Expo/React Na
 
 ```bash
 # Development
-npm run start:ios              # Run with Expo Go (UI-only, no native modules)
-npm run start:dev:ios          # Run with dev-client (required for SQLite)
-npm run ios:run                # Rebuild native iOS project
+npm run dev                    # Run dev-client on iOS (with DevTools, dev DB)
+npm run dev:android            # Run dev-client on Android
+npm run staging                # Run staging mode (no DevTools, staging DB)
+
+# Native builds
+npm run build:ios              # Rebuild native iOS project
+npm run build:android          # Rebuild native Android project
+
+# EAS builds (cloud)
+npm run eas:dev                # Development build (internal)
+npm run eas:staging            # Staging build (internal, prod-like)
+npm run eas:prod               # Production build (App Store)
 
 # Database
-npm run db:migration:new <name>   # Create a new migration
-npm run db:migration:regen        # Regenerate migrations index
-npm run db:dev:pull               # Export simulator database for inspection
-npm run db:reset                  # Reset database (uninstall app)
+npm run db:migrate:new <name>  # Create a new migration
+npm run db:migrate:regen       # Regenerate migrations index
+npm run db:pull                # Export simulator database for inspection
+npm run db:reset               # Reset database (delete DB file)
 
 # Full rebuild (when adding/updating native modules)
-npm run ios:run && npm run start:dev:ios
+npm run build:ios && npm run dev
 ```
 
 ## Architecture

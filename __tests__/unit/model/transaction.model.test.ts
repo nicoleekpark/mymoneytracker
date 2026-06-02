@@ -310,7 +310,7 @@ describe('transaction.model', () => {
         const invalidTx = {
           ...validExpenseBase,
           category: {
-            type: 'expense',
+            type: 'expense' as const,
             categoryKey: 'nonexistent',
           },
         }
@@ -324,7 +324,7 @@ describe('transaction.model', () => {
         const invalidTx = {
           ...validExpenseBase,
           category: {
-            type: 'expense',
+            type: 'expense' as const,
             categoryKey: 'food',
             subCategoryKey: 'nonexistent',
           },

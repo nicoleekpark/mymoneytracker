@@ -19,6 +19,4 @@ export const FEATURE_FLAGS: FeatureFlags = {
 
   // Developer tools
   devTools: isDev,
-  devSeedNotifications: isDev,  // Auto-seed mock notifications in dev
-  devSeedSuggestions: isDev,    // Auto-seed suggestion data in dev
 }
