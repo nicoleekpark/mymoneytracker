@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import type { CategoryRef } from '@/core/domain/category'
+import { useDataRefreshStore } from '@/shared/store'
 import type { UUID } from '@/core/domain/common/uuid'
 import {
   getAllTimeSummaryDollar,
@@ -69,9 +70,12 @@ const DEFAULT_DATA: AllTimeData = {
 }
 
 export function useAllTimeData() {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<AllTimeData>(DEFAULT_DATA)
+
+  // Subscribe to transaction changes to auto-refresh
+  const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
 
   useEffect(() => {
     let alive = true
@@ -157,7 +161,7 @@ export function useAllTimeData() {
     return () => {
       alive = false
     }
-  }, [])
+  }, [transactionVersion])
 
   return { loading, error, data }
 }

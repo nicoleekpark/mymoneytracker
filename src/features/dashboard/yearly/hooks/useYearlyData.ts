@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
+import { useDataRefreshStore } from '@/shared/store'
 import type { UUID } from '@/core/domain/common/uuid'
 import {
   getMonthlyFlowDollarForYear,
@@ -187,6 +188,9 @@ export function useYearlyData(year: number) {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<YearlyData>(DEFAULT_DATA)
 
+  // Subscribe to transaction changes to auto-refresh
+  const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
+
   useEffect(() => {
     let alive = true
 
@@ -296,7 +300,7 @@ export function useYearlyData(year: number) {
     return () => {
       alive = false
     }
-  }, [year])
+  }, [year, transactionVersion])
 
   return { loading, error, data }
 }

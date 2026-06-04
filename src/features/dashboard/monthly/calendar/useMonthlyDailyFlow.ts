@@ -1,4 +1,5 @@
 import { getDailyFlowDollarForMonth } from '@/core/services/transaction'
+import { useDataRefreshStore } from '@/shared/store'
 import { useEffect, useState } from 'react'
 
 export type DailyFlow = Readonly<{
@@ -13,6 +14,9 @@ export function useMonthlyDailyFlow(monthYYYYMM: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [daily, setDaily] = useState<DailyFlow[]>([])
+
+  // Subscribe to transaction changes to auto-refresh
+  const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
 
   useEffect(() => {
     let alive = true
@@ -38,7 +42,7 @@ export function useMonthlyDailyFlow(monthYYYYMM: string) {
     return () => {
       alive = false
     }
-  }, [monthYYYYMM])
+  }, [monthYYYYMM, transactionVersion])
 
   return { loading, error, daily }
 }

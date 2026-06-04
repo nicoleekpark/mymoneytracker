@@ -42,6 +42,7 @@ import {
 } from 'react-native'
 
 import { Screen } from '@/shared/layout/Screen'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 // Extended transaction type that can also be a draft
 type TransactionOrDraft = Transaction & { isDraft?: boolean }
@@ -142,6 +143,7 @@ function findScrollTarget(sections: DaySection[], focusDate?: string) {
 
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
+  const insets = useSafeAreaInsets()
 
   const params = useLocalSearchParams<{ focusDate?: string; accountId?: string; showDrafts?: string }>()
   const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
@@ -454,7 +456,7 @@ export default function TransactionsScreen() {
   return (
     <BottomSheetModalProvider>
       <Screen edges={[]}>
-        <View style={styles.searchRow}>
+        <View style={[styles.searchRow, { marginTop: spacing.xs }]}>
           {/* Search area - subtle border style */}
           <View style={[styles.searchArea, { backgroundColor: theme.semantic.surfaceAlt, borderColor: theme.semantic.border }]}>
             <FontAwesome name="search" size={14} color={theme.semantic.textSecondary as string} />
@@ -604,15 +606,19 @@ export default function TransactionsScreen() {
           </View>
         )}
 
-        {/* Floating month header */}
-        {visibleMonth && sections.length > 0 && (
-          <View style={[styles.monthBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
-            <Text style={[styles.monthText, { color: theme.semantic.text }]}>{visibleMonth.title}</Text>
-            <Text style={[styles.monthTotal, { color: theme.semantic.textSecondary }]}>
-              {formatCurrency(visibleMonth.total)}
-            </Text>
-          </View>
-        )}
+        {/* Floating month header - always render to prevent layout shift */}
+        <View style={[styles.monthBar, { backgroundColor: theme.semantic.background, borderColor: theme.semantic.border }]}>
+          {visibleMonth && sections.length > 0 ? (
+            <>
+              <Text style={[styles.monthText, { color: theme.semantic.text }]}>{visibleMonth.title}</Text>
+              <Text style={[styles.monthTotal, { color: theme.semantic.textSecondary }]}>
+                {formatCurrency(visibleMonth.total)}
+              </Text>
+            </>
+          ) : (
+            <Text style={[styles.monthText, { color: theme.semantic.textSecondary }]}> </Text>
+          )}
+        </View>
 
         <SectionList
           ref={listRef}

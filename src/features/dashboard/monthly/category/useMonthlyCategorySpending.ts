@@ -5,6 +5,7 @@ import {
   getMonthlyExpenseByCategoryDollar,
   getMonthlySummaryDollar
 } from '@/core/services/transaction'
+import { useDataRefreshStore } from '@/shared/store'
 import { useEffect, useState } from 'react'
 
 export type SubCategoryBreakdown = Readonly<{
@@ -96,6 +97,9 @@ export function useMonthlyCategorySpending(monthYYYYMM: string) {
   const [totalSpentDollar, setTotalSpentDollar] = useState(0)
   const [rows, setRows] = useState<CategorySpendingRow[]>([])
 
+  // Subscribe to transaction changes to auto-refresh
+  const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
+
   useEffect(() => {
     let alive = true
 
@@ -137,7 +141,7 @@ export function useMonthlyCategorySpending(monthYYYYMM: string) {
     return () => {
       alive = false
     }
-  }, [monthYYYYMM])
+  }, [monthYYYYMM, transactionVersion])
 
   return { loading, error, totalSpentDollar, rows }
 }

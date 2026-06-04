@@ -191,11 +191,14 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
   return (
     <>
       <View style={[styles.container, { borderBottomColor: theme.semantic.border }]}>
-        {/* Add button */}
+        {/* Add button - 44pt minimum touch target (Apple HIG) */}
         <Pressable
           onPress={handleAddPress}
-          hitSlop={8}
-          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={({ pressed }) => [
+            styles.addButton,
+            { opacity: pressed ? 0.7 : 1 }
+          ]}
         >
           <FontAwesome name="plus" size={20} color={theme.semantic.text} />
         </Pressable>
@@ -227,12 +230,12 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
             <Pressable
               onPress={handleDraftsPress}
               style={styles.iconBtn}
-              hitSlop={8}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityLabel={`${draftCount} drafts`}
               accessibilityRole="button"
             >
               <FontAwesome name="pencil-square-o" size={20} color={theme.semantic.warning} />
-              <View style={[styles.badge, { backgroundColor: theme.semantic.warning }]}>
+              <View style={[styles.badge, { backgroundColor: theme.semantic.warning }]} pointerEvents="none">
                 <Text style={[styles.badgeText, { color: theme.semantic.onWarning }]}>{draftCount}</Text>
               </View>
             </Pressable>
@@ -242,7 +245,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
           <Pressable
             onPress={handleBellPress}
             style={styles.iconBtn}
-            hitSlop={8}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             accessibilityLabel={hasNotifications ? `${unreadCount} notifications` : 'Notifications'}
             accessibilityRole="button"
           >
@@ -252,7 +255,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
               color={hasNotifications ? theme.semantic.danger : theme.semantic.textSecondary}
             />
             {hasNotifications && (
-              <View style={[styles.badge, { backgroundColor: theme.semantic.danger }]}>
+              <View style={[styles.badge, { backgroundColor: theme.semantic.danger }]} pointerEvents="none">
                 <Text style={[styles.badgeText, { color: '#fff' }]}>{unreadCount}</Text>
               </View>
             )}
@@ -444,6 +447,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg, // 16px - matches Screen default
     paddingVertical: spacing.md,
     height: APPBAR_HEIGHT,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   centerTouch: {
     flex: 1,

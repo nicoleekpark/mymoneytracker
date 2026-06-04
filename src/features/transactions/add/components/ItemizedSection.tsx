@@ -110,6 +110,29 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
     setShowSuggestions(false)
   }, [])
 
+  // Handle Enter key on ghost name - commit and continue adding
+  const handleGhostNameSubmit = useCallback(() => {
+    const name = ghostName.trim()
+    if (name) {
+      // Commit the item (even without price - user can edit later)
+      const newItem: ItemEntry = {
+        id: `item-${Date.now()}`,
+        name,
+        priceCents: ghostPriceCents,
+        quantity: 1,
+        itemId: ghostItemId,
+      }
+      onItemsChange([...items, newItem])
+      // Reset ghost and keep focus for next item
+      setGhostName('')
+      setGhostPriceCents(0)
+      setGhostItemId(undefined)
+      setShowSuggestions(false)
+      // Keep focus on the input for continuous entry
+      setTimeout(() => ghostNameRef.current?.focus(), 50)
+    }
+  }, [ghostName, ghostPriceCents, ghostItemId, items, onItemsChange])
+
   // Handle ghost name focus
   const handleGhostNameFocus = useCallback(() => {
     setSuggestionTarget('ghost')
@@ -383,10 +406,13 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
                 onChangeText={setGhostName}
                 onFocus={handleGhostNameFocus}
                 onBlur={handleGhostNameBlur}
+                onSubmitEditing={handleGhostNameSubmit}
                 placeholder="e.g., Milk"
                 placeholderTextColor={theme.semantic.textSecondary}
                 autoCapitalize="words"
                 autoCorrect={false}
+                returnKeyType="next"
+                blurOnSubmit={false}
                 style={[
                   styles.ghostNameInput,
                   {

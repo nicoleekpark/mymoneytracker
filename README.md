@@ -27,8 +27,10 @@ This project also served as a deep dive into **Clean Architecture** in a React N
 git clone <repository-url>
 cd hoh_ledger
 npm install
-npm run start:dev:ios    # iOS with SQLite
+npm run dev              # iOS Simulator
 ```
+
+> See [Development Guide](docs/DEVELOPMENT.md) for detailed commands, EAS builds, and troubleshooting.
 
 ---
 
@@ -177,14 +179,9 @@ src/
 
 | Document | Purpose |
 |----------|---------|
+| [Development Guide](docs/DEVELOPMENT.md) | Setup, commands, troubleshooting |
 | [CLAUDE.md](CLAUDE.md) | Architecture rules, coding guidelines |
-| [Development Guide](docs/guides/development.md) | Setup, commands, troubleshooting |
-| [Architecture](docs/architecture/overview.md) | System design, layers, patterns |
-| [Testing Guide](docs/guides/testing.md) | Test patterns, mocking, coverage |
-| [Deployment](docs/guides/deployment.md) | App Store publishing |
 | [Roadmap](docs/ROADMAP.md) | Future features (v2, v3) |
-| [Glossary](docs/reference/glossary.md) | Domain terminology |
-| [UI Terminology](docs/reference/ui-terminology.md) | Component naming conventions |
 
 ---
 

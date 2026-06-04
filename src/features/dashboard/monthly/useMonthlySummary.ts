@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 import { useEffect, useState } from 'react'
 import { getMonthlySummaryDollar, type MonthlySummaryDollar } from '@/core/services/transaction'
+import { useDataRefreshStore } from '@/shared/store'
 
 // Default/empty state (returned while loading or on error)
 const DEFAULT_DATA: MonthlySummaryDollar = {
@@ -23,6 +24,9 @@ export function useMonthlySummary(monthYYYYMM: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<MonthlySummaryDollar>(DEFAULT_DATA)
+
+  // Subscribe to transaction changes to auto-refresh
+  const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
 
   // ─── Effect: Fetch Data When Month Changes ─────────────────────────────────
   useEffect(() => {
@@ -54,7 +58,7 @@ export function useMonthlySummary(monthYYYYMM: string) {
     return () => {
       alive = false
     }
-  }, [monthYYYYMM])  // Re-run when month changes
+  }, [monthYYYYMM, transactionVersion])  // Re-run when month or data changes
 
   return { loading, error, data }
 }

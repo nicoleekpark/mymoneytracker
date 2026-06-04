@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { APP_CONFIG } from '@/shared/config/app.config'
 import { getMonthlySummaryDollar, getDailyExpenseTotalsDollarForMonth } from '@/core/services/transaction'
+import { useDataRefreshStore, useSettingsStore } from '@/shared/store'
 
 export type BudgetData = Readonly<{
   budgetDollar: number
@@ -22,6 +23,13 @@ export function useBudgetSummary(monthYYYYMM: string) {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<BudgetData | null>(null)
 
+  // Get user-configured budget (stored in cents), fall back to app default
+  const monthlyBudgetCents = useSettingsStore((s) => s.monthlyBudget)
+  const userBudgetDollar = monthlyBudgetCents > 0 ? monthlyBudgetCents / 100 : 0
+
+  // Subscribe to transaction changes to auto-refresh
+  const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
+
   useEffect(() => {
     let alive = true
 
@@ -38,7 +46,10 @@ export function useBudgetSummary(monthYYYYMM: string) {
 
         if (!alive) return
 
-        const budgetDollar = APP_CONFIG.budget.defaultMonthlyBudgetDollar
+        // Use user-configured budget if set, otherwise use app default
+        const budgetDollar = userBudgetDollar > 0
+          ? userBudgetDollar
+          : APP_CONFIG.budget.defaultMonthlyBudgetDollar
         const spentDollar = summary.expenseTotalDollar
         const remainingDollar = budgetDollar - spentDollar
         const percentUsed = budgetDollar > 0 ? (spentDollar / budgetDollar) * 100 : 0
@@ -80,7 +91,7 @@ export function useBudgetSummary(monthYYYYMM: string) {
     return () => {
       alive = false
     }
-  }, [monthYYYYMM])
+  }, [monthYYYYMM, userBudgetDollar, transactionVersion])
 
   return { loading, error, data }
 }

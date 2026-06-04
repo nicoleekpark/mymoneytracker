@@ -11,7 +11,8 @@ import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { useNotificationsStore, useDraftsStore } from '@/shared/store'
+import { useNotificationsStore, useDraftsStore, type DraftTransaction } from '@/shared/store'
+import { formatCurrency } from '@/shared/format/currency'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -24,12 +25,12 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-// Draft age groupings
-type DraftAgeGroup = '7days' | '14days' | 'older'
-const DRAFT_AGE_LABELS: Record<DraftAgeGroup, string> = {
-  '7days': 'Older than 7 days',
-  '14days': 'Older than 14 days',
-  'older': 'Older than 30 days',
+// Draft time groupings (for displaying actual drafts)
+type DraftTimeGroup = 'today' | 'thisWeek' | 'older'
+const DRAFT_TIME_LABELS: Record<DraftTimeGroup, string> = {
+  today: 'Today',
+  thisWeek: 'This Week',
+  older: 'Older',
 }
 
 export default function NotificationsScreen() {
@@ -135,30 +136,31 @@ export default function NotificationsScreen() {
     return groups
   }
 
-  // Helper to group drafts by age
-  const groupDraftsByAge = (items: Notification[]): Record<DraftAgeGroup, Notification[]> => {
+  // Helper to group actual drafts by time period
+  const groupDraftsByTime = (drafts: DraftTransaction[]): Record<DraftTimeGroup, DraftTransaction[]> => {
     const now = new Date()
-    const day7Ago = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const day14Ago = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
-    const day30Ago = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    const groups: Record<DraftAgeGroup, Notification[]> = {
-      '7days': [],
-      '14days': [],
-      'older': [],
+    const groups: Record<DraftTimeGroup, DraftTransaction[]> = {
+      today: [],
+      thisWeek: [],
+      older: [],
     }
 
-    items.forEach((item) => {
-      const date = new Date(item.createdAt)
-      if (date >= day7Ago) {
-        // Less than 7 days old - shouldn't have reminders yet, but include anyway
-        groups['7days'].push(item)
-      } else if (date >= day14Ago) {
-        groups['7days'].push(item)
-      } else if (date >= day30Ago) {
-        groups['14days'].push(item)
+    // Sort by createdAt descending (most recent first)
+    const sorted = [...drafts].sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+
+    sorted.forEach((draft) => {
+      const date = new Date(draft.createdAt)
+      if (date >= today) {
+        groups.today.push(draft)
+      } else if (date >= weekAgo) {
+        groups.thisWeek.push(draft)
       } else {
-        groups['older'].push(item)
+        groups.older.push(draft)
       }
     })
 
@@ -170,10 +172,10 @@ export default function NotificationsScreen() {
     return groupByTime(filteredItems)
   }, [filteredItems])
 
-  // Group drafts by age
+  // Group actual drafts by time period
   const groupedDrafts = useMemo(() => {
-    return groupDraftsByAge(draftReminders)
-  }, [draftReminders])
+    return groupDraftsByTime(actualDrafts)
+  }, [actualDrafts])
 
   // Format relative time
   const formatTime = (timestamp: string): string => {
@@ -293,18 +295,63 @@ export default function NotificationsScreen() {
     )
   }
 
-  // Render draft age group section
-  const renderDraftAgeGroup = (group: DraftAgeGroup, items: Notification[]) => {
+  // Render a single draft row
+  const renderDraftRow = (draft: DraftTransaction) => {
+    const amount = draft.amountCents > 0 ? formatCurrency(draft.amountCents / 100) : null
+    const description = draft.item || draft.merchant || 'Untitled draft'
+    const timeAgo = formatTime(draft.createdAt)
+
+    return (
+      <Pressable
+        key={draft.id}
+        onPress={() => handleDraftPress(draft.id)}
+        style={[styles.row, { borderBottomColor: theme.semantic.border }]}
+      >
+        <View style={[styles.iconContainer, { backgroundColor: theme.semantic.warning + '20' }]}>
+          <FontAwesome name="file-text-o" size={14} color={theme.semantic.warning} />
+        </View>
+        <View style={styles.rowContent}>
+          <View style={styles.rowHeader}>
+            <Text style={[styles.rowTitle, { color: theme.semantic.text }]} numberOfLines={1}>
+              {description}
+            </Text>
+            <Text style={[styles.rowTime, { color: theme.semantic.textSecondary }]}>
+              {timeAgo}
+            </Text>
+          </View>
+          {amount && (
+            <Text style={[styles.rowBody, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
+              {amount}
+            </Text>
+          )}
+        </View>
+        {draft.starred && (
+          <FontAwesome name="star" size={12} color={theme.semantic.warning} style={{ marginLeft: spacing.sm }} />
+        )}
+      </Pressable>
+    )
+  }
+
+  // Render draft time group
+  const renderDraftTimeGroup = (group: DraftTimeGroup, items: DraftTransaction[]) => {
     if (items.length === 0) return null
 
     return (
       <View key={group} style={styles.section}>
         <Text style={[styles.sectionHeader, { color: theme.semantic.textSecondary }]}>
-          {DRAFT_AGE_LABELS[group]}
+          {DRAFT_TIME_LABELS[group]}
         </Text>
-        {items.map(renderNotificationRow)}
+        {items.map(renderDraftRow)}
       </View>
     )
+  }
+
+  // Handle draft press - navigate to edit
+  const handleDraftPress = (draftId: string) => {
+    router.push({
+      pathname: '/(modal)/add-transaction',
+      params: { draftId }
+    })
   }
 
   // Render drafts summary card - shows actual draft count from drafts store
@@ -411,13 +458,12 @@ export default function NotificationsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {activeTab === 'drafts' ? (
-          // Drafts tab content
-          hasNotifications ? (
+          // Drafts tab content - show actual drafts grouped by time
+          actualDrafts.length > 0 ? (
             <>
-              {renderDraftsSummary()}
-              {renderDraftAgeGroup('7days', groupedDrafts['7days'])}
-              {renderDraftAgeGroup('14days', groupedDrafts['14days'])}
-              {renderDraftAgeGroup('older', groupedDrafts['older'])}
+              {renderDraftTimeGroup('today', groupedDrafts.today)}
+              {renderDraftTimeGroup('thisWeek', groupedDrafts.thisWeek)}
+              {renderDraftTimeGroup('older', groupedDrafts.older)}
             </>
           ) : (
             <View style={styles.emptyState}>
@@ -428,10 +474,10 @@ export default function NotificationsScreen() {
                 style={{ opacity: 0.5, marginBottom: spacing.lg }}
               />
               <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
-                No draft reminders
+                No drafts
               </Text>
               <Text style={[styles.emptyText, { color: theme.semantic.textSecondary }]}>
-                Drafts older than 7 days will appear here
+                Saved drafts will appear here
               </Text>
             </View>
           )
@@ -554,6 +600,15 @@ const styles = StyleSheet.create({
   },
   rowContent: {
     flex: 1,
+  },
+  rowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  rowBody: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
   },
   rowTitle: {
     fontSize: fontSize.md,

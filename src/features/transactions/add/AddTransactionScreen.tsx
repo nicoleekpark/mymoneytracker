@@ -15,7 +15,7 @@ import { CategoryIcon, ScalePressable } from '@/shared/components'
 import { logError } from '@/shared/utils/logger'
 import { muteColor } from '@/shared/utils/contrast'
 import { Screen } from '@/shared/layout/Screen'
-import { useDraftsStore, useLastTransactionStore, usePaymentFrequencyStore, useQuickChipsStore, SPECIAL_CHIP_KEYS, useSuggestionsStore } from '@/shared/store'
+import { useDataRefreshStore, useDraftsStore, useLastTransactionStore, usePaymentFrequencyStore, useQuickChipsStore, SPECIAL_CHIP_KEYS, useSuggestionsStore } from '@/shared/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -116,6 +116,8 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   const noteInputRef = useRef<TextInput>(null)
   const merchantInputRef = useRef<TextInput>(null)
   const scrollRef = useRef<ScrollView>(null)
+  const chipsScrollRef = useRef<ScrollView>(null)
+  const accountChipsScrollRef = useRef<ScrollView>(null)
 
   // Timeout refs for cleanup
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -567,6 +569,9 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       if (editingDraftId) {
         removeDraft(editingDraftId)
       }
+
+      // Invalidate dashboard data so it refreshes when modal closes
+      useDataRefreshStore.getState().invalidateTransactions()
 
       // Show toast then close modal
       const toastMsg = editingTransaction ? `$${amount.amountDisplay} updated` : `$${amount.amountDisplay} added`
@@ -1114,6 +1119,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               {/* Category chips */}
               {categoryChips.length > 0 && (
                 <ScrollView
+                  ref={chipsScrollRef}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   style={styles.fieldChipsRow}
@@ -1185,6 +1191,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               {/* Account chips */}
               {accountChips.length > 0 && (
                 <ScrollView
+                  ref={accountChipsScrollRef}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   style={styles.fieldChipsRow}
@@ -1352,6 +1359,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           onQueryChange={account.setAccountQuery}
           onClose={account.closeAccount}
           onChoose={account.chooseAccount}
+          onAddAccount={() => {
+            account.closeAccount()
+            Alert.alert('Coming Soon', 'Account management will be available in a future update.')
+          }}
         />
 
         <CategorySelectionModal
@@ -1359,6 +1370,12 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           categoryQuery={category.categoryQuery}
           searchRows={category.searchRows}
           categorySearchRef={category.categorySearchRef}
+          initialCategory={
+            // If parent category is selected without subcategory, show its subcategories first
+            category.categoryRef && !category.categoryRef.subCategoryKey
+              ? category.selectedCategory
+              : null
+          }
           onQueryChange={category.setCategoryQuery}
           onClose={category.closeCategory}
           onChooseCategory={category.chooseCategory}
@@ -1379,7 +1396,14 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           visible={showChipsEdit}
           transactionType={type === 'transfer' ? 'expense' : type}
           accounts={account.accounts}
-          onClose={() => setShowChipsEdit(false)}
+          onClose={() => {
+            setShowChipsEdit(false)
+            // Scroll chips back to start after edit
+            setTimeout(() => {
+              chipsScrollRef.current?.scrollTo({ x: 0, animated: true })
+              accountChipsScrollRef.current?.scrollTo({ x: 0, animated: true })
+            }, 100)
+          }}
         />
 
         <AmountKeypadSheet

@@ -27,6 +27,7 @@ type Props = Readonly<{
   categoryQuery: string
   searchRows: CategorySearchRow[]
   categorySearchRef: React.RefObject<TextInput | null>
+  initialCategory?: CategoryItem | null // Pre-select category to show subcategories
   onQueryChange: (q: string) => void
   onClose: () => void
   onChooseCategory: (cat: CategoryItem) => void
@@ -43,6 +44,7 @@ export function CategorySelectionModal({
   categoryQuery,
   searchRows,
   categorySearchRef,
+  initialCategory,
   onQueryChange,
   onClose,
   onChooseCategory,
@@ -56,11 +58,19 @@ export function CategorySelectionModal({
 
   // Reset state when modal opens/closes
   React.useEffect(() => {
-    if (!visible) {
+    if (visible) {
+      // When opening, if initialCategory has subcategories, show them first
+      if (initialCategory && initialCategory.subCategories?.length > 0) {
+        setSelectedCategory(initialCategory)
+      } else {
+        setSelectedCategory(null)
+      }
+      onQueryChange('')
+    } else {
       setSelectedCategory(null)
       onQueryChange('')
     }
-  }, [visible])
+  }, [visible, initialCategory])
 
   // Category grouping
   const CATEGORY_GROUPS: { key: string; title: string; categoryKeys: string[] }[] = [

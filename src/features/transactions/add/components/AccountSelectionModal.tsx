@@ -6,8 +6,8 @@
  */
 
 import type { Account } from '@/core/domain/account'
-import { useHoHTheme } from '@/shared/providers'
 import { Screen } from '@/shared/layout/Screen'
+import { useHoHTheme } from '@/shared/providers'
 import { usePaymentFrequencyStore } from '@/shared/store'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -35,6 +35,7 @@ type Props = Readonly<{
   onQueryChange: (q: string) => void
   onClose: () => void
   onChoose: (key: string) => void
+  onAddAccount?: () => void
 }>
 
 type SectionData = {
@@ -50,6 +51,7 @@ export function AccountSelectionModal({
   onQueryChange,
   onClose,
   onChoose,
+  onAddAccount,
 }: Props) {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
@@ -67,23 +69,23 @@ export function AccountSelectionModal({
     const recentKeys = getRecentKeys(3)
 
     // Build account lookup
-    const accountMap = new Map(filteredAccounts.map(a => [a.key, a]))
+    const accountMap = new Map(filteredAccounts.map((a) => [a.key, a]))
 
     // Frequently Used section
     const frequentAccounts = frequentKeys
-      .map(key => accountMap.get(key))
+      .map((key) => accountMap.get(key))
       .filter((a): a is Account => !!a)
 
     // Recent section (exclude items already in Frequent)
     const frequentSet = new Set(frequentKeys)
     const recentAccounts = recentKeys
-      .filter(key => !frequentSet.has(key))
-      .map(key => accountMap.get(key))
+      .filter((key) => !frequentSet.has(key))
+      .map((key) => accountMap.get(key))
       .filter((a): a is Account => !!a)
 
     // All Accounts section
     const usedSet = new Set([...frequentKeys, ...recentKeys])
-    const allAccounts = filteredAccounts.filter(a => !usedSet.has(a.key))
+    const allAccounts = filteredAccounts.filter((a) => !usedSet.has(a.key))
 
     const result: SectionData[] = []
 
@@ -146,20 +148,31 @@ export function AccountSelectionModal({
           </View>
           <View style={styles.rowInfo}>
             <Text style={[styles.accountName, { color: theme.semantic.text }]}>{a.name}</Text>
-            <Text style={[styles.accountBadge, { color: theme.semantic.textSecondary }]}>{badge}</Text>
+            <Text style={[styles.accountBadge, { color: theme.semantic.textSecondary }]}>
+              {badge}
+            </Text>
           </View>
         </View>
 
-        {selected && (
-          <FontAwesome name="check" size={16} color={theme.semantic.primary} />
-        )}
+        {selected && <FontAwesome name="check" size={16} color={theme.semantic.primary} />}
       </Pressable>
     )
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      onRequestClose={onClose}
+    >
+      <Screen
+        edges={[]}
+        padded={false}
+        topPadding={false}
+        style={{ flex: 1 }}
+        contentStyle={{ flex: 1 }}
+      >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -177,7 +190,9 @@ export function AccountSelectionModal({
             ]}
           >
             <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={[styles.headerCancel, { color: theme.semantic.textSecondary }]}>Cancel</Text>
+              <Text style={[styles.headerCancel, { color: theme.semantic.textSecondary }]}>
+                Cancel
+              </Text>
             </Pressable>
 
             <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Payment Method</Text>
@@ -224,6 +239,18 @@ export function AccountSelectionModal({
             keyboardDismissMode="on-drag"
             contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
             stickySectionHeadersEnabled={false}
+            ListFooterComponent={
+              onAddAccount ? (
+                <Pressable onPress={onAddAccount} style={styles.addAccountRow}>
+                  {/* <View style={[styles.iconContainer, { backgroundColor: theme.semantic.primary + '20' }]}>
+                  <FontAwesome name="plus" size={14} color={theme.semantic.primary} />
+                </View> */}
+                  <Text style={[styles.addAccountText, { color: theme.semantic.primary }]}>
+                    Add Account
+                  </Text>
+                </Pressable>
+              ) : null
+            }
           />
         </KeyboardAvoidingView>
       </Screen>
@@ -311,5 +338,16 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
     marginTop: 2,
+  },
+  addAccountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  addAccountText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
   },
 })

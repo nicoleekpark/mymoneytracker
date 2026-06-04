@@ -82,6 +82,7 @@ export function BottomCTABar({
         <Pressable
           onPress={onSaveAndNew}
           disabled={!canSave}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           style={({ pressed }) => [
             styles.textButton,
             { opacity: !canSave ? OPACITY.disabled : pressed ? OPACITY.pressed : 1 },
@@ -101,6 +102,7 @@ export function BottomCTABar({
 
         <Pressable
           onPress={onSaveDraft}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           style={({ pressed }) => [
             styles.textButton,
             { opacity: pressed ? OPACITY.pressed : 1 },
