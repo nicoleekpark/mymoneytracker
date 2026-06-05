@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 import { FEATURE_FLAGS } from '@/shared/config'
-import { SectionHeader } from '@/shared/components'
+import { EmptyState, SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 
 import { CategoryAccordion, DashboardHero, StatsRow } from '../shared'
@@ -124,6 +124,20 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
         <Text style={{ color: colors.danger }}>{error}</Text>
       </View>
+    )
+  }
+
+  // Check if there's any data (income or expense)
+  const hasData = totalIncome > 0 || totalExpense > 0
+
+  // Show empty state if no data
+  if (!hasData) {
+    return (
+      <EmptyState
+        title="No transactions yet"
+        description="Add transactions to start tracking this year."
+        colors={colors}
+      />
     )
   }
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, LayoutAnimation, Platform, Pressable, ScrollView, Text, UIManager, View } from 'react-native'
 import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -7,13 +7,14 @@ import { CATEGORY_DOT_SIZE, SECTION_GAP } from '@/shared/theme/tokens/viewStyles
 
 import { FEATURE_FLAGS } from '@/shared/config'
 import { UNCATEGORIZED_KEY } from '@/core/domain/category'
-import { CategoryIcon, InfoSheet, SectionHeader } from '@/shared/components'
+import { CategoryIcon, EmptyState, InfoSheet, SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth, formatTrackingSince } from '@/shared/format/date'
 import { getCategoryMeta, getSubcategoryMeta } from '@/shared/format/category'
+import { useDashboardSectionsStore } from '@/shared/store'
 
 import { useAllTimeData, type CategoryBreakdown } from './hooks'
-import { CumulativeNetChart } from './components'
+import { CollapsibleSection, CumulativeNetChart, SectionPlaceholder } from './components'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -188,6 +189,58 @@ export function AllBody({ colors }: Props) {
   const [showAllIncome, setShowAllIncome] = useState(false)
   const [showSavingsInfo, setShowSavingsInfo] = useState(false)
 
+  // Collapsible section states from persisted store
+  // Net worth growth: needs 2+ months of data
+  // Personal bests: needs data to exist
+  const hasNetWorthData = data.cumulativeData.length > 1
+  const hasPersonalBestsData = Boolean(data.personalBests.bestSavingsMonth || data.personalBests.worstMonth)
+
+  // Get persisted section states
+  const {
+    netWorthExpanded,
+    personalBestsExpanded,
+    setNetWorthExpanded,
+    setPersonalBestsExpanded,
+    _hydrate,
+  } = useDashboardSectionsStore()
+
+  // Hydrate store on mount
+  useEffect(() => {
+    _hydrate()
+  }, [_hydrate])
+
+  // Track if we've auto-expanded on first data availability
+  const hasAutoExpandedNetWorthRef = useRef(false)
+  const hasAutoExpandedPersonalBestsRef = useRef(false)
+
+  // Auto-expand when data becomes available (one-time)
+  useEffect(() => {
+    if (hasNetWorthData && !hasAutoExpandedNetWorthRef.current && !netWorthExpanded) {
+      hasAutoExpandedNetWorthRef.current = true
+      setNetWorthExpanded(true)
+    }
+  }, [hasNetWorthData, netWorthExpanded, setNetWorthExpanded])
+
+  useEffect(() => {
+    if (hasPersonalBestsData && !hasAutoExpandedPersonalBestsRef.current && !personalBestsExpanded) {
+      hasAutoExpandedPersonalBestsRef.current = true
+      setPersonalBestsExpanded(true)
+    }
+  }, [hasPersonalBestsData, personalBestsExpanded, setPersonalBestsExpanded])
+
+  // Handlers for CollapsibleSection
+  const handleNetWorthToggle = useCallback(() => {
+    setNetWorthExpanded(!netWorthExpanded)
+  }, [netWorthExpanded, setNetWorthExpanded])
+
+  const handlePersonalBestsToggle = useCallback(() => {
+    setPersonalBestsExpanded(!personalBestsExpanded)
+  }, [personalBestsExpanded, setPersonalBestsExpanded])
+
+  // No-op handlers for onUnlock (auto-expand is handled above)
+  const handleNetWorthUnlock = useCallback(() => {}, [])
+  const handlePersonalBestsUnlock = useCallback(() => {}, [])
+
   const TOP_N_CATEGORIES = 5
 
   // All categories sorted by amount
@@ -253,6 +306,19 @@ export function AllBody({ colors }: Props) {
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: spacing['3xl'] }}>
         <Text style={{ color: colors.danger }}>{error}</Text>
       </View>
+    )
+  }
+
+  // Check if there's any data at all
+  const hasAnyData = data.totalIncome > 0 || data.totalExpense > 0
+
+  if (!hasAnyData) {
+    return (
+      <EmptyState
+        title="No transactions yet"
+        description="Add transactions to see your all-time summary."
+        colors={colors}
+      />
     )
   }
 
@@ -437,110 +503,127 @@ export function AllBody({ colors }: Props) {
 
       </View>
 
-      {/* Section 2: Personal Bests (2x2 Grid - Accessible/Tied up style) */}
-      {(data.personalBests.bestSavingsMonth || data.personalBests.worstMonth) && (
-        <View style={{ marginBottom: SECTION_GAP }}>
-          <SectionHeader
-            title="Personal bests"
+      {/* Section 2: Personal Bests (Collapsible) */}
+      <CollapsibleSection
+        title="Personal bests"
+        hint="2+ mo"
+        hasData={hasPersonalBestsData}
+        isExpanded={personalBestsExpanded}
+        onToggle={handlePersonalBestsToggle}
+        onUnlock={handlePersonalBestsUnlock}
+        colors={colors}
+        placeholder={
+          <SectionPlaceholder
+            message="Track 2+ months to see your records"
+            subMessage="Best month, lowest month, and streaks"
             colors={colors}
           />
+        }
+      >
+        {/* 2x2 Grid with subtle dividers */}
+        <View>
+          {/* Row 1: Best Month / Worst Month */}
+          <View style={{ flexDirection: 'row' }}>
+            {/* Best Month */}
+            {data.personalBests.bestSavingsMonth && (
+              <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
+                  Best month
+                </Text>
+                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+                  {formatUsdInt(data.personalBests.bestSavingsMonth.netDollar)}
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  {formatYearMonth(data.personalBests.bestSavingsMonth.month)}
+                </Text>
+              </View>
+            )}
 
-          {/* 2x2 Grid with subtle dividers */}
-          <View>
-            {/* Row 1: Best Month / Worst Month */}
-            <View style={{ flexDirection: 'row' }}>
-              {/* Best Month */}
-              {data.personalBests.bestSavingsMonth && (
-                <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
-                    Best month
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
-                    {formatUsdInt(data.personalBests.bestSavingsMonth.netDollar)}
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
-                    {formatYearMonth(data.personalBests.bestSavingsMonth.month)}
-                  </Text>
-                </View>
-              )}
+            {/* Subtle middle divider */}
+            <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
 
-              {/* Subtle middle divider */}
-              <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
+            {/* Lowest Month */}
+            {data.personalBests.worstMonth && (
+              <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
+                  Lowest month
+                </Text>
+                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+                  {formatUsdInt(data.personalBests.worstMonth.netDollar)}
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  {formatYearMonth(data.personalBests.worstMonth.month)}
+                </Text>
+              </View>
+            )}
+          </View>
 
-              {/* Lowest Month */}
-              {data.personalBests.worstMonth && (
-                <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
-                    Lowest month
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
-                    {formatUsdInt(data.personalBests.worstMonth.netDollar)}
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
-                    {formatYearMonth(data.personalBests.worstMonth.month)}
-                  </Text>
-                </View>
-              )}
+          {/* Horizontal divider between rows */}
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: spacing.lg, opacity: 0.5 }} />
+
+          {/* Row 2: Best Streak / Current Streak */}
+          <View style={{ flexDirection: 'row' }}>
+            {/* Best Streak */}
+            <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
+                Best streak
+              </Text>
+              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+                {data.personalBests.positiveStreak} mo
+              </Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                positive months
+              </Text>
             </View>
 
-            {/* Horizontal divider between rows */}
-            <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: spacing.lg, opacity: 0.5 }} />
+            {/* Subtle middle divider */}
+            <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
 
-            {/* Row 2: Best Streak / Current Streak */}
-            <View style={{ flexDirection: 'row' }}>
-              {/* Best Streak */}
-              <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
-                  Best streak
-                </Text>
-                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
-                  {data.personalBests.positiveStreak} mo
-                </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
-                  positive months
-                </Text>
-              </View>
-
-              {/* Subtle middle divider */}
-              <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
-
-              {/* Current Streak */}
-              <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
-                  Current streak
-                </Text>
-                <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
-                  {data.personalBests.currentStreak.months} mo
-                </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
-                  {data.personalBests.currentStreak.isPositive ? 'in profit' : 'in loss'}
-                </Text>
-              </View>
+            {/* Current Streak */}
+            <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
+                Current streak
+              </Text>
+              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
+                {data.personalBests.currentStreak.months} mo
+              </Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                {data.personalBests.currentStreak.isPositive ? 'in profit' : 'in loss'}
+              </Text>
             </View>
           </View>
         </View>
-      )}
+      </CollapsibleSection>
 
-      {/* Cumulative Savings Chart */}
-      {data.cumulativeData.length > 0 && (
-        <View style={{ marginBottom: SECTION_GAP }}>
-          <SectionHeader
-            title="Net worth growth"
+      {/* Cumulative Savings Chart (Collapsible) */}
+      <CollapsibleSection
+        title="Net worth growth"
+        hint="2+ mo"
+        hasData={hasNetWorthData}
+        isExpanded={netWorthExpanded}
+        onToggle={handleNetWorthToggle}
+        onUnlock={handleNetWorthUnlock}
+        colors={colors}
+        placeholder={
+          <SectionPlaceholder
+            message="Track 2+ months to see your trend"
+            subMessage="Cumulative net over time"
             colors={colors}
           />
-          <CumulativeNetChart
-            data={data.cumulativeData}
-            colors={{
-              text: colors.text,
-              textSecondary: colors.textSecondary,
-              surface: colors.surface,
-              surfaceAlt: colors.surfaceAlt,
-              success: colors.success,
-              danger: colors.danger
-            }}
-          />
-        </View>
-      )}
+        }
+      >
+        <CumulativeNetChart
+          data={data.cumulativeData}
+          colors={{
+            text: colors.text,
+            textSecondary: colors.textSecondary,
+            surface: colors.surface,
+            surfaceAlt: colors.surfaceAlt,
+            success: colors.success,
+            danger: colors.danger
+          }}
+        />
+      </CollapsibleSection>
 
       {/* Where it went (Expense) */}
       {displayExpenseCategories.length > 0 && (

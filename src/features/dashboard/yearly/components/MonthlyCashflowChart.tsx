@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { LayoutChangeEvent, PanResponder, Pressable, Text, View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
 import Svg, { Path, Circle, Line } from 'react-native-svg'
 
 import { formatUsdInt } from '@/shared/format/currency'
@@ -44,7 +44,8 @@ function ComboChart({
   isCurrentYear,
   isPastYear,
   colors,
-  selectedIndex
+  selectedIndex,
+  onMonthTap
 }: {
   data: MonthData[]
   width: number
@@ -53,6 +54,7 @@ function ComboChart({
   isPastYear: boolean
   colors: MonthlyCashflowColors
   selectedIndex: number | null
+  onMonthTap: (index: number) => void
 }) {
   if (width <= 0) return null
 
@@ -135,8 +137,9 @@ function ComboChart({
           const barOpacity = isFuture ? 0.25 : isSelected ? 1 : hasSelection ? 0.4 : 0.85
 
           return (
-            <View
+            <Pressable
               key={idx}
+              onPress={() => onMonthTap(idx)}
               style={{
                 width: monthWidth,
                 height: CHART_HEIGHT,
@@ -172,7 +175,7 @@ function ComboChart({
                 }}
               />
 
-            </View>
+            </Pressable>
           )
         })}
       </View>
@@ -263,7 +266,7 @@ function ComboChart({
 }
 
 /**
- * Monthly cashflow chart with ygraph-style combo chart and drag interaction
+ * Monthly cashflow chart with combo chart and tap interaction
  */
 export function MonthlyCashflowChart({
   monthlyData,
@@ -275,96 +278,11 @@ export function MonthlyCashflowChart({
 }: Props) {
   const [chartWidth, setChartWidth] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [isLocked, setIsLocked] = useState(false) // Toggle lock state
-  const isDraggingRef = useRef(false)
-  const startXRef = useRef<number | null>(null)
-  const prevLockedIndexRef = useRef<number | null>(null) // Track previous locked index for tap comparison
 
-  // Keep refs in sync with state for use in panResponder callbacks (avoids stale closures)
-  const selectedIndexRef = useRef<number | null>(null)
-  const isLockedRef = useRef(false)
-  selectedIndexRef.current = selectedIndex
-  isLockedRef.current = isLocked
-
-  // Calculate month index from X position
-  const getMonthFromX = useCallback(
-    (x: number) => {
-      if (chartWidth <= 0) return null
-      // Adjust for padding - locationX is relative to the padded container
-      const adjustedX = x - CHART_PADDING_H
-      if (adjustedX < 0) return 0
-      if (adjustedX >= chartWidth) return 11
-      const monthWidth = chartWidth / 12
-      const idx = Math.floor(adjustedX / monthWidth)
-      return Math.max(0, Math.min(11, idx))
-    },
-    [chartWidth]
-  )
-
-  // Pan responder for drag and tap interaction
-  // Uses refs (selectedIndexRef, isLockedRef) to avoid stale closure issues
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: evt => {
-          startXRef.current = evt.nativeEvent.locationX
-          isDraggingRef.current = false
-          // Store current locked index before updating (use refs for current values)
-          prevLockedIndexRef.current = isLockedRef.current ? selectedIndexRef.current : null
-          const x = evt.nativeEvent.locationX
-          const newIdx = getMonthFromX(x)
-          setSelectedIndex(newIdx)
-        },
-        onPanResponderMove: evt => {
-          const x = evt.nativeEvent.locationX
-          // Check if this is a drag (moved more than 10px)
-          if (startXRef.current !== null && Math.abs(x - startXRef.current) > 10) {
-            isDraggingRef.current = true
-            setIsLocked(false) // Unlock when dragging
-          }
-          const newIdx = getMonthFromX(x)
-          setSelectedIndex(prev => (prev !== newIdx ? newIdx : prev))
-        },
-        onPanResponderRelease: evt => {
-          const x = evt.nativeEvent.locationX
-          const wasDragging = isDraggingRef.current
-          isDraggingRef.current = false
-          startXRef.current = null
-
-          if (!wasDragging) {
-            // This was a tap
-            const tappedIdx = getMonthFromX(x)
-            // Only close if tapping the SAME month that was previously locked
-            if (prevLockedIndexRef.current === tappedIdx) {
-              // Tapped same month - close detail
-              setIsLocked(false)
-              setSelectedIndex(null)
-            } else {
-              // Tapped different month (or wasn't locked) - show this month
-              setIsLocked(true)
-              setSelectedIndex(tappedIdx)
-            }
-          } else {
-            // Was dragging - clear selection unless locked (use ref for current value)
-            if (!isLockedRef.current) {
-              setSelectedIndex(null)
-            }
-          }
-          prevLockedIndexRef.current = null
-        },
-        onPanResponderTerminate: () => {
-          isDraggingRef.current = false
-          startXRef.current = null
-          // Use ref for current isLocked value
-          if (!isLockedRef.current) {
-            setSelectedIndex(null)
-          }
-        }
-      }),
-    [getMonthFromX]  // Removed isLocked and selectedIndex - using refs instead
-  )
+  // Handle month tap - toggle selection
+  const handleMonthTap = useCallback((index: number) => {
+    setSelectedIndex(prev => prev === index ? null : index)
+  }, [])
 
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
     setChartWidth(e.nativeEvent.layout.width - CHART_PADDING_H * 2)
@@ -375,12 +293,8 @@ export function MonthlyCashflowChart({
 
   return (
     <View onLayout={handleLayout}>
-      {/* Draggable area containing combo chart */}
-      <View
-        {...panResponder.panHandlers}
-        style={{ paddingHorizontal: CHART_PADDING_H }}
-      >
-        {/* Combo chart */}
+      {/* Chart area */}
+      <View style={{ paddingHorizontal: CHART_PADDING_H }}>
         <ComboChart
           data={monthlyData}
           width={chartWidth}
@@ -389,6 +303,7 @@ export function MonthlyCashflowChart({
           isPastYear={isPastYear}
           colors={colors}
           selectedIndex={selectedIndex}
+          onMonthTap={handleMonthTap}
         />
       </View>
 

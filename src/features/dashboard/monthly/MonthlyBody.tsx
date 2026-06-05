@@ -1,5 +1,5 @@
 import { FEATURE_FLAGS } from '@/shared/config'
-import { SectionHeader } from '@/shared/components'
+import { EmptyState, SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
@@ -55,6 +55,20 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: spacing['3xl'] }}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
+    )
+  }
+
+  // Check if there's any data (income or expense)
+  const hasData = heroData.incomeDollar > 0 || heroData.expenseDollar > 0
+
+  // Show empty state if no data
+  if (!hasData) {
+    return (
+      <EmptyState
+        title="No transactions yet"
+        description="Add your first transaction to start tracking this month."
+        colors={colors}
+      />
     )
   }
 

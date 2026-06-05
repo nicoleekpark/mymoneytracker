@@ -1,3 +1,4 @@
+export { EmptyState } from './EmptyState'
 export { FeatureErrorBoundary } from './FeatureErrorBoundary'
 export { AppBar } from './AppBar'
 export { CategoryIcon } from './CategoryIcon'

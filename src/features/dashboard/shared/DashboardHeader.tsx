@@ -80,6 +80,9 @@ export function DashboardHeader({
   const showNav = scope !== 'all'
   const isCurrent = isCurrentPeriod(scope, period)
 
+  // Only show "Everyone" chip if there are 2+ members (family/friend group)
+  const hasMultipleMembers = members.length > 1
+
   // ─── Member Selection Handlers ─────────────────────────────────────────────
 
   function handleAllClick() {
@@ -107,31 +110,32 @@ export function DashboardHeader({
         paddingTop: spacing.md,
         paddingBottom: spacing.sm
       }}>
-        {/* Members selector */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: spacing.sm }}
-          style={{ flex: 1 }}
-        >
-          <Pressable
-            onPress={handleAllClick}
-            style={{
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm,
-              borderRadius: radius.full,
-              backgroundColor: allMembersSelected ? colors.text : 'transparent',
-            }}
+        {/* Members selector - only show if multiple members exist */}
+        {hasMultipleMembers && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.sm }}
+            style={{ flex: 1 }}
           >
-            <Text style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: allMembersSelected ? colors.surface : colors.textSecondary,
-            }}>
-              Everyone
-            </Text>
-          </Pressable>
-          {members.map((member) => {
+            <Pressable
+              onPress={handleAllClick}
+              style={{
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.full,
+                backgroundColor: allMembersSelected ? colors.text : 'transparent',
+              }}
+            >
+              <Text style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: allMembersSelected ? colors.surface : colors.textSecondary,
+              }}>
+                Everyone
+              </Text>
+            </Pressable>
+            {members.map((member) => {
             const isSelected = selectedMemberIds.includes(member.id)
             return (
               <Pressable
@@ -154,7 +158,11 @@ export function DashboardHeader({
               </Pressable>
             )
           })}
-        </ScrollView>
+          </ScrollView>
+        )}
+
+        {/* Spacer when no members selector */}
+        {!hasMultipleMembers && <View style={{ flex: 1 }} />}
 
         {/* Period navigation */}
         {showNav ? (
