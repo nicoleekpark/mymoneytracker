@@ -161,6 +161,17 @@ const CATEGORY_META = {
   },
 
   // -------------------------
+  // ADJUSTMENTS (system category)
+  // -------------------------
+  adjustments: {
+    name: 'Adjustments',
+    icon: 'sliders',
+    color: '#6A6A6A',  // neutral gray
+    type: 'income' as const satisfies CategoryType,
+    isFixed: false
+  },
+
+  // -------------------------
   // TRANSFER
   // -------------------------
   transfers: {
@@ -393,6 +404,14 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
     { key: 'reimbursement', name: 'Reimbursement / Refund', icon: 'refresh', color: '#3F8B76' },
     { key: 'tax_refund', name: 'Tax Refund', icon: 'envelope', color: '#2F7B66' },
     { key: 'other_income', name: 'Other Income', icon: 'inbox', color: '#4F9B86' }
+  ],
+
+  // ---------------------------------------------------------------
+  // Adjustments (neutral gray family)
+  // ---------------------------------------------------------------
+  adjustments: [
+    { key: 'opening_balance', name: 'Opening Balance', icon: 'plus-circle', color: '#6A6A6A' },
+    { key: 'balance_correction', name: 'Balance Correction', icon: 'pencil', color: '#5A5A5A' }
   ],
 
   // ---------------------------------------------------------------

@@ -24,6 +24,7 @@ import { m20260227100000_add_is_estimated_to_transactions } from './202602271000
 import { m20260310100000_create_price_tracker } from './20260310100000_create_price_tracker'
 import { m20260330114044_add_notifications_dismissed } from './20260330114044_add_notifications_dismissed'
 import { m20260330115902_create_app_settings } from './20260330115902_create_app_settings'
+import { m20260605100000_add_account_details } from './20260605100000_add_account_details'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
@@ -46,5 +47,6 @@ export const MIGRATIONS: Migration[] = [
   m20260227100000_add_is_estimated_to_transactions,
   m20260310100000_create_price_tracker,
   m20260330114044_add_notifications_dismissed,
-  m20260330115902_create_app_settings
+  m20260330115902_create_app_settings,
+  m20260605100000_add_account_details
 ]

@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { TextInput } from 'react-native'
 import { Keyboard } from 'react-native'
+import { router } from 'expo-router'
 
 import { CATEGORIES } from '@/shared/config/categories.config'
 import type { CategoryRef } from '@/core/domain/category'
 import type { TransactionType } from '@/core/domain/transaction'
 import { normalizeForSearch, scoreText } from '@/shared/utils/search'
+import { useAddTransactionNavStore } from '../store/addTransactionNav.store'
 
 function buildCategoryLabel(cat: { name: string }): string {
   return cat.name
@@ -51,10 +53,13 @@ export type CategoryPickerState = Readonly<{
   chooseSubCategory: (subCategoryKey?: string) => void
   reopenCategoryFromSub: () => void
   resetCategory: () => void
+  // Navigation-based category selection
+  navigateToCategorySelection: () => void
 }>
 
 export function useCategoryPicker(type: TransactionType): CategoryPickerState {
   const categorySearchRef = useRef<TextInput | null>(null)
+  const { openCategorySelection } = useAddTransactionNavStore()
 
   const [categoryRef, setCategoryRef] = useState<CategoryRef | null>(null)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -199,6 +204,20 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
     setCategoryRef(null)
   }, [])
 
+  // Navigation-based category selection (slide from right)
+  const navigateToCategorySelection = useCallback(() => {
+    Keyboard.dismiss()
+    openCategorySelection(type, categoryRef, {
+      onChooseCategory: (cat) => {
+        setCategoryRef({ type, categoryKey: cat.key })
+      },
+      onChooseSubCategory: (cat, sub) => {
+        setCategoryRef({ type, categoryKey: cat.key, subCategoryKey: sub.key })
+      },
+    })
+    router.push('/(modal)/add-transaction/category-selection')
+  }, [type, categoryRef, openCategorySelection])
+
   return {
     categoryRef,
     setCategoryRef,
@@ -222,6 +241,7 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
     chooseSubCategory,
     reopenCategoryFromSub,
     resetCategory,
+    navigateToCategorySelection,
   }
 }
 

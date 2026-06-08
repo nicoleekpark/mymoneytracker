@@ -94,4 +94,10 @@ export type Account = {
 
   /** Archived accounts are hidden but preserved for historical data */
   isArchived?: boolean
+
+  /** Bank or issuer name (e.g., "Chase", "American Express") */
+  bankName?: string
+
+  /** Last 4 digits of account number (e.g., "1234") */
+  lastFourDigits?: string
 }

@@ -138,7 +138,7 @@ function ErrorFallback({
         <Text style={{
           fontSize: fontSize.sm,
           fontWeight: fontWeight.semibold,
-          color: '#fff'
+          color: theme.semantic.onPrimary
         }}>
           Try Again
         </Text>

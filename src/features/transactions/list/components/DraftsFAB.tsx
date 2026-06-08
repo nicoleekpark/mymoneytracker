@@ -50,9 +50,9 @@ export function DraftsFAB({ onPress, bottomOffset = 0 }: DraftsFABProps) {
         animatedStyle,
       ]}
     >
-      <FontAwesome name="file-text-o" size={20} color="#000" />
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{draftCount}</Text>
+      <FontAwesome name="file-text-o" size={20} color={theme.semantic.onWarning} />
+      <View style={[styles.badge, { backgroundColor: theme.semantic.text }]}>
+        <Text style={[styles.badgeText, { color: theme.semantic.surface }]}>{draftCount}</Text>
       </View>
     </AnimatedPressable>
   )
@@ -84,13 +84,11 @@ const styles = StyleSheet.create({
     minWidth: BADGE_SIZE,
     height: BADGE_SIZE,
     borderRadius: BADGE_SIZE / 2,
-    backgroundColor: '#000',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xs,
   },
   badgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold,
   },

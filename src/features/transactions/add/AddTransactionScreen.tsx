@@ -44,24 +44,19 @@ import Animated, {
 } from 'react-native-reanimated'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { FONT_SIZE_TINY } from '@/shared/theme/tokens/viewStyles'
+import { MODAL_ROW_HEIGHT } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-
-// Standard row height
-const ROW_HEIGHT = spacing['3xl'] + spacing.xs // 52
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import {
-  AccountSelectionModal,
   AmountKeypadSheet,
   AnimatedDescriptionPlaceholder,
   AnimatedQuickChip,
   BottomCTABar,
-  CategorySelectionModal,
   DateTimePickerModal,
   ItemizedSection,
   QuickChipsEditModal,
-  SubCategorySelectionModal,
   TagSection,
   type ItemEntry,
 } from './components'
@@ -1091,7 +1086,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                 <Text style={[styles.fieldLabel, { color: categoryDisplay ? theme.semantic.textSecondary : theme.semantic.text }]}>
                   Category <Text style={styles.optionalLabel}>(optional)</Text>
                 </Text>
-                <Pressable onPress={category.openCategory} style={styles.fieldValueTouchable}>
+                <Pressable onPress={category.navigateToCategorySelection} style={styles.fieldValueTouchable}>
                   {categoryDisplay ? (
                     <View style={styles.fieldValueRow}>
                       <CategoryIcon name={categoryDisplay.icon} size={16} color={categoryDisplay.color} />
@@ -1166,7 +1161,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                 <Text style={[styles.fieldLabel, { color: account.selectedAccount ? theme.semantic.textSecondary : theme.semantic.text }]}>
                   {type === 'expense' ? 'Paid with' : 'Account'}
                 </Text>
-                <Pressable onPress={account.openAccount} style={styles.fieldValueTouchable}>
+                <Pressable onPress={account.navigateToAccountSelection} style={styles.fieldValueTouchable}>
                   {account.selectedAccount ? (
                     <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
                       {account.accountDisplay}
@@ -1351,46 +1346,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           onConfirm={dateTime.onDateTimeConfirm}
         />
 
-        <AccountSelectionModal
-          visible={account.showAccountModal}
-          accountKey={account.accountKey}
-          accountQuery={account.accountQuery}
-          filteredAccounts={account.filteredAccounts}
-          onQueryChange={account.setAccountQuery}
-          onClose={account.closeAccount}
-          onChoose={account.chooseAccount}
-          onAddAccount={() => {
-            account.closeAccount()
-            Alert.alert('Coming Soon', 'Account management will be available in a future update.')
-          }}
-        />
-
-        <CategorySelectionModal
-          visible={category.showCategoryModal}
-          categoryQuery={category.categoryQuery}
-          searchRows={category.searchRows}
-          categorySearchRef={category.categorySearchRef}
-          initialCategory={
-            // If parent category is selected without subcategory, show its subcategories first
-            category.categoryRef && !category.categoryRef.subCategoryKey
-              ? category.selectedCategory
-              : null
-          }
-          onQueryChange={category.setCategoryQuery}
-          onClose={category.closeCategory}
-          onChooseCategory={category.chooseCategory}
-          onChooseSubFromSearch={category.chooseSubFromSearch}
-        />
-
-        <SubCategorySelectionModal
-          visible={category.showSubCategoryModal}
-          categoryRef={category.categoryRef}
-          selectedCategory={category.selectedCategory}
-          subCategories={category.subCategoriesForSelected}
-          onClose={category.closeSubCategory}
-          onChoose={category.chooseSubCategory}
-          onReopenCategory={category.reopenCategoryFromSub}
-        />
+        {/* CategorySelectionModal and AccountSelectionModal now use navigation (slide from right) */}
 
         <QuickChipsEditModal
           visible={showChipsEdit}
@@ -1621,7 +1577,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.md,
     paddingRight: spacing.xl, // room for chevron
-    minHeight: ROW_HEIGHT,
+    minHeight: MODAL_ROW_HEIGHT,
     borderBottomWidth: 1,
   },
   fieldRowLast: {
@@ -1694,7 +1650,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.lg,
-    minHeight: ROW_HEIGHT,
+    minHeight: MODAL_ROW_HEIGHT,
   },
   moreDetailsRight: {
     flexDirection: 'row',

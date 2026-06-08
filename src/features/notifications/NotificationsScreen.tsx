@@ -443,7 +443,7 @@ export default function NotificationsScreen() {
                     { backgroundColor: tab.isWarning ? theme.semantic.warning : theme.semantic.danger },
                   ]}
                 >
-                  <Text style={[styles.badgeText, { color: '#fff' }]}>{tab.count}</Text>
+                  <Text style={[styles.badgeText, { color: tab.isWarning ? theme.semantic.onWarning : theme.semantic.onDanger }]}>{tab.count}</Text>
                 </View>
               )}
             </Pressable>

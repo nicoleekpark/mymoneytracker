@@ -497,7 +497,7 @@ export default function TransactionsScreen() {
                 />
                 {activeCount > 0 && (
                   <View style={[styles.filterIconBadge, { backgroundColor: theme.semantic.danger }]}>
-                    <Text style={[styles.filterIconBadgeText, { color: '#fff' }]}>
+                    <Text style={[styles.filterIconBadgeText, { color: theme.semantic.onDanger }]}>
                       {activeCount}
                     </Text>
                   </View>
@@ -786,8 +786,8 @@ export default function TransactionsScreen() {
                   style={[styles.emptyStateCTA, { backgroundColor: theme.semantic.primary }]}
                   accessibilityLabel="Add first transaction"
                 >
-                  <FontAwesome name="plus" size={14} color="#fff" />
-                  <Text style={styles.emptyStateCTAText}>Add Transaction</Text>
+                  <FontAwesome name="plus" size={14} color={theme.semantic.onPrimary} />
+                  <Text style={[styles.emptyStateCTAText, { color: theme.semantic.onPrimary }]}>Add Transaction</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -983,7 +983,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg
   },
   emptyStateCTAText: {
-    color: '#fff',
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold
   },

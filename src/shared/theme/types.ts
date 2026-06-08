@@ -24,6 +24,7 @@ export type SemanticColors = {
 
   danger: string
   dangerSoft: string
+  onDanger: string  // text color on danger background
 
   info: string
   infoSoft: string

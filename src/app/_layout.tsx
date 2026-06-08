@@ -183,6 +183,15 @@ function RootLayoutNav() {
                   }}
                 />
 
+                {/* Add account - slides up as modal */}
+                <Stack.Screen
+                  name="(modal)/add-account"
+                  options={{
+                    presentation: 'modal',
+                    headerShown: false
+                  }}
+                />
+
                 {/* Notifications - slides from right like normal screen */}
                 <Stack.Screen
                   name="notifications"

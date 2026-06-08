@@ -18,4 +18,4 @@ export {
 } from './account.schema'
 
 // Repository interface
-export type { AccountRepository } from './account.repository'
+export type { AccountRepository, CreateAccountInput } from './account.repository'

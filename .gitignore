@@ -6,11 +6,9 @@ node_modules/
 # Expo
 .expo/
 dist/
-web-build/
 expo-env.d.ts
 
 # Native
-.kotlin/
 *.orig.*
 *.jks
 *.p8
@@ -42,19 +40,11 @@ yarn-error.*
 
 # generated native folders
 /ios
-/android
 
-db_exports/
+# database
 *.db
 *.db-wal
 *.db-shm
-
-# Claude Code
-.claude/settings.json
-.claude/projects/
-
-tmp/
-temporary.md
 
 # Test coverage reports
 coverage/
@@ -62,16 +52,12 @@ coverage/
 # Logs
 *.log
 
-# IDE
-.idea/
-
 # Build outputs
 *.apk
 *.ipa
 *.aab
 
-# Windows
-Thumbs.db
-
-# Local markdown files 
+# Local markdown files
 *.dev.md
+
+/dev_only

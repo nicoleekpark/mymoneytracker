@@ -306,7 +306,7 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
   if (data.fieldGroups.length === 0 && data.summary.netWorth === 0) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['2xl'] }}>
-        <CategoryIcon name="chart-pie" size={48} color={colors.textSecondary} />
+        <CategoryIcon name="pie-chart" size={48} color={colors.textSecondary} />
         <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, marginTop: spacing.lg, textAlign: 'center' }}>
           No assets tracked yet
         </Text>

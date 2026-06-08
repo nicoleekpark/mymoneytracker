@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { SectionHeader } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 import { useAccountsData } from './hooks/useAccountsData'
 import type { AccountsColors, AccountActivity, AccountGroup } from './accounts.types'
@@ -346,6 +347,10 @@ export function AccountsBody({ colors, scope, period }: Props) {
     })
   }
 
+  const handleAddAccount = useCallback(() => {
+    router.push('/(modal)/add-account')
+  }, [])
+
   // Show timeline for month and year scopes
   const showBalanceChange = scope === 'month' || scope === 'year'
 
@@ -362,53 +367,86 @@ export function AccountsBody({ colors, scope, period }: Props) {
 
   if (groups.length === 0) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-          No accounts
-        </Text>
-        <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, textAlign: 'center' }}>
-          Add accounts to track your balances and activity.
-        </Text>
-      </View>
+      <>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm, textAlign: 'center' }}>
+            No accounts yet
+          </Text>
+          <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.lg }}>
+            Add accounts to track your balances and activity.
+          </Text>
+          <Pressable
+            onPress={handleAddAccount}
+            style={{
+              backgroundColor: colors.text,
+              paddingHorizontal: spacing.xl,
+              paddingVertical: spacing.md,
+              borderRadius: radius.full,
+            }}
+          >
+            <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.surface }}>
+              Add Account
+            </Text>
+          </Pressable>
+        </View>
+      </>
     )
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Summary section */}
-      {visibleSummaries.length > 0 && (
-        <View style={{ marginBottom: SECTION_GAP }}>
-          {visibleSummaries.map((summary, index) => (
-            <SummarySectionRow
-              key={summary.key}
-              label={summary.label}
-              startBalance={summary.startBalance}
-              endBalance={summary.endBalance}
-              delta={summary.delta}
-              isLiability={summary.isLiability}
-              colors={colors}
-              isLast={index === visibleSummaries.length - 1}
-              isCurrentPeriod={isCurrentPeriod}
-            />
-          ))}
-        </View>
-      )}
+    <>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Summary section */}
+        {visibleSummaries.length > 0 && (
+          <View style={{ marginBottom: SECTION_GAP }}>
+            {visibleSummaries.map((summary, index) => (
+              <SummarySectionRow
+                key={summary.key}
+                label={summary.label}
+                startBalance={summary.startBalance}
+                endBalance={summary.endBalance}
+                delta={summary.delta}
+                isLiability={summary.isLiability}
+                colors={colors}
+                isLast={index === visibleSummaries.length - 1}
+                isCurrentPeriod={isCurrentPeriod}
+              />
+            ))}
+          </View>
+        )}
 
-      {/* Account sections */}
-      {groups.map((group) => (
-        <AccountSection
-          key={group.key}
-          group={group}
-          colors={colors}
-          showBalanceChange={showBalanceChange}
-          isCurrentPeriod={isCurrentPeriod}
-          onAccountPress={handleAccountPress}
-        />
-      ))}
-    </ScrollView>
+        {/* Account sections */}
+        {groups.map((group) => (
+          <AccountSection
+            key={group.key}
+            group={group}
+            colors={colors}
+            showBalanceChange={showBalanceChange}
+            isCurrentPeriod={isCurrentPeriod}
+            onAccountPress={handleAccountPress}
+          />
+        ))}
+
+        {/* Add Account button at bottom */}
+        <Pressable
+          onPress={handleAddAccount}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: spacing.md,
+            marginTop: spacing.lg,
+          }}
+        >
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
+            + Add Account
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </>
   )
 }

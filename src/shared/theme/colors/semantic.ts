@@ -37,6 +37,7 @@ export const semanticLight: SemanticColors = {
 
   danger: PALETTE.expense.light,     // warm terracotta
   dangerSoft: PALETTE.expense.lightSoft,
+  onDanger: '#FFFFFF',  // white text on dark terracotta
 
   info: PALETTE.info.light,
   infoSoft: PALETTE.info.lightSoft,
@@ -76,6 +77,7 @@ export const semanticDark: SemanticColors = {
 
   danger: PALETTE.expense.dark,      // soft peach
   dangerSoft: PALETTE.expense.darkSoft,
+  onDanger: '#070D12',  // dark text on light peach
 
   info: PALETTE.info.dark,
   infoSoft: PALETTE.info.darkSoft,

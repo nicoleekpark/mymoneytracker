@@ -1,8 +1,25 @@
 import type { UUID } from '@/core/domain/common/uuid'
-import type { Account } from '@/core/domain/account/account.types'
-import type { AccountRepository } from '@/core/domain/account/account.repository'
+import type { Account, AccountKind, AccountNature } from '@/core/domain/account/account.types'
+import type { AccountRepository, CreateAccountInput } from '@/core/domain/account/account.repository'
 import type { DataSource } from '../db/DataSource'
 import { rowToAccount, type AccountRow } from '../mappers/account.mapper'
+import { uuid } from '@/shared/utils/uuid'
+
+/**
+ * Determine account nature from kind.
+ * Credit cards and loans are liabilities; everything else is an asset.
+ */
+function getNatureFromKind(kind: AccountKind): AccountNature {
+  return kind === 'credit_card' || kind === 'loan' ? 'liability' : 'asset'
+}
+
+/**
+ * Generate a unique key for an account based on its kind and name.
+ */
+function generateAccountKey(kind: AccountKind, name: string): string {
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+  return `acct:${kind}_${slug}_${Date.now()}`
+}
 
 /**
  * SQLite implementation of AccountRepository.
@@ -13,7 +30,7 @@ export class SqliteAccountRepository implements AccountRepository {
   listActive(): Account[] {
     const rows = this.dataSource.queryAll<AccountRow>(
       `
-      SELECT id, key, name, nature, kind
+      SELECT id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits
       FROM accounts
       WHERE is_archived = 0
       ORDER BY
@@ -31,6 +48,7 @@ export class SqliteAccountRepository implements AccountRepository {
           WHEN 'loan' THEN 5
           ELSE 9
         END,
+        sort_order ASC,
         name ASC;
       `
     )
@@ -51,5 +69,69 @@ export class SqliteAccountRepository implements AccountRepository {
     )
     if (!row?.id) throw new Error(`Account not found for key=${key}`)
     return row.id
+  }
+
+  getById(id: UUID): Account | null {
+    const row = this.dataSource.queryFirst<AccountRow>(
+      `
+      SELECT id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits
+      FROM accounts
+      WHERE id = ?
+      LIMIT 1;
+      `,
+      [id]
+    )
+    return row ? rowToAccount(row) : null
+  }
+
+  getNextSortOrder(kind: AccountKind): number {
+    const row = this.dataSource.queryFirst<{ max_sort: number | null }>(
+      `
+      SELECT MAX(sort_order) as max_sort
+      FROM accounts
+      WHERE kind = ?
+        AND is_archived = 0;
+      `,
+      [kind]
+    )
+    return (row?.max_sort ?? -1) + 1
+  }
+
+  create(input: CreateAccountInput): Account {
+    const id = uuid()
+    const key = generateAccountKey(input.kind, input.name)
+    const nature = getNatureFromKind(input.kind)
+    const sortOrder = this.getNextSortOrder(input.kind)
+
+    this.dataSource.exec(
+      `
+      INSERT INTO accounts (id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits)
+      VALUES (?, ?, ?, ?, ?, 'USD', ?, 0, 0, ?, ?);
+      `,
+      [
+        id,
+        key,
+        input.name,
+        nature,
+        input.kind,
+        sortOrder,
+        input.bankName ?? null,
+        input.lastFourDigits ?? null
+      ]
+    )
+
+    return {
+      id,
+      key,
+      name: input.name,
+      nature,
+      kind: input.kind,
+      currency: 'USD',
+      sortOrder,
+      isSystem: false,
+      isArchived: false,
+      bankName: input.bankName,
+      lastFourDigits: input.lastFourDigits,
+    }
   }
 }

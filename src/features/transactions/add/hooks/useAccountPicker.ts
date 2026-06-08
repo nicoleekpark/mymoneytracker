@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Keyboard } from 'react-native'
+import { router } from 'expo-router'
 
 import type { Account } from '@/core/domain/account'
 import { getActiveAccounts } from '@/core/services/account'
 import { normalizeForSearch } from '@/shared/utils/search'
+import { useAddTransactionNavStore } from '../store/addTransactionNav.store'
 
 export type AccountPickerState = Readonly<{
   accountKey: string | null
@@ -19,14 +21,24 @@ export type AccountPickerState = Readonly<{
   closeAccount: () => void
   chooseAccount: (key: string) => void
   clearAccount: () => void
+  refreshAccounts: () => void
+  // Navigation-based account selection
+  navigateToAccountSelection: () => void
 }>
 
 export function useAccountPicker(): AccountPickerState {
+  const { openAccountSelection } = useAddTransactionNavStore()
+
   const [accountKey, setAccountKey] = useState<string | null>(null)
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [accountQuery, setAccountQuery] = useState('')
+  const [accountsVersion, setAccountsVersion] = useState(0)
 
-  const accounts = useMemo(() => getActiveAccounts(), [])
+  const accounts = useMemo(() => getActiveAccounts(), [accountsVersion])
+
+  const refreshAccounts = useCallback(() => {
+    setAccountsVersion((v) => v + 1)
+  }, [])
 
   const filteredAccounts = useMemo(() => {
     const q = normalizeForSearch(accountQuery)
@@ -67,6 +79,21 @@ export function useAccountPicker(): AccountPickerState {
     setAccountKey(null)
   }, [])
 
+  // Navigation-based account selection (slide from right)
+  const navigateToAccountSelection = useCallback(() => {
+    Keyboard.dismiss()
+    openAccountSelection(accounts, accountKey, {
+      onChooseAccount: (key) => {
+        setAccountKey(key)
+      },
+      onAddAccount: () => {
+        // After adding account, refresh the list
+        setAccountsVersion((v) => v + 1)
+      },
+    })
+    router.push('/(modal)/add-transaction/account-selection')
+  }, [accounts, accountKey, openAccountSelection])
+
   return {
     accountKey,
     showAccountModal,
@@ -81,5 +108,7 @@ export function useAccountPicker(): AccountPickerState {
     closeAccount,
     chooseAccount,
     clearAccount,
+    refreshAccounts,
+    navigateToAccountSelection,
   }
 }

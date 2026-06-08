@@ -256,7 +256,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
             />
             {hasNotifications && (
               <View style={[styles.badge, { backgroundColor: theme.semantic.danger }]} pointerEvents="none">
-                <Text style={[styles.badgeText, { color: '#fff' }]}>{unreadCount}</Text>
+                <Text style={[styles.badgeText, { color: theme.semantic.onDanger }]}>{unreadCount}</Text>
               </View>
             )}
           </Pressable>
