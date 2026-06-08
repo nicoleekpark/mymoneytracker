@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- MyMoneyTracker Logo - Light Mode -->
+  <!-- Rose pink piggy bank with gold coin -->
+
+  <!-- Body -->
+  <circle cx="60" cy="68" r="36" fill="#D4A49A"/>
+
+  <!-- Ears -->
+  <ellipse cx="36" cy="42" rx="9" ry="13" fill="#D4A49A" transform="rotate(-15 36 42)"/>
+  <ellipse cx="84" cy="42" rx="9" ry="13" fill="#D4A49A" transform="rotate(15 84 42)"/>
+
+  <!-- Snout -->
+  <ellipse cx="60" cy="78" rx="10" ry="7" fill="#E4B4AA"/>
+  <circle cx="55" cy="77" r="2" fill="#B4847A"/>
+  <circle cx="65" cy="77" r="2" fill="#B4847A"/>
+
+  <!-- Eyes -->
+  <circle cx="47" cy="62" r="3" fill="#2a2a2a"/>
+  <circle cx="73" cy="62" r="3" fill="#2a2a2a"/>
+
+  <!-- Slot -->
+  <rect x="48" y="36" width="24" height="4" rx="2" fill="#B4847A"/>
+
+  <!-- Coin -->
+  <ellipse cx="60" cy="20" rx="9" ry="5" fill="#D4A84A"/>
+  <ellipse cx="60" cy="18" rx="9" ry="5" fill="#F4D76A"/>
+</svg>

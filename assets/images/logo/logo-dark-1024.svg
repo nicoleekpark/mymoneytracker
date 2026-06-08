@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- MyMoneyTracker Logo - Dark Mode (1024x1024 for App Store) -->
+  <!-- Peach piggy bank with gold coin -->
+  <!-- Scaled from 120x120 base (factor: 8.533) -->
+
+  <!-- Body -->
+  <circle cx="512" cy="580" r="307" fill="#E8B0A0"/>
+
+  <!-- Ears -->
+  <ellipse cx="307" cy="358" rx="77" ry="111" fill="#E8B0A0" transform="rotate(-15 307 358)"/>
+  <ellipse cx="717" cy="358" rx="77" ry="111" fill="#E8B0A0" transform="rotate(15 717 358)"/>
+
+  <!-- Snout -->
+  <ellipse cx="512" cy="666" rx="85" ry="60" fill="#F0C0B0"/>
+  <circle cx="469" cy="657" r="17" fill="#C89080"/>
+  <circle cx="555" cy="657" r="17" fill="#C89080"/>
+
+  <!-- Eyes -->
+  <circle cx="401" cy="529" r="26" fill="#0a0e12"/>
+  <circle cx="623" cy="529" r="26" fill="#0a0e12"/>
+
+  <!-- Slot -->
+  <rect x="410" y="307" width="205" height="34" rx="17" fill="#C89080"/>
+
+  <!-- Coin -->
+  <ellipse cx="512" cy="171" rx="77" ry="43" fill="#C4984A"/>
+  <ellipse cx="512" cy="154" rx="77" ry="43" fill="#F4D76A"/>
+</svg>
