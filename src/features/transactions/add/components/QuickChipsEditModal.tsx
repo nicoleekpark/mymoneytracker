@@ -96,23 +96,10 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
       })
     })
 
-    // Payment methods not in current chips (only for expense)
-    if (transactionType === 'expense') {
-      accounts.forEach(acc => {
-        if (!currentChips.some(c => c.type === 'payment' && c.key === acc.key)) {
-          items.push({
-            type: 'payment',
-            key: acc.key,
-            label: acc.name,
-            icon: acc.kind === 'credit_card' ? 'credit-card' : acc.kind === 'cash' ? 'money' : 'bank',
-            color: '#5A6A6A',
-          })
-        }
-      })
-    }
+    // Note: Payment methods are managed separately in PaymentChipsReorderModal
 
     return items
-  }, [availableCategories, accounts, currentChips, transactionType])
+  }, [availableCategories, currentChips])
 
   // Get display info for a chip config
   const getChipDisplay = (chip: QuickChipConfig): ChipDisplayInfo | null => {
@@ -221,7 +208,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
                         {item.label}
                       </Text>
                       <Text style={[styles.chipType, { color: theme.semantic.textSecondary }]}>
-                        {item.type === 'special' ? 'Special' : item.subCategoryKey ? 'Subcategory' : item.type === 'category' ? 'Category' : 'Payment'}
+                        {item.type === 'special' ? 'Special' : item.subCategoryKey ? 'Subcategory' : 'Category'}
                       </Text>
                       <FontAwesome name="plus-circle" size={18} color={theme.semantic.primary} />
                     </Pressable>

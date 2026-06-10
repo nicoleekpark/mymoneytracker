@@ -155,7 +155,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
   }
 
   const handleDraftsPress = () => {
-    router.push({ pathname: '/transactions', params: { showDrafts: 'only' } })
+    // Use replace instead of push to ensure params update even when already on transactions page
+    router.replace({ pathname: '/transactions', params: { showDrafts: 'only' } })
   }
 
   const handleBellPress = () => {

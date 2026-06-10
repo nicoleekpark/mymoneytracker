@@ -32,6 +32,41 @@ Future feature ideas for MyMoneyTracker.
 - Co-organizer: Full access (can't remove organizer)
 - Member (Adult/Teen/Child): Configurable permissions
 
+### Developer Experience & Tooling
+
+| Feature | Description | Why |
+|---------|-------------|-----|
+| **Storybook** | Component documentation & visual testing | Interactive component catalog, visual regression testing, isolated development |
+| **Visual Regression** | Automated screenshot comparison (Percy/Chromatic) | Catch unintended UI changes in CI |
+| **E2E Testing** | Detox or Maestro for end-to-end flows | Automated QA for critical paths |
+
+#### Storybook Details
+
+**What it provides:**
+- 📚 Interactive component catalog
+- 🎨 Visual testing of all states (default, loading, error, edge cases)
+- 🔧 Isolated component development
+- 📝 Auto-generated documentation
+- ♿ Accessibility checks
+
+**Implementation:**
+```bash
+# React Native Storybook
+npx sb@latest init --type react_native
+```
+
+**Recommended stories:**
+- `Button.stories.tsx` - All button variants
+- `CategoryIcon.stories.tsx` - All category icons
+- `QuickChips.stories.tsx` - Chip states (selected, disabled, etc.)
+- `AmountKeypad.stories.tsx` - Keypad interactions
+- `TransactionRow.stories.tsx` - List item variants
+
+**Integration:**
+- Dev-only entry point (`/storybook` route in dev mode)
+- CI job to build Storybook static site
+- Optional: Chromatic for visual regression
+
 ---
 
 ## v2+ (AI & Advanced)

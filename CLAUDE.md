@@ -50,6 +50,37 @@ features/ ──► core/services/ ──► infrastructure/
 
 See `src/shared/theme/tokens/viewStyles.ts` for pre-composed styles.
 
+### Token-First Development (CRITICAL)
+
+**ALWAYS check for existing tokens before creating any component:**
+
+1. **Before writing styles**, check these files:
+   - `src/shared/theme/tokens/spacing.ts` - spacing values
+   - `src/shared/theme/tokens/radius.ts` - border radius
+   - `src/shared/theme/tokens/typography.ts` - font sizes, weights
+   - `src/shared/theme/tokens/modal/` - modal-specific styles
+   - `src/shared/theme/tokens/viewStyles.ts` - pre-composed styles
+
+2. **If a token exists, USE IT** - Never hardcode values that exist in tokens
+   ```tsx
+   // ❌ Bad
+   paddingHorizontal: 16
+
+   // ✅ Good
+   paddingHorizontal: spacing.lg
+   ```
+
+3. **Proactively suggest new tokens** when you see:
+   - Same magic number used 3+ times
+   - Pattern that could be reusable across components
+   - Style that matches an existing pattern but isn't tokenized
+
+4. **Modal components** - Always use `modalStyles` from `@/shared/theme/tokens/modal`:
+   - `modalStyles.dragHandle`, `modalStyles.dragHandleContainer`
+   - `modalStyles.modal` for backgroundStyle (includes `radius.sheet`)
+   - `modalStyles.ctaPrimaryButton`, `modalStyles.saveButton`
+   - Helper functions: `getScrollContentPadding()`, `getSheetBottomPadding()`
+
 ### Color Tokens
 
 - **NEVER use `textMuted`** - Always use `textSecondary`

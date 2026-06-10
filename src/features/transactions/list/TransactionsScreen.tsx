@@ -167,6 +167,14 @@ export default function TransactionsScreen() {
     showDrafts: showDraftsOnly,
   }))
 
+  // Sync filter state when showDrafts param changes (e.g., tapping draft button while already on page)
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      showDrafts: showDraftsOnly,
+    }))
+  }, [showDraftsOnly])
+
   // Drafts store
   const { drafts, loadDrafts, isLoaded: draftsLoaded } = useDraftsStore()
 
