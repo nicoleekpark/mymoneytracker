@@ -5,6 +5,7 @@ import { fontSize, fontWeight, displaySize, letterSpacing } from '@/shared/theme
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
+import { MODAL_SNAP_COMPACT } from '@/shared/theme/tokens/modal'
 import { formatUsdInt } from '@/shared/format/currency'
 
 import { NetSparkline, CategoryDeltaBar, DailyOutflowBars } from './components'
@@ -39,7 +40,7 @@ function TypicalInfoSheet({
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
-      snapPoints={['45%']}
+      snapPoints={MODAL_SNAP_COMPACT}
     >
       <View style={{ marginBottom: spacing.md }}>
         <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>

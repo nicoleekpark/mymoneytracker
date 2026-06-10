@@ -21,7 +21,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
-import { modalStyles } from '@/shared/theme/tokens/modal'
+import { modalStyles, MODAL_SNAP_FULL } from '@/shared/theme/tokens/modal'
 
 export type TransactionType = 'expense' | 'income' | 'transfer'
 export type DraftViewMode = 'grouped' | 'timeline'
@@ -63,7 +63,7 @@ export function TransactionFilterSheet({
 }: TransactionFilterSheetProps) {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
-  const snapPoints = useMemo(() => ['90%'], [])
+  const snapPoints = MODAL_SNAP_FULL
 
   const handleApply = () => {
     sheetRef.current?.dismiss()

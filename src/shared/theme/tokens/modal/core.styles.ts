@@ -148,6 +148,7 @@ export const coreStyles = StyleSheet.create({
   },
   ctaContainerAbsolute: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: spacing.lg,

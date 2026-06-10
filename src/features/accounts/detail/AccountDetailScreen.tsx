@@ -1,56 +1,124 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { router, useLocalSearchParams } from 'expo-router'
-import React, { useCallback, useMemo } from 'react'
+import { router, useLocalSearchParams, useSegments } from 'expo-router'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  ActionSheetIOS,
   Alert,
-  Platform,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { archiveAccount, getAccountById } from '@/core/services/account'
+import { archiveAccount, getAccountById, updateAccount } from '@/core/services/account'
+import { getAccountBalanceAtEndOfMonth } from '@/core/services/transaction'
 import { Screen } from '@/shared/layout/Screen'
+import { formatCurrency } from '@/shared/format/currency'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
 import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 
 export default function AccountDetailScreen() {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ accountId: string }>()
+  const segments = useSegments()
   const { invalidateTransactions } = useDataRefreshStore()
   const { semantic } = theme
+
+  // Determine if opened from nested flow (show "‹ Back") or directly (show "Close")
+  const isNestedFlow = segments.includes('account-settings' as never)
 
   const account = useMemo(() => {
     if (!params.accountId) return null
     return getAccountById(params.accountId)
   }, [params.accountId])
 
-  const handleClose = useCallback(() => {
-    router.back()
-  }, [])
-
-  const handleEdit = useCallback(() => {
-    if (!account) return
-    router.push({
-      pathname: '/(modal)/edit-account',
-      params: { accountId: account.id }
-    })
+  // Current balance
+  const currentBalance = useMemo(() => {
+    if (!account) return 0
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    return getAccountBalanceAtEndOfMonth(account.id, currentMonth)
   }, [account])
+
+  // Editable fields
+  const [name, setName] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [lastFourDigits, setLastFourDigits] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Initialize editable fields from account
+  useEffect(() => {
+    if (account) {
+      setName(account.name)
+      setBankName(account.bankName || '')
+      setLastFourDigits(account.lastFourDigits || '')
+    }
+  }, [account])
+
+  // Check if there are unsaved changes
+  const hasChanges = useMemo(() => {
+    if (!account) return false
+    return (
+      name !== account.name ||
+      bankName !== (account.bankName || '') ||
+      lastFourDigits !== (account.lastFourDigits || '')
+    )
+  }, [account, name, bankName, lastFourDigits])
+
+  const handleBack = useCallback(() => {
+    if (hasChanges) {
+      Alert.alert(
+        'Unsaved Changes',
+        'You have unsaved changes. Are you sure you want to go back?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Discard', style: 'destructive', onPress: () => router.back() },
+        ]
+      )
+    } else {
+      router.back()
+    }
+  }, [hasChanges])
+
+  const handleSave = useCallback(async () => {
+    if (!account || !hasChanges) return
+
+    // Validate name
+    if (!name.trim()) {
+      Alert.alert('Error', 'Account name is required')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      updateAccount(account.id, {
+        name: name.trim(),
+        bankName: bankName.trim() || undefined,
+        lastFourDigits: lastFourDigits.trim() || undefined,
+      })
+      invalidateTransactions()
+      Keyboard.dismiss()
+      router.back()
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save changes')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [account, name, bankName, lastFourDigits, hasChanges, invalidateTransactions])
 
   const handleViewTransactions = useCallback(() => {
     if (!account) return
     router.replace({
       pathname: '/(tabs)/transactions',
-      params: { accountId: account.id }
+      params: { accountId: account.id },
     })
   }, [account])
 
@@ -73,8 +141,8 @@ export default function AccountDetailScreen() {
             } catch (error) {
               Alert.alert('Error', 'Failed to archive account')
             }
-          }
-        }
+          },
+        },
       ]
     )
   }, [account, invalidateTransactions])
@@ -92,56 +160,21 @@ export default function AccountDetailScreen() {
           style: 'destructive',
           onPress: () => {
             // TODO: Implement deleteAccount in service
-            Alert.alert('Not Implemented', 'Delete functionality coming soon. Use Archive instead.')
-          }
-        }
+            Alert.alert(
+              'Not Implemented',
+              'Delete functionality coming soon. Use Archive instead.'
+            )
+          },
+        },
       ]
     )
   }, [account])
 
-  const handleMoreOptions = useCallback(() => {
-    if (!account) return
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Archive Account', 'Delete Account'],
-          destructiveButtonIndex: 2,
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) handleArchive()
-          if (buttonIndex === 2) handleDelete()
-        }
-      )
-    } else {
-      Alert.alert(
-        'Options',
-        undefined,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Archive Account', onPress: handleArchive },
-          { text: 'Delete Account', onPress: handleDelete, style: 'destructive' },
-        ]
-      )
-    }
-  }, [account, handleArchive, handleDelete])
-
-  const getAccountIcon = (kind: string) => {
-    switch (kind) {
-      case 'credit_card': return 'credit-card'
-      case 'cash': return 'money'
-      case 'checking':
-      case 'savings': return 'bank'
-      case 'investment': return 'line-chart'
-      case 'loan': return 'file-text-o'
-      default: return 'university'
-    }
-  }
-
   const getAccountTypeLabel = (kind: string, nature: string) => {
     const typeLabel = kind.replace('_', ' ')
-    return nature === 'liability' ? `${typeLabel} • liability` : typeLabel
+    const capitalizedType = typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)
+    const natureLabel = nature === 'liability' ? 'Liability' : 'Asset'
+    return `${capitalizedType} (${natureLabel})`
   }
 
   if (!account) {
@@ -153,6 +186,9 @@ export default function AccountDetailScreen() {
       </Screen>
     )
   }
+
+  const isDebt = account.nature === 'liability'
+  const displayBalance = isDebt ? -Math.abs(currentBalance) : currentBalance
 
   return (
     <Screen
@@ -167,111 +203,174 @@ export default function AccountDetailScreen() {
         <View style={[modalStyles.dragHandle, { backgroundColor: semantic.border }]} />
       </View>
 
-      {/* Header */}
+      {/* Header: Back + Title + Save */}
       <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
-        <Pressable onPress={handleClose} hitSlop={12} style={modalStyles.cancelButton}>
-          <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>Close</Text>
+        <Pressable onPress={handleBack} hitSlop={12} style={modalStyles.cancelButton}>
+          <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>
+            {isNestedFlow ? '‹ Back' : 'Close'}
+          </Text>
         </Pressable>
-        <Pressable onPress={handleMoreOptions} hitSlop={12} style={{ padding: spacing.xs }}>
-          <FontAwesome name="ellipsis-h" size={18} color={semantic.textSecondary} />
-        </Pressable>
+        <Text
+          style={[styles.headerTitle, { color: semantic.text }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {account.name}
+        </Text>
+        {hasChanges ? (
+          <Pressable
+            onPress={handleSave}
+            disabled={isSaving}
+            hitSlop={12}
+            style={[modalStyles.cancelButton, { opacity: isSaving ? 0.5 : 1 }]}
+          >
+            <Text style={[modalStyles.cancelText, { color: semantic.primary }]}>Save</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.headerSpacer} />
+        )}
       </View>
+
+      {/* Header Divider */}
+      <View style={{ height: 1, backgroundColor: semantic.border }} />
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: getScrollContentPadding(insets.bottom) }}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingBottom: getScrollContentPadding(insets.bottom),
+        }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Account Info Card */}
-        <View style={[styles.card, { backgroundColor: semantic.surfaceAlt }]}>
-          {/* Icon + Name */}
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconContainer, { backgroundColor: semantic.surface }]}>
-              <FontAwesome
-                name={getAccountIcon(account.kind)}
-                size={24}
-                color={semantic.text}
-              />
-            </View>
-            <View style={styles.cardHeaderText}>
-              <Text style={[styles.accountName, { color: semantic.text }]}>{account.name}</Text>
-              <Text style={[styles.accountType, { color: semantic.textSecondary }]}>
-                {getAccountTypeLabel(account.kind, account.nature)}
-              </Text>
-            </View>
-          </View>
-
-          {/* Details */}
-          {(account.bankName || account.lastFourDigits) && (
-            <View style={[styles.detailsSection, { borderTopColor: semantic.border }]}>
-              {account.bankName && (
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: semantic.textSecondary }]}>Institution</Text>
-                  <Text style={[styles.detailValue, { color: semantic.text }]}>{account.bankName}</Text>
-                </View>
-              )}
-              {account.lastFourDigits && (
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: semantic.textSecondary }]}>Last 4 digits</Text>
-                  <Text style={[styles.detailValue, { color: semantic.text }]}>•••• {account.lastFourDigits}</Text>
-                </View>
-              )}
-            </View>
-          )}
+        {/* Balance Hero */}
+        <View style={styles.balanceHero}>
+          <Text style={[styles.balanceLabel, { color: semantic.textSecondary }]}>
+            Current Balance
+          </Text>
+          <Text
+            style={[
+              styles.balanceValue,
+              { color: isDebt ? semantic.danger : semantic.text },
+            ]}
+          >
+            {formatCurrency(displayBalance)}
+          </Text>
         </View>
 
-        {/* Actions */}
-        <View style={styles.actionsSection}>
-          {/* View Transactions */}
-          <Pressable
-            onPress={handleViewTransactions}
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: semantic.surfaceAlt, opacity: pressed ? 0.7 : 1 }
-            ]}
-          >
-            <FontAwesome name="list" size={16} color={semantic.text} />
-            <Text style={[styles.actionButtonText, { color: semantic.text }]}>View Transactions</Text>
-            <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
-          </Pressable>
+        {/* Editable Fields */}
+        <View style={styles.section}>
+          {/* Account Name */}
+          <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
+            <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
+              Account Name
+            </Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              style={[styles.editFieldInput, { color: semantic.text }]}
+              placeholder="Enter account name"
+              placeholderTextColor={semantic.textSecondary}
+            />
+          </View>
 
-          {/* Edit */}
-          <Pressable
-            onPress={handleEdit}
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: semantic.surfaceAlt, opacity: pressed ? 0.7 : 1 }
-            ]}
-          >
-            <FontAwesome name="pencil" size={16} color={semantic.text} />
-            <Text style={[styles.actionButtonText, { color: semantic.text }]}>Edit Account</Text>
-            <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
-          </Pressable>
+          {/* Institution */}
+          <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
+            <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
+              Institution <Text style={styles.optionalLabel}>(optional)</Text>
+            </Text>
+            <TextInput
+              value={bankName}
+              onChangeText={setBankName}
+              style={[styles.editFieldInput, { color: semantic.text }]}
+              placeholder="e.g., Chase, Bank of America"
+              placeholderTextColor={semantic.textSecondary}
+            />
+          </View>
+
+          {/* Last 4 Digits */}
+          <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
+            <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
+              Last 4 Digits <Text style={styles.optionalLabel}>(optional)</Text>
+            </Text>
+            <TextInput
+              value={lastFourDigits}
+              onChangeText={(text) => setLastFourDigits(text.replace(/\D/g, '').slice(0, 4))}
+              style={[styles.editFieldInput, { color: semantic.text }]}
+              placeholder="e.g., 4521"
+              placeholderTextColor={semantic.textSecondary}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+        </View>
+
+        {/* Account Type (Read-only) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
+            Account Type
+          </Text>
+          <View style={[styles.readOnlyField, { backgroundColor: semantic.surfaceAlt }]}>
+            <Text style={[styles.readOnlyValue, { color: semantic.text }]}>
+              {getAccountTypeLabel(account.kind, account.nature)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
+            Quick Actions
+          </Text>
+          <View style={[styles.actionList, { backgroundColor: semantic.surfaceAlt }]}>
+            <Pressable
+              onPress={handleViewTransactions}
+              style={({ pressed }) => [
+                styles.actionRow,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <FontAwesome name="list" size={16} color={semantic.textSecondary} />
+              <Text style={[styles.actionLabel, { color: semantic.text }]}>
+                View Transactions
+              </Text>
+              <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Danger Zone */}
-        <View style={styles.dangerSection}>
-          <Pressable
-            onPress={handleArchive}
-            style={({ pressed }) => [
-              styles.dangerButton,
-              { borderColor: semantic.border, opacity: pressed ? 0.7 : 1 }
-            ]}
-          >
-            <FontAwesome name="archive" size={14} color={semantic.textSecondary} />
-            <Text style={[styles.dangerButtonText, { color: semantic.textSecondary }]}>Archive Account</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleDelete}
-            style={({ pressed }) => [
-              styles.dangerButton,
-              { borderColor: semantic.danger, opacity: pressed ? 0.7 : 1 }
-            ]}
-          >
-            <FontAwesome name="trash" size={14} color={semantic.danger} />
-            <Text style={[styles.dangerButtonText, { color: semantic.danger }]}>Delete Account</Text>
-          </Pressable>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: semantic.danger }]}>Danger Zone</Text>
+          <View style={[styles.actionList, { backgroundColor: semantic.surfaceAlt }]}>
+            <Pressable
+              onPress={handleArchive}
+              style={({ pressed }) => [
+                styles.actionRow,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <FontAwesome name="archive" size={16} color={semantic.textSecondary} />
+              <Text style={[styles.actionLabel, { color: semantic.text }]}>
+                Archive Account
+              </Text>
+              <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
+            </Pressable>
+            <View style={[styles.actionDivider, { backgroundColor: semantic.border }]} />
+            <Pressable
+              onPress={handleDelete}
+              style={({ pressed }) => [
+                styles.actionRow,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <FontAwesome name="trash" size={16} color={semantic.danger} />
+              <Text style={[styles.actionLabel, { color: semantic.danger }]}>
+                Delete Account
+              </Text>
+              <FontAwesome name="chevron-right" size={12} color={semantic.danger} />
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </Screen>
@@ -279,82 +378,89 @@ export default function AccountDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+  headerTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: spacing.sm,
+  },
+  headerSpacer: {
+    width: 50,
+  },
+  balanceHero: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
     marginBottom: spacing.lg,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardHeaderText: {
-    flex: 1,
-  },
-  accountName: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-  },
-  accountType: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-    textTransform: 'capitalize',
-  },
-  detailsSection: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
-  },
-  detailLabel: {
-    fontSize: fontSize.sm,
-  },
-  detailValue: {
-    fontSize: fontSize.sm,
+  balanceLabel: {
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
+    textTransform: 'uppercase',
+    letterSpacing: letterSpacing.wider,
+    marginBottom: spacing.xs,
   },
-  actionsSection: {
-    gap: spacing.sm,
+  balanceValue: {
+    fontSize: 32,
+    fontWeight: fontWeight.heavy,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -1,
+  },
+  section: {
     marginBottom: spacing.xl,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: radius.md,
-    gap: spacing.md,
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    textTransform: 'uppercase',
+    letterSpacing: letterSpacing.wider,
+    marginBottom: spacing.sm,
+    paddingLeft: spacing.xs,
   },
-  actionButtonText: {
-    flex: 1,
+  editField: {
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  editFieldLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    marginBottom: spacing.xs,
+  },
+  optionalLabel: {
+    fontWeight: fontWeight.normal,
+    opacity: 0.7,
+  },
+  editFieldInput: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    padding: 0,
+  },
+  readOnlyField: {
+    borderRadius: radius.lg,
+    padding: spacing.md,
+  },
+  readOnlyValue: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
   },
-  dangerSection: {
-    gap: spacing.sm,
+  actionList: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
   },
-  dangerButton: {
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.sm,
+    gap: spacing.md,
   },
-  dangerButtonText: {
+  actionLabel: {
+    flex: 1,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+  },
+  actionDivider: {
+    height: 1,
+    marginLeft: spacing.md + 16 + spacing.md, // icon width + gaps
   },
 })

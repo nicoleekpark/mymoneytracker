@@ -7,9 +7,9 @@ import { CATEGORY_DOT_SIZE, SECTION_GAP } from '@/shared/theme/tokens/viewStyles
 
 import { FEATURE_FLAGS } from '@/shared/config'
 import { UNCATEGORIZED_KEY } from '@/core/domain/category'
-import { CategoryIcon, EmptyState, InfoSheet, SectionHeader } from '@/shared/components'
+import { CategoryIcon, EmptyState, InfoSheet, SectionHeader, TrackingSince } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
-import { formatYearMonth, formatTrackingSince } from '@/shared/format/date'
+import { formatYearMonth } from '@/shared/format/date'
 import { getCategoryMeta, getSubcategoryMeta } from '@/shared/format/category'
 import { useDashboardSectionsStore } from '@/shared/store'
 
@@ -338,9 +338,7 @@ export function AllBody({ colors }: Props) {
       {/* Section 1: All-Time Overview */}
       <View style={{ marginBottom: SECTION_GAP }}>
         {/* Tracking since subtitle */}
-        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, textAlign: 'right', marginBottom: spacing.xs }}>
-          {formatTrackingSince(data.firstTransactionDate)}
-        </Text>
+        <TrackingSince date={data.firstTransactionDate} color={colors.textSecondary} />
 
         {/* Hero */}
         {useOptionAHero ? (

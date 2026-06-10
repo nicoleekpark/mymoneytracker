@@ -15,6 +15,7 @@ import { formatYearMonth } from '@/shared/format/date'
 import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { MODAL_SNAP_HALF } from '@/shared/theme/tokens/modal'
 import { useAssetsData } from './hooks/useAssetsData'
 
 // Enable LayoutAnimation on Android
@@ -63,7 +64,7 @@ function LiquidityInfoSheet({
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
-      snapPoints={['50%']}
+      snapPoints={MODAL_SNAP_HALF}
     >
       <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
         Money you can access quickly without penalties or significant loss.
@@ -208,7 +209,7 @@ function WealthGoalInfoSheet({
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
-      snapPoints={['50%']}
+      snapPoints={MODAL_SNAP_HALF}
     >
       <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
         A wealth goal is a target net worth you want to reach by a specific date, usually year-end.

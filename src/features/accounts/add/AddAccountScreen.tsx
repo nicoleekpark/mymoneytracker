@@ -68,8 +68,10 @@ export default function AddAccountScreen() {
   const balanceInputRef = useRef<TextInput>(null)
   const { semantic } = theme
 
-  // Determine if opened from transaction flow (show "Back") or directly (show "Cancel")
-  const isFromTransactionFlow = segments.includes('add-transaction' as never)
+  // Determine if opened from nested flow (show "‹ Back") or directly (show "Cancel")
+  const isNestedFlow =
+    segments.includes('add-transaction' as never) ||
+    segments.includes('account-settings' as never)
 
   // Form state
   const [category, setCategory] = useState<AccountCategory>('bank')
@@ -160,8 +162,9 @@ export default function AddAccountScreen() {
   const canSubmit = name.trim().length > 0
   const subtypes = ACCOUNT_SUBTYPES[category]
 
-  // Get label for institution field based on kind
+  // Get label for institution/source field based on kind
   const institutionLabel = useMemo(() => {
+    if (kind === 'cash') return 'Source'
     if (kind === 'credit_card') return 'Card issuer'
     if (kind === 'loan') return 'Lender'
     if (kind === 'investment') return 'Brokerage'
@@ -169,6 +172,7 @@ export default function AddAccountScreen() {
   }, [kind])
 
   const institutionPlaceholder = useMemo(() => {
+    if (kind === 'cash') return 'e.g., ATM, Gift, Salary'
     if (kind === 'credit_card') return 'e.g., Chase, Amex'
     if (kind === 'loan') return 'e.g., SoFi, Marcus'
     if (kind === 'investment') return 'e.g., Fidelity, Vanguard'
@@ -192,7 +196,7 @@ export default function AddAccountScreen() {
         <View style={modalStyles.header}>
           <Pressable onPress={handleCancel} hitSlop={12} style={modalStyles.cancelButton}>
             <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>
-              {isFromTransactionFlow ? 'Back' : 'Cancel'}
+              {isNestedFlow ? '‹ Back' : 'Cancel'}
             </Text>
           </Pressable>
         </View>
@@ -330,40 +334,36 @@ export default function AddAccountScreen() {
 
           {/* Field Group */}
           <View style={modalStyles.fieldGroup}>
-            {/* Institution Name (Optional) - Hidden for cash */}
-            {category !== 'cash' && (
-              <>
-                <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
+            {/* Institution/Source (Optional) */}
+            <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
+              <Text
+                style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!bankName, semantic) }]}
+              >
+                {institutionLabel} <Text style={modalStyles.optionalLabel}>(optional)</Text>
+              </Text>
+              <View style={modalStyles.fieldInputWrapper}>
+                {!bankName && (
                   <Text
-                    style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!bankName, semantic) }]}
+                    style={[
+                      modalStyles.fieldPlaceholder,
+                      modalStyles.fieldInputPlaceholder,
+                      { color: semantic.textSecondary },
+                    ]}
                   >
-                    {institutionLabel} <Text style={modalStyles.optionalLabel}>(optional)</Text>
+                    {institutionPlaceholder}
                   </Text>
-                  <View style={modalStyles.fieldInputWrapper}>
-                    {!bankName && (
-                      <Text
-                        style={[
-                          modalStyles.fieldPlaceholder,
-                          modalStyles.fieldInputPlaceholder,
-                          { color: semantic.textSecondary },
-                        ]}
-                      >
-                        {institutionPlaceholder}
-                      </Text>
-                    )}
-                    <TextInput
-                      ref={institutionInputRef}
-                      value={bankName}
-                      onChangeText={setBankName}
-                      style={[modalStyles.fieldInput, { color: semantic.text }]}
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                    />
-                  </View>
-                </View>
-                <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
-              </>
-            )}
+                )}
+                <TextInput
+                  ref={institutionInputRef}
+                  value={bankName}
+                  onChangeText={setBankName}
+                  style={[modalStyles.fieldInput, { color: semantic.text }]}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+            <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
 
             {/* Last 4 Digits (Optional) - Only for bank accounts and cards (not cash) */}
             {(category === 'bank' || category === 'card') && kind !== 'cash' && (

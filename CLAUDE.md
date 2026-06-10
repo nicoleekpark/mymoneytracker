@@ -72,10 +72,15 @@ See `src/shared/theme/tokens/viewStyles.ts` for pre-composed styles.
 
 3. **Proactively suggest new tokens** when you see:
    - Same magic number used 3+ times
-   - Pattern that could be reusable across components
    - Style that matches an existing pattern but isn't tokenized
 
-4. **Modal components** - Always use `modalStyles` from `@/shared/theme/tokens/modal`:
+4. **Proactively suggest shared components** (CRITICAL):
+   - **BEFORE implementing**: Search for similar patterns in codebase
+   - If same UI/logic exists elsewhere → suggest extracting to `shared/components/`
+   - Examples: `TrackingSince`, `SectionHeader`, `EmptyState`
+   - Ask: "이 패턴이 다른 곳에서도 사용되나요? 공통 컴포넌트로 만들까요?"
+
+5. **Modal components** - Always use `modalStyles` from `@/shared/theme/tokens/modal`:
    - `modalStyles.dragHandle`, `modalStyles.dragHandleContainer`
    - `modalStyles.modal` for backgroundStyle (includes `radius.sheet`)
    - `modalStyles.ctaPrimaryButton`, `modalStyles.saveButton`

@@ -56,6 +56,7 @@ import {
   getAccountBalanceBeforeDate,
   getAccountBalanceAtEndOfMonth,
 } from '@/core/services/transaction'
+import { transactionRepository } from '@/infrastructure/repositories'
 
 // ─── Feature Types ──────────────────────────────────────────────────────────
 import type { AccountActivity, AccountGroup, SectionKey, SectionSummary } from '../accounts.types'
@@ -82,6 +83,8 @@ export type AccountsData = {
   sectionSummaries: SectionSummary[]
   /** Human-readable period label ("March 2024", "2024", "All Time") */
   periodLabel: string
+  /** First transaction date (for "All" scope - "Tracking since" display) */
+  firstTransactionDate: Date | null
   /** Force re-fetch data */
   refetch: () => void
 }
@@ -135,6 +138,7 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
 
     let activityMap: Map<string, ActivityRecord>
     let periodLabel: string
+    let firstTransactionDate: Date | null = null
 
     const year = period.year
     const month = 'month' in period ? clampMonth(period.month) : 1
@@ -175,6 +179,10 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
         transactionCount: a.transactionCount,
       }]))
       periodLabel = 'All Time'
+
+      // Get first transaction date for "Tracking since" display
+      const firstDateStr = transactionRepository.getFirstTransactionDate()
+      firstTransactionDate = firstDateStr ? new Date(firstDateStr) : null
     }
 
     // ─── Step 3: Build account activities with balances ───────────────────
@@ -211,7 +219,8 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
         endBalance = getAccountBalanceAtEndOfMonth(account.id, endOfYear)
 
       } else {
-        // All time: just show current balance (no start balance)
+        // All time: start balance = 0 (before any transactions), end = current balance
+        startBalance = 0
         const now = new Date()
         const currentMonth = formatMonthYYYYMM(now.getFullYear(), now.getMonth() + 1)
         endBalance = getAccountBalanceAtEndOfMonth(account.id, currentMonth)
@@ -314,6 +323,7 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
       groups,
       sectionSummaries,
       periodLabel,
+      firstTransactionDate,
     }
   }, [scope, period, refreshKey])  // Recompute when scope, period, or refreshKey changes
 

@@ -25,6 +25,11 @@ export {
   OPACITY_SOFT,
   OPACITY_SUBTLE,
   OPACITY_BORDER,
+  // Snap points
+  MODAL_SNAP_FULL,
+  MODAL_SNAP_HALF,
+  MODAL_SNAP_COMPACT,
+  MODAL_SNAP_DYNAMIC,
 } from './modal/constants'
 
 // Re-export types

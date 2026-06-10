@@ -26,6 +26,22 @@ export const MODAL_CHIP_MAX_WIDTH = 100
 export const MODAL_KEY_HEIGHT = spacing['3xl'] // 48
 
 // -----------------------------------------------------------------------------
+// Snap Points (BottomSheetModal sizes)
+// -----------------------------------------------------------------------------
+
+/** Full modal - matches AddTransactionScreen (standard) */
+export const MODAL_SNAP_FULL: string[] = ['90%']
+
+/** Half-screen modal */
+export const MODAL_SNAP_HALF: string[] = ['50%']
+
+/** Compact modal for simple content */
+export const MODAL_SNAP_COMPACT: string[] = ['45%']
+
+/** Dynamic modal - expandable from half to full */
+export const MODAL_SNAP_DYNAMIC: string[] = ['50%', '90%']
+
+// -----------------------------------------------------------------------------
 // Animation
 // -----------------------------------------------------------------------------
 

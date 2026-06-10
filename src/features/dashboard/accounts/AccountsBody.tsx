@@ -1,16 +1,16 @@
+import { SectionHeader, TrackingSince } from '@/shared/components'
+import { formatCurrency } from '@/shared/format/currency'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import { router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native'
-import { router } from 'expo-router'
-import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { SectionHeader } from '@/shared/components'
-import { formatCurrency } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
-import { spacing } from '@/shared/theme/tokens/spacing'
-import { radius } from '@/shared/theme/tokens/radius'
-import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
-import { useAccountsData } from './hooks/useAccountsData'
-import type { AccountsColors, AccountActivity, AccountGroup } from './accounts.types'
 import type { Period, Scope } from '../types'
+import type { AccountActivity, AccountGroup, AccountsColors } from './accounts.types'
+import { useAccountsData } from './hooks/useAccountsData'
 
 type Props = {
   colors: AccountsColors
@@ -29,7 +29,7 @@ function SummarySectionRow({
   isLiability,
   colors,
   isLast,
-  isCurrentPeriod
+  isCurrentPeriod,
 }: {
   label: string
   startBalance: number | null
@@ -54,9 +54,7 @@ function SummarySectionRow({
         ? `${formatCurrency(absChange)} less debt`
         : `${formatCurrency(absChange)} more debt`
     }
-    return delta > 0
-      ? `${formatCurrency(absChange)} more`
-      : `${formatCurrency(absChange)} less`
+    return delta > 0 ? `${formatCurrency(absChange)} more` : `${formatCurrency(absChange)} less`
   }
 
   const getChangeColor = () => {
@@ -72,46 +70,99 @@ function SummarySectionRow({
       style={{
         paddingVertical: spacing.md,
         borderBottomWidth: isLast ? 0 : 1,
-        borderBottomColor: colors.border
+        borderBottomColor: colors.border,
       }}
     >
       {/* Section title */}
-      <Text style={{
-        fontSize: fontSize.sm,
-        fontWeight: fontWeight.semibold,
-        color: colors.text,
-        marginBottom: spacing.sm
-      }}>
+      <Text
+        style={{
+          fontSize: fontSize.sm,
+          fontWeight: fontWeight.semibold,
+          color: colors.text,
+          marginBottom: spacing.sm,
+        }}
+      >
         Total {label}
       </Text>
 
       {/* Data rows */}
       {hasTimeline && (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xs }}>
-          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: spacing.xs,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.medium,
+              color: colors.textSecondary,
+            }}
+          >
             Start
           </Text>
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textSecondary, fontVariant: ['tabular-nums'] }}>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.textSecondary,
+              fontVariant: ['tabular-nums'],
+            }}
+          >
             {formatCurrency(displayStart)}
           </Text>
         </View>
       )}
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: hasTimeline ? spacing.xs : 0 }}>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginBottom: hasTimeline ? spacing.xs : 0,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.xs,
+            fontWeight: fontWeight.medium,
+            color: colors.textSecondary,
+          }}
+        >
           {hasTimeline ? (isCurrentPeriod ? 'Current' : 'End') : 'Balance'}
         </Text>
-        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, fontVariant: ['tabular-nums'] }}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.text,
+            fontVariant: ['tabular-nums'],
+          }}
+        >
           {formatCurrency(displayEnd)}
         </Text>
       </View>
 
       {hasTimeline && (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
+          <Text
+            style={{
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.medium,
+              color: colors.textSecondary,
+            }}
+          >
             Change
           </Text>
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: getChangeColor(), fontVariant: ['tabular-nums'] }}>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: getChangeColor(),
+              fontVariant: ['tabular-nums'],
+            }}
+          >
             {formatChange()}
           </Text>
         </View>
@@ -128,18 +179,17 @@ function AccountRow({
   colors,
   showBalanceChange,
   isCurrentPeriod,
-  onTap,
-  onViewTransactions
+  onViewTransactions,
 }: {
   activity: AccountActivity
   colors: AccountsColors
   showBalanceChange: boolean
   isCurrentPeriod: boolean
-  onTap: () => void
   onViewTransactions: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  const { account, startBalance, endBalance, totalOut, totalIn, transactionCount, hasActivity } = activity
+  const { account, startBalance, endBalance, totalOut, totalIn, transactionCount, hasActivity } =
+    activity
   const isLiability = account.nature === 'liability'
   const hasBalanceData = showBalanceChange && startBalance !== null
 
@@ -160,67 +210,99 @@ function AccountRow({
   }
   const { outLabel, inLabel } = getLabels()
 
+  // Can expand if has activity with money flow breakdown (monthly/yearly view only)
+  const canExpand = hasActivity && hasBalanceData && (totalIn > 0 || totalOut > 0)
+
   const handleRowPress = () => {
-    // If can expand (has activity breakdown), toggle expand
-    // Otherwise, go to account detail
-    if (hasActivity && hasBalanceData && (totalIn > 0 || totalOut > 0)) {
+    // Only expand/collapse - no navigation to account detail
+    // Use Account Settings sheet for account management
+    if (canExpand) {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
       setExpanded(!expanded)
-    } else {
-      onTap()
     }
+    // No action for accounts that can't expand
   }
 
-  // Can expand if has activity (to show money in/out breakdown)
-  const canExpand = hasActivity && (totalIn > 0 || totalOut > 0)
-
-  // No activity - single line, dimmed, tap to open detail
+  // No activity - display only (use Account Settings for management)
   if (!hasActivity) {
     return (
-      <Pressable
-        onPress={onTap}
-        style={({ pressed }) => ({
+      <View
+        style={{
           flexDirection: 'row',
           alignItems: 'center',
           paddingVertical: spacing.sm,
-          opacity: pressed ? 0.7 : 1
-        })}
+        }}
       >
         {/* Empty chevron space for alignment */}
         <View style={{ width: 16 }} />
-        <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textSecondary }} numberOfLines={1}>
+        <Text
+          style={{
+            flex: 1,
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: colors.textSecondary,
+          }}
+          numberOfLines={1}
+        >
           {account.name}
         </Text>
-        <FontAwesome name="chevron-right" size={10} color={colors.textSecondary} />
-      </Pressable>
+        {/* No chevron - use Account Settings for account management */}
+      </View>
     )
   }
 
   return (
     <View style={{ paddingVertical: spacing.sm }}>
       {/* Main row: Chevron + Account name + balance */}
-      <Pressable
-        onPress={handleRowPress}
-        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-      >
+      <Pressable onPress={handleRowPress} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {/* Chevron indicator */}
           <Text style={{ fontSize: 10, color: colors.textSecondary, width: 16 }}>
             {canExpand ? (expanded ? '▼' : '▶') : ''}
           </Text>
-          <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.text,
+            }}
+            numberOfLines={1}
+          >
             {account.name}
           </Text>
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, fontVariant: ['tabular-nums'] }}>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.text,
+              fontVariant: ['tabular-nums'],
+            }}
+          >
             {formatCurrency(displayEnd)}
           </Text>
         </View>
 
         {/* Sub row: Start → End + transaction link (hide Start → End when expanded) */}
         {hasBalanceData && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs, marginLeft: 16 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: spacing.xs,
+              marginLeft: 16,
+            }}
+          >
             {!expanded && (
-              <Text style={{ flex: 1, fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, fontVariant: ['tabular-nums'] }}>
+              <Text
+                style={{
+                  flex: 1,
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.medium,
+                  color: colors.textSecondary,
+                  fontVariant: ['tabular-nums'],
+                }}
+              >
                 {formatCurrency(displayStart)} → {formatCurrency(displayEnd)}
               </Text>
             )}
@@ -233,7 +315,13 @@ function AccountRow({
               hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
             >
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.medium,
+                  color: colors.textSecondary,
+                }}
+              >
                 {transactionCount} txn{transactionCount !== 1 ? 's' : ''} ›
               </Text>
             </Pressable>
@@ -242,7 +330,14 @@ function AccountRow({
 
         {/* All-time view: just show transaction link */}
         {!hasBalanceData && (
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.xs, marginLeft: 16 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              marginTop: spacing.xs,
+              marginLeft: 16,
+            }}
+          >
             <Pressable
               onPress={(e) => {
                 e.stopPropagation()
@@ -251,7 +346,13 @@ function AccountRow({
               hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
             >
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary }}>
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.medium,
+                  color: colors.textSecondary,
+                }}
+              >
                 {transactionCount} txn{transactionCount !== 1 ? 's' : ''} ›
               </Text>
             </Pressable>
@@ -263,20 +364,43 @@ function AccountRow({
       {expanded && canExpand && (
         <View style={{ flexDirection: 'row', marginLeft: spacing.sm, marginTop: spacing.xs }}>
           {/* Indent line */}
-          <View style={{ width: 1, backgroundColor: colors.border, marginRight: spacing.md, opacity: 0.5 }} />
+          <View
+            style={{
+              width: 1,
+              backgroundColor: colors.border,
+              marginRight: spacing.md,
+              opacity: 0.5,
+            }}
+          />
           <View style={{ flex: 1 }}>
             {/* Start */}
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3 }}>
-              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>Start</Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, fontVariant: ['tabular-nums'] }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>
+                Start
+              </Text>
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  color: colors.textSecondary,
+                  fontVariant: ['tabular-nums'],
+                }}
+              >
                 {formatCurrency(displayStart)}
               </Text>
             </View>
             {/* Money In / Paid back */}
             {totalIn > 0 && (
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3 }}>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>{inLabel}</Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.success, fontVariant: ['tabular-nums'] }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>
+                  {inLabel}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colors.success,
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
                   + {formatCurrency(totalIn)}
                 </Text>
               </View>
@@ -284,26 +408,50 @@ function AccountRow({
             {/* Money Out / Charged */}
             {totalOut > 0 && (
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3 }}>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>{outLabel}</Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.danger, fontVariant: ['tabular-nums'] }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>
+                  {outLabel}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colors.danger,
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
                   − {formatCurrency(totalOut)}
                 </Text>
               </View>
             )}
             {/* End/Current (with top border as "equals" line) */}
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 3,
-              marginTop: spacing.xs,
-              borderTopWidth: 1,
-              borderTopColor: colors.border,
-              paddingTop: spacing.xs
-            }}>
-              <Text style={{ fontSize: fontSize.xs, color: colors.text, flex: 1, fontWeight: fontWeight.medium }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 3,
+                marginTop: spacing.xs,
+                borderTopWidth: 1,
+                borderTopColor: colors.border,
+                paddingTop: spacing.xs,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  color: colors.text,
+                  flex: 1,
+                  fontWeight: fontWeight.medium,
+                }}
+              >
                 {isCurrentPeriod ? 'Current' : 'End'}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.text, fontVariant: ['tabular-nums'], fontWeight: fontWeight.semibold }}>
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  color: colors.text,
+                  fontVariant: ['tabular-nums'],
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
                 {formatCurrency(displayEnd)}
               </Text>
             </View>
@@ -322,22 +470,17 @@ function AccountSection({
   colors,
   showBalanceChange,
   isCurrentPeriod,
-  onAccountTap,
-  onViewTransactions
+  onViewTransactions,
 }: {
   group: AccountGroup
   colors: AccountsColors
   showBalanceChange: boolean
   isCurrentPeriod: boolean
-  onAccountTap: (accountId: string) => void
   onViewTransactions: (accountId: string) => void
 }) {
   return (
     <View style={{ marginBottom: SECTION_GAP }}>
-      <SectionHeader
-        title={group.label}
-        colors={colors}
-      />
+      <SectionHeader title={group.label} colors={colors} />
       {group.accounts.map((activity) => (
         <AccountRow
           key={activity.account.id}
@@ -345,7 +488,6 @@ function AccountSection({
           colors={colors}
           showBalanceChange={showBalanceChange}
           isCurrentPeriod={isCurrentPeriod}
-          onTap={() => onAccountTap(activity.account.id)}
           onViewTransactions={() => onViewTransactions(activity.account.id)}
         />
       ))}
@@ -354,48 +496,72 @@ function AccountSection({
 }
 
 export function AccountsBody({ colors, scope, period }: Props) {
-  const { groups, sectionSummaries } = useAccountsData({ scope, period })
-
-  const handleAccountTap = useCallback((accountId: string) => {
-    router.push({
-      pathname: '/(modal)/account-detail',
-      params: { accountId }
-    })
-  }, [])
+  const { groups, sectionSummaries, firstTransactionDate } = useAccountsData({ scope, period })
 
   const handleViewTransactions = useCallback((accountId: string) => {
     router.push({
       pathname: '/(tabs)/transactions',
-      params: { accountId }
+      params: { accountId },
     })
   }, [])
 
+  const handleOpenSettings = useCallback(() => {
+    router.push('/(modal)/account-settings')
+  }, [])
+
+  // Direct add account (used in empty state)
   const handleAddAccount = useCallback(() => {
     router.push('/(modal)/add-account')
   }, [])
 
-  // Show timeline for month and year scopes
-  const showBalanceChange = scope === 'month' || scope === 'year'
+  // Show balance timeline for all scopes (All uses startBalance = 0)
+  const showBalanceChange = true
 
   // Determine if viewing current period
   const now = new Date()
   const currentYear = now.getFullYear()
   const currentMonth = now.getMonth() + 1
-  const isCurrentPeriod = scope === 'all' ||
+  const isCurrentPeriod =
+    scope === 'all' ||
     (scope === 'year' && period.year === currentYear) ||
-    (scope === 'month' && period.year === currentYear && 'month' in period && period.month === currentMonth)
+    (scope === 'month' &&
+      period.year === currentYear &&
+      'month' in period &&
+      period.month === currentMonth)
 
   // Filter summaries to only show sections with accounts
-  const visibleSummaries = sectionSummaries.filter(s => s.hasAccounts)
+  const visibleSummaries = sectionSummaries.filter((s) => s.hasAccounts)
 
   if (groups.length === 0) {
     return (
       <>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] }}>
-          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm, textAlign: 'center' }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: spacing['3xl'],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.text,
+              marginBottom: spacing.sm,
+              textAlign: 'center',
+            }}
+          >
             No accounts yet
           </Text>
-          <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.lg }}>
+          <Text
+            style={{
+              fontSize: fontSize.md,
+              color: colors.textSecondary,
+              textAlign: 'center',
+              marginBottom: spacing.lg,
+            }}
+          >
             Add accounts to track your balances and activity.
           </Text>
           <Pressable
@@ -407,7 +573,13 @@ export function AccountsBody({ colors, scope, period }: Props) {
               borderRadius: radius.full,
             }}
           >
-            <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.surface }}>
+            <Text
+              style={{
+                fontSize: fontSize.md,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface,
+              }}
+            >
               Add Account
             </Text>
           </Pressable>
@@ -417,60 +589,70 @@ export function AccountsBody({ colors, scope, period }: Props) {
   }
 
   return (
-    <>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
-        showsVerticalScrollIndicator={false}
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Tracking since (All scope only) */}
+      {scope === 'all' && (
+        <TrackingSince date={firstTransactionDate} color={colors.textSecondary} />
+      )}
+
+      {/* Summary section */}
+      {visibleSummaries.length > 0 && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          {visibleSummaries.map((summary, index) => (
+            <SummarySectionRow
+              key={summary.key}
+              label={summary.label}
+              startBalance={summary.startBalance}
+              endBalance={summary.endBalance}
+              delta={summary.delta}
+              isLiability={summary.isLiability}
+              colors={colors}
+              isLast={index === visibleSummaries.length - 1}
+              isCurrentPeriod={isCurrentPeriod}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Account sections */}
+      {groups.map((group) => (
+        <AccountSection
+          key={group.key}
+          group={group}
+          colors={colors}
+          showBalanceChange={showBalanceChange}
+          isCurrentPeriod={isCurrentPeriod}
+          onViewTransactions={handleViewTransactions}
+        />
+      ))}
+
+      {/* Accounts Settings button at bottom */}
+      <Pressable
+        onPress={handleOpenSettings}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: spacing.sm,
+          paddingVertical: spacing.md,
+          marginTop: spacing.lg,
+        }}
       >
-        {/* Summary section */}
-        {visibleSummaries.length > 0 && (
-          <View style={{ marginBottom: SECTION_GAP }}>
-            {visibleSummaries.map((summary, index) => (
-              <SummarySectionRow
-                key={summary.key}
-                label={summary.label}
-                startBalance={summary.startBalance}
-                endBalance={summary.endBalance}
-                delta={summary.delta}
-                isLiability={summary.isLiability}
-                colors={colors}
-                isLast={index === visibleSummaries.length - 1}
-                isCurrentPeriod={isCurrentPeriod}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Account sections */}
-        {groups.map((group) => (
-          <AccountSection
-            key={group.key}
-            group={group}
-            colors={colors}
-            showBalanceChange={showBalanceChange}
-            isCurrentPeriod={isCurrentPeriod}
-            onAccountTap={handleAccountTap}
-            onViewTransactions={handleViewTransactions}
-          />
-        ))}
-
-        {/* Add Account button at bottom */}
-        <Pressable
-          onPress={handleAddAccount}
+        <FontAwesome name="cog" size={14} color={colors.primary} />
+        <Text
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: spacing.md,
-            marginTop: spacing.lg,
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.primary,
           }}
         >
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary }}>
-            + Add Account
-          </Text>
-        </Pressable>
-      </ScrollView>
-    </>
+          Accounts Settings
+        </Text>
+      </Pressable>
+    </ScrollView>
   )
 }

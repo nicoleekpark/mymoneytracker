@@ -26,7 +26,7 @@ import type {
 import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon, CTAContainer } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
-import { modalStyles, getScrollContentWithCTAPadding } from '@/shared/theme/tokens/modal'
+import { modalStyles, getScrollContentWithCTAPadding, MODAL_SNAP_FULL } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { ItemPriceHistorySheet } from '@/features/price-tracker'
@@ -41,7 +41,7 @@ type Props = {
 
 export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdit, onDelete }: Props) {
   const theme = useHoHTheme()
-  const snapPoints = useMemo(() => ['90%'], [])
+  const snapPoints = MODAL_SNAP_FULL
 
   const accounts = useMemo(() => getActiveAccounts(), [])
   const accountNameById = useMemo(() => {
