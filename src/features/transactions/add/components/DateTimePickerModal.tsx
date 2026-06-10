@@ -2,6 +2,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import React, { useState } from 'react'
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
@@ -76,7 +77,7 @@ export function DateTimePickerModal({
       <Pressable style={styles.backdrop} onPress={handleCancel} />
 
       {/* Sheet */}
-      <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border, paddingBottom: insets.bottom + spacing.lg }]}>
+      <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
         {/* Drag Handle */}
         <View style={styles.handleContainer}>
           <View style={[styles.handle, { backgroundColor: theme.semantic.border }]} />

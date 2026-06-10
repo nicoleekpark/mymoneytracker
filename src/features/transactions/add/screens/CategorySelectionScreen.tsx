@@ -9,7 +9,7 @@ import { CATEGORIES } from '@/shared/config/categories.config'
 import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
-import { modalStyles } from '@/shared/theme/tokens/modal'
+import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { router } from 'expo-router'
 import React, { useMemo, useState, useRef, useEffect } from 'react'
@@ -481,7 +481,7 @@ export function CategorySelectionScreen() {
       {/* Content */}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: getScrollContentPadding(insets.bottom) }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

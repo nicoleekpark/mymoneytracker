@@ -12,6 +12,7 @@ import { useQuickChipsStore, SPECIAL_CHIP_KEYS, type QuickChipConfig } from '@/s
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useCallback, useMemo } from 'react'
 import {
@@ -177,7 +178,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
       <GestureHandlerRootView style={styles.gestureRoot}>
         <Pressable style={styles.backdrop} onPress={onClose} />
 
-        <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: insets.bottom + spacing.lg }]}>
+        <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
             <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Edit Quick Actions</Text>

@@ -41,10 +41,16 @@ export type { ModalBaseColors, ModalColors } from './types'
 
 // Re-export helpers
 export {
+  // Style helpers
   getFieldLabelColor,
   getChipStyle,
   getTabStyle,
   getRowHighlightColor,
+  // Safe area padding helpers
+  getSheetBottomPadding,
+  getScrollContentPadding,
+  getScrollContentWithCTAPadding,
+  getScrollContentWithSimpleCTAPadding,
 } from './helpers'
 
 // Re-export individual style modules

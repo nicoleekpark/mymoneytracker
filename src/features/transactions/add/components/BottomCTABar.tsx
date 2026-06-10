@@ -2,7 +2,7 @@
  * BottomCTABar
  *
  * Bottom-anchored action bar for save actions.
- * Positions itself above the keyboard using keyboard events directly.
+ * Positions itself above the keyboard using useKeyboardOffset hook.
  * Does NOT rely on KeyboardAvoidingView.
  *
  * Uses design system styles from modalStyles.
@@ -10,12 +10,12 @@
  * Layout: Full-width primary button + text links below
  */
 
-import React, { useEffect } from 'react'
-import { Keyboard, Platform, Pressable, Text, View } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import React from 'react'
+import { Pressable, Text, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useHoHTheme } from '@/shared/providers'
+import { useKeyboardOffset } from '@/shared/hooks'
 import { modalStyles } from '@/shared/theme/tokens/modal'
-import { spacing } from '@/shared/theme/tokens/spacing'
 
 type BottomCTABarProps = {
   amountDisplay: string
@@ -40,36 +40,7 @@ export function BottomCTABar({
   onSaveDraft,
 }: BottomCTABarProps) {
   const theme = useHoHTheme()
-  const keyboardHeight = useSharedValue(0)
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
-
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      keyboardHeight.value = withTiming(e.endCoordinates.height, { duration: 250 })
-    })
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      keyboardHeight.value = withTiming(0, { duration: 250 })
-    })
-
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [])
-
-  const animatedStyle = useAnimatedStyle(() => {
-    // When keyboard is open, position above keyboard
-    // When keyboard is closed, position above safe area
-    const bottomOffset = keyboardHeight.value > 0
-      ? keyboardHeight.value
-      : bottomInset
-
-    return {
-      bottom: bottomOffset,
-    }
-  })
+  const { animatedStyle } = useKeyboardOffset(bottomInset)
 
   return (
     <Animated.View style={[modalStyles.ctaContainerAbsolute, { backgroundColor: theme.semantic.background }, animatedStyle]}>

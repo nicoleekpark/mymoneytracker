@@ -64,8 +64,8 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [suggestionTarget, setSuggestionTarget] = useState<'ghost' | number | null>(null)
 
-  // Calculate total and count (only items with name AND price)
-  const validItems = items.filter(item => item.name.trim() && item.priceCents > 0)
+  // Calculate total and count (items with name OR price)
+  const validItems = items.filter(item => item.name.trim() || item.priceCents > 0)
   const total = validItems.reduce((sum, item) => sum + item.priceCents * item.quantity, 0)
   const itemCount = validItems.length
 
@@ -82,13 +82,14 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
     }
   }, [searchQuery])
 
-  // Commit ghost row to items list
+  // Commit ghost row to items list (name OR price required)
   const commitGhostRow = useCallback(() => {
     const name = ghostName.trim()
-    if (name) {
+    // Allow saving if we have either a name or a price
+    if (name || ghostPriceCents > 0) {
       const newItem: ItemEntry = {
         id: `item-${Date.now()}`,
-        name,
+        name: name || 'Item', // Default name if only price provided
         priceCents: ghostPriceCents,
         quantity: 1,
         itemId: ghostItemId,

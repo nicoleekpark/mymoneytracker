@@ -11,6 +11,7 @@ import { usePaymentChipsOrderStore, getOrderedAccounts } from '@/shared/store'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import React, { useCallback, useMemo } from 'react'
 import {
   Modal,
@@ -72,7 +73,7 @@ export function PaymentChipsReorderModal({ visible, accounts, onClose }: Props) 
       <GestureHandlerRootView style={styles.gestureRoot}>
         <Pressable style={styles.backdrop} onPress={onClose} />
 
-        <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: insets.bottom + spacing.lg }]}>
+        <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
             <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Reorder Payment Methods</Text>
@@ -82,6 +83,10 @@ export function PaymentChipsReorderModal({ visible, accounts, onClose }: Props) 
           </View>
 
           <View style={styles.content}>
+            {/* Section title - matching QuickChipsEditModal */}
+            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+              YOUR PAYMENT METHODS
+            </Text>
             <Text style={[styles.dragHint, { color: theme.semantic.textSecondary }]}>
               Hold and drag to reorder
             </Text>
@@ -130,8 +135,15 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
   },
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    letterSpacing: letterSpacing.wider,
+    marginBottom: spacing.sm,
+  },
   dragHint: {
     fontSize: fontSize.xs,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+    marginTop: -spacing.xs,
   },
 })

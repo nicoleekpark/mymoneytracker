@@ -2,6 +2,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { displaySize, fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import React from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -32,7 +33,7 @@ export function AmountKeypadModal({
       <Pressable style={styles.backdrop} onPress={onClose} />
 
       {/* Sheet */}
-      <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border, paddingBottom: insets.bottom + spacing.lg }]}>
+      <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
         {/* Drag Handle */}
         <View style={styles.handleContainer}>
           <View style={[styles.handle, { backgroundColor: theme.semantic.border }]} />

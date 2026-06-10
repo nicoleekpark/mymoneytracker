@@ -11,6 +11,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { modalStyles } from '@/shared/theme/tokens/modal'
 import { formatCurrency } from '@/shared/format/currency'
 import type { PricePointWithStore, TrackedItem } from '@/core/domain/price-tracker'
 
@@ -43,8 +44,8 @@ export function ItemPriceHistorySheet({
 
   const renderHandle = useCallback(
     () => (
-      <View style={styles.handleContainer}>
-        <View style={[styles.handle, { backgroundColor: theme.semantic.border }]} />
+      <View style={modalStyles.dragHandleContainer}>
+        <View style={[modalStyles.dragHandle, { backgroundColor: theme.semantic.border }]} />
       </View>
     ),
     [theme.semantic.border]
@@ -77,7 +78,7 @@ export function ItemPriceHistorySheet({
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
       handleComponent={renderHandle}
-      backgroundStyle={{ backgroundColor: theme.semantic.surface }}
+      backgroundStyle={[modalStyles.modal, { backgroundColor: theme.semantic.surface }]}
       enablePanDownToClose
       onDismiss={onDismiss}
     >
@@ -85,8 +86,9 @@ export function ItemPriceHistorySheet({
         {/* Close button */}
         <Pressable
           onPress={() => sheetRef.current?.dismiss()}
-          style={styles.closeBtn}
+          style={modalStyles.detailCloseButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityLabel="Close"
         >
           <FontAwesome name="times" size={18} color={theme.semantic.textSecondary as string} />
         </Pressable>
@@ -177,23 +179,6 @@ function formatRelativeDate(date: Date): string {
 const styles = StyleSheet.create({
   sheetContainer: {
     flex: 1,
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: spacing.xs,
-    left: spacing.md,
-    zIndex: 10,
-    padding: spacing.sm,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
   },
   content: {
     flex: 1,

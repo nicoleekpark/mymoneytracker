@@ -15,8 +15,8 @@ export const coreStyles = StyleSheet.create({
   // MODAL CONTAINER (Bottom Sheet)
   // ===========================================================================
   modal: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
     overflow: 'hidden',
   },
 
@@ -289,5 +289,39 @@ export const coreStyles = StyleSheet.create({
   },
   moreDetailsChevron: {
     fontSize: fontSize.lg,
+  },
+
+  // ===========================================================================
+  // TEXT STYLES (Common text patterns in modals)
+  // ===========================================================================
+
+  /** Bold title text - for modal headers, section titles */
+  textTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.heavy,
+  },
+
+  /** Secondary link text - for cancel, back buttons */
+  textLink: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+  },
+
+  /** Primary text - for main content, list items */
+  textPrimary: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+  },
+
+  /** Secondary text - for hints, subtitles */
+  textSecondary: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+  },
+
+  /** Small label text - for badges, tags */
+  textLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
   },
 })

@@ -12,6 +12,7 @@ import { usePaymentFrequencyStore } from '@/shared/store'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useMemo } from 'react'
 import {
@@ -237,7 +238,7 @@ export function AccountSelectionModal({
             renderSectionHeader={renderSectionHeader}
             keyboardShouldPersistTaps="always"
             keyboardDismissMode="on-drag"
-            contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
+            contentContainerStyle={{ paddingBottom: getScrollContentPadding(insets.bottom) }}
             stickySectionHeadersEnabled={false}
             ListFooterComponent={
               onAddAccount ? (

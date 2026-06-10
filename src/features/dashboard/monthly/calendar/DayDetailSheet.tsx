@@ -11,6 +11,8 @@ import type { Transaction } from '@/core/domain/transaction/transaction.types'
 import { formatUsdInt } from '@/shared/format/currency'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { radius } from '@/shared/theme/tokens/radius'
+import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import type { CalendarColors } from './calendar.types'
 import { MONTH_NAMES_SHORT } from '../../utils'
 
@@ -84,16 +86,8 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
     // Custom handle with grabber
     const renderHandle = useCallback(
       () => (
-        <View style={{ alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.xs }}>
-          <View
-            style={{
-              width: 36,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: colors.textSecondary,
-              opacity: 0.4
-            }}
-          />
+        <View style={modalStyles.dragHandleContainer}>
+          <View style={[modalStyles.dragHandle, { backgroundColor: colors.textSecondary, opacity: 0.4 }]} />
         </View>
       ),
       [colors.textSecondary]
@@ -107,12 +101,12 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         handleComponent={renderHandle}
-        backgroundStyle={{ backgroundColor: colors.surface }}
+        backgroundStyle={[modalStyles.modal, { backgroundColor: colors.surface }]}
         enablePanDownToClose
       >
         <BottomSheetScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing['2xl'] }}
+          contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: getScrollContentPadding(0) }}
         >
           {/* Header: Date + Close */}
           <View
@@ -263,20 +257,12 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               {/* View All CTA */}
               <Pressable
                 onPress={onViewAll}
-                style={{
-                  paddingVertical: spacing.md,
-                  alignItems: 'center',
-                  backgroundColor: colors.textSecondary + '10',
-                  borderRadius: spacing.sm
-                }}
+                style={[
+                  modalStyles.saveButton,
+                  { backgroundColor: colors.textSecondary + '10' }
+                ]}
               >
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    color: colors.textSecondary
-                  }}
-                >
+                <Text style={[modalStyles.saveButtonText, { color: colors.textSecondary }]}>
                   View all {selectedDay.txCount} transactions →
                 </Text>
               </Pressable>

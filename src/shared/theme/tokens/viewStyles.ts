@@ -80,8 +80,13 @@ export const CATEGORY_DOT_SIZE = 10
 /** Small category dot (8x8) - used in transaction rows */
 export const CATEGORY_DOT_SIZE_SM = 8
 
-/** Bottom sheet grabber handle dimensions */
+/**
+ * @deprecated Use MODAL_GRABBER_WIDTH from '@/shared/theme/tokens/modal' instead.
+ */
 export const GRABBER_WIDTH = 36
+/**
+ * @deprecated Use MODAL_GRABBER_HEIGHT from '@/shared/theme/tokens/modal' instead.
+ */
 export const GRABBER_HEIGHT = 4
 
 /** Small badge/pill dimensions for filter counts, type indicators */

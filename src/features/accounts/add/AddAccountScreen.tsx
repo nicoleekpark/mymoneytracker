@@ -21,7 +21,7 @@ import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
-import { getFieldLabelColor, MODAL_TOAST_DURATION, modalStyles } from '@/shared/theme/tokens/modal'
+import { getFieldLabelColor, getScrollContentWithSimpleCTAPadding, MODAL_TOAST_DURATION, modalStyles } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -231,7 +231,7 @@ export default function AddAccountScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={[
             modalStyles.content,
-            { paddingBottom: insets.bottom + 52 + spacing.xl * 2 + keyboardHeight },
+            { paddingBottom: getScrollContentWithSimpleCTAPadding(insets.bottom, keyboardHeight) },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -465,7 +465,7 @@ export default function AddAccountScreen() {
             exiting={FadeOut.duration(150)}
             style={[
               modalStyles.toast,
-              { backgroundColor: semantic.text, position: 'absolute', bottom: insets.bottom + spacing['3xl'] * 2, alignSelf: 'center' }
+              { backgroundColor: semantic.text, position: 'absolute', bottom: getScrollContentWithSimpleCTAPadding(insets.bottom), alignSelf: 'center' }
             ]}
             pointerEvents="none"
           >

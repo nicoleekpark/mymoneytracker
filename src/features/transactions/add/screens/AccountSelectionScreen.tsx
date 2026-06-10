@@ -10,7 +10,7 @@ import { getActiveAccounts } from '@/core/services/account'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { usePaymentFrequencyStore } from '@/shared/store'
-import { modalStyles } from '@/shared/theme/tokens/modal'
+import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { normalizeForSearch } from '@/shared/utils/search'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
@@ -247,7 +247,7 @@ export function AccountSelectionScreen() {
           renderSectionHeader={renderSectionHeader}
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="on-drag"
-          contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
+          contentContainerStyle={{ paddingBottom: getScrollContentPadding(insets.bottom) }}
           stickySectionHeadersEnabled={false}
           ListFooterComponent={
             <Pressable onPress={handleAddAccount} style={modalStyles.selectionAddRow}>

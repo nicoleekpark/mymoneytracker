@@ -11,6 +11,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import { useNotificationsStore, useDraftsStore, type DraftTransaction } from '@/shared/store'
 import { formatCurrency } from '@/shared/format/currency'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
@@ -454,7 +455,7 @@ export default function NotificationsScreen() {
       {/* Content */}
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: getScrollContentPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >
         {activeTab === 'drafts' ? (

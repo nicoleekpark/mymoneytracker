@@ -16,6 +16,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
+import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 
 const TOAST_DURATION = 1500
 
@@ -62,7 +63,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           style={[
             styles.container,
             {
-              bottom: insets.bottom + spacing.xl,
+              bottom: getScrollContentPadding(insets.bottom),
               backgroundColor: theme.semantic.text,
             },
           ]}

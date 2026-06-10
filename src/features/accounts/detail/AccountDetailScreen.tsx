@@ -17,7 +17,7 @@ import { archiveAccount, getAccountById } from '@/core/services/account'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
-import { modalStyles } from '@/shared/theme/tokens/modal'
+import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -179,7 +179,7 @@ export default function AccountDetailScreen() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: getScrollContentPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >
         {/* Account Info Card */}

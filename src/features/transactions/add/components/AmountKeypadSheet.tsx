@@ -29,7 +29,7 @@ import { ScalePressable } from '@/shared/components'
 import { fontSize, fontWeight, displaySize } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
-import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/shared/theme/tokens/viewStyles'
+import { MODAL_GRABBER_WIDTH, MODAL_GRABBER_HEIGHT } from '@/shared/theme/tokens/modal'
 
 // Component-specific size
 const KEY_HEIGHT = spacing['3xl'] // 48 - standard touch target
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
     paddingBottom: spacing['3xl'],
   },
   handleContainer: {
@@ -227,8 +227,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
   },
   handle: {
-    width: GRABBER_WIDTH,
-    height: GRABBER_HEIGHT + 1, // 5
+    width: MODAL_GRABBER_WIDTH,
+    height: MODAL_GRABBER_HEIGHT,
     borderRadius: radius.xs,
   },
   titleText: {

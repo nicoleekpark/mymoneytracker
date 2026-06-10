@@ -6,7 +6,6 @@ import {
   BottomSheetScrollView,
   type BottomSheetBackdropProps
 } from '@gorhom/bottom-sheet'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 
 import { CATEGORIES } from '@/shared/config'
@@ -25,9 +24,9 @@ import type {
   PricePointWithStore,
 } from '@/core/domain/price-tracker'
 import { useHoHTheme } from '@/shared/providers'
-import { CategoryIcon } from '@/shared/components'
+import { CategoryIcon, CTAContainer } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
-import { modalStyles } from '@/shared/theme/tokens/modal'
+import { modalStyles, getScrollContentWithCTAPadding } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { ItemPriceHistorySheet } from '@/features/price-tracker'
@@ -42,7 +41,6 @@ type Props = {
 
 export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdit, onDelete }: Props) {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
   const snapPoints = useMemo(() => ['90%'], [])
 
   const accounts = useMemo(() => getActiveAccounts(), [])
@@ -190,7 +188,7 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
 
         <BottomSheetScrollView
           style={styles.scrollView}
-          contentContainerStyle={modalStyles.content}
+          contentContainerStyle={[modalStyles.content, { paddingBottom: getScrollContentWithCTAPadding(0) }]}
         >
           {/* Header - Amount */}
           <View style={modalStyles.heroContainer}>
@@ -332,7 +330,7 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
         </BottomSheetScrollView>
 
         {/* Fixed Footer Buttons */}
-        <View style={[modalStyles.ctaContainerAbsolute, { backgroundColor: theme.semantic.surface, bottom: 0, paddingBottom: insets.bottom + spacing.lg }]}>
+        <CTAContainer insideBottomSheet>
           <Pressable
             onPress={() => onEdit(transaction)}
             style={[modalStyles.ctaPrimaryButton, { backgroundColor: theme.semantic.primary }]}
@@ -354,7 +352,7 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
               </Text>
             </Pressable>
           )}
-        </View>
+        </CTAContainer>
 
         {/* Item Price History Sheet */}
         <ItemPriceHistorySheet

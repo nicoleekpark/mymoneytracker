@@ -4,11 +4,8 @@ import type { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/shared/theme/tokens/viewStyles'
+import { MODAL_GRABBER_WIDTH, MODAL_GRABBER_HEIGHT, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 
-// Platform-specific safe area padding
-const BOTTOM_PADDING_IOS = 34
-const BOTTOM_PADDING_ANDROID = 20
 const PICKER_HEIGHT = 200
 
 export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHoHTheme>) {
@@ -20,13 +17,13 @@ export function createDashboardPeriodPickerStyles(theme: ReturnType<typeof useHo
     },
     sheet: {
       backgroundColor: theme.semantic.surface,
-      borderTopLeftRadius: radius.xl,
-      borderTopRightRadius: radius.xl,
-      paddingBottom: Platform.OS === 'ios' ? BOTTOM_PADDING_IOS : BOTTOM_PADDING_ANDROID
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      paddingBottom: getSheetBottomPadding(Platform.OS === 'ios' ? 34 : 20)
     },
     handle: {
-      width: GRABBER_WIDTH,
-      height: GRABBER_HEIGHT,
+      width: MODAL_GRABBER_WIDTH,
+      height: MODAL_GRABBER_HEIGHT,
       backgroundColor: theme.semantic.border,
       borderRadius: radius.xs,
       alignSelf: 'center',

@@ -21,6 +21,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { modalStyles } from '@/shared/theme/tokens/modal'
 
 export type TransactionType = 'expense' | 'income' | 'transfer'
 export type DraftViewMode = 'grouped' | 'timeline'
@@ -97,9 +98,9 @@ export function TransactionFilterSheet({
         >
           <Pressable
             onPress={handleApply}
-            style={[styles.applyBtn, { backgroundColor: theme.semantic.primary }]}
+            style={[modalStyles.ctaPrimaryButton, { backgroundColor: theme.semantic.primary }]}
           >
-            <Text style={[styles.applyBtnText, { color: theme.semantic.onPrimary }]}>
+            <Text style={[modalStyles.ctaPrimaryText, { color: theme.semantic.onPrimary }]}>
               Apply{activeCount > 0 ? ` (${activeCount})` : ''}
             </Text>
           </Pressable>
@@ -141,7 +142,7 @@ export function TransactionFilterSheet({
       backdropComponent={renderBackdrop}
       footerComponent={renderFooter}
       onDismiss={onDismiss}
-      backgroundStyle={{ backgroundColor: theme.semantic.surface }}
+      backgroundStyle={[modalStyles.modal, { backgroundColor: theme.semantic.surface }]}
       handleIndicatorStyle={{ backgroundColor: theme.semantic.border }}
     >
       <BottomSheetScrollView
@@ -463,15 +464,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-  },
-  applyBtn: {
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  applyBtnText: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
   },
 })

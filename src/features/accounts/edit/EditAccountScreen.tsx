@@ -19,7 +19,7 @@ import { getAccountById, updateAccount } from '@/core/services/account'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
-import { getFieldLabelColor, MODAL_TOAST_DURATION, modalStyles } from '@/shared/theme/tokens/modal'
+import { getFieldLabelColor, getScrollContentWithSimpleCTAPadding, getSheetBottomPadding, MODAL_TOAST_DURATION, modalStyles } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -204,7 +204,7 @@ export default function EditAccountScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={[
             modalStyles.content,
-            { paddingBottom: insets.bottom + spacing['3xl'] * 2 },
+            { paddingBottom: getScrollContentWithSimpleCTAPadding(insets.bottom) },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -372,7 +372,7 @@ export default function EditAccountScreen() {
             exiting={FadeOut.duration(150)}
             style={[
               modalStyles.toast,
-              { backgroundColor: semantic.text, position: 'absolute', bottom: insets.bottom + spacing.lg, alignSelf: 'center' }
+              { backgroundColor: semantic.text, position: 'absolute', bottom: getSheetBottomPadding(insets.bottom), alignSelf: 'center' }
             ]}
             pointerEvents="none"
           >

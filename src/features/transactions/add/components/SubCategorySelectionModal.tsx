@@ -6,6 +6,7 @@ import { Screen } from '@/shared/layout/Screen'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontWeight } from '@/shared/theme/tokens/typography'
+import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import React from 'react'
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -82,7 +83,7 @@ export function SubCategorySelectionModal({
           keyExtractor={(x) => x.key}
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="none"
-          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
+          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: getScrollContentPadding(insets.bottom) }}
           renderItem={({ item: row }) => {
             if (row.key === '__none__') {
               const selected = !categoryRef?.subCategoryKey

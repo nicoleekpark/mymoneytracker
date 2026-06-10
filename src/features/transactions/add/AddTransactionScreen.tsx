@@ -25,7 +25,7 @@ import {
   useQuickChipsStore,
   useSuggestionsStore,
 } from '@/shared/store'
-import { MODAL_ROW_HEIGHT } from '@/shared/theme/tokens/modal'
+import { MODAL_ROW_HEIGHT, getScrollContentWithCTAPadding } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -1021,7 +1021,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         style={{ flex: 1 }}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: insets.bottom + spacing['3xl'] * 3 + keyboardHeight },
+          { paddingBottom: getScrollContentWithCTAPadding(insets.bottom, keyboardHeight) },
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
@@ -1539,7 +1539,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
             {
               backgroundColor: theme.semantic.text,
               position: 'absolute',
-              bottom: insets.bottom + spacing['3xl'] * 3,
+              bottom: getScrollContentWithCTAPadding(insets.bottom),
               alignSelf: 'center',
             },
           ]}

@@ -10,7 +10,7 @@ import {
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
-import { GRABBER_WIDTH, GRABBER_HEIGHT } from '@/shared/theme/tokens/viewStyles'
+import { modalStyles } from '@/shared/theme/tokens/modal'
 
 export type InfoSheetColors = {
   surface: string
@@ -88,16 +88,8 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
     // Custom handle with grabber
     const renderHandle = useCallback(
       () => (
-        <View style={{ alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.xs }}>
-          <View
-            style={{
-              width: GRABBER_WIDTH,
-              height: GRABBER_HEIGHT,
-              borderRadius: GRABBER_HEIGHT / 2,
-              backgroundColor: colors.textSecondary,
-              opacity: 0.4
-            }}
-          />
+        <View style={modalStyles.dragHandleContainer}>
+          <View style={[modalStyles.dragHandle, { backgroundColor: colors.textSecondary, opacity: 0.4 }]} />
         </View>
       ),
       [colors.textSecondary]
@@ -109,7 +101,7 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         handleComponent={renderHandle}
-        backgroundStyle={{ backgroundColor: colors.surface }}
+        backgroundStyle={[modalStyles.modal, { backgroundColor: colors.surface }]}
         enablePanDownToClose
         onDismiss={handleDismiss}
       >
@@ -139,21 +131,12 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
           {showCloseButton && (
             <Pressable
               onPress={onClose}
-              style={{
-                backgroundColor: colors.surfaceAlt,
-                borderRadius: radius.md,
-                paddingVertical: spacing.md,
-                alignItems: 'center',
-                marginTop: spacing.lg
-              }}
+              style={[
+                modalStyles.saveButton,
+                { backgroundColor: colors.surfaceAlt, marginTop: spacing.lg }
+              ]}
             >
-              <Text
-                style={{
-                  fontSize: fontSize.md,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.text
-                }}
-              >
+              <Text style={[modalStyles.saveButtonText, { color: colors.text }]}>
                 {closeButtonText}
               </Text>
             </Pressable>

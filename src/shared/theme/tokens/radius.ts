@@ -11,7 +11,8 @@ export const radius = {
   sm: 4,       // small elements, dots, tags
   md: 8,       // buttons, small cards, inputs
   lg: 12,      // cards, modals, larger inputs
-  xl: 16,      // large cards, sheets
+  xl: 16,      // large cards
   '2xl': 24,   // extra large elements
+  sheet: 40,   // bottom sheets, modals (matches iOS native)
   full: 9999,  // circles, pills
 } as const
