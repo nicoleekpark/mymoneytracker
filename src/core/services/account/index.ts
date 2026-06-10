@@ -5,7 +5,9 @@ export {
   getActiveAccounts,
   resolveAccountIdByKey,
   getAccountById,
-  createAccount
+  createAccount,
+  updateAccount,
+  archiveAccount
 } from './account.service'
 
 export type { AddAccountInput } from './account.service'

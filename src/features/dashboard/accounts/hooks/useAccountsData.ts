@@ -42,7 +42,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ─── React ──────────────────────────────────────────────────────────────────
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 // ─── Domain Types ─────────────────────────────────────────────────────────────
 import type { Account } from '@/core/domain/account'
@@ -82,6 +82,8 @@ export type AccountsData = {
   sectionSummaries: SectionSummary[]
   /** Human-readable period label ("March 2024", "2024", "All Time") */
   periodLabel: string
+  /** Force re-fetch data */
+  refetch: () => void
 }
 
 export type UseAccountsDataParams = {
@@ -112,7 +114,12 @@ export type UseAccountsDataParams = {
  * ```
  */
 export function useAccountsData({ scope, period }: UseAccountsDataParams): AccountsData {
-  const data = useMemo((): AccountsData => {
+  const [refreshKey, setRefreshKey] = useState(0)
+  const refetch = useCallback(() => setRefreshKey(k => k + 1), [])
+
+  const data = useMemo((): Omit<AccountsData, 'refetch'> => {
+    // refreshKey dependency forces re-computation when refetch() is called
+    void refreshKey
     // ─── Step 1: Fetch all active accounts ────────────────────────────────
     const accounts = getActiveAccounts()
 
@@ -308,7 +315,7 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
       sectionSummaries,
       periodLabel,
     }
-  }, [scope, period])  // Recompute when scope or period changes
+  }, [scope, period, refreshKey])  // Recompute when scope, period, or refreshKey changes
 
-  return data
+  return { ...data, refetch }
 }

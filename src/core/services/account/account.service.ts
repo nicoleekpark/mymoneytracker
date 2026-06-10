@@ -19,7 +19,7 @@
 
 import type { UUID } from '@/core/domain/common/uuid'
 import type { Account, AccountKind } from '@/core/domain/account'
-import type { CreateAccountInput } from '@/core/domain/account/account.repository'
+import type { CreateAccountInput, UpdateAccountInput } from '@/core/domain/account/account.repository'
 import { accountRepository, transactionRepository } from '@/infrastructure/repositories'
 import { createTransaction, buildTxKey } from '@/core/domain/transaction'
 import type { CategoryIndex } from '@/shared/config/categories.index'
@@ -107,25 +107,26 @@ export function createAccount(
   const account = accountRepository.create(createInput)
 
   // If initial balance is provided, create an opening balance transaction
+  // Opening balance is always recorded as income type (adding initial funds/debt to the account)
+  // For assets: represents initial funds
+  // For liabilities: represents initial debt owed (negative balance handled by account nature)
   if (input.initialBalance && input.initialBalance > 0) {
-    const isLiability = account.nature === 'liability'
-    const txType = isLiability ? 'expense' : 'income'
     const occurredAt = new Date()
 
     const tx = createTransaction(categoryIndex, {
       id: uuid(),
       key: buildTxKey({
         occurredAt,
-        type: txType,
+        type: 'income',
         item: 'Opening Balance',
         merchant: undefined
       }),
       occurredAt,
-      type: txType,
+      type: 'income',
       item: 'Opening Balance',
       money: { amount: input.initialBalance, currency: 'USD' },
       accountId: account.id,
-      category: { type: txType, categoryKey: 'adjustments', subCategoryKey: 'opening_balance' },
+      category: { type: 'income', categoryKey: 'adjustments', subCategoryKey: 'opening_balance' },
       note: `Initial balance for ${account.name}`,
     })
 
@@ -133,4 +134,30 @@ export function createAccount(
   }
 
   return account
+}
+
+/**
+ * Update an existing account's details.
+ *
+ * @param id - Account UUID to update
+ * @param input - Fields to update
+ * @returns The updated account
+ * @throws Error if account not found or is a system account
+ */
+export function updateAccount(
+  id: UUID,
+  input: UpdateAccountInput
+): Account {
+  return accountRepository.update(id, input)
+}
+
+/**
+ * Archive an account (soft delete).
+ * Archived accounts are hidden from active lists but preserved for historical transactions.
+ *
+ * @param id - Account UUID to archive
+ * @throws Error if account not found or is a system account
+ */
+export function archiveAccount(id: UUID): void {
+  accountRepository.archive(id)
 }

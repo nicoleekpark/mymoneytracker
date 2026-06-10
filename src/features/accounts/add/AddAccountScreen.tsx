@@ -1,10 +1,8 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { router } from 'expo-router'
+import { router, useSegments } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,7 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { AccountKind } from '@/core/domain/account'
 import { createAccount } from '@/core/services/account'
+import { ModalSaveBar } from '@/shared/components'
 import { CATEGORIES_INDEX } from '@/shared/config/categories.index'
+import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
@@ -59,9 +59,17 @@ const ACCOUNT_SUBTYPES: Record<
 export default function AddAccountScreen() {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
+  const segments = useSegments()
   const { invalidateTransactions } = useDataRefreshStore()
   const nameInputRef = useRef<TextInput>(null)
+  const scrollViewRef = useRef<ScrollView>(null)
+  const institutionInputRef = useRef<TextInput>(null)
+  const lastFourInputRef = useRef<TextInput>(null)
+  const balanceInputRef = useRef<TextInput>(null)
   const { semantic } = theme
+
+  // Determine if opened from transaction flow (show "Back") or directly (show "Cancel")
+  const isFromTransactionFlow = segments.includes('add-transaction' as never)
 
   // Form state
   const [category, setCategory] = useState<AccountCategory>('bank')
@@ -76,6 +84,9 @@ export default function AddAccountScreen() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastKey, setToastKey] = useState(0)
   const [highlightName, setHighlightName] = useState(false)
+
+  // Keyboard height for ScrollView padding (design system hook)
+  const keyboardHeight = useKeyboardHeight()
 
   // Timeout refs
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -97,10 +108,15 @@ export default function AddAccountScreen() {
   }, [])
 
   // Auto-select first subtype when category changes
+  // For cash, also set default name
   useEffect(() => {
     const subtypes = ACCOUNT_SUBTYPES[category]
     if (subtypes.length > 0) {
       setKind(subtypes[0].key)
+    }
+    // Auto-set name for cash
+    if (category === 'cash') {
+      setName('Cash')
     }
   }, [category])
 
@@ -167,11 +183,6 @@ export default function AddAccountScreen() {
       style={{ flex: 1 }}
       contentStyle={{ flex: 1 }}
     >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
         {/* Drag Handle */}
         <View style={modalStyles.dragHandleContainer}>
           <View style={[modalStyles.dragHandle, { backgroundColor: semantic.border }]} />
@@ -180,7 +191,9 @@ export default function AddAccountScreen() {
         {/* Header */}
         <View style={modalStyles.header}>
           <Pressable onPress={handleCancel} hitSlop={12} style={modalStyles.cancelButton}>
-            <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>Cancel</Text>
+            <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>
+              {isFromTransactionFlow ? 'Back' : 'Cancel'}
+            </Text>
           </Pressable>
         </View>
 
@@ -214,54 +227,65 @@ export default function AddAccountScreen() {
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
           style={{ flex: 1 }}
           contentContainerStyle={[
             modalStyles.content,
-            { paddingBottom: insets.bottom + spacing['3xl'] * 2 },
+            { paddingBottom: insets.bottom + 52 + spacing.xl * 2 + keyboardHeight },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero: Nickname Input */}
-          <View
-            style={[
-              localStyles.heroContainer,
-              highlightName && { backgroundColor: (semantic.warning ?? semantic.danger) + '15' },
-            ]}
-          >
-            <View style={localStyles.heroInputWrapper}>
-              {!name && !nameFocused && (
-                <Text style={[localStyles.heroPlaceholder, { color: semantic.textSecondary }]}>
-                  Account nickname
-                </Text>
-              )}
-              <TextInput
-                ref={nameInputRef}
-                value={name}
-                onChangeText={setName}
-                onFocus={() => setNameFocused(true)}
-                onBlur={() => setNameFocused(false)}
-                style={[
-                  localStyles.heroInput,
-                  {
-                    color: semantic.text,
-                    borderBottomColor: highlightName
-                      ? (semantic.warning ?? semantic.danger)
-                      : name
-                        ? semantic.primary
-                        : semantic.border,
-                  },
-                ]}
-                autoCapitalize="words"
-                autoCorrect={false}
-                returnKeyType="done"
-              />
+          {/* Hero: Nickname Input (simplified for cash) */}
+          {category === 'cash' ? (
+            <View style={localStyles.heroContainer}>
+              <FontAwesome name="money" size={32} color={semantic.primary} />
+              <Text style={[localStyles.cashTitle, { color: semantic.text }]}>Cash</Text>
+              <Text style={[localStyles.heroHint, { color: semantic.textSecondary }]}>
+                Enter your current cash on hand
+              </Text>
             </View>
-            <Text style={[localStyles.heroHint, { color: semantic.textSecondary }]}>
-              This is how it will appear in your list
-            </Text>
-          </View>
+          ) : (
+            <View
+              style={[
+                localStyles.heroContainer,
+                highlightName && { backgroundColor: (semantic.warning ?? semantic.danger) + '15' },
+              ]}
+            >
+              <View style={localStyles.heroInputWrapper}>
+                {!name && !nameFocused && (
+                  <Text style={[localStyles.heroPlaceholder, { color: semantic.textSecondary }]}>
+                    Account nickname
+                  </Text>
+                )}
+                <TextInput
+                  ref={nameInputRef}
+                  value={name}
+                  onChangeText={setName}
+                  onFocus={() => setNameFocused(true)}
+                  onBlur={() => setNameFocused(false)}
+                  style={[
+                    localStyles.heroInput,
+                    {
+                      color: semantic.text,
+                      borderBottomColor: highlightName
+                        ? (semantic.warning ?? semantic.danger)
+                        : name
+                          ? semantic.primary
+                          : semantic.border,
+                    },
+                  ]}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                />
+              </View>
+              <Text style={[localStyles.heroHint, { color: semantic.textSecondary }]}>
+                This is how it will appear in your list
+              </Text>
+            </View>
+          )}
 
           {/* Subtype Chips */}
           {subtypes.length > 1 && (
@@ -306,38 +330,43 @@ export default function AddAccountScreen() {
 
           {/* Field Group */}
           <View style={modalStyles.fieldGroup}>
-            {/* Institution Name (Optional) */}
-            <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
-              <Text
-                style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!bankName, semantic) }]}
-              >
-                {institutionLabel} <Text style={modalStyles.optionalLabel}>(optional)</Text>
-              </Text>
-              <View style={modalStyles.fieldInputWrapper}>
-                {!bankName && (
+            {/* Institution Name (Optional) - Hidden for cash */}
+            {category !== 'cash' && (
+              <>
+                <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
                   <Text
-                    style={[
-                      modalStyles.fieldPlaceholder,
-                      modalStyles.fieldInputPlaceholder,
-                      { color: semantic.textSecondary },
-                    ]}
+                    style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!bankName, semantic) }]}
                   >
-                    {institutionPlaceholder}
+                    {institutionLabel} <Text style={modalStyles.optionalLabel}>(optional)</Text>
                   </Text>
-                )}
-                <TextInput
-                  value={bankName}
-                  onChangeText={setBankName}
-                  style={[modalStyles.fieldInput, { color: semantic.text }]}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                />
-              </View>
-            </View>
-            <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+                  <View style={modalStyles.fieldInputWrapper}>
+                    {!bankName && (
+                      <Text
+                        style={[
+                          modalStyles.fieldPlaceholder,
+                          modalStyles.fieldInputPlaceholder,
+                          { color: semantic.textSecondary },
+                        ]}
+                      >
+                        {institutionPlaceholder}
+                      </Text>
+                    )}
+                    <TextInput
+                      ref={institutionInputRef}
+                      value={bankName}
+                      onChangeText={setBankName}
+                      style={[modalStyles.fieldInput, { color: semantic.text }]}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                    />
+                  </View>
+                </View>
+                <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+              </>
+            )}
 
-            {/* Last 4 Digits (Optional) - Only for bank/card */}
-            {(category === 'bank' || category === 'card') && (
+            {/* Last 4 Digits (Optional) - Only for bank accounts and cards (not cash) */}
+            {(category === 'bank' || category === 'card') && kind !== 'cash' && (
               <>
                 <View
                   style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
@@ -363,6 +392,7 @@ export default function AddAccountScreen() {
                       </Text>
                     )}
                     <TextInput
+                      ref={lastFourInputRef}
                       value={lastFour}
                       onChangeText={(text) => setLastFour(text.replace(/\D/g, '').slice(0, 4))}
                       style={[modalStyles.fieldInput, { color: semantic.text }]}
@@ -396,6 +426,7 @@ export default function AddAccountScreen() {
                   </Text>
                 )}
                 <TextInput
+                  ref={balanceInputRef}
                   value={balance ? `$${balance}` : ''}
                   onChangeText={(text) => {
                     const cleaned = text.replace(/[^0-9.]/g, '')
@@ -415,42 +446,32 @@ export default function AddAccountScreen() {
               </Text>
             )}
           </View>
+
         </ScrollView>
 
-        {/* Toast + Save Button */}
-        <View style={{ paddingBottom: insets.bottom, backgroundColor: semantic.surface }}>
-          {toastMessage && (
-            <Animated.View
-              key={toastKey}
-              entering={FadeIn.duration(150)}
-              exiting={FadeOut.duration(150)}
-              style={[modalStyles.toast, { backgroundColor: semantic.text }]}
-              pointerEvents="none"
-            >
-              <Text style={[modalStyles.toastText, { color: semantic.surface }]}>{toastMessage}</Text>
-            </Animated.View>
-          )}
-          <View style={localStyles.ctaContainer}>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={!canSubmit}
-              style={[
-                localStyles.saveButton,
-                { backgroundColor: canSubmit ? semantic.primary : semantic.surfaceAlt },
-              ]}
-            >
-              <Text
-                style={[
-                  localStyles.saveButtonText,
-                  { color: canSubmit ? semantic.surface : semantic.textSecondary },
-                ]}
-              >
-                Save Account
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+        {/* Save Button - fixed at bottom, moves with keyboard */}
+        <ModalSaveBar
+          label="Save"
+          disabled={!canSubmit}
+          bottomInset={insets.bottom}
+          onPress={handleSubmit}
+        />
+
+        {/* Toast - floating above button */}
+        {toastMessage && (
+          <Animated.View
+            key={toastKey}
+            entering={FadeIn.duration(150)}
+            exiting={FadeOut.duration(150)}
+            style={[
+              modalStyles.toast,
+              { backgroundColor: semantic.text, position: 'absolute', bottom: insets.bottom + spacing['3xl'] * 2, alignSelf: 'center' }
+            ]}
+            pointerEvents="none"
+          >
+            <Text style={[modalStyles.toastText, { color: semantic.surface }]}>{toastMessage}</Text>
+          </Animated.View>
+        )}
     </Screen>
   )
 }
@@ -490,6 +511,11 @@ const localStyles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: spacing.md,
   },
+  cashTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.semibold,
+    marginTop: spacing.md,
+  },
 
   // Chips
   chipsRow: {
@@ -511,21 +537,5 @@ const localStyles = StyleSheet.create({
   chipText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-  },
-
-  // CTA
-  ctaContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  saveButton: {
-    paddingVertical: spacing.md + spacing.xs,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
   },
 })

@@ -39,6 +39,7 @@ type Props = {
   chips: ChipDisplayInfo[]
   onReorder: (fromIndex: number, toIndex: number) => void
   onRemove: (chip: ChipDisplayInfo) => void
+  showRemoveButton?: boolean
 }
 
 type DraggableRowProps = {
@@ -49,6 +50,7 @@ type DraggableRowProps = {
   currentPositions: SharedValue<number[]>
   onDragEnd: (fromIndex: number, toIndex: number) => void
   onRemove: (chip: ChipDisplayInfo) => void
+  showRemoveButton: boolean
 }
 
 function DraggableRow({
@@ -59,6 +61,7 @@ function DraggableRow({
   currentPositions,
   onDragEnd,
   onRemove,
+  showRemoveButton,
 }: DraggableRowProps) {
   const theme = useHoHTheme()
 
@@ -212,15 +215,17 @@ function DraggableRow({
         </Text>
 
         {/* Remove button */}
-        <Pressable onPress={handleRemove} hitSlop={8} style={styles.removeBtn}>
-          <FontAwesome name="times-circle" size={18} color={theme.semantic.danger} />
-        </Pressable>
+        {showRemoveButton && (
+          <Pressable onPress={handleRemove} hitSlop={8} style={styles.removeBtn}>
+            <FontAwesome name="times-circle" size={18} color={theme.semantic.danger} />
+          </Pressable>
+        )}
       </Animated.View>
     </GestureDetector>
   )
 }
 
-export function DraggableChipList({ chips, onReorder, onRemove }: Props) {
+export function DraggableChipList({ chips, onReorder, onRemove, showRemoveButton = true }: Props) {
   const theme = useHoHTheme()
 
   const activeIndex = useSharedValue(-1)
@@ -261,6 +266,7 @@ export function DraggableChipList({ chips, onReorder, onRemove }: Props) {
           currentPositions={currentPositions}
           onDragEnd={handleDragEnd}
           onRemove={onRemove}
+          showRemoveButton={showRemoveButton}
         />
       ))}
     </View>

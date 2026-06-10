@@ -1,21 +1,37 @@
-import { CATEGORIES, CATEGORIES_INDEX } from '@/shared/config'
-import { getActiveAccounts, resolveAccountIdByKey } from '@/core/services/account'
 import type { UUID } from '@/core/domain/common/uuid'
 import type { Transaction, TransactionType } from '@/core/domain/transaction'
-import { addTransaction, getTransactionById, updateTransaction } from '@/core/services/transaction'
+import { getActiveAccounts, resolveAccountIdByKey } from '@/core/services/account'
 import {
+  addPricePoint,
   addTransactionItem,
   deleteTransactionItems,
-  getTransactionItems,
   getStoreByMerchant,
-  addPricePoint,
+  getTransactionItems,
 } from '@/core/services/price-tracker'
-import { useHoHTheme } from '@/shared/providers'
+import { addTransaction, getTransactionById, updateTransaction } from '@/core/services/transaction'
 import { CategoryIcon, ScalePressable } from '@/shared/components'
-import { logError } from '@/shared/utils/logger'
-import { muteColor } from '@/shared/utils/contrast'
+import { CATEGORIES, CATEGORIES_INDEX } from '@/shared/config'
+import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
-import { useDataRefreshStore, useDraftsStore, useLastTransactionStore, usePaymentFrequencyStore, useQuickChipsStore, SPECIAL_CHIP_KEYS, useSuggestionsStore } from '@/shared/store'
+import { useHoHTheme } from '@/shared/providers'
+import {
+  getOrderedAccounts,
+  SPECIAL_CHIP_KEYS,
+  useDataRefreshStore,
+  useDraftsStore,
+  useLastTransactionStore,
+  usePaymentChipsOrderStore,
+  usePaymentFrequencyStore,
+  useQuickChipsStore,
+  useSuggestionsStore,
+} from '@/shared/store'
+import { MODAL_ROW_HEIGHT } from '@/shared/theme/tokens/modal'
+import { radius } from '@/shared/theme/tokens/radius'
+import { spacing } from '@/shared/theme/tokens/spacing'
+import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { FONT_SIZE_TINY } from '@/shared/theme/tokens/viewStyles'
+import { muteColor } from '@/shared/utils/contrast'
+import { logError } from '@/shared/utils/logger'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -23,8 +39,6 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -33,20 +47,15 @@ import {
   View,
 } from 'react-native'
 import Animated, {
+  Easing,
   FadeIn,
   FadeOut,
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withRepeat,
-  withTiming,
   withSequence,
-  Easing,
+  withTiming,
 } from 'react-native-reanimated'
-import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
-import { FONT_SIZE_TINY } from '@/shared/theme/tokens/viewStyles'
-import { MODAL_ROW_HEIGHT } from '@/shared/theme/tokens/modal'
-import { radius } from '@/shared/theme/tokens/radius'
-import { spacing } from '@/shared/theme/tokens/spacing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import {
@@ -56,6 +65,7 @@ import {
   BottomCTABar,
   DateTimePickerModal,
   ItemizedSection,
+  PaymentChipsReorderModal,
   QuickChipsEditModal,
   TagSection,
   type ItemEntry,
@@ -98,6 +108,9 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastKey, setToastKey] = useState(0)
 
+  // Keyboard height for ScrollView padding (design system hook)
+  const keyboardHeight = useKeyboardHeight()
+
   const showToast = (message: string) => {
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current)
@@ -107,10 +120,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     toastTimeoutRef.current = setTimeout(() => setToastMessage(null), TOAST_DURATION)
   }
 
+  const scrollViewRef = useRef<ScrollView>(null)
   const descInputRef = useRef<TextInput>(null)
   const noteInputRef = useRef<TextInput>(null)
   const merchantInputRef = useRef<TextInput>(null)
-  const scrollRef = useRef<ScrollView>(null)
   const chipsScrollRef = useRef<ScrollView>(null)
   const accountChipsScrollRef = useRef<ScrollView>(null)
 
@@ -147,7 +160,8 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   // UI state
   const [moreDetailsExpanded, setMoreDetailsExpanded] = useState(false)
   const [showKeypadSheet, setShowKeypadSheet] = useState(false) // Bottom sheet keypad
-  const [showChipsEdit, setShowChipsEdit] = useState(false) // Quick chips edit modal
+  const [showChipsEdit, setShowChipsEdit] = useState(false) // Category chips edit modal
+  const [showPaymentChipsReorder, setShowPaymentChipsReorder] = useState(false) // Payment chips reorder modal
   const [isEstimated, setIsEstimated] = useState(false) // Amount is approximate
   const [descriptionFocused, setDescriptionFocused] = useState(false)
   const [highlightedField, setHighlightedField] = useState<'category' | 'account' | null>(null)
@@ -173,25 +187,27 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   // Payment frequency store (for tracking usage)
   const { recordUsage } = usePaymentFrequencyStore()
 
+  // Payment chips order store
+  const { orderedKeys: paymentChipsOrder } = usePaymentChipsOrderStore()
+
   // Hooks for complex state
   const amount = useAmountKeypad()
   const account = useAccountPicker()
   const category = useCategoryPicker(type)
   const dateTime = useDateTime()
 
-
   // Category chips - From store (user customizable)
   const categoryChips = useMemo((): QuickChip[] => {
     const chipConfigs = type === 'expense' ? expenseChips : incomeChips
     const chips: QuickChip[] = []
 
-    chipConfigs.forEach(config => {
+    chipConfigs.forEach((config) => {
       if (config.type === 'category') {
-        const cat = CATEGORIES.find(c => c.key === config.key && c.type === type)
+        const cat = CATEGORIES.find((c) => c.key === config.key && c.type === type)
         if (cat) {
           // Check for subcategory
           if (config.subCategoryKey) {
-            const sub = cat.subCategories?.find(s => s.key === config.subCategoryKey)
+            const sub = cat.subCategories?.find((s) => s.key === config.subCategoryKey)
             if (sub) {
               chips.push({
                 type: 'category',
@@ -218,16 +234,20 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     return chips
   }, [type, expenseChips, incomeChips])
 
-  // Account chips - Show all accounts as quick picks
+  // Account chips - Show all accounts as quick picks (in user-defined order)
+  const orderedAccounts = useMemo(() => {
+    return getOrderedAccounts(account.accounts, paymentChipsOrder)
+  }, [account.accounts, paymentChipsOrder])
+
   const accountChips = useMemo((): QuickChip[] => {
-    return account.accounts.map(acc => ({
+    return orderedAccounts.map((acc) => ({
       type: 'payment' as const,
       key: acc.key,
       label: acc.name,
       icon: acc.kind === 'credit_card' ? 'credit-card' : acc.kind === 'cash' ? 'money' : 'bank',
       color: '#5A6A6A',
     }))
-  }, [account.accounts])
+  }, [orderedAccounts])
 
   // Load draft data if editing
   useEffect(() => {
@@ -269,80 +289,82 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     let cancelled = false
     setIsLoadingEdit(true)
 
-    getTransactionById(editingTransactionId).then((tx) => {
-      if (cancelled || !tx) return
+    getTransactionById(editingTransactionId)
+      .then((tx) => {
+        if (cancelled || !tx) return
 
-      setEditingTransaction(tx)
-      setType(tx.type)
-      setDescription(tx.item || '')
-      setMerchant(tx.merchant || '')
-      setNote(tx.note || '')
+        setEditingTransaction(tx)
+        setType(tx.type)
+        setDescription(tx.item || '')
+        setMerchant(tx.merchant || '')
+        setNote(tx.note || '')
 
-      // Convert amount from dollars to cents
-      const amountCents = Math.round(tx.money.amount * 100)
-      amount.setAmountCents(amountCents)
+        // Convert amount from dollars to cents
+        const amountCents = Math.round(tx.money.amount * 100)
+        amount.setAmountCents(amountCents)
 
-      // Find account key by ID
-      const accounts = getActiveAccounts()
-      const acc = accounts.find((a) => a.id === tx.accountId)
-      if (acc) {
-        account.setAccountKey(acc.key)
-      }
-
-      // Set category
-      if (tx.category) {
-        category.setCategoryRef({
-          type: tx.type,
-          categoryKey: tx.category.categoryKey ?? '',
-          subCategoryKey: tx.category.subCategoryKey,
-        })
-      }
-
-      // Set date
-      dateTime.setOccurredAt(tx.occurredAt)
-
-      // Set tags
-      if (tx.tags && tx.tags.length > 0) {
-        setTags(tx.tags)
-      }
-
-      // Set estimated
-      if (tx.isEstimated) {
-        setIsEstimated(true)
-      }
-
-      // Load transaction items if any
-      const txItems = getTransactionItems(editingTransactionId)
-      if (txItems.length > 0) {
-        setItemizedItems(
-          txItems.map((ti) => ({
-            id: ti.id,
-            name: ti.name,
-            priceCents: ti.priceCents,
-            quantity: ti.quantity,
-            unit: ti.unit,
-            itemId: ti.itemId,
-          }))
-        )
-        setItemizedExpanded(true)
-      }
-
-      // Expand more details if has optional fields
-      if (tx.tags && tx.tags.length > 0) {
-        setMoreDetailsExpanded(true)
-      }
-
-      // Scroll to top after loading edit data
-      scrollTimeoutRef.current = setTimeout(() => {
-        if (!cancelled) {
-          scrollRef.current?.scrollTo({ y: 0, animated: false })
+        // Find account key by ID
+        const accounts = getActiveAccounts()
+        const acc = accounts.find((a) => a.id === tx.accountId)
+        if (acc) {
+          account.setAccountKey(acc.key)
         }
-      }, 150)
-    }).finally(() => {
-      if (!cancelled) {
-        setIsLoadingEdit(false)
-      }
-    })
+
+        // Set category
+        if (tx.category) {
+          category.setCategoryRef({
+            type: tx.type,
+            categoryKey: tx.category.categoryKey ?? '',
+            subCategoryKey: tx.category.subCategoryKey,
+          })
+        }
+
+        // Set date
+        dateTime.setOccurredAt(tx.occurredAt)
+
+        // Set tags
+        if (tx.tags && tx.tags.length > 0) {
+          setTags(tx.tags)
+        }
+
+        // Set estimated
+        if (tx.isEstimated) {
+          setIsEstimated(true)
+        }
+
+        // Load transaction items if any
+        const txItems = getTransactionItems(editingTransactionId)
+        if (txItems.length > 0) {
+          setItemizedItems(
+            txItems.map((ti) => ({
+              id: ti.id,
+              name: ti.name,
+              priceCents: ti.priceCents,
+              quantity: ti.quantity,
+              unit: ti.unit,
+              itemId: ti.itemId,
+            }))
+          )
+          setItemizedExpanded(true)
+        }
+
+        // Expand more details if has optional fields
+        if (tx.tags && tx.tags.length > 0) {
+          setMoreDetailsExpanded(true)
+        }
+
+        // Scroll to top after loading edit data
+        scrollTimeoutRef.current = setTimeout(() => {
+          if (!cancelled) {
+            scrollViewRef.current?.scrollTo({ y: 0, animated: false })
+          }
+        }, 150)
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingEdit(false)
+        }
+      })
 
     return () => {
       cancelled = true
@@ -357,7 +379,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
   // Auto-scroll when More Details is expanded (but not on initial edit load)
   useEffect(() => {
-    if (moreDetailsExpanded && scrollRef.current) {
+    if (moreDetailsExpanded && scrollViewRef.current) {
       // Skip auto-scroll on initial load (when editing)
       if (isInitialLoadRef.current) {
         isInitialLoadRef.current = false
@@ -365,7 +387,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       }
       // Small delay to let the content render
       const timeoutId = setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true })
+        scrollViewRef.current?.scrollToEnd({ animated: true })
       }, 100)
 
       return () => clearTimeout(timeoutId)
@@ -466,7 +488,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     if (category.categoryRef) {
       const typeMap = CATEGORIES_INDEX[category.categoryRef.type]
       const subKeys = typeMap?.[category.categoryRef.categoryKey]
-      const ok = !!subKeys && (!category.categoryRef.subCategoryKey || subKeys.includes(category.categoryRef.subCategoryKey))
+      const ok =
+        !!subKeys &&
+        (!category.categoryRef.subCategoryKey ||
+          subKeys.includes(category.categoryRef.subCategoryKey))
 
       if (!ok) {
         showToast('Please re-select category')
@@ -569,7 +594,9 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       useDataRefreshStore.getState().invalidateTransactions()
 
       // Show toast then close modal
-      const toastMsg = editingTransaction ? `$${amount.amountDisplay} updated` : `$${amount.amountDisplay} added`
+      const toastMsg = editingTransaction
+        ? `$${amount.amountDisplay} updated`
+        : `$${amount.amountDisplay} added`
       showToast(toastMsg)
       if (navigationTimeoutRef.current) {
         clearTimeout(navigationTimeoutRef.current)
@@ -675,7 +702,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     if (category.categoryRef) {
       const typeMap = CATEGORIES_INDEX[category.categoryRef.type]
       const subKeys = typeMap?.[category.categoryRef.categoryKey]
-      const ok = !!subKeys && (!category.categoryRef.subCategoryKey || subKeys.includes(category.categoryRef.subCategoryKey))
+      const ok =
+        !!subKeys &&
+        (!category.categoryRef.subCategoryKey ||
+          subKeys.includes(category.categoryRef.subCategoryKey))
 
       if (!ok) {
         showToast('Please re-select category')
@@ -830,7 +860,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
     const subKey = category.categoryRef?.subCategoryKey
     const sub = subKey
-      ? category.selectedCategory.subCategories?.find(s => s.key === subKey)
+      ? category.selectedCategory.subCategories?.find((s) => s.key === subKey)
       : null
 
     return {
@@ -838,7 +868,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       color: sub?.color ?? category.selectedCategory.color,
       label: sub
         ? `${category.selectedCategory.name} › ${sub.name}`
-        : category.selectedCategory.name
+        : category.selectedCategory.name,
     }
   }, [category.selectedCategory, category.categoryRef])
 
@@ -862,7 +892,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           setDescription(lastTransaction.description)
         }
         if (lastTransaction.categoryKey) {
-          const fullCategory = CATEGORIES.find(c => c.key === lastTransaction.categoryKey)
+          const fullCategory = CATEGORIES.find((c) => c.key === lastTransaction.categoryKey)
           if (fullCategory) {
             category.chooseCategory(fullCategory)
             if (lastTransaction.subCategoryKey) {
@@ -876,7 +906,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       }
     } else if (chip.type === 'category') {
       // Find the full category object and select it
-      const fullCategory = CATEGORIES.find(c => c.key === chip.key)
+      const fullCategory = CATEGORIES.find((c) => c.key === chip.key)
       if (fullCategory) {
         if (chip.subCategoryKey) {
           // For subcategory chips, set both category and subcategory
@@ -914,493 +944,610 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   }
 
   return (
-    <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
-      <KeyboardAvoidingView
+    <Screen
+      edges={[]}
+      padded={false}
+      topPadding={false}
+      style={{ flex: 1 }}
+      contentStyle={{ flex: 1 }}
+    >
+      {/* Drag Handle */}
+      <View style={styles.dragHandleContainer}>
+        <View style={[styles.dragHandle, { backgroundColor: theme.semantic.border }]} />
+      </View>
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Pressable onPress={onCancel} hitSlop={12} style={styles.cancelButton}>
+          <Text style={[styles.cancelText, { color: theme.semantic.textSecondary }]}>Cancel</Text>
+        </Pressable>
+      </View>
+
+      {/* Type Tabs */}
+      <View style={[styles.typeTabs, { borderBottomColor: theme.semantic.border }]}>
+        {TRANSACTION_TYPES.map((t) => {
+          const selected = t.key === type
+          const isDisabled = t.disabled === true
+          return (
+            <Pressable
+              key={t.key}
+              onPress={() => {
+                if (isDisabled) return
+                setType(t.key)
+                category.resetCategory()
+              }}
+              style={[
+                styles.typeTab,
+                {
+                  borderBottomColor:
+                    selected && !isDisabled ? theme.semantic.primary : 'transparent',
+                },
+                isDisabled && { opacity: 0.5 },
+              ]}
+            >
+              <View style={styles.typeTabContent}>
+                <Text
+                  style={[
+                    styles.typeTabText,
+                    {
+                      color: isDisabled
+                        ? theme.semantic.textSecondary
+                        : selected
+                          ? theme.semantic.text
+                          : theme.semantic.textSecondary,
+                      fontWeight: selected && !isDisabled ? '700' : '500',
+                    },
+                  ]}
+                >
+                  {t.label}
+                </Text>
+                {isDisabled && (
+                  <View
+                    style={[styles.comingSoonBadge, { backgroundColor: theme.semantic.surfaceAlt }]}
+                  >
+                    <Text style={[styles.comingSoonText, { color: theme.semantic.textSecondary }]}>
+                      Soon
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          )
+        })}
+      </View>
+
+      <ScrollView
+        ref={scrollViewRef}
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + spacing['3xl'] * 3 + keyboardHeight },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Drag Handle */}
-        <View style={styles.dragHandleContainer}>
-          <View style={[styles.dragHandle, { backgroundColor: theme.semantic.border }]} />
-        </View>
+        {/* Loading state for edit mode */}
+        {isLoadingEdit && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.semantic.primary} />
+            <Text style={[styles.loadingText, { color: theme.semantic.textSecondary }]}>
+              Loading transaction...
+            </Text>
+          </View>
+        )}
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={onCancel} hitSlop={12} style={styles.cancelButton}>
-            <Text style={[styles.cancelText, { color: theme.semantic.textSecondary }]}>Cancel</Text>
-          </Pressable>
-        </View>
-
-        {/* Type Tabs */}
-        <View style={[styles.typeTabs, { borderBottomColor: theme.semantic.border }]}>
-          {TRANSACTION_TYPES.map((t) => {
-            const selected = t.key === type
-            const isDisabled = t.disabled === true
-            return (
-              <Pressable
-                key={t.key}
-                onPress={() => {
-                  if (isDisabled) return
-                  setType(t.key)
-                  category.resetCategory()
-                }}
+        {/* Hero Amount - Tap to open keypad sheet */}
+        <View style={styles.heroAmount}>
+          <Pressable onPress={() => setShowKeypadSheet(true)} style={styles.amountTouchable}>
+            <Animated.Text
+              style={[styles.amountValue, { color: amountColor }, amountAnimatedStyle]}
+            >
+              {isEstimated ? '~' : ''}${amount.amountDisplay}
+            </Animated.Text>
+            {isEstimated && (
+              <View
                 style={[
-                  styles.typeTab,
-                  { borderBottomColor: selected && !isDisabled ? theme.semantic.primary : 'transparent' },
-                  isDisabled && { opacity: 0.5 }
+                  styles.estimatedBadge,
+                  {
+                    backgroundColor: theme.semantic.warningSoft,
+                    borderColor: theme.semantic.warning + '40',
+                  },
                 ]}
               >
-                <View style={styles.typeTabContent}>
-                  <Text
-                    style={[
-                      styles.typeTabText,
-                      {
-                        color: isDisabled
-                          ? theme.semantic.textSecondary
-                          : selected
-                            ? theme.semantic.text
-                            : theme.semantic.textSecondary,
-                        fontWeight: selected && !isDisabled ? '700' : '500',
-                      }
-                    ]}
-                  >
-                    {t.label}
-                  </Text>
-                  {isDisabled && (
-                    <View style={[styles.comingSoonBadge, { backgroundColor: theme.semantic.surfaceAlt }]}>
-                      <Text style={[styles.comingSoonText, { color: theme.semantic.textSecondary }]}>Soon</Text>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
-            )
-          })}
-        </View>
+                <Text style={[styles.estimatedBadgeText, { color: theme.semantic.warning }]}>
+                  Estimated
+                </Text>
+              </View>
+            )}
+          </Pressable>
 
-        <ScrollView
-          ref={scrollRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing['3xl'] * 2 }]}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Loading state for edit mode */}
-          {isLoadingEdit && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.semantic.primary} />
-              <Text style={[styles.loadingText, { color: theme.semantic.textSecondary }]}>
-                Loading transaction...
-              </Text>
-            </View>
-          )}
-
-          {/* Hero Amount - Tap to open keypad sheet */}
-          <View style={styles.heroAmount}>
-            <Pressable onPress={() => setShowKeypadSheet(true)} style={styles.amountTouchable}>
-              <Animated.Text style={[styles.amountValue, { color: amountColor }, amountAnimatedStyle]}>
-                {isEstimated ? '~' : ''}${amount.amountDisplay}
-              </Animated.Text>
-              {isEstimated && (
-                <View style={[styles.estimatedBadge, { backgroundColor: theme.semantic.warningSoft, borderColor: theme.semantic.warning + '40' }]}>
-                  <Text style={[styles.estimatedBadgeText, { color: theme.semantic.warning }]}>Estimated</Text>
-                </View>
-              )}
-            </Pressable>
-
-            {/* Description subtitle - Option A style */}
-            <View style={styles.descSubtitle}>
-              <AnimatedDescriptionPlaceholder
-                isActive={!description && !descriptionFocused}
-                color={theme.semantic.textSecondary}
-              />
-              <TextInput
-                ref={descInputRef}
-                value={description}
-                onChangeText={setDescription}
-                onFocus={() => setDescriptionFocused(true)}
-                onBlur={() => setDescriptionFocused(false)}
-                placeholderTextColor={theme.semantic.textSecondary}
-                style={[styles.descSubtitleInput, {
+          {/* Description subtitle - Option A style */}
+          <View style={styles.descSubtitle}>
+            <AnimatedDescriptionPlaceholder
+              isActive={!description && !descriptionFocused}
+              color={theme.semantic.textSecondary}
+            />
+            <TextInput
+              ref={descInputRef}
+              value={description}
+              onChangeText={setDescription}
+              onFocus={() => setDescriptionFocused(true)}
+              onBlur={() => setDescriptionFocused(false)}
+              placeholderTextColor={theme.semantic.textSecondary}
+              style={[
+                styles.descSubtitleInput,
+                {
                   color: theme.semantic.text,
                   borderBottomColor: highlightIdentifier
                     ? theme.semantic.warning
                     : description
                       ? theme.semantic.primary
                       : theme.semantic.border,
-                }]}
-                returnKeyType="done"
-              />
-            </View>
+                },
+              ]}
+              returnKeyType="done"
+            />
           </View>
+        </View>
 
-          {/* Transfer placeholder */}
-          {type === 'transfer' && (
-            <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}>
-              <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.semibold, textAlign: 'center', paddingVertical: spacing.lg }}>
-                Transfer feature coming soon
-              </Text>
-            </View>
-          )}
+        {/* Transfer placeholder */}
+        {type === 'transfer' && (
+          <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}>
+            <Text
+              style={{
+                color: theme.semantic.textSecondary,
+                fontWeight: fontWeight.semibold,
+                textAlign: 'center',
+                paddingVertical: spacing.lg,
+              }}
+            >
+              Transfer feature coming soon
+            </Text>
+          </View>
+        )}
 
-          {/* Essential Fields */}
-          {type !== 'transfer' && (
-            <View style={styles.fieldGroup}>
-              {/* Merchant (optional) */}
-              <View style={[
+        {/* Essential Fields */}
+        {type !== 'transfer' && (
+          <View style={styles.fieldGroup}>
+            {/* Merchant (optional) */}
+            <View
+              style={[
                 styles.fieldRow,
                 styles.fieldRowNoBorder,
                 { paddingRight: 0 },
-                highlightIdentifier && { backgroundColor: theme.semantic.warning + '15' }
-              ]}>
-                <Text style={[styles.fieldLabel, { color: merchant ? theme.semantic.textSecondary : theme.semantic.text }]}>
-                  Merchant <Text style={styles.optionalLabel}>(optional)</Text>
-                </Text>
-                <View style={styles.fieldInputWrapper}>
-                  {!merchant && (
-                    <Text style={[styles.fieldPlaceholder, styles.fieldInputPlaceholder, { color: theme.semantic.textSecondary }]}>
-                      Add merchant
-                    </Text>
-                  )}
-                  <TextInput
-                    ref={merchantInputRef}
-                    value={merchant}
-                    onChangeText={setMerchant}
-                    style={[styles.fieldInput, { color: theme.semantic.text }]}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                  />
-                </View>
-              </View>
-              <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-
-              {/* Category (optional) */}
-              <View
+                highlightIdentifier && { backgroundColor: theme.semantic.warning + '15' },
+              ]}
+            >
+              <Text
                 style={[
-                  styles.fieldRow,
-                  styles.fieldRowNoBorder,
-                  highlightedField === 'category' && { backgroundColor: theme.semantic.primary + '15' },
-                ]}
-              >
-                <Text style={[styles.fieldLabel, { color: categoryDisplay ? theme.semantic.textSecondary : theme.semantic.text }]}>
-                  Category <Text style={styles.optionalLabel}>(optional)</Text>
-                </Text>
-                <Pressable onPress={category.navigateToCategorySelection} style={styles.fieldValueTouchable}>
-                  {categoryDisplay ? (
-                    <View style={styles.fieldValueRow}>
-                      <CategoryIcon name={categoryDisplay.icon} size={16} color={categoryDisplay.color} />
-                      <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
-                        {categoryDisplay.label}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={[styles.fieldPlaceholder, { color: theme.semantic.primary }]}>
-                      Add category
-                    </Text>
-                  )}
-                </Pressable>
-                {categoryDisplay && (
-                  <Pressable
-                    onPress={category.resetCategory}
-                    hitSlop={8}
-                    style={styles.clearButton}
-                  >
-                    <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
-                  </Pressable>
-                )}
-              </View>
-
-              {/* Category chips */}
-              {categoryChips.length > 0 && (
-                <ScrollView
-                  ref={chipsScrollRef}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.fieldChipsRow}
-                  contentContainerStyle={styles.fieldChipsContent}
-                >
-                  {categoryChips.map((chip) => {
-                    const selected = isChipSelected(chip)
-                    const mutedColor = muteColor(chip.color, 0.35, 0.05)
-                    return (
-                      <AnimatedQuickChip
-                        key={`${chip.type}-${chip.key}-${chip.subCategoryKey ?? ''}`}
-                        label={chip.label}
-                        icon={chip.icon}
-                        iconColor={selected ? theme.semantic.primary : mutedColor}
-                        selected={selected}
-                        selectedColor={theme.semantic.primary + '20'}
-                        surfaceColor={theme.semantic.surfaceAlt}
-                        borderColor={theme.semantic.border}
-                        selectedBorderColor={theme.semantic.primary}
-                        textColor={selected ? theme.semantic.primary : theme.semantic.textSecondary}
-                        onPress={() => onQuickChipPress(chip)}
-                      />
-                    )
-                  })}
-                  <ScalePressable
-                    onPress={() => setShowChipsEdit(true)}
-                    style={[styles.quickChipEdit, { borderColor: theme.semantic.border }]}
-                  >
-                    <FontAwesome name="pencil" size={12} color={theme.semantic.textSecondary} />
-                  </ScalePressable>
-                </ScrollView>
-              )}
-              <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-
-              {/* Paid with */}
-              <View
-                style={[
-                  styles.fieldRow,
-                  styles.fieldRowNoBorder,
-                  highlightedField === 'account' && { backgroundColor: theme.semantic.primary + '15' },
-                  highlightAccount && { backgroundColor: theme.semantic.warning + '15' },
-                ]}
-              >
-                <Text style={[styles.fieldLabel, { color: account.selectedAccount ? theme.semantic.textSecondary : theme.semantic.text }]}>
-                  {type === 'expense' ? 'Paid with' : 'Account'}
-                </Text>
-                <Pressable onPress={account.navigateToAccountSelection} style={styles.fieldValueTouchable}>
-                  {account.selectedAccount ? (
-                    <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
-                      {account.accountDisplay}
-                    </Text>
-                  ) : (
-                    <Text style={[styles.fieldPlaceholder, { color: theme.semantic.primary }]}>
-                      Add account
-                    </Text>
-                  )}
-                </Pressable>
-                {account.selectedAccount && (
-                  <Pressable
-                    onPress={account.clearAccount}
-                    hitSlop={8}
-                    style={styles.clearButton}
-                  >
-                    <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
-                  </Pressable>
-                )}
-              </View>
-
-              {/* Account chips */}
-              {accountChips.length > 0 && (
-                <ScrollView
-                  ref={accountChipsScrollRef}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.fieldChipsRow}
-                  contentContainerStyle={styles.fieldChipsContent}
-                >
-                  {accountChips.map((chip) => {
-                    const selected = account.selectedAccount?.key === chip.key
-                    return (
-                      <AnimatedQuickChip
-                        key={`account-${chip.key}`}
-                        label={chip.label}
-                        icon={chip.icon}
-                        iconColor={selected ? theme.semantic.primary : theme.semantic.textSecondary}
-                        selected={selected}
-                        selectedColor={theme.semantic.primary + '20'}
-                        surfaceColor={theme.semantic.surfaceAlt}
-                        borderColor={theme.semantic.border}
-                        selectedBorderColor={theme.semantic.primary}
-                        textColor={selected ? theme.semantic.primary : theme.semantic.textSecondary}
-                        onPress={() => onQuickChipPress(chip)}
-                      />
-                    )
-                  })}
-                </ScrollView>
-              )}
-              <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-
-              {/* Date */}
-              <Pressable
-                onPress={dateTime.openDateTimeModal}
-                style={[styles.fieldRow, styles.fieldRowNoBorder]}
-              >
-                <Text style={[styles.fieldLabel, { color: theme.semantic.text }]}>Date</Text>
-                <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
-                  {dateTime.dateDisplay}, {dateTime.timeDisplay}
-                </Text>
-                <Text style={[styles.chevron, { color: theme.semantic.textSecondary }]}>›</Text>
-              </Pressable>
-              <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-
-              {/* Note */}
-              <View style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingRight: 0 }]}>
-                <Text style={[styles.fieldLabel, { color: note ? theme.semantic.textSecondary : theme.semantic.text }]}>
-                  Note <Text style={styles.optionalLabel}>(optional)</Text>
-                </Text>
-                <View style={styles.fieldInputWrapper}>
-                  {!note && (
-                    <Text style={[styles.fieldPlaceholder, styles.fieldInputPlaceholder, { color: theme.semantic.textSecondary }]}>
-                      Add note
-                    </Text>
-                  )}
-                  <TextInput
-                    ref={noteInputRef}
-                    value={note}
-                    onChangeText={setNote}
-                    style={[styles.fieldInput, { color: theme.semantic.text }]}
-                    multiline
-                  />
-                </View>
-              </View>
-              {/* Itemized Items - expense only */}
-              {type === 'expense' && (
-                <>
-                  <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-                  <ItemizedSection
-                    items={itemizedItems}
-                    onItemsChange={setItemizedItems}
-                    expanded={itemizedExpanded}
-                    onExpandedChange={setItemizedExpanded}
-                    merchant={merchant}
-                  />
-                </>
-              )}
-            </View>
-          )}
-
-          {/* More Details */}
-          {type !== 'transfer' && (
-            <>
-              <Pressable
-                onPress={() => setMoreDetailsExpanded(!moreDetailsExpanded)}
-                style={styles.moreDetailsRow}
-              >
-                <Text style={[
                   styles.fieldLabel,
-                  { color: theme.semantic.textSecondary, marginBottom: 0 }
-                ]}>
-                  {moreDetailsExpanded ? 'Optional' : 'More details'}
-                </Text>
-                <View style={styles.moreDetailsRight}>
-                  <View style={[styles.badge, { backgroundColor: theme.semantic.surfaceAlt, borderColor: theme.semantic.border }]}>
-                    {moreDetailsCount > 0 && (
-                      <View style={[styles.badgeDot, { backgroundColor: theme.semantic.primary }]} />
-                    )}
-                    <Text style={[styles.badgeText, { color: theme.semantic.textSecondary }]}>
-                      {moreDetailsCount > 0 ? moreDetailsCount : 'None'}
+                  { color: merchant ? theme.semantic.textSecondary : theme.semantic.text },
+                ]}
+              >
+                Merchant <Text style={styles.optionalLabel}>(optional)</Text>
+              </Text>
+              <View style={styles.fieldInputWrapper}>
+                {!merchant && (
+                  <Text
+                    style={[
+                      styles.fieldPlaceholder,
+                      styles.fieldInputPlaceholder,
+                      { color: theme.semantic.textSecondary },
+                    ]}
+                  >
+                    Add merchant
+                  </Text>
+                )}
+                <TextInput
+                  ref={merchantInputRef}
+                  value={merchant}
+                  onChangeText={setMerchant}
+                  style={[styles.fieldInput, { color: theme.semantic.text }]}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* Category (optional) */}
+            <View
+              style={[
+                styles.fieldRow,
+                styles.fieldRowNoBorder,
+                highlightedField === 'category' && {
+                  backgroundColor: theme.semantic.primary + '15',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: categoryDisplay ? theme.semantic.textSecondary : theme.semantic.text },
+                ]}
+              >
+                Category <Text style={styles.optionalLabel}>(optional)</Text>
+              </Text>
+              <Pressable
+                onPress={category.navigateToCategorySelection}
+                style={styles.fieldValueTouchable}
+              >
+                {categoryDisplay ? (
+                  <View style={styles.fieldValueRow}>
+                    <CategoryIcon
+                      name={categoryDisplay.icon}
+                      size={16}
+                      color={categoryDisplay.color}
+                    />
+                    <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                      {categoryDisplay.label}
                     </Text>
                   </View>
-                  <Text style={[
+                ) : (
+                  <Text style={[styles.fieldPlaceholder, { color: theme.semantic.primary }]}>
+                    Add category
+                  </Text>
+                )}
+              </Pressable>
+              {categoryDisplay && (
+                <Pressable onPress={category.resetCategory} hitSlop={8} style={styles.clearButton}>
+                  <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
+                </Pressable>
+              )}
+            </View>
+
+            {/* Category chips */}
+            {categoryChips.length > 0 && (
+              <ScrollView
+                ref={chipsScrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.fieldChipsRow}
+                contentContainerStyle={styles.fieldChipsContent}
+              >
+                {categoryChips.map((chip) => {
+                  const selected = isChipSelected(chip)
+                  const mutedColor = muteColor(chip.color, 0.35, 0.05)
+                  return (
+                    <AnimatedQuickChip
+                      key={`${chip.type}-${chip.key}-${chip.subCategoryKey ?? ''}`}
+                      label={chip.label}
+                      icon={chip.icon}
+                      iconColor={selected ? theme.semantic.primary : mutedColor}
+                      selected={selected}
+                      selectedColor={theme.semantic.primary + '20'}
+                      surfaceColor={theme.semantic.surfaceAlt}
+                      borderColor={theme.semantic.border}
+                      selectedBorderColor={theme.semantic.primary}
+                      textColor={selected ? theme.semantic.primary : theme.semantic.textSecondary}
+                      onPress={() => onQuickChipPress(chip)}
+                    />
+                  )
+                })}
+                <ScalePressable
+                  onPress={() => setShowChipsEdit(true)}
+                  style={[styles.quickChipEdit, { borderColor: theme.semantic.border }]}
+                >
+                  <FontAwesome name="pencil" size={12} color={theme.semantic.textSecondary} />
+                </ScalePressable>
+              </ScrollView>
+            )}
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* Paid with */}
+            <View
+              style={[
+                styles.fieldRow,
+                styles.fieldRowNoBorder,
+                highlightedField === 'account' && {
+                  backgroundColor: theme.semantic.primary + '15',
+                },
+                highlightAccount && { backgroundColor: theme.semantic.warning + '15' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  {
+                    color: account.selectedAccount
+                      ? theme.semantic.textSecondary
+                      : theme.semantic.text,
+                  },
+                ]}
+              >
+                {type === 'expense' ? 'Paid with' : 'Account'}
+              </Text>
+              <Pressable
+                onPress={account.navigateToAccountSelection}
+                style={styles.fieldValueTouchable}
+              >
+                {account.selectedAccount ? (
+                  <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                    {account.accountDisplay}
+                  </Text>
+                ) : (
+                  <Text style={[styles.fieldPlaceholder, { color: theme.semantic.primary }]}>
+                    Add account
+                  </Text>
+                )}
+              </Pressable>
+              {account.selectedAccount && (
+                <Pressable onPress={account.clearAccount} hitSlop={8} style={styles.clearButton}>
+                  <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
+                </Pressable>
+              )}
+            </View>
+
+            {/* Account chips */}
+            {accountChips.length > 0 && (
+              <ScrollView
+                ref={accountChipsScrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.fieldChipsRow}
+                contentContainerStyle={styles.fieldChipsContent}
+              >
+                {accountChips.map((chip) => {
+                  const selected = account.selectedAccount?.key === chip.key
+                  return (
+                    <AnimatedQuickChip
+                      key={`account-${chip.key}`}
+                      label={chip.label}
+                      icon={chip.icon}
+                      iconColor={selected ? theme.semantic.primary : theme.semantic.textSecondary}
+                      selected={selected}
+                      selectedColor={theme.semantic.primary + '20'}
+                      surfaceColor={theme.semantic.surfaceAlt}
+                      borderColor={theme.semantic.border}
+                      selectedBorderColor={theme.semantic.primary}
+                      textColor={selected ? theme.semantic.primary : theme.semantic.textSecondary}
+                      onPress={() => onQuickChipPress(chip)}
+                    />
+                  )
+                })}
+                <ScalePressable
+                  onPress={() => setShowPaymentChipsReorder(true)}
+                  style={[styles.quickChipEdit, { borderColor: theme.semantic.border }]}
+                >
+                  <FontAwesome name="pencil" size={12} color={theme.semantic.textSecondary} />
+                </ScalePressable>
+              </ScrollView>
+            )}
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* Date */}
+            <Pressable
+              onPress={dateTime.openDateTimeModal}
+              style={[styles.fieldRow, styles.fieldRowNoBorder]}
+            >
+              <Text style={[styles.fieldLabel, { color: theme.semantic.text }]}>Date</Text>
+              <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                {dateTime.dateDisplay}, {dateTime.timeDisplay}
+              </Text>
+              <Text style={[styles.chevron, { color: theme.semantic.textSecondary }]}>›</Text>
+            </Pressable>
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* Note */}
+            <View style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingRight: 0 }]}>
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: note ? theme.semantic.textSecondary : theme.semantic.text },
+                ]}
+              >
+                Note <Text style={styles.optionalLabel}>(optional)</Text>
+              </Text>
+              <View style={styles.fieldInputWrapper}>
+                {!note && (
+                  <Text
+                    style={[
+                      styles.fieldPlaceholder,
+                      styles.fieldInputPlaceholder,
+                      { color: theme.semantic.textSecondary },
+                    ]}
+                  >
+                    Add note
+                  </Text>
+                )}
+                <TextInput
+                  ref={noteInputRef}
+                  value={note}
+                  onChangeText={setNote}
+                  style={[styles.fieldInput, { color: theme.semantic.text }]}
+                  multiline
+                />
+              </View>
+            </View>
+            {/* Itemized Items - expense only */}
+            {type === 'expense' && (
+              <>
+                <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+                <ItemizedSection
+                  items={itemizedItems}
+                  onItemsChange={setItemizedItems}
+                  expanded={itemizedExpanded}
+                  onExpandedChange={setItemizedExpanded}
+                  merchant={merchant}
+                />
+              </>
+            )}
+          </View>
+        )}
+
+        {/* More Details */}
+        {type !== 'transfer' && (
+          <>
+            <Pressable
+              onPress={() => setMoreDetailsExpanded(!moreDetailsExpanded)}
+              style={styles.moreDetailsRow}
+            >
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: theme.semantic.textSecondary, marginBottom: 0 },
+                ]}
+              >
+                {moreDetailsExpanded ? 'Optional' : 'More details'}
+              </Text>
+              <View style={styles.moreDetailsRight}>
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: theme.semantic.surfaceAlt,
+                      borderColor: theme.semantic.border,
+                    },
+                  ]}
+                >
+                  {moreDetailsCount > 0 && (
+                    <View style={[styles.badgeDot, { backgroundColor: theme.semantic.primary }]} />
+                  )}
+                  <Text style={[styles.badgeText, { color: theme.semantic.textSecondary }]}>
+                    {moreDetailsCount > 0 ? moreDetailsCount : 'None'}
+                  </Text>
+                </View>
+                <Text
+                  style={[
                     styles.moreDetailsChevron,
                     {
                       color: theme.semantic.textSecondary,
-                      transform: [{ rotate: moreDetailsExpanded ? '90deg' : '0deg' }]
-                    }
-                  ]}>
-                    ›
+                      transform: [{ rotate: moreDetailsExpanded ? '90deg' : '0deg' }],
+                    },
+                  ]}
+                >
+                  ›
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Expanded Fields */}
+            {moreDetailsExpanded && (
+              <View style={styles.fieldGroup}>
+                {/* Tags */}
+                <View style={[styles.tagsRow, { borderBottomColor: theme.semantic.border }]}>
+                  <TagSection selectedTags={tags} onTagsChange={setTags} />
+                </View>
+
+                {/* Receipt */}
+                <Pressable onPress={onReceiptPress} style={[styles.fieldRow, styles.fieldRowLast]}>
+                  <Text
+                    style={[
+                      styles.fieldLabel,
+                      { color: receiptUri ? theme.semantic.textSecondary : theme.semantic.text },
+                    ]}
+                  >
+                    Receipt
                   </Text>
-                </View>
-              </Pressable>
-
-              {/* Expanded Fields */}
-              {moreDetailsExpanded && (
-                <View style={styles.fieldGroup}>
-                  {/* Tags */}
-                  <View style={[styles.tagsRow, { borderBottomColor: theme.semantic.border }]}>
-                    <TagSection
-                      selectedTags={tags}
-                      onTagsChange={setTags}
+                  <View style={styles.fieldValueRow}>
+                    <FontAwesome
+                      name={receiptUri ? 'check-circle' : 'camera'}
+                      size={14}
+                      color={receiptUri ? theme.semantic.success : theme.semantic.textSecondary}
                     />
+                    <Text
+                      style={[
+                        receiptUri ? styles.fieldValue : styles.fieldPlaceholder,
+                        { color: receiptUri ? theme.semantic.text : theme.semantic.textSecondary },
+                      ]}
+                    >
+                      {receiptUri ? 'Attached' : 'Attach photo'}
+                    </Text>
                   </View>
+                </Pressable>
 
-                  {/* Receipt */}
-                  <Pressable onPress={onReceiptPress} style={[styles.fieldRow, styles.fieldRowLast]}>
-                    <Text style={[styles.fieldLabel, { color: receiptUri ? theme.semantic.textSecondary : theme.semantic.text }]}>Receipt</Text>
-                    <View style={styles.fieldValueRow}>
-                      <FontAwesome
-                        name={receiptUri ? 'check-circle' : 'camera'}
-                        size={14}
-                        color={receiptUri ? theme.semantic.success : theme.semantic.textSecondary}
-                      />
-                      <Text style={[receiptUri ? styles.fieldValue : styles.fieldPlaceholder, { color: receiptUri ? theme.semantic.text : theme.semantic.textSecondary }]}>
-                        {receiptUri ? 'Attached' : 'Attach photo'}
-                      </Text>
-                    </View>
+                {receiptUri && (
+                  <Pressable onPress={onReceiptPress} style={styles.receiptPreview}>
+                    <Image
+                      source={{ uri: receiptUri }}
+                      style={styles.receiptImage}
+                      resizeMode="cover"
+                    />
                   </Pressable>
+                )}
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
 
-                  {receiptUri && (
-                    <Pressable onPress={onReceiptPress} style={styles.receiptPreview}>
-                      <Image
-                        source={{ uri: receiptUri }}
-                        style={styles.receiptImage}
-                        resizeMode="cover"
-                      />
-                    </Pressable>
-                  )}
-                </View>
-              )}
-            </>
-          )}
-        </ScrollView>
+      {/* Modals */}
+      <DateTimePickerModal
+        visible={dateTime.showDateTimeModal}
+        value={dateTime.occurredAt}
+        onClose={dateTime.closeDateTimeModal}
+        onConfirm={dateTime.onDateTimeConfirm}
+      />
 
-        {/* Modals */}
-        <DateTimePickerModal
-          visible={dateTime.showDateTimeModal}
-          value={dateTime.occurredAt}
-          onClose={dateTime.closeDateTimeModal}
-          onConfirm={dateTime.onDateTimeConfirm}
-        />
+      {/* CategorySelectionModal and AccountSelectionModal now use navigation (slide from right) */}
 
-        {/* CategorySelectionModal and AccountSelectionModal now use navigation (slide from right) */}
+      <QuickChipsEditModal
+        visible={showChipsEdit}
+        transactionType={type === 'transfer' ? 'expense' : type}
+        accounts={account.accounts}
+        onClose={() => {
+          setShowChipsEdit(false)
+          // Scroll chips back to start after edit
+          setTimeout(() => {
+            chipsScrollRef.current?.scrollTo({ x: 0, animated: true })
+          }, 100)
+        }}
+      />
 
-        <QuickChipsEditModal
-          visible={showChipsEdit}
-          transactionType={type === 'transfer' ? 'expense' : type}
-          accounts={account.accounts}
-          onClose={() => {
-            setShowChipsEdit(false)
-            // Scroll chips back to start after edit
-            setTimeout(() => {
-              chipsScrollRef.current?.scrollTo({ x: 0, animated: true })
-              accountChipsScrollRef.current?.scrollTo({ x: 0, animated: true })
-            }, 100)
-          }}
-        />
+      <PaymentChipsReorderModal
+        visible={showPaymentChipsReorder}
+        accounts={account.accounts}
+        onClose={() => {
+          setShowPaymentChipsReorder(false)
+          // Scroll chips back to start after reorder
+          setTimeout(() => {
+            accountChipsScrollRef.current?.scrollTo({ x: 0, animated: true })
+          }, 100)
+        }}
+      />
 
-        <AmountKeypadSheet
-          visible={showKeypadSheet}
-          amountDisplay={amount.amountDisplay}
-          isEstimated={isEstimated}
-          onDigit={amount.appendAmountDigit}
-          onBackspace={amount.backspaceAmount}
-          onClear={amount.clearAmount}
-          onEstimatedChange={setIsEstimated}
-          onDone={() => setShowKeypadSheet(false)}
-          onClose={() => setShowKeypadSheet(false)}
-        />
-        {/* Toast + Bottom CTA Bar */}
-        <View>
-          {toastMessage && (
-            <Animated.View
-              key={toastKey}
-              entering={FadeIn.duration(150)}
-              exiting={FadeOut.duration(150)}
-              style={[
-                styles.toast,
-                { backgroundColor: theme.semantic.text },
-              ]}
-              pointerEvents="none"
-            >
-              <Text style={[styles.toastText, { color: theme.semantic.surface }]}>
-                {toastMessage}
-              </Text>
-            </Animated.View>
-          )}
-          <BottomCTABar
-            amountDisplay={amount.amountDisplay}
-            canSave={canSave}
-            bottomInset={insets.bottom}
-            onSave={onSave}
-            onSaveAndNew={onSaveAndAddAnother}
-            onSaveDraft={onSaveDraft}
-          />
-        </View>
-      </KeyboardAvoidingView>
+      <AmountKeypadSheet
+        visible={showKeypadSheet}
+        amountDisplay={amount.amountDisplay}
+        isEstimated={isEstimated}
+        onDigit={amount.appendAmountDigit}
+        onBackspace={amount.backspaceAmount}
+        onClear={amount.clearAmount}
+        onEstimatedChange={setIsEstimated}
+        onDone={() => setShowKeypadSheet(false)}
+        onClose={() => setShowKeypadSheet(false)}
+      />
+      {/* Bottom CTA Bar - absolutely positioned */}
+      <BottomCTABar
+        amountDisplay={amount.amountDisplay}
+        canSave={canSave}
+        bottomInset={insets.bottom}
+        onSave={onSave}
+        onSaveAndNew={onSaveAndAddAnother}
+        onSaveDraft={onSaveDraft}
+      />
+
+      {/* Toast - floating above button */}
+      {toastMessage && (
+        <Animated.View
+          key={toastKey}
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(150)}
+          style={[
+            styles.toast,
+            {
+              backgroundColor: theme.semantic.text,
+              position: 'absolute',
+              bottom: insets.bottom + spacing['3xl'] * 3,
+              alignSelf: 'center',
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Text style={[styles.toastText, { color: theme.semantic.surface }]}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </Screen>
   )
 }

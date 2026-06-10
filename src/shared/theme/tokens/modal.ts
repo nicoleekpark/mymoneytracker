@@ -446,6 +446,14 @@ export const modalStyles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
+  ctaContainerAbsolute: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
   ctaPrimaryButton: {
     width: '100%',
     height: spacing['3xl'], // 48

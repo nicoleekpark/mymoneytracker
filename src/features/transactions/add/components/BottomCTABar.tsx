@@ -2,15 +2,20 @@
  * BottomCTABar
  *
  * Bottom-anchored action bar for save actions.
- * Layout A: Full-width primary button + text links below
+ * Positions itself above the keyboard using keyboard events directly.
+ * Does NOT rely on KeyboardAvoidingView.
+ *
+ * Uses design system styles from modalStyles.
+ *
+ * Layout: Full-width primary button + text links below
  */
 
-import React, { useEffect, useState } from 'react'
-import { Keyboard, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import React, { useEffect } from 'react'
+import { Keyboard, Platform, Pressable, Text, View } from 'react-native'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useHoHTheme } from '@/shared/providers'
-import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { radius } from '@/shared/theme/tokens/radius'
 
 type BottomCTABarProps = {
   amountDisplay: string
@@ -20,9 +25,6 @@ type BottomCTABarProps = {
   onSaveAndNew: () => void
   onSaveDraft: () => void
 }
-
-// Minimum padding above keyboard when it's open
-const KEYBOARD_SPACING = spacing.md
 
 const OPACITY = {
   pressed: 0.7,
@@ -38,14 +40,18 @@ export function BottomCTABar({
   onSaveDraft,
 }: BottomCTABarProps) {
   const theme = useHoHTheme()
-  const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const keyboardHeight = useSharedValue(0)
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
 
-    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true))
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false))
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      keyboardHeight.value = withTiming(e.endCoordinates.height, { duration: 250 })
+    })
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      keyboardHeight.value = withTiming(0, { duration: 250 })
+    })
 
     return () => {
       showSub.remove()
@@ -53,44 +59,51 @@ export function BottomCTABar({
     }
   }, [])
 
-  // When keyboard is open, use fixed spacing; otherwise use safe area inset
-  const computedPaddingBottom = keyboardVisible
-    ? KEYBOARD_SPACING
-    : bottomInset + spacing.md
+  const animatedStyle = useAnimatedStyle(() => {
+    // When keyboard is open, position above keyboard
+    // When keyboard is closed, position above safe area
+    const bottomOffset = keyboardHeight.value > 0
+      ? keyboardHeight.value
+      : bottomInset
+
+    return {
+      bottom: bottomOffset,
+    }
+  })
 
   return (
-    <View style={[styles.container, { paddingBottom: computedPaddingBottom }]}>
+    <Animated.View style={[modalStyles.ctaContainerAbsolute, { backgroundColor: theme.semantic.background }, animatedStyle]}>
       {/* Primary: Save $X.XX - full width */}
       <Pressable
         onPress={onSave}
         disabled={!canSave}
         style={({ pressed }) => [
-          styles.primaryButton,
+          modalStyles.ctaPrimaryButton,
           {
             backgroundColor: theme.semantic.primary,
             opacity: !canSave ? OPACITY.disabled : pressed ? OPACITY.pressed : 1,
           },
         ]}
       >
-        <Text style={[styles.primaryButtonLabel, { color: theme.semantic.onPrimary }]}>
+        <Text style={[modalStyles.ctaPrimaryText, { color: theme.semantic.onPrimary }]}>
           Save ${amountDisplay}
         </Text>
       </Pressable>
 
       {/* Secondary: Text links */}
-      <View style={styles.secondaryRow}>
+      <View style={modalStyles.ctaSecondaryRow}>
         <Pressable
           onPress={onSaveAndNew}
           disabled={!canSave}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           style={({ pressed }) => [
-            styles.textButton,
+            modalStyles.ctaTextButton,
             { opacity: !canSave ? OPACITY.disabled : pressed ? OPACITY.pressed : 1 },
           ]}
         >
           <Text
             style={[
-              styles.textButtonLabel,
+              modalStyles.ctaTextButtonLabel,
               { color: canSave ? theme.semantic.text : theme.semantic.textSecondary },
             ]}
           >
@@ -98,56 +111,21 @@ export function BottomCTABar({
           </Text>
         </Pressable>
 
-        <Text style={[styles.separator, { color: theme.semantic.textSecondary }]}>·</Text>
+        <Text style={[modalStyles.ctaTextButtonLabel, { color: theme.semantic.textSecondary }]}>·</Text>
 
         <Pressable
           onPress={onSaveDraft}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           style={({ pressed }) => [
-            styles.textButton,
+            modalStyles.ctaTextButton,
             { opacity: pressed ? OPACITY.pressed : 1 },
           ]}
         >
-          <Text style={[styles.textButtonLabel, { color: theme.semantic.textSecondary }]}>
+          <Text style={[modalStyles.ctaTextButtonLabel, { color: theme.semantic.textSecondary }]}>
             Draft
           </Text>
         </Pressable>
       </View>
-    </View>
+    </Animated.View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  primaryButton: {
-    width: '100%',
-    height: 52,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonLabel: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-  },
-  secondaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.sm,
-  },
-  textButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  textButtonLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-  },
-  separator: {
-    fontSize: fontSize.sm,
-  },
-})

@@ -4,25 +4,20 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e .env.development -- npx expo start -c --dev-client --ios",
+    "dev": "dotenv -e .env.development -- npx expo start -c --clear --dev-client --ios",
     "dev:android": "dotenv -e .env.development -- npx expo start -c --dev-client --android",
     "staging": "dotenv -e .env.staging -- npx expo start -c --dev-client --ios",
-
     "build:ios": "npx expo run:ios",
     "build:android": "npx expo run:android",
-
     "eas:dev": "eas build --profile development --platform ios",
     "eas:staging": "eas build --profile preview --platform ios",
     "eas:prod": "eas build --profile production --platform ios",
-
     "ios:uninstall": "dotenv -e .env.local -- sh -c 'xcrun simctl uninstall booted \"$EXPO_PUBLIC_IOS_BUNDLE_ID\" || true'",
     "ios:reset": "npm run ios:uninstall && expo prebuild --clean",
-
     "db:migrate:new": "node scripts/create-migration.js",
     "db:migrate:regen": "node scripts/create-migration.js --regen",
     "db:pull": "./scripts/dbpull.sh",
     "db:reset": "./scripts/db-reset.sh",
-
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

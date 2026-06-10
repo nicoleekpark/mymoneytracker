@@ -1,6 +1,6 @@
 import type { UUID } from '@/core/domain/common/uuid'
 import type { Account, AccountKind, AccountNature } from '@/core/domain/account/account.types'
-import type { AccountRepository, CreateAccountInput } from '@/core/domain/account/account.repository'
+import type { AccountRepository, CreateAccountInput, UpdateAccountInput } from '@/core/domain/account/account.repository'
 import type { DataSource } from '../db/DataSource'
 import { rowToAccount, type AccountRow } from '../mappers/account.mapper'
 import { uuid } from '@/shared/utils/uuid'
@@ -133,5 +133,48 @@ export class SqliteAccountRepository implements AccountRepository {
       bankName: input.bankName,
       lastFourDigits: input.lastFourDigits,
     }
+  }
+
+  update(id: UUID, input: UpdateAccountInput): Account {
+    const existing = this.getById(id)
+    if (!existing) throw new Error(`Account not found: ${id}`)
+    if (existing.isSystem) throw new Error('Cannot update system account')
+
+    const updates: string[] = []
+    const values: (string | null)[] = []
+
+    if (input.name !== undefined) {
+      updates.push('name = ?')
+      values.push(input.name)
+    }
+    if (input.bankName !== undefined) {
+      updates.push('bank_name = ?')
+      values.push(input.bankName)
+    }
+    if (input.lastFourDigits !== undefined) {
+      updates.push('last_four_digits = ?')
+      values.push(input.lastFourDigits)
+    }
+
+    if (updates.length === 0) return existing
+
+    values.push(id)
+    this.dataSource.exec(
+      `UPDATE accounts SET ${updates.join(', ')} WHERE id = ?;`,
+      values
+    )
+
+    return this.getById(id)!
+  }
+
+  archive(id: UUID): void {
+    const existing = this.getById(id)
+    if (!existing) throw new Error(`Account not found: ${id}`)
+    if (existing.isSystem) throw new Error('Cannot archive system account')
+
+    this.dataSource.exec(
+      `UPDATE accounts SET is_archived = 1 WHERE id = ?;`,
+      [id]
+    )
   }
 }

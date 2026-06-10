@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native'
 import { router } from 'expo-router'
+import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { SectionHeader } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -127,13 +128,15 @@ function AccountRow({
   colors,
   showBalanceChange,
   isCurrentPeriod,
-  onNavigate
+  onTap,
+  onViewTransactions
 }: {
   activity: AccountActivity
   colors: AccountsColors
   showBalanceChange: boolean
   isCurrentPeriod: boolean
-  onNavigate: () => void
+  onTap: () => void
+  onViewTransactions: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const { account, startBalance, endBalance, totalOut, totalIn, transactionCount, hasActivity } = activity
@@ -158,27 +161,38 @@ function AccountRow({
   const { outLabel, inLabel } = getLabels()
 
   const handleRowPress = () => {
-    if (!hasActivity || !hasBalanceData) return
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setExpanded(!expanded)
+    // If can expand (has activity breakdown), toggle expand
+    // Otherwise, go to account detail
+    if (hasActivity && hasBalanceData && (totalIn > 0 || totalOut > 0)) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      setExpanded(!expanded)
+    } else {
+      onTap()
+    }
   }
 
   // Can expand if has activity (to show money in/out breakdown)
   const canExpand = hasActivity && (totalIn > 0 || totalOut > 0)
 
-  // No activity - single line, dimmed, show "No activity" instead of balance
+  // No activity - single line, dimmed, tap to open detail
   if (!hasActivity) {
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm }}>
+      <Pressable
+        onPress={onTap}
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: spacing.sm,
+          opacity: pressed ? 0.7 : 1
+        })}
+      >
         {/* Empty chevron space for alignment */}
         <View style={{ width: 16 }} />
         <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textSecondary }} numberOfLines={1}>
           {account.name}
         </Text>
-        <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, fontStyle: 'italic' }}>
-          No activity
-        </Text>
-      </View>
+        <FontAwesome name="chevron-right" size={10} color={colors.textSecondary} />
+      </Pressable>
     )
   }
 
@@ -187,8 +201,7 @@ function AccountRow({
       {/* Main row: Chevron + Account name + balance */}
       <Pressable
         onPress={handleRowPress}
-        disabled={!canExpand}
-        style={({ pressed }) => ({ opacity: pressed && canExpand ? 0.7 : 1 })}
+        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {/* Chevron indicator */}
@@ -215,7 +228,7 @@ function AccountRow({
             <Pressable
               onPress={(e) => {
                 e.stopPropagation()
-                onNavigate()
+                onViewTransactions()
               }}
               hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
@@ -233,7 +246,7 @@ function AccountRow({
             <Pressable
               onPress={(e) => {
                 e.stopPropagation()
-                onNavigate()
+                onViewTransactions()
               }}
               hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
@@ -309,13 +322,15 @@ function AccountSection({
   colors,
   showBalanceChange,
   isCurrentPeriod,
-  onAccountPress
+  onAccountTap,
+  onViewTransactions
 }: {
   group: AccountGroup
   colors: AccountsColors
   showBalanceChange: boolean
   isCurrentPeriod: boolean
-  onAccountPress: (accountId: string) => void
+  onAccountTap: (accountId: string) => void
+  onViewTransactions: (accountId: string) => void
 }) {
   return (
     <View style={{ marginBottom: SECTION_GAP }}>
@@ -330,7 +345,8 @@ function AccountSection({
           colors={colors}
           showBalanceChange={showBalanceChange}
           isCurrentPeriod={isCurrentPeriod}
-          onNavigate={() => onAccountPress(activity.account.id)}
+          onTap={() => onAccountTap(activity.account.id)}
+          onViewTransactions={() => onViewTransactions(activity.account.id)}
         />
       ))}
     </View>
@@ -340,12 +356,19 @@ function AccountSection({
 export function AccountsBody({ colors, scope, period }: Props) {
   const { groups, sectionSummaries } = useAccountsData({ scope, period })
 
-  const handleAccountPress = (accountId: string) => {
+  const handleAccountTap = useCallback((accountId: string) => {
+    router.push({
+      pathname: '/(modal)/account-detail',
+      params: { accountId }
+    })
+  }, [])
+
+  const handleViewTransactions = useCallback((accountId: string) => {
     router.push({
       pathname: '/(tabs)/transactions',
       params: { accountId }
     })
-  }
+  }, [])
 
   const handleAddAccount = useCallback(() => {
     router.push('/(modal)/add-account')
@@ -427,7 +450,8 @@ export function AccountsBody({ colors, scope, period }: Props) {
             colors={colors}
             showBalanceChange={showBalanceChange}
             isCurrentPeriod={isCurrentPeriod}
-            onAccountPress={handleAccountPress}
+            onAccountTap={handleAccountTap}
+            onViewTransactions={handleViewTransactions}
           />
         ))}
 
