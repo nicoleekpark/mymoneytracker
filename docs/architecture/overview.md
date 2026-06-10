@@ -204,7 +204,7 @@ const colors: StandardViewColors = { text, textSecondary, ... }
 | **Clean Architecture** | Testable domain, swappable infrastructure |
 | **SQLite over AsyncStorage** | Complex queries, indexed lookups, ACID |
 | **Zustand over Redux** | Minimal boilerplate, no provider nesting |
-| **Tamagui** | Cross-platform (iOS/Android/Web), design tokens |
+| **StyleSheet + Design Tokens** | Zero dependencies, native performance, type-safe |
 | **Cents storage** | Avoid floating-point errors in financial data |
 
 ---

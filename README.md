@@ -145,7 +145,7 @@ Understand your spending patterns with visual analytics and smart alerts.
 | Category | Technology |
 |----------|------------|
 | Framework | React Native + Expo SDK 54 |
-| UI | Tamagui Design System |
+| UI | StyleSheet + Design Tokens |
 | Database | SQLite (expo-sqlite) |
 | State | Zustand |
 | Validation | Zod (runtime type safety) |

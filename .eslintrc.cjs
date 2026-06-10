@@ -36,7 +36,6 @@ module.exports = {
     '*.config.ts',
     'babel.config.js',
     'metro.config.js',
-    'tamagui.config.ts',
   ],
   settings: {
     react: {

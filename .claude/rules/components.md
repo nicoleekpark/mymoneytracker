@@ -4,28 +4,45 @@ globs: ["src/shared/components/**/*.tsx", "src/features/**/components/**/*.tsx"]
 
 # Component Rules
 
-Use Tamagui primitives:
-- `XStack`, `YStack` for layout (not View)
-- `Text` for typography (not RN Text)
-- `styled()` for component variants
+Use React Native primitives with design tokens:
+- `View` for layout
+- `Text` for typography
+- `StyleSheet.create()` for styles
 
 Pattern:
 ```tsx
-import { XStack, YStack, Text, styled } from 'tamagui'
+import { View, Text, StyleSheet } from 'react-native'
+import { useHoHTheme } from '@/shared/providers'
+import { spacing } from '@/shared/theme/tokens'
 
 export function MyComponent({ ... }: Props) {
+  const theme = useHoHTheme()
+
   return (
-    <YStack gap="$3" padding="$4">
-      ...
-    </YStack>
+    <View style={[styles.container, { backgroundColor: theme.semantic.surface }]}>
+      <Text style={[styles.text, { color: theme.semantic.text }]}>
+        ...
+      </Text>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  text: {
+    fontSize: 16,
+  },
+})
 ```
 
 Tokens:
-- Spacing: `$1`, `$2`, `$3`, `$4` (semantic scale)
-- Colors: Use theme tokens (`$background`, `$color`, `$borderColor`)
-- Never hardcode colors or pixel values
+- Spacing: Use `spacing.*` from `@/shared/theme/tokens`
+- Typography: Use `fontSize.*`, `fontWeight.*` from tokens
+- Colors: Use `theme.semantic.*` from `useHoHTheme()`
+- Never hardcode colors or magic pixel values
 
 ## Style Files
 

@@ -29,8 +29,6 @@ import { useQuickChipsStore } from '@/shared/store/quickChips.store' // Quick ch
 import { useDraftsStore } from '@/shared/store/drafts.store' // Drafts persistence
 import { logError } from '@/shared/utils/logger' // Centralized error logging
 
-import { TamaguiProvider } from 'tamagui'                // UI framework provider
-import tamaguiConfig from '../../tamagui.config'         // Tamagui theme configuration
 
 export { ErrorBoundary } from 'expo-router'              // Re-export for Expo Router error handling
 
@@ -152,13 +150,10 @@ function RootLayoutNav() {
         <BottomSheetModalProvider>
           {/* Layer 4: Toast context (useToast() works anywhere inside) */}
           <ToastProvider>
-            {/* Layer 5: Tamagui styling (XStack, YStack, styled() work) */}
-            <TamaguiProvider config={tamaguiConfig}>
-
-              {/* ─── Navigation Stack ─────────────────────────────────── */}
-              {/* Stack = screens stacked on top of each other */}
-              {/* name = file path in src/app/ folder */}
-              <Stack>
+            {/* ─── Navigation Stack ─────────────────────────────────── */}
+            {/* Stack = screens stacked on top of each other */}
+            {/* name = file path in src/app/ folder */}
+            <Stack>
                 {/* Main tabs (Dashboard, Transactions) - headerShown:false = we use custom AppBar */}
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
@@ -202,9 +197,7 @@ function RootLayoutNav() {
                     gestureDirection: 'horizontal',
                   }}
                 />
-              </Stack>
-
-            </TamaguiProvider>
+            </Stack>
           </ToastProvider>
         </BottomSheetModalProvider>
       </HoHThemeProvider>

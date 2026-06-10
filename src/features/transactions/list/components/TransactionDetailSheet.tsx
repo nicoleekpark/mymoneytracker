@@ -7,8 +7,8 @@ import {
   type BottomSheetBackdropProps
 } from '@gorhom/bottom-sheet'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-
 import FontAwesome from '@expo/vector-icons/FontAwesome'
+
 import { CATEGORIES } from '@/shared/config'
 import type { Transaction } from '@/core/domain/transaction'
 import { safeDate } from '@/core/domain/transaction'
@@ -27,7 +27,7 @@ import type {
 import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
-import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { ItemPriceHistorySheet } from '@/features/price-tracker'
@@ -111,8 +111,8 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
 
   const renderHandle = useCallback(
     () => (
-      <View style={styles.handleContainer}>
-        <View style={[styles.handle, { backgroundColor: theme.semantic.border }]} />
+      <View style={modalStyles.dragHandleContainer}>
+        <View style={[modalStyles.dragHandle, { backgroundColor: theme.semantic.border }]} />
       </View>
     ),
     [theme.semantic.border]
@@ -126,7 +126,7 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
     month: 'short',
     day: 'numeric',
     year: 'numeric'
-  }) + ' • ' + d.toLocaleTimeString('en-US', {
+  }) + ' · ' + d.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit'
   })
@@ -173,7 +173,7 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
       handleComponent={renderHandle}
-      backgroundStyle={{ backgroundColor: theme.semantic.surface }}
+      backgroundStyle={[modalStyles.modal, { backgroundColor: theme.semantic.surface }]}
       enablePanDownToClose
       onDismiss={onDismiss}
     >
@@ -181,7 +181,7 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
         {/* Close X button */}
         <Pressable
           onPress={() => sheetRef.current?.dismiss()}
-          style={styles.closeX}
+          style={modalStyles.detailCloseButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           accessibilityLabel="Close"
         >
@@ -189,160 +189,155 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
         </Pressable>
 
         <BottomSheetScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
+          style={styles.scrollView}
+          contentContainerStyle={modalStyles.content}
         >
-        {/* Header - Amount */}
-        <View style={styles.header}>
-          <Text style={[styles.amount, { color: amountColor }]}>
-            {isIncome ? '+' : ''}{formatCurrency(transaction.money.amount)}
-          </Text>
-          <Text style={[styles.itemTitle, { color: theme.semantic.text }]}>
-            {primaryText}
-          </Text>
-          {secondaryText && (
-            <Text style={[styles.merchant, { color: theme.semantic.textSecondary }]}>
-              {secondaryText}
+          {/* Header - Amount */}
+          <View style={modalStyles.heroContainer}>
+            <Text style={[modalStyles.heroAmount, { color: amountColor }]}>
+              {isIncome ? '+' : ''}{formatCurrency(transaction.money.amount)}
             </Text>
-          )}
-        </View>
-
-        {/* Details */}
-        <View style={styles.detailsSection}>
-          {/* Date & Time - combined */}
-          <View style={[styles.detailRow, { borderBottomColor: theme.semantic.border }]}>
-            <Text style={[styles.detailLabel, { color: theme.semantic.textSecondary }]}>Date</Text>
-            <Text style={[styles.detailValue, { color: theme.semantic.text }]}>{dateTimeStr}</Text>
+            <Text style={[styles.heroTitle, { color: theme.semantic.text }]}>
+              {primaryText}
+            </Text>
+            {secondaryText && (
+              <Text style={[modalStyles.heroHint, { color: theme.semantic.textSecondary }]}>
+                {secondaryText}
+              </Text>
+            )}
           </View>
 
-          {/* Account */}
-          <View style={[styles.detailRow, { borderBottomColor: theme.semantic.border }]}>
-            <Text style={[styles.detailLabel, { color: theme.semantic.textSecondary }]}>
-              {isIncome ? 'Account' : 'Paid with'}
-            </Text>
-            <Text style={[styles.detailValue, { color: theme.semantic.text }]}>{accountName}</Text>
-          </View>
+          {/* Details */}
+          <View style={modalStyles.fieldGroup}>
+            {/* Date & Time */}
+            <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+              <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>Date</Text>
+              <Text style={[modalStyles.detailValue, { color: theme.semantic.text }]}>{dateTimeStr}</Text>
+            </View>
 
-          {/* Category */}
-          {transaction.category && (() => {
-            const catRef = transaction.category
-            const cat = CATEGORIES.find((c) => c.key === catRef.categoryKey && c.type === catRef.type)
-            const subCat = catRef.subCategoryKey
-              ? cat?.subCategories?.find((s) => s.key === catRef.subCategoryKey)
-              : null
+            {/* Account */}
+            <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+              <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>
+                {isIncome ? 'Account' : 'Paid with'}
+              </Text>
+              <Text style={[modalStyles.detailValue, { color: theme.semantic.text }]}>{accountName}</Text>
+            </View>
 
-            const icon = subCat?.icon ?? cat?.icon ?? 'circle'
-            const color = subCat?.color ?? cat?.color ?? theme.semantic.textSecondary
-            const name = cat?.name ?? catRef.categoryKey
-            const subName = subCat?.name
+            {/* Category */}
+            {transaction.category && (() => {
+              const catRef = transaction.category
+              const cat = CATEGORIES.find((c) => c.key === catRef.categoryKey && c.type === catRef.type)
+              const subCat = catRef.subCategoryKey
+                ? cat?.subCategories?.find((s) => s.key === catRef.subCategoryKey)
+                : null
 
-            return (
-              <View style={[styles.detailRow, { borderBottomColor: theme.semantic.border }]}>
-                <Text style={[styles.detailLabel, { color: theme.semantic.textSecondary }]}>Category</Text>
-                <View style={styles.categoryValue}>
-                  <CategoryIcon
-                    name={icon}
-                    size={16}
-                    color={color as string}
-                  />
-                  <Text style={[styles.categoryText, { color: theme.semantic.text }]} numberOfLines={1}>
-                    {name}
-                    {subName && ` › ${subName}`}
-                  </Text>
-                </View>
-              </View>
-            )
-          })()}
+              const icon = subCat?.icon ?? cat?.icon ?? 'circle'
+              const color = subCat?.color ?? cat?.color ?? theme.semantic.textSecondary
+              const name = cat?.name ?? catRef.categoryKey
+              const subName = subCat?.name
 
-          {/* Tags */}
-          {transaction.tags && transaction.tags.length > 0 && (
-            <View style={[styles.detailRow, { borderBottomColor: theme.semantic.border }]}>
-              <Text style={[styles.detailLabel, { color: theme.semantic.textSecondary }]}>Tags</Text>
-              <View style={styles.tagsRow}>
-                {transaction.tags.map((tag) => (
-                  <View
-                    key={tag}
-                    style={[styles.tag, { backgroundColor: theme.semantic.surfaceAlt }]}
-                  >
-                    <Text style={[styles.tagText, { color: theme.semantic.textSecondary }]}>
-                      {tag}
+              return (
+                <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+                  <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>Category</Text>
+                  <View style={modalStyles.detailValueRow}>
+                    <CategoryIcon name={icon} size={16} color={color as string} />
+                    <Text style={[modalStyles.detailValue, { color: theme.semantic.text, flex: 0 }]} numberOfLines={1}>
+                      {name}{subName && ` › ${subName}`}
                     </Text>
                   </View>
-                ))}
-              </View>
-            </View>
-          )}
+                </View>
+              )
+            })()}
 
-          {/* Estimated Badge */}
-          {transaction.isEstimated && (
-            <View style={[styles.detailRow, { borderBottomColor: theme.semantic.border }]}>
-              <Text style={[styles.detailLabel, { color: theme.semantic.textSecondary }]}>Status</Text>
-              <View style={[styles.estimatedBadge, { backgroundColor: theme.semantic.warningSoft }]}>
-                <Text style={[styles.estimatedText, { color: theme.semantic.warning }]}>
-                  Estimated
+            {/* Tags */}
+            {transaction.tags && transaction.tags.length > 0 && (
+              <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+                <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>Tags</Text>
+                <View style={styles.tagsContainer}>
+                  {transaction.tags.map((tag) => (
+                    <View
+                      key={tag}
+                      style={[styles.tag, { backgroundColor: theme.semantic.surfaceAlt }]}
+                    >
+                      <Text style={[styles.tagText, { color: theme.semantic.textSecondary }]}>
+                        {tag}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Estimated Badge */}
+            {transaction.isEstimated && (
+              <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+                <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>Status</Text>
+                <View style={[modalStyles.badge, { backgroundColor: theme.semantic.warningSoft, borderColor: theme.semantic.warning + '40' }]}>
+                  <Text style={[modalStyles.badgeText, { color: theme.semantic.warning }]}>
+                    Estimated
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Items Section */}
+          {transactionItems.length > 0 && (
+            <View style={styles.itemsSection}>
+              <View style={[modalStyles.detailSectionHeader, { borderBottomColor: theme.semantic.border }]}>
+                <Text style={[modalStyles.detailSectionTitle, { color: theme.semantic.textSecondary }]}>Items</Text>
+                <Text style={[modalStyles.detailSectionSubtitle, { color: theme.semantic.textSecondary }]}>
+                  {transactionItems.length} {transactionItems.length === 1 ? 'item' : 'items'} · {formatCurrency(itemsTotal)}
                 </Text>
               </View>
+
+              {transactionItems.map((txItem) => (
+                <Pressable
+                  key={txItem.id}
+                  onPress={() => handleItemPress(txItem)}
+                  style={[modalStyles.itemRow, { borderBottomColor: theme.semantic.border }]}
+                  disabled={!txItem.itemId}
+                >
+                  <View style={modalStyles.itemRowLeft}>
+                    <Text style={modalStyles.itemRowEmoji}>📦</Text>
+                    <Text style={[modalStyles.itemRowName, { color: theme.semantic.text }]}>{txItem.name}</Text>
+                    {txItem.quantity > 1 && (
+                      <Text style={[modalStyles.itemRowQty, { color: theme.semantic.textSecondary }]}>
+                        × {txItem.quantity}{txItem.unit ? ` ${txItem.unit}` : ''}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={modalStyles.itemRowRight}>
+                    <Text style={[modalStyles.itemRowPrice, { color: theme.semantic.text }]}>
+                      {formatCurrency(txItem.priceCents / 100)}
+                    </Text>
+                    {txItem.itemId && (
+                      <Text style={[modalStyles.chevronInline, { color: theme.semantic.textSecondary }]}>›</Text>
+                    )}
+                  </View>
+                </Pressable>
+              ))}
             </View>
           )}
-        </View>
 
-        {/* Items Section */}
-        {transactionItems.length > 0 && (
-          <View style={styles.itemsSection}>
-            <View style={[styles.itemsSectionHeader, { borderBottomColor: theme.semantic.border }]}>
-              <Text style={[styles.itemsSectionTitle, { color: theme.semantic.textSecondary }]}>Items</Text>
-              <Text style={[styles.itemsSectionCount, { color: theme.semantic.textSecondary }]}>
-                {transactionItems.length} {transactionItems.length === 1 ? 'item' : 'items'} · {formatCurrency(itemsTotal)}
+          {/* Note */}
+          {transaction.note && (
+            <View style={modalStyles.noteSection}>
+              <Text style={[modalStyles.noteSectionLabel, { color: theme.semantic.textSecondary }]}>Note</Text>
+              <Text style={[modalStyles.noteSectionText, { color: theme.semantic.text }]}>
+                {transaction.note}
               </Text>
             </View>
-
-            {transactionItems.map((txItem) => (
-              <Pressable
-                key={txItem.id}
-                onPress={() => handleItemPress(txItem)}
-                style={[styles.itemRow, { borderBottomColor: theme.semantic.border }]}
-                disabled={!txItem.itemId}
-              >
-                <View style={styles.itemLeft}>
-                  <Text style={styles.itemEmoji}>📦</Text>
-                  <Text style={[styles.itemName, { color: theme.semantic.text }]}>{txItem.name}</Text>
-                  {txItem.quantity > 1 && (
-                    <Text style={[styles.itemQty, { color: theme.semantic.textSecondary }]}>
-                      × {txItem.quantity}{txItem.unit ? ` ${txItem.unit}` : ''}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.itemRight}>
-                  <Text style={[styles.itemPrice, { color: theme.semantic.text }]}>
-                    {formatCurrency(txItem.priceCents / 100)}
-                  </Text>
-                  {txItem.itemId && (
-                    <Text style={[styles.itemChevron, { color: theme.semantic.textSecondary }]}>›</Text>
-                  )}
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        {/* Note - Full width section */}
-        {transaction.note && (
-          <View style={styles.noteSection}>
-            <Text style={[styles.noteSectionLabel, { color: theme.semantic.textSecondary }]}>Note</Text>
-            <Text style={[styles.noteSectionText, { color: theme.semantic.text }]}>
-              {transaction.note}
-            </Text>
-          </View>
-        )}
+          )}
         </BottomSheetScrollView>
 
         {/* Fixed Footer Buttons */}
-        <View style={[styles.footer, { backgroundColor: theme.semantic.surface, paddingBottom: insets.bottom + spacing.lg }]}>
+        <View style={[modalStyles.ctaContainerAbsolute, { backgroundColor: theme.semantic.surface, bottom: 0, paddingBottom: insets.bottom + spacing.lg }]}>
           <Pressable
             onPress={() => onEdit(transaction)}
-            style={[styles.editButton, { backgroundColor: theme.semantic.primary }]}
+            style={[modalStyles.ctaPrimaryButton, { backgroundColor: theme.semantic.primary }]}
           >
-            <Text style={[styles.editButtonText, { color: theme.semantic.onPrimary }]}>
+            <Text style={[modalStyles.ctaPrimaryText, { color: theme.semantic.onPrimary }]}>
               Edit
             </Text>
           </Pressable>
@@ -352,9 +347,9 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
                 sheetRef.current?.dismiss()
                 onDelete(transaction)
               }}
-              style={styles.deleteButton}
+              style={modalStyles.ctaDangerTextButton}
             >
-              <Text style={[styles.deleteButtonText, { color: theme.semantic.danger }]}>
+              <Text style={[modalStyles.ctaDangerTextButtonLabel, { color: theme.semantic.danger }]}>
                 Delete Transaction
               </Text>
             </Pressable>
@@ -374,91 +369,27 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
   )
 }
 
+// Only keep styles that are NOT in the design system
 const styles = StyleSheet.create({
   sheetContainer: {
     flex: 1,
   },
-  closeX: {
-    position: 'absolute',
-    top: spacing.xs,
-    left: spacing.md,
-    zIndex: 10,
-    padding: spacing.sm,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-  },
-  content: {
+  scrollView: {
     flex: 1,
   },
-  contentContainer: {
-    paddingHorizontal: spacing.xl
-  },
-  header: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  amount: {
-    fontSize: 40,
-    fontWeight: fontWeight.heavy,
-    letterSpacing: -1,
-  },
-  itemTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     marginTop: spacing.sm,
     textAlign: 'center',
   },
-  merchant: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-  },
-  detailsSection: {
-    marginBottom: spacing.md,
-  },
-  detailRow: {
+  tagsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  detailLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    flex: 0.4,
-  },
-  detailValue: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    flex: 0.6,
-    textAlign: 'right',
-  },
-  categoryValue: {
-    flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: spacing.xs,
-    flex: 0.6,
-  },
-  categoryText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    textAlign: 'right',
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    gap: spacing.xs,
-    flex: 0.6,
+    flex: 0.65,
   },
   tag: {
     paddingVertical: spacing.xs - 2,
@@ -466,107 +397,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
   tagText: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.medium,
+    fontSize: 11,
+    fontWeight: '500',
   },
-  estimatedBadge: {
-    paddingVertical: spacing.xs - 2,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.full,
-  },
-  estimatedText: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-  },
-  footer: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  editButton: {
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-  },
-  editButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-  },
-  deleteButton: {
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  deleteButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-  },
-  noteSection: {
-    marginBottom: spacing.xl,
-  },
-  noteSectionLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    marginBottom: spacing.xs,
-  },
-  noteSectionText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    lineHeight: 20,
-  },
-  // Items Section
   itemsSection: {
     marginTop: spacing.xs,
     marginBottom: spacing.md,
-  },
-  itemsSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  itemsSectionTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-  },
-  itemsSectionCount: {
-    fontSize: fontSize.sm,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  itemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  itemEmoji: {
-    fontSize: 18,
-  },
-  itemName: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    flexShrink: 1,
-  },
-  itemQty: {
-    fontSize: fontSize.xs,
-  },
-  itemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  itemPrice: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    fontVariant: ['tabular-nums'],
-  },
-  itemChevron: {
-    fontSize: fontSize.lg,
   },
 })
