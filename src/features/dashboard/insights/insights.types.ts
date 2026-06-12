@@ -1,3 +1,13 @@
+// Duration options for insights baseline calculation
+export type InsightsDuration = 3 | 6 | 12 | 'all'
+
+export const DURATION_OPTIONS: { value: InsightsDuration; label: string }[] = [
+  { value: 3, label: '3 months' },
+  { value: 6, label: '6 months' },
+  { value: 12, label: '12 months' },
+  { value: 'all', label: 'All time' },
+]
+
 export type EvidenceItem = Readonly<{
   key: string
   value: string
@@ -84,7 +94,7 @@ export type WeekdaySpend = Readonly<{
 export type CategoryComparison = Readonly<{
   name: string
   thisMonth: number
-  lastMonth: number
+  avgAmount: number // average of selected duration
   color: string | null
 }>
 
@@ -138,6 +148,8 @@ export type InsightsData = Readonly<{
   // Metadata
   monthYYYYMM: string
   hasEnoughData: boolean
+  availableMonths: number // how many months of history we actually have
+  durationLabel: string // e.g., "6-mo avg" for display
 }>
 
 export type InsightsColors = Readonly<{

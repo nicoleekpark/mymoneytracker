@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { AccountKind } from '@/core/domain/account'
 import { createAccount } from '@/core/services/account'
-import { ModalSaveBar } from '@/shared/components'
+import { AmountKeypadSheet, ModalSaveBar } from '@/shared/components'
 import { CATEGORIES_INDEX } from '@/shared/config/categories.index'
 import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
@@ -65,7 +65,6 @@ export default function AddAccountScreen() {
   const scrollViewRef = useRef<ScrollView>(null)
   const institutionInputRef = useRef<TextInput>(null)
   const lastFourInputRef = useRef<TextInput>(null)
-  const balanceInputRef = useRef<TextInput>(null)
   const { semantic } = theme
 
   // Determine if opened from nested flow (show "‹ Back") or directly (show "Cancel")
@@ -80,12 +79,13 @@ export default function AddAccountScreen() {
   const [nameFocused, setNameFocused] = useState(false)
   const [bankName, setBankName] = useState('')
   const [lastFour, setLastFour] = useState('')
-  const [balance, setBalance] = useState('')
+  const [balanceCents, setBalanceCents] = useState(0)
 
   // UI state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastKey, setToastKey] = useState(0)
   const [highlightName, setHighlightName] = useState(false)
+  const [showKeypad, setShowKeypad] = useState(false)
 
   // Keyboard height for ScrollView padding (design system hook)
   const keyboardHeight = useKeyboardHeight()
@@ -107,6 +107,33 @@ export default function AddAccountScreen() {
     setToastMessage(message)
     setToastKey((k) => k + 1)
     toastTimeoutRef.current = setTimeout(() => setToastMessage(null), MODAL_TOAST_DURATION)
+  }, [])
+
+  // Amount keypad helpers
+  const balanceDisplay = useMemo(() => {
+    const dollars = Math.floor(balanceCents / 100)
+    const cents = balanceCents % 100
+    return `${dollars}.${cents.toString().padStart(2, '0')}`
+  }, [balanceCents])
+
+  const handleKeypadDigit = useCallback((digit: string) => {
+    setBalanceCents((prev) => {
+      const next = prev * 10 + parseInt(digit, 10)
+      // Cap at $999,999.99
+      return next > 99999999 ? prev : next
+    })
+  }, [])
+
+  const handleKeypadBackspace = useCallback(() => {
+    setBalanceCents((prev) => Math.floor(prev / 10))
+  }, [])
+
+  const handleKeypadClear = useCallback(() => {
+    setBalanceCents(0)
+  }, [])
+
+  const handleKeypadDone = useCallback(() => {
+    setShowKeypad(false)
   }, [])
 
   // Auto-select first subtype when category changes
@@ -144,7 +171,7 @@ export default function AddAccountScreen() {
         kind,
         bankName: bankName.trim() || undefined,
         lastFourDigits: lastFour.trim() || undefined,
-        initialBalance: balance ? parseFloat(balance) : undefined,
+        initialBalance: balanceCents > 0 ? balanceCents / 100 : undefined,
       })
 
       // Trigger data refresh for callers
@@ -156,7 +183,7 @@ export default function AddAccountScreen() {
     } catch (error) {
       showToast('Failed to create account')
     }
-  }, [name, kind, bankName, lastFour, balance, invalidateTransactions, showToast])
+  }, [name, kind, bankName, lastFour, balanceCents, invalidateTransactions, showToast])
 
   const isLiability = kind === 'credit_card' || kind === 'loan'
   const canSubmit = name.trim().length > 0
@@ -405,42 +432,32 @@ export default function AddAccountScreen() {
               </>
             )}
 
-            {/* Current Balance (Optional) */}
-            <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
+            {/* Current Balance (Optional) - Opens keypad */}
+            <Pressable
+              onPress={() => {
+                Keyboard.dismiss()
+                setShowKeypad(true)
+              }}
+              style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
+            >
               <Text
-                style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!balance, semantic) }]}
+                style={[modalStyles.fieldLabel, { color: getFieldLabelColor(balanceCents > 0, semantic) }]}
               >
                 {isLiability ? 'Current balance owed' : 'Current balance'}{' '}
                 <Text style={modalStyles.optionalLabel}>(optional)</Text>
               </Text>
               <View style={modalStyles.fieldInputWrapper}>
-                {!balance && (
-                  <Text
-                    style={[
-                      modalStyles.fieldPlaceholder,
-                      modalStyles.fieldInputPlaceholder,
-                      { color: semantic.textSecondary },
-                    ]}
-                  >
-                    $0.00
-                  </Text>
-                )}
-                <TextInput
-                  ref={balanceInputRef}
-                  value={balance ? `$${balance}` : ''}
-                  onChangeText={(text) => {
-                    const cleaned = text.replace(/[^0-9.]/g, '')
-                    const parts = cleaned.split('.')
-                    if (parts.length > 2) return
-                    if (parts[1] && parts[1].length > 2) return
-                    setBalance(cleaned)
-                  }}
-                  style={[modalStyles.fieldInput, { color: semantic.text }]}
-                  keyboardType="decimal-pad"
-                />
+                <Text
+                  style={[
+                    modalStyles.fieldInput,
+                    { color: balanceCents > 0 ? semantic.text : semantic.textSecondary },
+                  ]}
+                >
+                  ${balanceDisplay}
+                </Text>
               </View>
-            </View>
-            {isLiability && balance && (
+            </Pressable>
+            {isLiability && balanceCents > 0 && (
               <Text style={[modalStyles.hint, { color: semantic.textSecondary }]}>
                 This will be tracked as a liability
               </Text>
@@ -472,6 +489,18 @@ export default function AddAccountScreen() {
             <Text style={[modalStyles.toastText, { color: semantic.surface }]}>{toastMessage}</Text>
           </Animated.View>
         )}
+
+        {/* Amount Keypad Sheet */}
+        <AmountKeypadSheet
+          visible={showKeypad}
+          amountDisplay={balanceDisplay}
+          hideEstimated
+          onDigit={handleKeypadDigit}
+          onBackspace={handleKeypadBackspace}
+          onClear={handleKeypadClear}
+          onDone={handleKeypadDone}
+          onClose={handleKeypadDone}
+        />
     </Screen>
   )
 }

@@ -6,13 +6,14 @@
  */
 
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { router } from 'expo-router'
-import React, { useCallback, useMemo } from 'react'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Account, AccountKind } from '@/core/domain/account'
-import { getActiveAccounts } from '@/core/services/account'
+import { getActiveAccounts, getArchivedAccounts, restoreAccount } from '@/core/services/account'
+import { useToast } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { modalStyles } from '@/shared/theme/tokens/modal'
@@ -56,10 +57,30 @@ function getSectionKeyForKind(kind: AccountKind): SectionKey {
 export default function AccountSettingsScreen() {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
+  const params = useLocalSearchParams<{ deleted?: string }>()
+  const { showToast } = useToast()
   const { semantic } = theme
 
-  // Get all active accounts
-  const accounts = useMemo(() => getActiveAccounts(), [])
+  // Get accounts - refetch on focus to catch deletions/additions
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [archivedAccounts, setArchivedAccounts] = useState<Account[]>([])
+  const [showArchived, setShowArchived] = useState(false)
+
+  const refreshAccounts = useCallback(() => {
+    setAccounts(getActiveAccounts())
+    setArchivedAccounts(getArchivedAccounts())
+  }, [])
+
+  useFocusEffect(refreshAccounts)
+
+  // Show toast when account was deleted
+  useEffect(() => {
+    if (params.deleted) {
+      showToast(`"${params.deleted}" deleted`)
+      // Clear the param to prevent re-showing on re-render
+      router.setParams({ deleted: undefined })
+    }
+  }, [params.deleted, showToast])
 
   // Group accounts by section
   const groupedAccounts = useMemo((): GroupedAccounts[] => {
@@ -101,6 +122,12 @@ export default function AccountSettingsScreen() {
       params: { accountId },
     })
   }, [])
+
+  const handleRestoreAccount = useCallback((account: Account) => {
+    restoreAccount(account.id)
+    refreshAccounts()
+    showToast(`"${account.name}" restored`)
+  }, [refreshAccounts, showToast])
 
   const getAccountIcon = (kind: string): React.ComponentProps<typeof FontAwesome>['name'] => {
     switch (kind) {
@@ -213,6 +240,73 @@ export default function AccountSettingsScreen() {
             </Text>
           </View>
         )}
+
+        {/* Archived Accounts - Collapsed by default */}
+        {archivedAccounts.length > 0 && (
+          <View style={styles.section}>
+            <Pressable
+              onPress={() => setShowArchived(!showArchived)}
+              style={styles.collapsibleHeader}
+            >
+              <Text style={[styles.sectionTitle, { color: semantic.textSecondary, marginBottom: 0 }]}>
+                Closed Accounts ({archivedAccounts.length})
+              </Text>
+              <FontAwesome
+                name={showArchived ? 'chevron-up' : 'chevron-down'}
+                size={10}
+                color={semantic.textSecondary}
+              />
+            </Pressable>
+            {showArchived && archivedAccounts.map((account, index) => (
+              <View
+                key={account.id}
+                style={[
+                  styles.accountRow,
+                  index < archivedAccounts.length - 1 && [
+                    styles.accountRowBorder,
+                    { borderBottomColor: semantic.border },
+                  ],
+                ]}
+              >
+                <View style={[styles.accountIcon, { backgroundColor: semantic.surfaceAlt, opacity: 0.6 }]}>
+                  <FontAwesome
+                    name={getAccountIcon(account.kind)}
+                    size={14}
+                    color={semantic.textSecondary}
+                  />
+                </View>
+                <View style={styles.accountInfo}>
+                  <Text style={[styles.accountName, { color: semantic.textSecondary }]} numberOfLines={1}>
+                    {account.name}
+                  </Text>
+                  {(account.bankName || account.lastFourDigits) && (
+                    <Text
+                      style={[styles.accountMeta, { color: semantic.textSecondary, opacity: 0.7 }]}
+                      numberOfLines={1}
+                    >
+                      {[
+                        account.lastFourDigits ? `••••${account.lastFourDigits}` : null,
+                        account.bankName,
+                      ]
+                        .filter(Boolean)
+                        .join(' • ')}
+                    </Text>
+                  )}
+                </View>
+                <Pressable
+                  onPress={() => handleRestoreAccount(account)}
+                  hitSlop={8}
+                  style={({ pressed }) => [
+                    styles.restoreButton,
+                    { backgroundColor: semantic.surfaceAlt, opacity: pressed ? 0.6 : 1 },
+                  ]}
+                >
+                  <Text style={[styles.restoreButtonText, { color: semantic.primary }]}>Restore</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {/* Bottom CTA */}
@@ -304,5 +398,20 @@ const styles = StyleSheet.create({
   emptyHint: {
     fontSize: fontSize.sm,
     textAlign: 'center',
+  },
+  restoreButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+  },
+  restoreButtonText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+  },
+  collapsibleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
   },
 })

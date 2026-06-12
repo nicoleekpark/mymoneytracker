@@ -297,7 +297,7 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
                   disabled={!txItem.itemId}
                 >
                   <View style={modalStyles.itemRowLeft}>
-                    <Text style={modalStyles.itemRowEmoji}>📦</Text>
+                    <View style={[modalStyles.itemRowDot, { backgroundColor: theme.semantic.primary }]} />
                     <Text style={[modalStyles.itemRowName, { color: theme.semantic.text }]}>{txItem.name}</Text>
                     {txItem.quantity > 1 && (
                       <Text style={[modalStyles.itemRowQty, { color: theme.semantic.textSecondary }]}>

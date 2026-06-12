@@ -25,6 +25,7 @@ import { m20260310100000_create_price_tracker } from './20260310100000_create_pr
 import { m20260330114044_add_notifications_dismissed } from './20260330114044_add_notifications_dismissed'
 import { m20260330115902_create_app_settings } from './20260330115902_create_app_settings'
 import { m20260605100000_add_account_details } from './20260605100000_add_account_details'
+import { m20260612100000_rename_cash_wallet } from './20260612100000_rename_cash_wallet'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
@@ -48,5 +49,6 @@ export const MIGRATIONS: Migration[] = [
   m20260310100000_create_price_tracker,
   m20260330114044_add_notifications_dismissed,
   m20260330115902_create_app_settings,
-  m20260605100000_add_account_details
+  m20260605100000_add_account_details,
+  m20260612100000_rename_cash_wallet,
 ]

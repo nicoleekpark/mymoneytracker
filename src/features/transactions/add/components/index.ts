@@ -1,5 +1,4 @@
 export { AccountSelectionModal } from './AccountSelectionModal'
-export { AmountKeypadSheet } from './AmountKeypadSheet'
 export { AnimatedDescriptionPlaceholder } from './AnimatedDescriptionPlaceholder'
 export { AnimatedQuickChip } from './AnimatedQuickChip'
 export { BottomCTABar } from './BottomCTABar'

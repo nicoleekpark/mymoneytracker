@@ -25,7 +25,7 @@ import {
   useQuickChipsStore,
   useSuggestionsStore,
 } from '@/shared/store'
-import { MODAL_ROW_HEIGHT, getScrollContentWithCTAPadding } from '@/shared/theme/tokens/modal'
+import { MODAL_ROW_HEIGHT, getScrollContentWithCTAPadding, modalStyles } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -58,8 +58,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { AmountKeypadSheet } from '@/shared/components'
 import {
-  AmountKeypadSheet,
   AnimatedDescriptionPlaceholder,
   AnimatedQuickChip,
   BottomCTABar,
@@ -533,20 +533,21 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         const store = cleanedMerchant ? getStoreByMerchant(cleanedMerchant) : null
 
         itemizedItems.forEach((item, index) => {
-          if (item.name.trim() && item.priceCents > 0) {
+          // Save item if it has name OR price (not requiring both)
+          if (item.name.trim() || item.priceCents > 0) {
             // Add transaction item
             addTransactionItem({
               transactionId: savedTransactionId as UUID,
               itemId: item.itemId,
-              name: item.name.trim(),
+              name: item.name.trim() || 'Item',
               priceCents: item.priceCents,
               quantity: item.quantity,
               unit: item.unit,
               sortOrder: index,
             })
 
-            // Create price point if we have a store and item is linked
-            if (store && item.itemId) {
+            // Create price point if we have a store, item is linked, and has price
+            if (store && item.itemId && item.priceCents > 0) {
               addPricePoint({
                 itemId: item.itemId,
                 storeId: store.id,
@@ -733,18 +734,20 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         const store = cleanedMerchant ? getStoreByMerchant(cleanedMerchant) : null
 
         itemizedItems.forEach((item, index) => {
-          if (item.name.trim() && item.priceCents > 0) {
+          // Save item if it has name OR price (not requiring both)
+          if (item.name.trim() || item.priceCents > 0) {
             addTransactionItem({
               transactionId: newTx.id,
               itemId: item.itemId,
-              name: item.name.trim(),
+              name: item.name.trim() || 'Item',
               priceCents: item.priceCents,
               quantity: item.quantity,
               unit: item.unit,
               sortOrder: index,
             })
 
-            if (store && item.itemId) {
+            // Create price point if we have a store, item is linked, and has price
+            if (store && item.itemId && item.priceCents > 0) {
               addPricePoint({
                 itemId: item.itemId,
                 storeId: store.id,
@@ -1127,12 +1130,12 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               >
                 Merchant <Text style={styles.optionalLabel}>(optional)</Text>
               </Text>
-              <View style={styles.fieldInputWrapper}>
+              <View style={modalStyles.fieldInputWrapper}>
                 {!merchant && (
                   <Text
                     style={[
                       styles.fieldPlaceholder,
-                      styles.fieldInputPlaceholder,
+                      modalStyles.fieldInputPlaceholder,
                       { color: theme.semantic.textSecondary },
                     ]}
                   >
@@ -1143,7 +1146,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                   ref={merchantInputRef}
                   value={merchant}
                   onChangeText={setMerchant}
-                  style={[styles.fieldInput, { color: theme.semantic.text }]}
+                  style={[modalStyles.fieldInput, { color: theme.semantic.text }]}
                   autoCapitalize="words"
                   autoCorrect={false}
                 />
@@ -1339,12 +1342,12 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               >
                 Note <Text style={styles.optionalLabel}>(optional)</Text>
               </Text>
-              <View style={styles.fieldInputWrapper}>
+              <View style={modalStyles.fieldInputWrapper}>
                 {!note && (
                   <Text
                     style={[
                       styles.fieldPlaceholder,
-                      styles.fieldInputPlaceholder,
+                      modalStyles.fieldInputPlaceholder,
                       { color: theme.semantic.textSecondary },
                     ]}
                   >
@@ -1355,7 +1358,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                   ref={noteInputRef}
                   value={note}
                   onChangeText={setNote}
-                  style={[styles.fieldInput, { color: theme.semantic.text }]}
+                  style={[modalStyles.fieldInput, { color: theme.semantic.text }]}
                   multiline
                 />
               </View>
@@ -1750,15 +1753,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     opacity: 0.5,
   },
-  fieldInputWrapper: {
-    position: 'relative',
-    width: '100%',
-  },
-  fieldInputPlaceholder: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
   fieldValueRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1786,10 +1780,6 @@ const styles = StyleSheet.create({
     top: '50%',
     marginTop: -8,
     padding: spacing.xs,
-  },
-  fieldInput: {
-    width: '100%',
-    fontSize: fontSize.md,
   },
   // More Details - Flat Linear Style
   moreDetailsRow: {

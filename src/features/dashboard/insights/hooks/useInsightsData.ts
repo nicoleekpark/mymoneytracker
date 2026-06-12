@@ -19,7 +19,8 @@ import type {
   NetTrendPoint,
   WeekdaySpend,
   CategoryComparison,
-  DailyOutflow
+  DailyOutflow,
+  InsightsDuration
 } from '../insights.types'
 
 // Get previous N months as YYYY-MM strings
@@ -95,10 +96,12 @@ const DEFAULT_DATA: InsightsData = {
   dailyOutflow: [],
   medianNet: null,
   monthYYYYMM: '',
-  hasEnoughData: false
+  hasEnoughData: false,
+  availableMonths: 0,
+  durationLabel: ''
 }
 
-export function useInsightsData(monthYYYYMM: string) {
+export function useInsightsData(monthYYYYMM: string, duration: InsightsDuration = 6) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<InsightsData>(DEFAULT_DATA)
@@ -111,8 +114,9 @@ export function useInsightsData(monthYYYYMM: string) {
       setError(null)
 
       try {
-        // Get previous 12 months for baseline calculation (per spec)
-        const prevMonths = getPrevMonths(monthYYYYMM, 12)
+        // Get previous months based on duration (fetch max 24 for "all time")
+        const maxMonthsToFetch = duration === 'all' ? 24 : duration
+        const prevMonths = getPrevMonths(monthYYYYMM, maxMonthsToFetch)
         const lastMonthYYYYMM = prevMonths[0]
 
         // Fetch all data in parallel
@@ -130,7 +134,7 @@ export function useInsightsData(monthYYYYMM: string) {
           getMonthlyExpenseByCategoryDollar(lastMonthYYYYMM).catch(() => []),
           getDailyFlowDollarForMonth(monthYYYYMM),
           // Fetch summary, daily flow, and category expenses for previous months
-          ...prevMonths.slice(0, 11).flatMap(m => [
+          ...prevMonths.slice(0, maxMonthsToFetch - 1).flatMap(m => [
             getMonthlySummaryDollar(m).catch(() => null),
             getDailyFlowDollarForMonth(m).catch(() => [] as DailyFlowDollar[]),
             getMonthlyExpenseByCategoryDollar(m).catch(() => [])
@@ -138,51 +142,94 @@ export function useInsightsData(monthYYYYMM: string) {
         ])
 
         // Separate prev months data into summaries, daily flows, and category expenses
+        type CategoryExpenseItem = { categoryId: string | null; categoryName: string | null; totalDollar: number }
         const prevSummaries: (MonthlySummaryDollar | null)[] = []
         const prevDailyFlows: DailyFlowDollar[][] = []
-        const prevCategoryExpenses: { categoryId: string | null; totalDollar: number }[][] = []
+        const prevCategoryExpenses: CategoryExpenseItem[][] = []
         for (let i = 0; i < prevMonthsData.length; i += 3) {
           prevSummaries.push(prevMonthsData[i] as MonthlySummaryDollar | null)
           prevDailyFlows.push((prevMonthsData[i + 1] || []) as DailyFlowDollar[])
-          prevCategoryExpenses.push((prevMonthsData[i + 2] || []) as { categoryId: string | null; totalDollar: number }[])
+          prevCategoryExpenses.push((prevMonthsData[i + 2] || []) as CategoryExpenseItem[])
         }
 
         if (!alive) return
 
         // Check if we have enough data
         const hasData = currentSummary.incomeTotalDollar > 0 || currentSummary.expenseTotalDollar > 0
-        const hasLastMonth = lastMonthSummary !== null &&
-          (lastMonthSummary.incomeTotalDollar > 0 || lastMonthSummary.expenseTotalDollar > 0)
 
-        // Valid previous summaries for baseline
+        // Valid previous summaries for baseline (with actual data)
         const validPrevSummaries = [lastMonthSummary, ...prevSummaries]
-          .filter((s): s is MonthlySummaryDollar => s !== null)
+          .filter((s): s is MonthlySummaryDollar =>
+            s !== null && (s.incomeTotalDollar > 0 || s.expenseTotalDollar > 0)
+          )
 
-        // === CALCULATE BASELINE ===
-        const baselineNetDollar = validPrevSummaries.length >= 3
-          ? median(validPrevSummaries.map(s => s.netCashFlowDollar))
+        // Available months = how many months of history we have
+        const availableMonths = validPrevSummaries.length
+
+        // Need at least 2 months for any comparisons
+        const hasEnoughForComparison = availableMonths >= 2
+
+        // Duration label for UI (e.g., "6-mo avg", "3-mo avg")
+        const actualMonthsUsed = duration === 'all' ? availableMonths : Math.min(duration, availableMonths)
+        const durationLabel = actualMonthsUsed === availableMonths && duration !== 'all'
+          ? `${actualMonthsUsed}-mo avg`
+          : duration === 'all'
+            ? `${availableMonths}-mo avg`
+            : `${actualMonthsUsed}-mo avg`
+
+        // === CALCULATE BASELINE (median of selected duration) ===
+        const baselineNetDollar = hasEnoughForComparison
+          ? median(validPrevSummaries.slice(0, actualMonthsUsed).map(s => s.netCashFlowDollar))
           : null
 
-        // === FIND PRIMARY DRIVER (merged: what changed + why) ===
+        // === BUILD CATEGORY AVERAGES FROM PREVIOUS MONTHS ===
+        // Collect all category expenses from previous months for averaging
+        const categoryTotalsMap = new Map<string | null, { totals: number[]; name: string }>()
+
+        // Include lastMonth expenses + prevCategoryExpenses (up to actualMonthsUsed)
+        const allPrevCategoryExpenses = [lastMonthExpenseByCategory, ...prevCategoryExpenses]
+          .slice(0, actualMonthsUsed)
+
+        for (const monthExpenses of allPrevCategoryExpenses) {
+          for (const cat of monthExpenses) {
+            const existing = categoryTotalsMap.get(cat.categoryId)
+            if (existing) {
+              existing.totals.push(cat.totalDollar)
+            } else {
+              categoryTotalsMap.set(cat.categoryId, {
+                totals: [cat.totalDollar],
+                name: getCategoryDisplayName(cat.categoryName)
+              })
+            }
+          }
+        }
+
+        // Calculate averages
+        const categoryAverages = new Map<string | null, { avg: number; name: string }>()
+        for (const [catId, data] of categoryTotalsMap) {
+          const avg = data.totals.reduce((a, b) => a + b, 0) / data.totals.length
+          categoryAverages.set(catId, { avg, name: data.name })
+        }
+
+        // === FIND PRIMARY DRIVER (vs average of selected duration) ===
         let driverCategory: string | null = null
         let driverDeltaDollar: number | null = null
         let driverConfidence: 'high' | 'low' = 'low'
 
-        if (hasLastMonth && lastMonthSummary && currentExpenseByCategory.length > 0) {
-          // Build maps with both total and name by categoryId
+        if (hasEnoughForComparison && currentExpenseByCategory.length > 0) {
+          // Build current month map
           const currentByKey = new Map(currentExpenseByCategory.map(c => [c.categoryId, { total: c.totalDollar, name: c.categoryName }]))
-          const lastByKey = new Map(lastMonthExpenseByCategory.map(c => [c.categoryId, { total: c.totalDollar, name: c.categoryName }]))
 
-          // Calculate delta for each category
-          const allCategories = new Set([...currentByKey.keys(), ...lastByKey.keys()])
+          // Calculate delta vs average for each category
+          const allCategories = new Set([...currentByKey.keys(), ...categoryAverages.keys()])
           const categoryDeltas: { catId: string | null; name: string; delta: number }[] = []
 
           for (const catId of allCategories) {
             const curr = currentByKey.get(catId)?.total || 0
-            const last = lastByKey.get(catId)?.total || 0
-            const delta = curr - last
-            // Get name from current or last month data
-            const name = getCategoryDisplayName(currentByKey.get(catId)?.name ?? lastByKey.get(catId)?.name ?? null)
+            const avg = categoryAverages.get(catId)?.avg || 0
+            const delta = curr - avg
+            // Get name from current or average data
+            const name = getCategoryDisplayName(currentByKey.get(catId)?.name ?? categoryAverages.get(catId)?.name ?? null)
             categoryDeltas.push({ catId, name, delta })
           }
 
@@ -191,7 +238,9 @@ export function useInsightsData(monthYYYYMM: string) {
 
           if (categoryDeltas.length > 0) {
             const top = categoryDeltas[0]
-            const totalOutflowDelta = currentSummary.expenseTotalDollar - (lastMonthSummary?.expenseTotalDollar || 0)
+            const avgTotalExpense = validPrevSummaries.slice(0, actualMonthsUsed)
+              .reduce((sum, s) => sum + s.expenseTotalDollar, 0) / actualMonthsUsed
+            const totalOutflowDelta = currentSummary.expenseTotalDollar - avgTotalExpense
 
             // Per spec: hide if < $200 or < 30% of total outflow delta
             const meetsAbsThreshold = Math.abs(top.delta) >= MIN_DRIVER_ABS_DOLLARS
@@ -282,33 +331,28 @@ export function useInsightsData(monthYYYYMM: string) {
 
         // -----------------------------------------------------------------------
         // 1. PRIMARY DRIVER (no badge - content is self-explanatory)
+        // Compare vs average of selected duration, not just last month
         // -----------------------------------------------------------------------
-        if (hasLastMonth && lastMonthSummary) {
-          const netChange = currentSummary.netCashFlowDollar - lastMonthSummary.netCashFlowDollar
-          const arrow = netChange >= 0 ? '↑' : '↓'
-          const driverLine = driverCategory && driverDeltaDollar
-            ? `\nDriver: ${driverCategory} ${formatSignedUsdCompact(driverDeltaDollar)}`
-            : ''
+        if (hasEnoughForComparison && driverCategory && driverDeltaDollar) {
+          const arrow = driverDeltaDollar >= 0 ? '↑' : '↓'
 
           insights.push({
             id: 'primary-driver',
             type: 'driver',
             title: 'Primary driver',
-            body: `Net ${arrow} ${formatSignedUsdCompact(Math.abs(netChange))} vs last month${driverLine}`,
+            body: `${driverCategory} ${arrow} ${formatSignedUsdCompact(Math.abs(driverDeltaDollar))} vs ${durationLabel}`,
             sub: undefined,
             evidence: [
-              ...(driverCategory && driverDeltaDollar ? [
-                { key: 'Change', value: `${driverCategory} ${formatSignedUsdCompact(driverDeltaDollar)}` }
-              ] : []),
-              { key: 'This month', value: formatSignedUsdCompact(currentSummary.netCashFlowDollar) },
-              { key: 'Last month', value: formatSignedUsdCompact(lastMonthSummary.netCashFlowDollar) }
+              { key: 'Change', value: `${driverCategory} ${formatSignedUsdCompact(driverDeltaDollar)}` },
+              { key: 'This month', value: formatSignedUsdCompact(currentSummary.expenseTotalDollar) },
+              { key: 'Average', value: formatSignedUsdCompact(categoryAverages.get(null)?.avg ?? 0) }
             ],
             ctas: [
               { label: 'See drivers', variant: 'primary' },
               { label: 'Open category', variant: 'ghost' }
             ],
             explanation: {
-              calculation: 'Largest category delta vs last month.',
+              calculation: `Largest category delta vs ${durationLabel}.`,
               whatMatters: 'Identifies where the change came from.'
             }
           })
@@ -500,12 +544,13 @@ export function useInsightsData(monthYYYYMM: string) {
 
         // === CHART DATA ===
 
-        // Net trend sparkline - oldest to newest
+        // Net trend sparkline - oldest to newest (limited to selected duration)
         // prevSummaries[i] contains data for prevMonths[i]
         const netTrend: NetTrendPoint[] = []
-        for (let i = prevSummaries.length - 1; i >= 0; i--) {
+        const trendMonthsToShow = Math.min(actualMonthsUsed, prevSummaries.length)
+        for (let i = trendMonthsToShow - 1; i >= 0; i--) {
           const summary = prevSummaries[i]
-          if (summary) {
+          if (summary && (summary.incomeTotalDollar > 0 || summary.expenseTotalDollar > 0)) {
             netTrend.push({ month: prevMonths[i], net: summary.netCashFlowDollar })
           }
         }
@@ -527,37 +572,39 @@ export function useInsightsData(monthYYYYMM: string) {
           weekdayPattern.push({ day: d, avgSpend })
         }
 
-        // Category comparison
+        // Category comparison (vs average of selected duration)
         const categoryComparison: CategoryComparison[] = []
-        if (currentExpenseByCategory.length > 0) {
+        if (currentExpenseByCategory.length > 0 && hasEnoughForComparison) {
           // Build a map of category name -> color from config
           const categoryColorMap = new Map<string, string>()
           for (const cat of CATEGORIES) {
             categoryColorMap.set(cat.name, cat.color)
           }
 
+          // Current month by name
           const currentByName = new Map<string, number>()
           for (const c of currentExpenseByCategory) {
             const name = getCategoryDisplayName(c.categoryName)
             currentByName.set(name, (currentByName.get(name) || 0) + c.totalDollar)
           }
 
-          const lastByName = new Map<string, number>()
-          for (const c of lastMonthExpenseByCategory) {
-            const name = getCategoryDisplayName(c.categoryName)
-            lastByName.set(name, (lastByName.get(name) || 0) + c.totalDollar)
+          // Build average by name from categoryAverages
+          const avgByName = new Map<string, number>()
+          for (const [, data] of categoryAverages) {
+            const existing = avgByName.get(data.name) || 0
+            avgByName.set(data.name, existing + data.avg)
           }
 
-          const withChange: { name: string; thisMonth: number; lastMonth: number; absChange: number; color: string | null }[] = []
+          const withChange: { name: string; thisMonth: number; avgAmount: number; absChange: number; color: string | null }[] = []
           for (const [name, thisMonth] of currentByName.entries()) {
-            const lastMonth = lastByName.get(name) || 0
+            const avgAmount = avgByName.get(name) || 0
             const color = categoryColorMap.get(name) ?? null
-            withChange.push({ name, thisMonth, lastMonth, absChange: Math.abs(thisMonth - lastMonth), color })
+            withChange.push({ name, thisMonth, avgAmount, absChange: Math.abs(thisMonth - avgAmount), color })
           }
 
           withChange.sort((a, b) => b.absChange - a.absChange)
-          categoryComparison.push(...withChange.slice(0, 3).map(({ name, thisMonth, lastMonth, color }) => ({
-            name, thisMonth, lastMonth, color
+          categoryComparison.push(...withChange.slice(0, 3).map(({ name, thisMonth, avgAmount, color }) => ({
+            name, thisMonth, avgAmount, color
           })))
         }
 
@@ -586,7 +633,9 @@ export function useInsightsData(monthYYYYMM: string) {
           dailyOutflow,
           medianNet: baselineNetDollar,
           monthYYYYMM,
-          hasEnoughData: hasData
+          hasEnoughData: hasData,
+          availableMonths,
+          durationLabel
         })
       } catch (e) {
         if (!alive) return
@@ -602,7 +651,7 @@ export function useInsightsData(monthYYYYMM: string) {
     return () => {
       alive = false
     }
-  }, [monthYYYYMM])
+  }, [monthYYYYMM, duration])
 
   return { loading, error, data }
 }

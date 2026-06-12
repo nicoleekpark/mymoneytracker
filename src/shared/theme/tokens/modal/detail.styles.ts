@@ -7,7 +7,7 @@
 import { StyleSheet } from 'react-native'
 import { fontSize, fontWeight } from '../typography'
 import { spacing } from '../spacing'
-import { MODAL_ROW_HEIGHT } from './constants'
+import { MODAL_ROW_HEIGHT, MODAL_INDICATOR_DOT_SIZE } from './constants'
 
 // -----------------------------------------------------------------------------
 // Detail Styles
@@ -107,11 +107,13 @@ export const detailStyles = StyleSheet.create({
   itemRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
     flex: 1,
   },
-  itemRowEmoji: {
-    fontSize: 18,
+  itemRowDot: {
+    width: MODAL_INDICATOR_DOT_SIZE,
+    height: MODAL_INDICATOR_DOT_SIZE,
+    borderRadius: MODAL_INDICATOR_DOT_SIZE / 2,
   },
   itemRowName: {
     fontSize: fontSize.sm,

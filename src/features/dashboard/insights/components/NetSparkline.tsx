@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
+import { LayoutChangeEvent, PanResponder, Text, View } from 'react-native'
 import Svg, { Path, Line, Circle } from 'react-native-svg'
 
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -18,11 +18,12 @@ type Props = {
   colors: InsightsColors
 }
 
-const CHART_HEIGHT = 80
+const CHART_HEIGHT = 88
 const CHART_AREA_HEIGHT = 64
-const AXIS_Y = 68
+const AXIS_Y = 76
 const LABEL_FONT_SIZE = 10
-const PADDING_TOP = 8
+const PADDING_TOP = 12
+const PADDING_HORIZONTAL = 8 // Prevent line from being cut at edges
 
 function formatNet(val: number): string {
   const absVal = Math.abs(val)
@@ -96,6 +97,9 @@ export function NetSparkline({ data, baseline, colors }: Props) {
     return [...data].sort((a, b) => a.month.localeCompare(b.month))
   }, [data])
 
+  // Calculate usable width (with padding for line stroke)
+  const usableWidth = chartWidth - PADDING_HORIZONTAL * 2
+
   // Calculate points for SVG
   const { points, linePath, areaPath, baselineY, zeroY } = useMemo(() => {
     if (sortedData.length < 2) {
@@ -112,37 +116,56 @@ export function NetSparkline({ data, baseline, colors }: Props) {
       return AXIS_Y - PADDING_TOP - normalized * (CHART_AREA_HEIGHT - PADDING_TOP)
     }
 
+    // Add horizontal padding to prevent line from being cut at edges
     const pts = sortedData.map((d, i) => ({
-      x: (i / (sortedData.length - 1)) * chartWidth,
+      x: PADDING_HORIZONTAL + (i / (sortedData.length - 1)) * usableWidth,
       y: mapY(d.net)
     }))
 
     const line = generateSmoothPath(pts)
-    const area = line + ` L${chartWidth},${AXIS_Y} L0,${AXIS_Y} Z`
+    const area = line + ` L${chartWidth - PADDING_HORIZONTAL},${AXIS_Y} L${PADDING_HORIZONTAL},${AXIS_Y} Z`
     const blY = mapY(baseline)
     const zy = mapY(0) // Calculate where y=0 is on the chart
 
     return { points: pts, linePath: line, areaPath: area, baselineY: blY, zeroY: zy }
-  }, [sortedData, baseline, chartWidth])
+  }, [sortedData, baseline, chartWidth, usableWidth])
 
-  // Handle tap to select closest point
-  const handlePress = useCallback((event: { nativeEvent: { locationX: number } }) => {
-    if (points.length === 0) return
+  // Find closest point to X coordinate
+  const findClosestPoint = useCallback((x: number) => {
+    if (points.length === 0) return null
 
-    const tapX = event.nativeEvent.locationX
     let closestIdx = 0
-    let closestDist = Math.abs(points[0].x - tapX)
+    let closestDist = Math.abs(points[0].x - x)
 
     for (let i = 1; i < points.length; i++) {
-      const dist = Math.abs(points[i].x - tapX)
+      const dist = Math.abs(points[i].x - x)
       if (dist < closestDist) {
         closestDist = dist
         closestIdx = i
       }
     }
 
-    setSelectedIndex(prev => prev === closestIdx ? null : closestIdx)
+    return closestIdx
   }, [points])
+
+  // PanResponder for drag interaction
+  const panResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (evt) => {
+      const x = evt.nativeEvent.locationX
+      const idx = findClosestPoint(x)
+      if (idx !== null) setSelectedIndex(idx)
+    },
+    onPanResponderMove: (evt) => {
+      const x = evt.nativeEvent.locationX
+      const idx = findClosestPoint(x)
+      if (idx !== null) setSelectedIndex(idx)
+    },
+    onPanResponderRelease: () => {
+      // Keep selection visible after release
+    },
+  }), [findClosestPoint])
 
   if (sortedData.length < 2) return null
 
@@ -180,14 +203,14 @@ export function NetSparkline({ data, baseline, colors }: Props) {
         </View>
       </View>
 
-      {/* Chart */}
-      <Pressable onPress={handlePress}>
+      {/* Chart with drag support */}
+      <View {...panResponder.panHandlers}>
         <Svg width={chartWidth} height={CHART_HEIGHT} viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}>
           {/* Zero reference line */}
           <Line
-            x1={0}
+            x1={PADDING_HORIZONTAL}
             y1={zeroY}
-            x2={chartWidth}
+            x2={chartWidth - PADDING_HORIZONTAL}
             y2={zeroY}
             stroke={colors.textSecondary}
             strokeWidth={1}
@@ -196,9 +219,9 @@ export function NetSparkline({ data, baseline, colors }: Props) {
 
           {/* Baseline reference line */}
           <Line
-            x1={0}
+            x1={PADDING_HORIZONTAL}
             y1={baselineY}
-            x2={chartWidth}
+            x2={chartWidth - PADDING_HORIZONTAL}
             y2={baselineY}
             stroke={colors.text}
             strokeWidth={1}
@@ -217,9 +240,9 @@ export function NetSparkline({ data, baseline, colors }: Props) {
 
           {/* Axis line */}
           <Line
-            x1={0}
+            x1={PADDING_HORIZONTAL}
             y1={AXIS_Y}
-            x2={chartWidth}
+            x2={chartWidth - PADDING_HORIZONTAL}
             y2={AXIS_Y}
             stroke={colors.border}
             strokeWidth={1}
@@ -241,7 +264,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
               <Circle
                 cx={selectedPoint.x}
                 cy={selectedPoint.y}
-                r={5}
+                r={6}
                 fill={selectedData && selectedData.net >= 0 ? colors.success : colors.danger}
                 stroke={colors.surface}
                 strokeWidth={2}
@@ -251,7 +274,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
         </Svg>
 
         {/* X-axis labels */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2, paddingHorizontal: PADDING_HORIZONTAL }}>
           <Text style={{ fontSize: LABEL_FONT_SIZE, color: colors.textSecondary, opacity: 0.7 }}>
             12 mo ago
           </Text>
@@ -259,7 +282,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
             now
           </Text>
         </View>
-      </Pressable>
+      </View>
     </View>
   )
 }

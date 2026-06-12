@@ -26,10 +26,13 @@ export type UpdateAccountInput = {
  */
 export interface AccountRepository {
   listActive(): Account[]
+  listArchived(): Account[]
   getIdByKey(key: string): UUID
   getById(id: UUID): Account | null
   create(input: CreateAccountInput): Account
   update(id: UUID, input: UpdateAccountInput): Account
   archive(id: UUID): void
+  restore(id: UUID): void
+  delete(id: UUID): void
   getNextSortOrder(kind: AccountKind): number
 }

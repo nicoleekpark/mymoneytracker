@@ -152,12 +152,55 @@ export function updateAccount(
 }
 
 /**
+ * Get all archived accounts.
+ *
+ * Used by: Account settings to view/restore closed accounts
+ */
+export function getArchivedAccounts(): Account[] {
+  return accountRepository.listArchived()
+}
+
+/**
  * Archive an account (soft delete).
  * Archived accounts are hidden from active lists but preserved for historical transactions.
  *
  * @param id - Account UUID to archive
- * @throws Error if account not found or is a system account
  */
 export function archiveAccount(id: UUID): void {
   accountRepository.archive(id)
+}
+
+/**
+ * Restore an archived account.
+ *
+ * @param id - Account UUID to restore
+ */
+export function restoreAccount(id: UUID): void {
+  accountRepository.restore(id)
+}
+
+/**
+ * Permanently delete an account and all its transactions.
+ * This is a destructive operation - use archiveAccount (Close) to preserve history.
+ *
+ * @param id - Account UUID to delete
+ * @throws Error if account not found
+ */
+export function deleteAccount(id: UUID): void {
+  const account = accountRepository.getById(id)
+  if (!account) throw new Error(`Account not found: ${id}`)
+
+  // Delete all transactions for this account first (cascade)
+  transactionRepository.deleteTransactionsForAccount(id)
+
+  // Delete the account
+  accountRepository.delete(id)
+}
+
+/**
+ * Check if deleting an account would also delete transactions.
+ * Used by UI to show appropriate warning message.
+ */
+export function getAccountTransactionCount(id: UUID): number {
+  return transactionRepository.countTransactionsForAccount(id)
 }

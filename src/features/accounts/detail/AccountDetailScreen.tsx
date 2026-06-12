@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { archiveAccount, getAccountById, updateAccount } from '@/core/services/account'
+import { archiveAccount, deleteAccount, getAccountById, getAccountTransactionCount, updateAccount } from '@/core/services/account'
 import { getAccountBalanceAtEndOfMonth } from '@/core/services/transaction'
 import { Screen } from '@/shared/layout/Screen'
 import { formatCurrency } from '@/shared/format/currency'
@@ -122,24 +122,29 @@ export default function AccountDetailScreen() {
     })
   }, [account])
 
-  const handleArchive = useCallback(() => {
+  // Close = soft delete (archive). Transactions stay linked, data preserved for charts/trends.
+  const handleClose = useCallback(() => {
     if (!account) return
 
     Alert.alert(
-      'Archive Account',
-      `Are you sure you want to archive "${account.name}"? It will be hidden from your accounts list but existing transactions will be preserved.`,
+      'Close Account',
+      `This will hide "${account.name}" from your accounts list.\n\nAll transactions and spending history will be preserved.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Archive',
+          text: 'Close Account',
           style: 'destructive',
           onPress: () => {
             try {
+              const accountName = account.name
               archiveAccount(account.id)
               invalidateTransactions()
-              router.back()
+              router.replace({
+                pathname: '/(modal)/account-settings',
+                params: { deleted: `"${accountName}" closed` },
+              })
             } catch (error) {
-              Alert.alert('Error', 'Failed to archive account')
+              Alert.alert('Error', 'Failed to close account')
             }
           },
         },
@@ -147,28 +152,44 @@ export default function AccountDetailScreen() {
     )
   }, [account, invalidateTransactions])
 
+  // Delete = hard delete with cascade. Removes account AND all transactions.
   const handleDelete = useCallback(() => {
     if (!account) return
 
+    const txCount = getAccountTransactionCount(account.id)
+    const hasTransactions = txCount > 0
+
+    const message = hasTransactions
+      ? `Permanently delete "${account.name}" and ${txCount} transaction${txCount === 1 ? '' : 's'}?\n\nThis will remove all spending history for this account. This cannot be undone.`
+      : `Permanently delete "${account.name}"?\n\nThis cannot be undone.`
+
     Alert.alert(
       'Delete Account',
-      `Are you sure you want to permanently delete "${account.name}"? This will also delete all transactions associated with this account. This action cannot be undone.`,
+      message,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
+          text: hasTransactions ? 'Delete All' : 'Delete',
           style: 'destructive',
           onPress: () => {
-            // TODO: Implement deleteAccount in service
-            Alert.alert(
-              'Not Implemented',
-              'Delete functionality coming soon. Use Archive instead.'
-            )
+            try {
+              const accountName = account.name
+              deleteAccount(account.id)
+              invalidateTransactions()
+              router.replace({
+                pathname: '/(modal)/account-settings',
+                params: { deleted: `"${accountName}" deleted` },
+              })
+            } catch (error) {
+              console.error('Delete account error:', error)
+              const message = error instanceof Error ? error.message : 'Failed to delete account'
+              Alert.alert('Error', message)
+            }
           },
         },
       ]
     )
-  }, [account])
+  }, [account, invalidateTransactions])
 
   const getAccountTypeLabel = (kind: string, nature: string) => {
     const typeLabel = kind.replace('_', ' ')
@@ -268,7 +289,7 @@ export default function AccountDetailScreen() {
             <TextInput
               value={name}
               onChangeText={setName}
-              style={[styles.editFieldInput, { color: semantic.text }]}
+              style={[modalStyles.fieldInput, { color: semantic.text }]}
               placeholder="Enter account name"
               placeholderTextColor={semantic.textSecondary}
             />
@@ -282,7 +303,7 @@ export default function AccountDetailScreen() {
             <TextInput
               value={bankName}
               onChangeText={setBankName}
-              style={[styles.editFieldInput, { color: semantic.text }]}
+              style={[modalStyles.fieldInput, { color: semantic.text }]}
               placeholder="e.g., Chase, Bank of America"
               placeholderTextColor={semantic.textSecondary}
             />
@@ -296,7 +317,7 @@ export default function AccountDetailScreen() {
             <TextInput
               value={lastFourDigits}
               onChangeText={(text) => setLastFourDigits(text.replace(/\D/g, '').slice(0, 4))}
-              style={[styles.editFieldInput, { color: semantic.text }]}
+              style={[modalStyles.fieldInput, { color: semantic.text }]}
               placeholder="e.g., 4521"
               placeholderTextColor={semantic.textSecondary}
               keyboardType="number-pad"
@@ -339,21 +360,28 @@ export default function AccountDetailScreen() {
           </View>
         </View>
 
-        {/* Danger Zone */}
+        {/* Account Actions */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: semantic.danger }]}>Danger Zone</Text>
+          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
+            Account Actions
+          </Text>
           <View style={[styles.actionList, { backgroundColor: semantic.surfaceAlt }]}>
             <Pressable
-              onPress={handleArchive}
+              onPress={handleClose}
               style={({ pressed }) => [
                 styles.actionRow,
                 { opacity: pressed ? 0.7 : 1 },
               ]}
             >
-              <FontAwesome name="archive" size={16} color={semantic.textSecondary} />
-              <Text style={[styles.actionLabel, { color: semantic.text }]}>
-                Archive Account
-              </Text>
+              <FontAwesome name="times-circle" size={16} color={semantic.textSecondary} />
+              <View style={styles.actionLabelGroup}>
+                <Text style={[styles.actionLabel, { color: semantic.text }]}>
+                  Close Account
+                </Text>
+                <Text style={[styles.actionHint, { color: semantic.textSecondary }]}>
+                  Keeps transaction history
+                </Text>
+              </View>
               <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
             </Pressable>
             <View style={[styles.actionDivider, { backgroundColor: semantic.border }]} />
@@ -365,9 +393,14 @@ export default function AccountDetailScreen() {
               ]}
             >
               <FontAwesome name="trash" size={16} color={semantic.danger} />
-              <Text style={[styles.actionLabel, { color: semantic.danger }]}>
-                Delete Account
-              </Text>
+              <View style={styles.actionLabelGroup}>
+                <Text style={[styles.actionLabel, { color: semantic.danger }]}>
+                  Delete Account
+                </Text>
+                <Text style={[styles.actionHint, { color: semantic.textSecondary }]}>
+                  Removes all transactions
+                </Text>
+              </View>
               <FontAwesome name="chevron-right" size={12} color={semantic.danger} />
             </Pressable>
           </View>
@@ -431,11 +464,6 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.normal,
     opacity: 0.7,
   },
-  editFieldInput: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.medium,
-    padding: 0,
-  },
   readOnlyField: {
     borderRadius: radius.lg,
     padding: spacing.md,
@@ -454,10 +482,16 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.md,
   },
-  actionLabel: {
+  actionLabelGroup: {
     flex: 1,
+  },
+  actionLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+  },
+  actionHint: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
   },
   actionDivider: {
     height: 1,

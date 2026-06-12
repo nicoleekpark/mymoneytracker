@@ -80,7 +80,7 @@ export function seedSystemAccounts(report: SeedReport): void {
   const SYSTEM_ACCOUNTS = [
     {
       key: 'acct:cash_wallet',
-      name: 'Cash Wallet',
+      name: 'Cash',
       kind: 'cash',
       nature: 'asset',
       currency: 'USD'

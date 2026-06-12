@@ -56,6 +56,19 @@ export class SqliteAccountRepository implements AccountRepository {
     return rows.map(rowToAccount)
   }
 
+  listArchived(): Account[] {
+    const rows = this.dataSource.queryAll<AccountRow>(
+      `
+      SELECT id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits
+      FROM accounts
+      WHERE is_archived = 1
+      ORDER BY name ASC;
+      `
+    )
+
+    return rows.map(rowToAccount)
+  }
+
   getIdByKey(key: string): UUID {
     const row = this.dataSource.queryFirst<{ id: UUID }>(
       `
@@ -170,10 +183,29 @@ export class SqliteAccountRepository implements AccountRepository {
   archive(id: UUID): void {
     const existing = this.getById(id)
     if (!existing) throw new Error(`Account not found: ${id}`)
-    if (existing.isSystem) throw new Error('Cannot archive system account')
 
     this.dataSource.exec(
       `UPDATE accounts SET is_archived = 1 WHERE id = ?;`,
+      [id]
+    )
+  }
+
+  restore(id: UUID): void {
+    const existing = this.getById(id)
+    if (!existing) throw new Error(`Account not found: ${id}`)
+
+    this.dataSource.exec(
+      `UPDATE accounts SET is_archived = 0 WHERE id = ?;`,
+      [id]
+    )
+  }
+
+  delete(id: UUID): void {
+    const existing = this.getById(id)
+    if (!existing) throw new Error(`Account not found: ${id}`)
+
+    this.dataSource.exec(
+      `DELETE FROM accounts WHERE id = ?;`,
       [id]
     )
   }

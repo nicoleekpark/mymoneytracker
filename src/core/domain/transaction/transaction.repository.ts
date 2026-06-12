@@ -150,4 +150,10 @@ export interface TransactionRepository {
   // Account balance (running total from transactions)
   getAccountBalanceBeforeDate(accountId: UUID, dateYYYYMMDD: string): number
   getAccountBalanceAtEndOfMonth(accountId: UUID, monthYYYYMM: string): number
+
+  // Account operations
+  clearAccountId(accountId: UUID): number // Returns count of affected transactions
+  hasTransactionsForAccount(accountId: UUID): boolean
+  countTransactionsForAccount(accountId: UUID): number
+  deleteTransactionsForAccount(accountId: UUID): number // Returns count of deleted transactions
 }

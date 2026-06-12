@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: fontSize.md,
-    fontWeight: fontWeight.medium,
+    fontWeight: fontWeight.normal,  // Normal weight for lighter placeholders
     paddingVertical: spacing.xs,
   },
   sectionHeader: {

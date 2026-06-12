@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   chipInput: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
+    fontWeight: fontWeight.normal,  // Normal weight for lighter placeholders
     padding: 0,
     minWidth: 60,
   },

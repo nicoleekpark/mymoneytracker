@@ -75,6 +75,10 @@ export const fieldStyles = StyleSheet.create({
   // ===========================================================================
   // FIELD INPUT
   // ===========================================================================
+  // NOTE: fieldInput uses fontWeight.normal (400) intentionally.
+  // This ensures native placeholders appear lighter than semibold/medium text.
+  // Industry best practice: placeholders = normal weight + muted color.
+  // ===========================================================================
   fieldInputWrapper: {
     position: 'relative',
     width: '100%',
@@ -82,6 +86,7 @@ export const fieldStyles = StyleSheet.create({
   fieldInput: {
     width: '100%',
     fontSize: fontSize.md,
+    fontWeight: fontWeight.normal,  // Intentional: keeps placeholders light
   },
   fieldInputPlaceholder: {
     position: 'absolute',
@@ -90,6 +95,7 @@ export const fieldStyles = StyleSheet.create({
   },
   fieldPlaceholder: {
     fontSize: fontSize.sm,
+    fontWeight: fontWeight.normal,
     opacity: 0.5,
   },
 

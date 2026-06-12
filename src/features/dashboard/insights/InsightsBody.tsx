@@ -1,3 +1,4 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { InfoSheet, SectionHeader } from '@/shared/components'
@@ -10,7 +11,8 @@ import { formatUsdInt } from '@/shared/format/currency'
 
 import { NetSparkline, CategoryDeltaBar, DailyOutflowBars } from './components'
 import { useInsightsData } from './hooks'
-import type { InsightsColors } from './insights.types'
+import type { InsightsColors, InsightsDuration } from './insights.types'
+import { DURATION_OPTIONS } from './insights.types'
 
 type Props = {
   monthYYYYMM: string
@@ -71,7 +73,9 @@ function TypicalInfoSheet({
 }
 
 export function InsightsBody({ monthYYYYMM, colors }: Props) {
-  const { loading, error, data } = useInsightsData(monthYYYYMM)
+  const [duration, setDuration] = useState<InsightsDuration>(6)
+  const [showDurationPicker, setShowDurationPicker] = useState(false)
+  const { loading, error, data } = useInsightsData(monthYYYYMM, duration)
   const [showTypicalInfo, setShowTypicalInfo] = useState(false)
 
   if (loading) {
@@ -90,7 +94,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
     )
   }
 
-  const { summary, insights, categoryComparison, netTrend, dailyOutflow, medianNet } = data
+  const { summary, insights, categoryComparison, netTrend, dailyOutflow, medianNet, availableMonths, durationLabel } = data
 
   // Extract key values from summary
   const vsTypical = summary.baselineNetCents !== null
@@ -98,17 +102,18 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
     : null
   const netDollar = summary.netCents / 100
 
-  // Check if we have any content to show
-  const hasContent = netTrend.length > 1 || categoryComparison.length > 0 || dailyOutflow.length > 0
+  // Check if we have any transactions at all this month
+  const hasAnyData = data.hasEnoughData || netDollar !== 0
 
-  if (!hasContent && !data.hasEnoughData) {
+  // Only show completely empty state if there's literally no data
+  if (!hasAnyData && availableMonths === 0) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] }}>
         <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, textAlign: 'center', marginBottom: spacing.sm }}>
-          Not enough data yet
+          No transactions yet
         </Text>
         <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 }}>
-          We'll surface insights once more transactions are available. Keep tracking and check back soon.
+          Add some transactions to see insights about your spending patterns.
         </Text>
       </View>
     )
@@ -118,17 +123,22 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
   const volatilityInsight = insights.find(i => i.id === 'volatility')
   const opportunityInsight = insights.find(i => i.id === 'opportunities')
 
-  // Primary driver - find the category with biggest absolute delta
-  const primaryDriver = categoryComparison.length > 0
+  // Primary driver - find the category with biggest absolute delta vs average
+  // Only show if we have at least 2 months of data for comparison
+  const hasEnoughDataForComparison = availableMonths >= 2
+  const primaryDriver = categoryComparison.length > 0 && hasEnoughDataForComparison
     ? categoryComparison.reduce((max, cat) => {
-        const delta = Math.abs(cat.thisMonth - cat.lastMonth)
-        const maxDelta = Math.abs(max.thisMonth - max.lastMonth)
+        const delta = Math.abs(cat.thisMonth - cat.avgAmount)
+        const maxDelta = Math.abs(max.thisMonth - max.avgAmount)
         return delta > maxDelta ? cat : max
       }, categoryComparison[0])
     : null
+  // Values are already in dollars, no need to divide by 100
   const primaryDriverDelta = primaryDriver
-    ? (primaryDriver.thisMonth - primaryDriver.lastMonth) / 100
+    ? (primaryDriver.thisMonth - primaryDriver.avgAmount)
     : 0
+  // Don't show if delta is effectively zero (less than $1)
+  const showPrimaryDriver = primaryDriver && Math.abs(primaryDriverDelta) >= 1
 
   // Format vs typical value - always with sign
   const formatVsTypical = (val: number | null): string => {
@@ -161,8 +171,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
   }
 
   // Data quality info
-  const monthsTracked = netTrend.length
-  const isLimitedData = monthsTracked < 6
+  const isLimitedData = availableMonths < 6
 
   return (
     <View style={{ flex: 1 }}>
@@ -264,86 +273,135 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {/* Section: Primary Driver */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {categoryComparison.length > 0 && (
-          <View style={{ marginBottom: SECTION_GAP }}>
-            <SectionHeader
-              title="Primary driver"
-              description="Which category changed the most"
-              colors={colors}
-            />
-            {/* Dynamic summary */}
-            {primaryDriver && (
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Primary driver"
+            description={showPrimaryDriver ? `Which category changed the most vs ${durationLabel}` : 'Which category changed the most'}
+            colors={colors}
+          />
+          {showPrimaryDriver ? (
+            <>
               <Text style={{ fontSize: fontSize.md, color: colors.text, marginBottom: spacing.md }}>
-                <Text style={{ fontWeight: fontWeight.semibold }}>{primaryDriver.name}</Text>
+                <Text style={{ fontWeight: fontWeight.semibold }}>{primaryDriver!.name}</Text>
                 {' '}
                 {primaryDriverDelta >= 0 ? 'up' : 'down'}
                 {' '}
                 <Text style={{ fontWeight: fontWeight.semibold }}>
                   {formatDeltaWithSign(primaryDriverDelta)}
                 </Text>
-                {' '}vs last month
+                {' '}vs {durationLabel}
               </Text>
-            )}
-            <CategoryDeltaBar data={categoryComparison} colors={colors} />
-          </View>
-        )}
+              <CategoryDeltaBar data={categoryComparison} colors={colors} />
+            </>
+          ) : (
+            <View style={{
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.lg,
+              padding: spacing.lg,
+              alignItems: 'center'
+            }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>
+                {availableMonths < 2
+                  ? 'Need 2+ months to compare categories'
+                  : 'No significant category changes this month'}
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {/* Section: Net Trend */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {netTrend.length > 1 && medianNet !== null && (
-          <View style={{ marginBottom: SECTION_GAP }}>
-            <SectionHeader
-              title="Net trend"
-              description="Long-term pattern and current position"
-              colors={colors}
-            />
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Net trend"
+            description="Long-term pattern and current position"
+            colors={colors}
+          />
+          {netTrend.length > 1 && medianNet !== null ? (
             <NetSparkline
               data={netTrend}
               baseline={medianNet}
               colors={colors}
             />
-          </View>
-        )}
+          ) : (
+            <View style={{
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.lg,
+              padding: spacing.lg,
+              alignItems: 'center'
+            }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>
+                Need 2+ months to show trend
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {/* Section: Spending Pattern */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {dailyOutflow.length > 0 && (
-          <View style={{ marginBottom: SECTION_GAP }}>
-            <SectionHeader
-              title="Spending pattern"
-              description={volatilityInsight?.body ?? 'Daily outflow distribution'}
-              colors={colors}
-            />
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Spending pattern"
+            description={volatilityInsight?.body ?? 'Daily outflow distribution'}
+            colors={colors}
+          />
+          {dailyOutflow.length > 0 ? (
             <DailyOutflowBars data={dailyOutflow} monthYYYYMM={monthYYYYMM} colors={colors} />
-          </View>
-        )}
+          ) : (
+            <View style={{
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.lg,
+              padding: spacing.lg,
+              alignItems: 'center'
+            }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>
+                No spending data this month yet
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {/* Section: Opportunity */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {opportunityInsight && (
-          <View style={{ marginBottom: SECTION_GAP }}>
-            <SectionHeader
-              title="Opportunity"
-              description="Suggested target for next month"
-              colors={colors}
-            />
-            <Text style={{ fontSize: fontSize.md, color: colors.text, lineHeight: 22 }}>
-              {opportunityInsight.body}
-            </Text>
-            {opportunityInsight.sub && (
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs }}>
-                {opportunityInsight.sub}
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <SectionHeader
+            title="Opportunity"
+            description="Suggested target for next month"
+            colors={colors}
+          />
+          {opportunityInsight ? (
+            <>
+              <Text style={{ fontSize: fontSize.md, color: colors.text, lineHeight: 22 }}>
+                {opportunityInsight.body}
               </Text>
-            )}
-          </View>
-        )}
+              {opportunityInsight.sub && (
+                <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.xs }}>
+                  {opportunityInsight.sub}
+                </Text>
+              )}
+            </>
+          ) : (
+            <View style={{
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.lg,
+              padding: spacing.lg,
+              alignItems: 'center'
+            }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>
+                {availableMonths < 3
+                  ? 'Need 3+ months to suggest targets'
+                  : 'On track - no action needed'}
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {/* Sticky Footer: Data Quality */}
+      {/* Sticky Footer: Duration Selector */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       <View style={{
         paddingHorizontal: spacing.lg,
@@ -353,20 +411,94 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
       }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
-            Data quality
+            Based on
           </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.text }}>
-            {isLimitedData ? (
-              <>
-                <Text>Last {monthsTracked} months</Text>
-                <Text style={{ color: colors.textSecondary }}> · </Text>
-                <Text style={{ color: colors.warning }}>Insights improve over time</Text>
-              </>
-            ) : (
-              <Text>Last {monthsTracked} months</Text>
+          <View style={{ position: 'relative' }}>
+            <Pressable
+              onPress={() => setShowDurationPicker(!showDurationPicker)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing.xs,
+                paddingVertical: spacing.xs,
+                paddingHorizontal: spacing.sm,
+                backgroundColor: colors.surfaceAlt,
+                borderRadius: radius.md
+              }}
+            >
+              <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text }}>
+                {DURATION_OPTIONS.find(o => o.value === duration)?.label ?? '6 months'}
+              </Text>
+              <FontAwesome
+                name={showDurationPicker ? 'chevron-up' : 'chevron-down'}
+                size={10}
+                color={colors.textSecondary}
+              />
+            </Pressable>
+
+            {/* Dropdown Menu */}
+            {showDurationPicker && (
+              <View style={{
+                position: 'absolute',
+                bottom: '100%',
+                right: 0,
+                marginBottom: spacing.xs,
+                backgroundColor: colors.surface,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: -2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 5,
+                minWidth: 120
+              }}>
+                {DURATION_OPTIONS.map((option, index) => {
+                  // Disable options that require more months than available
+                  const requiredMonths = option.value === 'all' ? 2 : option.value
+                  const isDisabled = availableMonths < requiredMonths
+                  const isSelected = duration === option.value
+
+                  return (
+                    <Pressable
+                      key={option.value}
+                      onPress={() => {
+                        if (!isDisabled) {
+                          setDuration(option.value)
+                          setShowDurationPicker(false)
+                        }
+                      }}
+                      style={{
+                        paddingVertical: spacing.sm,
+                        paddingHorizontal: spacing.md,
+                        borderBottomWidth: index < DURATION_OPTIONS.length - 1 ? 1 : 0,
+                        borderBottomColor: colors.border,
+                        backgroundColor: isSelected ? colors.surfaceAlt : 'transparent',
+                        opacity: isDisabled ? 0.4 : 1
+                      }}
+                    >
+                      <Text style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
+                        color: isSelected ? colors.primary : colors.text
+                      }}>
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
             )}
-          </Text>
+          </View>
         </View>
+
+        {/* Warning for limited data */}
+        {isLimitedData && (
+          <Text style={{ fontSize: fontSize.xs, color: colors.warning, marginTop: spacing.xs, textAlign: 'right' }}>
+            More data = better insights
+          </Text>
+        )}
       </View>
     </View>
   )

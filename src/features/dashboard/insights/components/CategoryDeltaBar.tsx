@@ -11,7 +11,7 @@ import type { InsightsColors } from '../insights.types'
 type CategoryDelta = {
   name: string
   thisMonth: number
-  lastMonth: number
+  avgAmount: number  // average of selected duration
   color: string | null
 }
 
@@ -29,7 +29,7 @@ function formatDelta(value: number): string {
 }
 
 /**
- * Horizontal progress bar chart showing top category deltas vs last month
+ * Horizontal progress bar chart showing top category deltas vs average
  * Neutral styling - bars use category colors, delta text is neutral
  *
  * Layout:
@@ -47,10 +47,10 @@ export function CategoryDeltaBar({ data, colors }: Props) {
   // Take top 3 categories
   const topCategories = data.slice(0, 3)
 
-  // Calculate deltas and find max for scaling
+  // Calculate deltas vs average and find max for scaling
   const deltas = topCategories.map(cat => ({
     name: cat.name,
-    delta: cat.thisMonth - cat.lastMonth,
+    delta: cat.thisMonth - cat.avgAmount,
     categoryColor: cat.color
   }))
 

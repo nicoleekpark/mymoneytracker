@@ -1,11 +1,16 @@
 /**
  * AmountKeypadSheet
  *
- * Bottom sheet with numeric keypad for amount entry.
+ * Design system component: Bottom sheet with numeric keypad for amount entry.
  * Features:
  * - Spring-animated slide up/down
- * - "Estimated amount" toggle
+ * - Optional "Estimated amount" toggle (controlled via hideEstimated prop)
  * - Clear/Done actions
+ *
+ * Usage:
+ * - Add Transaction: hideEstimated={false} (show toggle)
+ * - Add Account balance: hideEstimated={true} (hide toggle)
+ * - Itemized items: hideEstimated={true} (hide toggle)
  */
 
 import React from 'react'
@@ -25,7 +30,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useHoHTheme } from '@/shared/providers'
-import { ScalePressable } from '@/shared/components'
+import { ScalePressable } from './ScalePressable'
 import { fontSize, fontWeight, displaySize } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -46,7 +51,7 @@ type AmountKeypadSheetProps = {
   onClose: () => void
   /** Optional title shown above amount (e.g., item name) */
   title?: string
-  /** Hide the estimated toggle (for item prices) */
+  /** Hide the estimated toggle (default: false) */
   hideEstimated?: boolean
 }
 

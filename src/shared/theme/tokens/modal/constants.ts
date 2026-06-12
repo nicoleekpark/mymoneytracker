@@ -25,6 +25,9 @@ export const MODAL_CHIP_MAX_WIDTH = 100
 /** Numeric keypad key height */
 export const MODAL_KEY_HEIGHT = spacing['3xl'] // 48
 
+/** Small indicator dot size (e.g., item list bullets) */
+export const MODAL_INDICATOR_DOT_SIZE = spacing.xs + 1 // 5
+
 // -----------------------------------------------------------------------------
 // Snap Points (BottomSheetModal sizes)
 // -----------------------------------------------------------------------------

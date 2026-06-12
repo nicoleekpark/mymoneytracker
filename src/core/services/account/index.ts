@@ -3,11 +3,15 @@
 
 export {
   getActiveAccounts,
+  getArchivedAccounts,
   resolveAccountIdByKey,
   getAccountById,
   createAccount,
   updateAccount,
-  archiveAccount
+  archiveAccount,
+  restoreAccount,
+  deleteAccount,
+  getAccountTransactionCount,
 } from './account.service'
 
 export type { AddAccountInput } from './account.service'

@@ -938,4 +938,61 @@ export class SqliteTransactionRepository implements TransactionRepository {
       Number(row.transfer_out_cents ?? 0)
     )
   }
+
+  clearAccountId(accountId: UUID): number {
+    // Set account_id to null for all transactions with this account
+    // Also clear from_account_id and to_account_id for transfers
+    this.dataSource.exec(
+      `UPDATE transactions SET account_id = NULL WHERE account_id = ?;`,
+      [accountId]
+    )
+    this.dataSource.exec(
+      `UPDATE transactions SET from_account_id = NULL WHERE from_account_id = ?;`,
+      [accountId]
+    )
+    this.dataSource.exec(
+      `UPDATE transactions SET to_account_id = NULL WHERE to_account_id = ?;`,
+      [accountId]
+    )
+
+    // Return count of affected transactions (approximate - counts any reference)
+    const row = this.dataSource.queryFirst<{ count: number }>(
+      `SELECT changes() as count;`
+    )
+    return row?.count ?? 0
+  }
+
+  hasTransactionsForAccount(accountId: UUID): boolean {
+    const row = this.dataSource.queryFirst<{ count: number }>(
+      `SELECT COUNT(*) as count FROM transactions
+       WHERE account_id = ? OR from_account_id = ? OR to_account_id = ?
+       LIMIT 1;`,
+      [accountId, accountId, accountId]
+    )
+    return (row?.count ?? 0) > 0
+  }
+
+  countTransactionsForAccount(accountId: UUID): number {
+    const row = this.dataSource.queryFirst<{ count: number }>(
+      `SELECT COUNT(*) as count FROM transactions
+       WHERE account_id = ? OR from_account_id = ? OR to_account_id = ?;`,
+      [accountId, accountId, accountId]
+    )
+    return row?.count ?? 0
+  }
+
+  /**
+   * Delete all transactions for an account (cascade delete).
+   */
+  deleteTransactionsForAccount(accountId: UUID): number {
+    this.dataSource.exec(
+      `DELETE FROM transactions
+       WHERE account_id = ? OR from_account_id = ? OR to_account_id = ?;`,
+      [accountId, accountId, accountId]
+    )
+    const row = this.dataSource.queryFirst<{ count: number }>(
+      `SELECT changes() as count;`
+    )
+    return row?.count ?? 0
+  }
 }

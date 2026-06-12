@@ -12,7 +12,7 @@ import {
   getStoreByMerchant,
 } from '@/core/services/price-tracker'
 import type { TrackedItem } from '@/core/domain/price-tracker'
-import { AmountKeypadSheet } from './AmountKeypadSheet'
+import { AmountKeypadSheet } from '@/shared/components'
 
 export type ItemEntry = {
   id: string
@@ -142,17 +142,13 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
     }
   }, [expanded, onExpandedChange])
 
-  // Open price keypad for ghost row
+  // Open price keypad for ghost row (always allowed)
   const openGhostPriceKeypad = useCallback(() => {
-    // First commit the name if we have one
-    const name = ghostName.trim()
-    if (name) {
-      Keyboard.dismiss()
-      setPriceKeypadTarget('ghost')
-      setKeypadPriceCentsText(ghostPriceCents > 0 ? String(ghostPriceCents) : '')
-      setShowPriceKeypad(true)
-    }
-  }, [ghostName, ghostPriceCents])
+    Keyboard.dismiss()
+    setPriceKeypadTarget('ghost')
+    setKeypadPriceCentsText(ghostPriceCents > 0 ? String(ghostPriceCents) : '')
+    setShowPriceKeypad(true)
+  }, [ghostPriceCents])
 
   // Handle selecting a suggestion for ghost row
   const handleGhostSuggestion = useCallback((suggestion: TrackedItem) => {
@@ -261,13 +257,12 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
     const cents = parseInt(keypadPriceCentsText, 10) || 0
 
     if (priceKeypadTarget === 'ghost') {
-      setGhostPriceCents(cents)
-      // Now commit the ghost row since we have both name and price
       const name = ghostName.trim()
-      if (name) {
+      // Commit if we have name OR price (not requiring both)
+      if (name || cents > 0) {
         const newItem: ItemEntry = {
           id: `item-${Date.now()}`,
-          name,
+          name: name || 'Item', // Default name if only price provided
           priceCents: cents,
           quantity: 1,
           itemId: ghostItemId,
@@ -276,6 +271,9 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
         setGhostName('')
         setGhostPriceCents(0)
         setGhostItemId(undefined)
+      } else {
+        // Just update ghost price without committing (user might add name next)
+        setGhostPriceCents(cents)
       }
     } else if (typeof priceKeypadTarget === 'number') {
       const updated = [...items]
@@ -424,18 +422,17 @@ export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChan
               />
             </View>
 
-            {/* Price cell */}
+            {/* Price cell - always tappable */}
             <Pressable
               onPress={openGhostPriceKeypad}
               style={styles.ghostPriceCell}
-              disabled={!ghostName.trim()}
             >
               <Text
                 style={[
                   styles.ghostPrice,
                   {
-                    color: ghostName.trim() ? theme.semantic.text : theme.semantic.textSecondary,
-                    borderBottomColor: ghostName.trim() ? theme.semantic.border : 'transparent',
+                    color: ghostPriceCents > 0 ? theme.semantic.text : theme.semantic.textSecondary,
+                    borderBottomColor: theme.semantic.border,
                   },
                 ]}
               >
