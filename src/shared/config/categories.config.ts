@@ -364,6 +364,7 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
   // ---------------------------------------------------------------
   fees: [
     { key: 'bank_fees', name: 'Bank Fees', icon: 'bank', color: '#6A7A7A' },
+    { key: 'service_fees', name: 'Service Fees', icon: 'ticket', color: '#5A7A7A' },
     { key: 'atm_fees', name: 'ATM Fees', icon: 'credit-card', color: '#5A6A6A' },
     { key: 'late_fees', name: 'Late Fees', icon: 'clock-o', color: '#4A5A5A' },
     { key: 'brokerage_fees', name: 'Brokerage Fees', icon: 'line-chart', color: '#7A8A8A' }

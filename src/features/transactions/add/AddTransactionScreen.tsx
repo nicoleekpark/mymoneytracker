@@ -25,7 +25,11 @@ import {
   useQuickChipsStore,
   useSuggestionsStore,
 } from '@/shared/store'
-import { MODAL_ROW_HEIGHT, getScrollContentWithCTAPadding, modalStyles } from '@/shared/theme/tokens/modal'
+import {
+  getScrollContentWithCTAPadding,
+  MODAL_ROW_HEIGHT,
+  modalStyles,
+} from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -39,6 +43,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -71,6 +76,7 @@ import {
   type ItemEntry,
 } from './components'
 import { useAccountPicker, useAmountKeypad, useCategoryPicker, useDateTime } from './hooks'
+import { useAddTransactionNavStore } from './store/addTransactionNav.store'
 
 // Quick action chip types
 type QuickChip = {
@@ -85,7 +91,7 @@ type QuickChip = {
 const TRANSACTION_TYPES: { key: TransactionType; label: string; disabled?: boolean }[] = [
   { key: 'expense', label: 'Expense' },
   { key: 'income', label: 'Income' },
-  { key: 'transfer', label: 'Transfer', disabled: true },
+  { key: 'transfer', label: 'Transfer' },
 ]
 
 const TOAST_DURATION = 1500
@@ -156,6 +162,13 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   // Itemized items
   const [itemizedItems, setItemizedItems] = useState<ItemEntry[]>([])
   const [itemizedExpanded, setItemizedExpanded] = useState(false)
+
+  // Transfer-specific state
+  const [toAccountKey, setToAccountKey] = useState<string | null>(null)
+  const [hasFee, setHasFee] = useState(false)
+  const [feeCents, setFeeCents] = useState(0)
+  const [showFeeKeypad, setShowFeeKeypad] = useState(false)
+  const [highlightToAccount, setHighlightToAccount] = useState(false)
 
   // UI state
   const [moreDetailsExpanded, setMoreDetailsExpanded] = useState(false)
@@ -248,6 +261,19 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       color: '#5A6A6A',
     }))
   }, [orderedAccounts])
+
+  // Transfer "To" account display
+  const toAccountDisplay = useMemo(() => {
+    if (!toAccountKey) return null
+    const acc = account.accounts.find((a) => a.key === toAccountKey)
+    return acc ? acc.name : null
+  }, [toAccountKey, account.accounts])
+
+  // Fee display in dollars
+  const feeDisplay = useMemo(() => {
+    if (!hasFee || feeCents <= 0) return null
+    return (feeCents / 100).toFixed(2)
+  }, [hasFee, feeCents])
 
   // Load draft data if editing
   useEffect(() => {
@@ -422,10 +448,9 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
   // Validation - Required: amount, date, account, type
   const canSave = useMemo(() => {
-    if (type === 'transfer') return false
     const hasAmount = Number.isFinite(amount.amountCents) && amount.amountCents > 0
     return hasAmount
-  }, [type, amount.amountCents])
+  }, [amount.amountCents])
 
   // Check if more details has any content
   const moreDetailsCount = useMemo(() => {
@@ -441,11 +466,6 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   }
 
   const onSave = async () => {
-    if (type === 'transfer') {
-      showToast('Transfer coming soon')
-      return
-    }
-
     const cleanedDescription = description.trim()
     const cleanedMerchant = merchant.trim()
     const cleanedNote = note.trim()
@@ -455,32 +475,63 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       return
     }
 
-    // Require either description or merchant for scannable transaction list
-    if (!cleanedDescription && !cleanedMerchant) {
-      showToast('Add a description or merchant')
-      setHighlightIdentifier(true)
-      if (highlightTimeoutRef.current) {
-        clearTimeout(highlightTimeoutRef.current)
+    // Transfer-specific validation
+    if (type === 'transfer') {
+      if (!account.accountKey) {
+        showToast('Select source account')
+        setHighlightAccount(true)
+        if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
+        highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
+        return
       }
-      highlightTimeoutRef.current = setTimeout(() => setHighlightIdentifier(false), 2000)
-      return
+      if (!toAccountKey) {
+        showToast('Select destination account')
+        setHighlightToAccount(true)
+        if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
+        highlightTimeoutRef.current = setTimeout(() => setHighlightToAccount(false), 2000)
+        return
+      }
+      if (account.accountKey === toAccountKey) {
+        showToast('Cannot transfer to same account')
+        return
+      }
+    } else {
+      // Require either description or merchant for scannable transaction list
+      if (!cleanedDescription && !cleanedMerchant) {
+        showToast('Add a description or merchant')
+        setHighlightIdentifier(true)
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current)
+        }
+        highlightTimeoutRef.current = setTimeout(() => setHighlightIdentifier(false), 2000)
+        return
+      }
+
+      if (!account.accountKey) {
+        showToast('Please select a payment method')
+        setHighlightAccount(true)
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current)
+        }
+        highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
+        return
+      }
     }
 
-    if (!account.accountKey) {
-      showToast('Please select a payment method')
-      setHighlightAccount(true)
-      if (highlightTimeoutRef.current) {
-        clearTimeout(highlightTimeoutRef.current)
-      }
-      highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
-      return
-    }
+    // Resolve account IDs
+    let fromAccountId: UUID | undefined
+    let toAccountId: UUID | undefined
+    let accountId: UUID | undefined
 
-    let accountId: UUID
     try {
-      accountId = resolveAccountIdByKey(account.accountKey)
+      if (type === 'transfer') {
+        fromAccountId = resolveAccountIdByKey(account.accountKey!)
+        toAccountId = resolveAccountIdByKey(toAccountKey!)
+      } else {
+        accountId = resolveAccountIdByKey(account.accountKey!)
+      }
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Please select a payment method'
+      const message = e instanceof Error ? e.message : 'Invalid account'
       showToast(message)
       return
     }
@@ -500,18 +551,32 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     }
 
     try {
-      const transactionInput = {
-        type,
-        item: cleanedDescription || undefined,
-        amount: amount.amountDollars,
-        category: category.categoryRef ?? undefined,
-        accountId,
-        occurredAt: dateTime.occurredAt,
-        merchant: cleanedMerchant || undefined,
-        note: cleanedNote || undefined,
-        tags: tags.length > 0 ? tags : undefined,
-        isEstimated: isEstimated || undefined,
-      }
+      // Build transaction input based on type
+      const transactionInput =
+        type === 'transfer'
+          ? {
+              type: 'transfer' as const,
+              item: cleanedDescription || undefined,
+              amount: amount.amountDollars,
+              fromAccountId: fromAccountId!,
+              toAccountId: toAccountId!,
+              occurredAt: dateTime.occurredAt,
+              note: cleanedNote || undefined,
+              tags: tags.length > 0 ? tags : undefined,
+              isEstimated: isEstimated || undefined,
+            }
+          : {
+              type,
+              item: cleanedDescription || undefined,
+              amount: amount.amountDollars,
+              category: category.categoryRef ?? undefined,
+              accountId: accountId!,
+              occurredAt: dateTime.occurredAt,
+              merchant: cleanedMerchant || undefined,
+              note: cleanedNote || undefined,
+              tags: tags.length > 0 ? tags : undefined,
+              isEstimated: isEstimated || undefined,
+            }
 
       let savedTransactionId: UUID | undefined
 
@@ -525,6 +590,21 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         // Create new transaction
         const newTx = await addTransaction(CATEGORIES_INDEX, transactionInput)
         savedTransactionId = newTx?.id
+
+        // Create linked fee expense when fee is added
+        if (hasFee && feeCents > 0 && savedTransactionId) {
+          const feeAccountId = type === 'transfer' ? fromAccountId! : accountId!
+          const feeItem = type === 'transfer' ? 'Transfer Fee' : 'Service Fee'
+          await addTransaction(CATEGORIES_INDEX, {
+            type: 'expense',
+            item: feeItem,
+            amount: feeCents / 100,
+            accountId: feeAccountId,
+            category: { type: 'expense', categoryKey: 'fees', subCategoryKey: 'service_fees' },
+            occurredAt: dateTime.occurredAt,
+            parentTransactionId: savedTransactionId,
+          })
+        }
       }
 
       // Save transaction items if any
@@ -664,16 +744,16 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     category.resetCategory()
     setMoreDetailsExpanded(false)
     setIsEstimated(false)
+    // Reset transfer state
+    setToAccountKey(null)
+    setHasFee(false)
+    setFeeCents(0)
   }
 
   // Save and add another transaction
   const onSaveAndAddAnother = async () => {
-    if (type === 'transfer') {
-      showToast('Transfer coming soon')
-      return
-    }
-
     const cleanedDescription = description.trim()
+    const cleanedMerchant = merchant.trim()
     const cleanedNote = note.trim()
 
     if (!Number.isFinite(amount.amountCents) || amount.amountCents <= 0) {
@@ -681,21 +761,52 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       return
     }
 
-    if (!account.accountKey) {
-      showToast('Please select a payment method')
-      setHighlightAccount(true)
-      if (highlightTimeoutRef.current) {
-        clearTimeout(highlightTimeoutRef.current)
+    // Transfer-specific validation
+    if (type === 'transfer') {
+      if (!account.accountKey) {
+        showToast('Select source account')
+        setHighlightAccount(true)
+        if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
+        highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
+        return
       }
-      highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
-      return
+      if (!toAccountKey) {
+        showToast('Select destination account')
+        setHighlightToAccount(true)
+        if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
+        highlightTimeoutRef.current = setTimeout(() => setHighlightToAccount(false), 2000)
+        return
+      }
+      if (account.accountKey === toAccountKey) {
+        showToast('Cannot transfer to same account')
+        return
+      }
+    } else {
+      if (!account.accountKey) {
+        showToast('Please select a payment method')
+        setHighlightAccount(true)
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current)
+        }
+        highlightTimeoutRef.current = setTimeout(() => setHighlightAccount(false), 2000)
+        return
+      }
     }
 
-    let accountId: UUID
+    // Resolve account IDs
+    let fromAccountId: UUID | undefined
+    let toAccountIdResolved: UUID | undefined
+    let accountId: UUID | undefined
+
     try {
-      accountId = resolveAccountIdByKey(account.accountKey)
+      if (type === 'transfer') {
+        fromAccountId = resolveAccountIdByKey(account.accountKey!)
+        toAccountIdResolved = resolveAccountIdByKey(toAccountKey!)
+      } else {
+        accountId = resolveAccountIdByKey(account.accountKey!)
+      }
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Please select a payment method'
+      const message = e instanceof Error ? e.message : 'Invalid account'
       showToast(message)
       return
     }
@@ -715,19 +826,49 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
     }
 
     try {
-      const cleanedMerchant = merchant.trim()
-      const newTx = await addTransaction(CATEGORIES_INDEX, {
-        type,
-        item: cleanedDescription || undefined,
-        amount: amount.amountDollars,
-        category: category.categoryRef ?? undefined,
-        accountId,
-        occurredAt: dateTime.occurredAt,
-        merchant: cleanedMerchant || undefined,
-        note: cleanedNote || undefined,
-        tags: tags.length > 0 ? tags : undefined,
-        isEstimated: isEstimated || undefined,
-      })
+      // Build transaction input based on type
+      const transactionInput =
+        type === 'transfer'
+          ? {
+              type: 'transfer' as const,
+              item: cleanedDescription || undefined,
+              amount: amount.amountDollars,
+              fromAccountId: fromAccountId!,
+              toAccountId: toAccountIdResolved!,
+              occurredAt: dateTime.occurredAt,
+              note: cleanedNote || undefined,
+              tags: tags.length > 0 ? tags : undefined,
+              isEstimated: isEstimated || undefined,
+            }
+          : {
+              type,
+              item: cleanedDescription || undefined,
+              amount: amount.amountDollars,
+              category: category.categoryRef ?? undefined,
+              accountId: accountId!,
+              occurredAt: dateTime.occurredAt,
+              merchant: cleanedMerchant || undefined,
+              note: cleanedNote || undefined,
+              tags: tags.length > 0 ? tags : undefined,
+              isEstimated: isEstimated || undefined,
+            }
+
+      const newTx = await addTransaction(CATEGORIES_INDEX, transactionInput)
+
+      // Create linked fee expense when fee is added
+      if (hasFee && feeCents > 0 && newTx?.id) {
+        const feeAccountId = type === 'transfer' ? fromAccountId! : accountId!
+        const feeItem = type === 'transfer' ? 'Transfer Fee' : 'Service Fee'
+        await addTransaction(CATEGORIES_INDEX, {
+          type: 'expense',
+          item: feeItem,
+          amount: feeCents / 100,
+          accountId: feeAccountId,
+          category: { type: 'expense', categoryKey: 'fees', subCategoryKey: 'service_fees' },
+          occurredAt: dateTime.occurredAt,
+          parentTransactionId: newTx.id,
+        })
+      }
 
       // Save transaction items if any
       if (newTx?.id && itemizedItems.length > 0) {
@@ -1094,19 +1235,206 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           </View>
         </View>
 
-        {/* Transfer placeholder */}
+        {/* Transfer Fields */}
         {type === 'transfer' && (
-          <View style={[styles.fieldGroup, { backgroundColor: theme.semantic.surfaceAlt }]}>
-            <Text
-              style={{
-                color: theme.semantic.textSecondary,
-                fontWeight: fontWeight.semibold,
-                textAlign: 'center',
-                paddingVertical: spacing.lg,
-              }}
+          <View style={styles.fieldGroup}>
+            {/* Fee checkbox under amount */}
+            <Pressable
+              onPress={() => setHasFee(!hasFee)}
+              style={[styles.fieldRow, styles.fieldRowNoBorder, { justifyContent: 'center' }]}
             >
-              Transfer feature coming soon
-            </Text>
+              <View style={styles.checkboxRow}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    {
+                      borderColor: hasFee ? theme.semantic.primary : theme.semantic.border,
+                      backgroundColor: hasFee ? theme.semantic.primary : 'transparent',
+                    },
+                  ]}
+                >
+                  {hasFee && (
+                    <FontAwesome name="check" size={10} color={theme.semantic.onPrimary} />
+                  )}
+                </View>
+                <Text style={[styles.checkboxLabel, { color: theme.semantic.textSecondary }]}>
+                  Add fee
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Fee input (shown when checkbox is checked) */}
+            {hasFee && (
+              <>
+                <Pressable
+                  onPress={() => setShowFeeKeypad(true)}
+                  style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingLeft: spacing.xl }]}
+                >
+                  <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>
+                    Fee
+                  </Text>
+                  <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                    {feeDisplay ? `$${feeDisplay}` : '$0.00'}
+                  </Text>
+                  {feeCents > 0 && (
+                    <Pressable
+                      onPress={() => setFeeCents(0)}
+                      hitSlop={8}
+                      style={styles.clearButton}
+                    >
+                      <FontAwesome
+                        name="times-circle"
+                        size={16}
+                        color={theme.semantic.textSecondary}
+                      />
+                    </Pressable>
+                  )}
+                </Pressable>
+                <View style={[styles.feeHint, { paddingLeft: spacing.xl }]}>
+                  <Text style={[styles.feeHintText, { color: theme.semantic.textSecondary }]}>
+                    Recorded separately · Total: ${((amount.amountCents + feeCents) / 100).toFixed(2)}
+                  </Text>
+                </View>
+              </>
+            )}
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* From Account */}
+            <View
+              style={[
+                styles.fieldRow,
+                styles.fieldRowNoBorder,
+                highlightAccount && { backgroundColor: theme.semantic.warning + '15' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  {
+                    color: account.accountKey ? theme.semantic.textSecondary : theme.semantic.text,
+                  },
+                ]}
+              >
+                From
+              </Text>
+              <Pressable
+                onPress={account.navigateToAccountSelection}
+                style={styles.fieldValueTouchable}
+              >
+                {account.selectedAccount ? (
+                  <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                    {account.selectedAccount.name}
+                  </Text>
+                ) : (
+                  <Text style={[styles.fieldPlaceholder, { color: theme.semantic.primary }]}>
+                    Select account
+                  </Text>
+                )}
+              </Pressable>
+              {account.accountKey && (
+                <Pressable onPress={account.clearAccount} hitSlop={8} style={styles.clearButton}>
+                  <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
+                </Pressable>
+              )}
+            </View>
+
+            {/* To Account */}
+            <View
+              style={[
+                styles.fieldRow,
+                styles.fieldRowNoBorder,
+                highlightToAccount && { backgroundColor: theme.semantic.warning + '15' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: toAccountKey ? theme.semantic.textSecondary : theme.semantic.text },
+                ]}
+              >
+                To
+              </Text>
+              <Pressable
+                onPress={() => {
+                  // Use same navigation but with different callback
+                  Keyboard.dismiss()
+                  const { openAccountSelection } = useAddTransactionNavStore.getState()
+                  openAccountSelection(account.accounts, toAccountKey, {
+                    onChooseAccount: (key) => setToAccountKey(key),
+                    onAddAccount: () => account.refreshAccounts(),
+                  })
+                  router.push('/(modal)/add-transaction/account-selection')
+                }}
+                style={styles.fieldValueTouchable}
+              >
+                {toAccountDisplay ? (
+                  <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                    {toAccountDisplay}
+                  </Text>
+                ) : (
+                  <Text style={[styles.fieldPlaceholder, { color: theme.semantic.primary }]}>
+                    Select account
+                  </Text>
+                )}
+              </Pressable>
+              {toAccountKey && (
+                <Pressable
+                  onPress={() => setToAccountKey(null)}
+                  hitSlop={8}
+                  style={styles.clearButton}
+                >
+                  <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
+                </Pressable>
+              )}
+            </View>
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* Date */}
+            <View style={[styles.fieldRow, styles.fieldRowNoBorder]}>
+              <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>Date</Text>
+              <Pressable onPress={dateTime.openDateTimeModal} style={styles.fieldValueTouchable}>
+                <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                  {dateTime.dateDisplay}
+                </Text>
+                <Text style={[styles.fieldValueSecondary, { color: theme.semantic.textSecondary }]}>
+                  {' '}
+                  · {dateTime.timeDisplay}
+                </Text>
+              </Pressable>
+            </View>
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* Note (optional) */}
+            <View style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingRight: 0 }]}>
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: note ? theme.semantic.textSecondary : theme.semantic.text },
+                ]}
+              >
+                Note <Text style={styles.optionalLabel}>(optional)</Text>
+              </Text>
+              <View style={modalStyles.fieldInputWrapper}>
+                {!note && (
+                  <Text
+                    style={[
+                      styles.fieldPlaceholder,
+                      modalStyles.fieldInputPlaceholder,
+                      { color: theme.semantic.textSecondary },
+                    ]}
+                  >
+                    Add note
+                  </Text>
+                )}
+                <TextInput
+                  ref={noteInputRef}
+                  value={note}
+                  onChangeText={setNote}
+                  style={[modalStyles.fieldInput, { color: theme.semantic.text }]}
+                  multiline
+                />
+              </View>
+            </View>
           </View>
         )}
 
@@ -1363,6 +1691,68 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                 />
               </View>
             </View>
+            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
+
+            {/* Add Fee - expense/income */}
+            <Pressable
+              onPress={() => setHasFee(!hasFee)}
+              style={[styles.fieldRow, styles.fieldRowNoBorder, { justifyContent: 'center' }]}
+            >
+              <View style={styles.checkboxRow}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    {
+                      borderColor: hasFee ? theme.semantic.primary : theme.semantic.border,
+                      backgroundColor: hasFee ? theme.semantic.primary : 'transparent',
+                    },
+                  ]}
+                >
+                  {hasFee && (
+                    <FontAwesome name="check" size={10} color={theme.semantic.onPrimary} />
+                  )}
+                </View>
+                <Text style={[styles.checkboxLabel, { color: theme.semantic.textSecondary }]}>
+                  Add fee
+                </Text>
+              </View>
+            </Pressable>
+
+            {/* Fee input (shown when checkbox is checked) */}
+            {hasFee && (
+              <>
+                <Pressable
+                  onPress={() => setShowFeeKeypad(true)}
+                  style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingLeft: spacing.xl }]}
+                >
+                  <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>
+                    Fee
+                  </Text>
+                  <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                    {feeDisplay ? `$${feeDisplay}` : '$0.00'}
+                  </Text>
+                  {feeCents > 0 && (
+                    <Pressable
+                      onPress={() => setFeeCents(0)}
+                      hitSlop={8}
+                      style={styles.clearButton}
+                    >
+                      <FontAwesome
+                        name="times-circle"
+                        size={16}
+                        color={theme.semantic.textSecondary}
+                      />
+                    </Pressable>
+                  )}
+                </Pressable>
+                <View style={[styles.feeHint, { paddingLeft: spacing.xl }]}>
+                  <Text style={[styles.feeHintText, { color: theme.semantic.textSecondary }]}>
+                    Recorded separately · Total: ${((amount.amountCents + feeCents) / 100).toFixed(2)}
+                  </Text>
+                </View>
+              </>
+            )}
+
             {/* Itemized Items - expense only */}
             {type === 'expense' && (
               <>
@@ -1521,6 +1911,31 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         onDone={() => setShowKeypadSheet(false)}
         onClose={() => setShowKeypadSheet(false)}
       />
+
+      {/* Fee Keypad Sheet (for transfers) */}
+      <AmountKeypadSheet
+        visible={showFeeKeypad}
+        amountDisplay={feeCents > 0 ? (feeCents / 100).toFixed(2) : '0'}
+        hideEstimated
+        onDigit={(digit) => {
+          const current = feeCents.toString()
+          const newVal = current === '0' ? digit : current + digit
+          const cents = parseInt(newVal, 10)
+          if (cents <= 99999) setFeeCents(cents) // Max $999.99
+        }}
+        onBackspace={() => {
+          const current = feeCents.toString()
+          if (current.length <= 1) {
+            setFeeCents(0)
+          } else {
+            setFeeCents(parseInt(current.slice(0, -1), 10))
+          }
+        }}
+        onClear={() => setFeeCents(0)}
+        onDone={() => setShowFeeKeypad(false)}
+        onClose={() => setShowFeeKeypad(false)}
+      />
+
       {/* Bottom CTA Bar - absolutely positioned */}
       <BottomCTABar
         amountDisplay={amount.amountDisplay}
@@ -1853,5 +2268,33 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: spacing.md,
     fontSize: fontSize.sm,
+  },
+  // Transfer styles
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  checkbox: {
+    width: spacing.lg + spacing.xs, // 20
+    height: spacing.lg + spacing.xs, // 20
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+  },
+  feeHint: {
+    paddingBottom: spacing.sm,
+  },
+  feeHintText: {
+    fontSize: fontSize.xs,
+    fontStyle: 'italic',
+  },
+  fieldValueSecondary: {
+    fontSize: fontSize.md,
   },
 })

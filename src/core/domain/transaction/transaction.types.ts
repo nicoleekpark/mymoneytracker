@@ -23,6 +23,7 @@ type TransactionBase = Readonly<{
   tags?: string[] // tag names
   memberId?: UUID // null = shared/household
   isEstimated?: boolean // true = user marked amount as approximate
+  parentTransactionId?: UUID // links child transactions (e.g., fee) to parent (e.g., transfer)
 }>
 
 export type IncomeExpenseTransaction = TransactionBase &
@@ -57,6 +58,7 @@ export type AddTransactionInput =
       tags?: string[]
       memberId?: UUID // null = shared/household
       isEstimated?: boolean
+      parentTransactionId?: UUID // for linked transactions (e.g., fee expense)
     }
   | {
       key?: string
@@ -72,4 +74,5 @@ export type AddTransactionInput =
       tags?: string[]
       memberId?: UUID // null = shared/household
       isEstimated?: boolean
+      parentTransactionId?: UUID // for linked transactions (e.g., fee expense)
     }

@@ -94,6 +94,7 @@ export async function addTransaction(
           ...base,
           type: input.type,
           accountId: input.accountId,
+          parentTransactionId: input.parentTransactionId,
         })
 
   // Insert transaction + tags atomically
@@ -203,6 +204,7 @@ export async function updateTransaction(
           ...base,
           type: input.type,
           accountId: input.accountId,
+          parentTransactionId: input.parentTransactionId,
         })
 
   // Update transaction + tags atomically

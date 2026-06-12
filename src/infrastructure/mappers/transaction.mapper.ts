@@ -41,6 +41,8 @@ export type TransactionRow = Readonly<{
   account_id: UUID | null
   from_account_id: UUID | null
   to_account_id: UUID | null
+  fee_cents: number | null // deprecated, kept for migration compatibility
+  parent_transaction_id: UUID | null // links child transactions to parent
 
   category_id: UUID | null
   merchant: string | null
@@ -80,6 +82,7 @@ export function rowToTransaction(
     memberId: row.member_id ?? undefined,
     isEstimated: row.is_estimated === 1 ? true : undefined,
     tags: tags && tags.length > 0 ? tags : undefined,
+    parentTransactionId: row.parent_transaction_id ?? undefined,
   } as const
 
   if (validatedType === 'transfer') {
@@ -118,6 +121,7 @@ export function transactionToRow(
     note: tx.note ?? null,
     member_id: tx.memberId ?? null,
     is_estimated: tx.isEstimated ? 1 : 0,
+    parent_transaction_id: tx.parentTransactionId ?? null,
   }
 
   if (tx.type === 'transfer') {
@@ -126,6 +130,7 @@ export function transactionToRow(
       account_id: null,
       from_account_id: tx.fromAccountId,
       to_account_id: tx.toAccountId,
+      fee_cents: null,
     }
   }
 
@@ -134,5 +139,6 @@ export function transactionToRow(
     account_id: tx.accountId,
     from_account_id: null,
     to_account_id: null,
+    fee_cents: null,
   }
 }
