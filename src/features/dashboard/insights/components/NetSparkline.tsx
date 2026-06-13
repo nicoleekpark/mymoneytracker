@@ -27,12 +27,17 @@ const PADDING_HORIZONTAL = 8 // Prevent line from being cut at edges
 
 function formatNet(val: number): string {
   const absVal = Math.abs(val)
+  const sign = val >= 0 ? '+' : '-'
   if (absVal >= 1000) {
     const k = absVal / 1000
     const kStr = k >= 10 ? Math.round(k).toString() : k.toFixed(1)
-    return `${val >= 0 ? '+' : '-'}$${kStr}k`
+    return `${sign}$${kStr}k`
   }
-  return `${val >= 0 ? '+' : '-'}$${Math.round(absVal)}`
+  // Smart format: show cents only when non-zero
+  const formatted = absVal % 1 !== 0
+    ? absVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : Math.round(absVal).toLocaleString('en-US')
+  return `${sign}$${formatted}`
 }
 
 function formatFullMonth(yyyymm: string): string {

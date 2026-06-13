@@ -223,30 +223,71 @@ function AccountRow({
     // No action for accounts that can't expand
   }
 
-  // No activity - display only (use Account Settings for management)
+  // No activity - still show balance with "No change" indicator
   if (!hasActivity) {
     return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: spacing.sm,
-        }}
-      >
-        {/* Empty chevron space for alignment */}
-        <View style={{ width: 16 }} />
-        <Text
-          style={{
-            flex: 1,
-            fontSize: fontSize.sm,
-            fontWeight: fontWeight.medium,
-            color: colors.textSecondary,
-          }}
-          numberOfLines={1}
-        >
-          {account.name}
-        </Text>
-        {/* No chevron - use Account Settings for account management */}
+      <View style={{ paddingVertical: spacing.sm }}>
+        {/* Main row: Account name + balance */}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* Empty chevron space for alignment */}
+          <View style={{ width: 16 }} />
+          <Text
+            style={{
+              flex: 1,
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.text,
+            }}
+            numberOfLines={1}
+          >
+            {account.name}
+          </Text>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.text,
+              fontVariant: ['tabular-nums'],
+            }}
+          >
+            {formatCurrency(displayEnd)}
+          </Text>
+        </View>
+
+        {/* Sub row: Start → Current / No change indicator */}
+        {hasBalanceData && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: spacing.xs,
+              marginLeft: 16,
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.medium,
+                color: colors.textSecondary,
+                fontVariant: ['tabular-nums'],
+              }}
+            >
+              {displayStart === displayEnd
+                ? 'No change'
+                : `${formatCurrency(displayStart)} → ${formatCurrency(displayEnd)}`}
+            </Text>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.medium,
+                color: colors.textSecondary,
+              }}
+            >
+              0 txns
+            </Text>
+          </View>
+        )}
       </View>
     )
   }

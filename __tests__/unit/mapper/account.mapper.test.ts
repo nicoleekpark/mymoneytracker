@@ -1,5 +1,7 @@
 import { rowToAccount, type AccountRow } from '@/infrastructure/mappers/account.mapper'
 
+const TEST_CREATED_AT = '2026-01-01T00:00:00.000Z'
+
 describe('account.mapper', () => {
   describe('rowToAccount', () => {
     it('converts valid row to Account', () => {
@@ -9,6 +11,7 @@ describe('account.mapper', () => {
         name: 'Chase Checking',
         nature: 'asset',
         kind: 'checking',
+        created_at: TEST_CREATED_AT,
       }
 
       const account = rowToAccount(row)
@@ -18,6 +21,7 @@ describe('account.mapper', () => {
       expect(account.name).toBe(row.name)
       expect(account.nature).toBe('asset')
       expect(account.kind).toBe('checking')
+      expect(account.createdAt).toBe(TEST_CREATED_AT)
     })
 
     it('uses fallback for invalid nature', () => {
@@ -27,6 +31,7 @@ describe('account.mapper', () => {
         name: 'Test Account',
         nature: 'invalid_nature',
         kind: 'checking',
+        created_at: TEST_CREATED_AT,
       }
 
       const account = rowToAccount(row)
@@ -41,6 +46,7 @@ describe('account.mapper', () => {
         name: 'Test Account',
         nature: 'asset',
         kind: 'invalid_kind',
+        created_at: TEST_CREATED_AT,
       }
 
       const account = rowToAccount(row)
@@ -55,6 +61,7 @@ describe('account.mapper', () => {
         name: 'Credit Card',
         nature: 'liability',
         kind: 'credit_card',
+        created_at: TEST_CREATED_AT,
       }
 
       const account = rowToAccount(row)

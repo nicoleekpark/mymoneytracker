@@ -209,6 +209,7 @@ export default function AccountDetailScreen() {
   }
 
   const isDebt = account.nature === 'liability'
+  const isCash = account.kind === 'cash'
   const displayBalance = isDebt ? -Math.abs(currentBalance) : currentBalance
 
   return (
@@ -281,49 +282,51 @@ export default function AccountDetailScreen() {
 
         {/* Editable Fields */}
         <View style={styles.section}>
-          {/* Account Name */}
+          {/* Account Name / Nickname */}
           <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
             <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
-              Account Name
+              {isCash ? 'Nickname' : 'Account Name'}
             </Text>
             <TextInput
               value={name}
               onChangeText={setName}
               style={[modalStyles.fieldInput, { color: semantic.text }]}
-              placeholder="Enter account name"
+              placeholder={isCash ? 'e.g., Vacation, Emergency' : 'Enter account name'}
               placeholderTextColor={semantic.textSecondary}
             />
           </View>
 
-          {/* Institution */}
+          {/* Source (Cash) or Institution (Other) */}
           <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
             <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
-              Institution <Text style={styles.optionalLabel}>(optional)</Text>
+              {isCash ? 'Source' : 'Institution'} <Text style={styles.optionalLabel}>(optional)</Text>
             </Text>
             <TextInput
               value={bankName}
               onChangeText={setBankName}
               style={[modalStyles.fieldInput, { color: semantic.text }]}
-              placeholder="e.g., Chase, Bank of America"
+              placeholder={isCash ? 'e.g., ATM, Gift, Salary' : 'e.g., Chase, Bank of America'}
               placeholderTextColor={semantic.textSecondary}
             />
           </View>
 
-          {/* Last 4 Digits */}
-          <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
-            <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
-              Last 4 Digits <Text style={styles.optionalLabel}>(optional)</Text>
-            </Text>
-            <TextInput
-              value={lastFourDigits}
-              onChangeText={(text) => setLastFourDigits(text.replace(/\D/g, '').slice(0, 4))}
-              style={[modalStyles.fieldInput, { color: semantic.text }]}
-              placeholder="e.g., 4521"
-              placeholderTextColor={semantic.textSecondary}
-              keyboardType="number-pad"
-              maxLength={4}
-            />
-          </View>
+          {/* Last 4 Digits - Only for non-cash accounts */}
+          {!isCash && (
+            <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
+              <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
+                Last 4 Digits <Text style={styles.optionalLabel}>(optional)</Text>
+              </Text>
+              <TextInput
+                value={lastFourDigits}
+                onChangeText={(text) => setLastFourDigits(text.replace(/\D/g, '').slice(0, 4))}
+                style={[modalStyles.fieldInput, { color: semantic.text }]}
+                placeholder="e.g., 4521"
+                placeholderTextColor={semantic.textSecondary}
+                keyboardType="number-pad"
+                maxLength={4}
+              />
+            </View>
+          )}
         </View>
 
         {/* Account Type (Read-only) */}

@@ -4,7 +4,7 @@ import { formatUsdInt } from '@/shared/format/currency'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 import { useRouter } from 'expo-router'
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 
 import { DashboardHero, StatsRow } from '../shared'
@@ -41,10 +41,42 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   const totalExpense = summaryData.expenseTotalDollar
   const totalIncome = summaryData.incomeTotalDollar
 
-  // Zero-spend days: days with income but no expense
-  const zeroSpendDays = useMemo(() => {
+  // Auto zero-spend days: days with income but no expense
+  const autoZeroSpendCount = useMemo(() => {
     return daily.filter(d => d.incomeDollar > 0 && d.expenseDollar === 0).length
   }, [daily])
+
+  // Manual zero-spend days (user-marked)
+  const [manualZeroSpendDays, setManualZeroSpendDays] = useState<Set<string>>(new Set())
+
+  // Toggle zero-spend for a day
+  const handleToggleZeroSpend = useCallback((ymd: string, isZeroSpend: boolean) => {
+    setManualZeroSpendDays(prev => {
+      const next = new Set(prev)
+      if (isZeroSpend) {
+        next.add(ymd)
+      } else {
+        next.delete(ymd)
+      }
+      return next
+    })
+  }, [])
+
+  // Total zero-spend days (auto + manual, avoiding double-counting)
+  const zeroSpendDays = useMemo(() => {
+    // Days that are auto zero-spend
+    const autoDays = new Set(
+      daily.filter(d => d.incomeDollar > 0 && d.expenseDollar === 0).map(d => d.day)
+    )
+    // Manual days that aren't already auto
+    let manualOnly = 0
+    for (const ymd of manualZeroSpendDays) {
+      if (!autoDays.has(ymd)) {
+        manualOnly++
+      }
+    }
+    return autoZeroSpendCount + manualOnly
+  }, [daily, manualZeroSpendDays, autoZeroSpendCount])
 
   // Feature flag for hero variant
   const heroVariant = FEATURE_FLAGS.heroVariant === 'optionA' ? 'optionA' : 'optionB'
@@ -90,8 +122,6 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
           showDayIndicator={heroData.isCurrentMonth}
           comparisonDollar={heroData.hasLastMonthData ? heroData.netChangeDollar : null}
           comparisonLabel={heroData.hasLastMonthData ? `vs ${heroData.lastMonthName}` : undefined}
-          nudgeText="Keep this pace for the rest of the month"
-          showNudge={heroData.isCurrentMonth}
           colors={colors}
         />
 
@@ -135,6 +165,8 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
               daily={daily}
               colors={colors}
               onPressDay={onPressDay}
+              manualZeroSpendDays={manualZeroSpendDays}
+              onToggleZeroSpend={handleToggleZeroSpend}
             />
           </>
         )}

@@ -57,6 +57,10 @@ type Props = Readonly<{
   daily: DailyFlow[]
   colors: CalendarColors
   onPressDay?: (ymd: string) => void
+  /** Set of YMD strings that are manually marked as zero-spend */
+  manualZeroSpendDays?: Set<string>
+  /** Callback when zero-spend is toggled for a day */
+  onToggleZeroSpend?: (ymd: string, isZeroSpend: boolean) => void
 }>
 
 /**
@@ -65,7 +69,7 @@ type Props = Readonly<{
  * - Always shows income/expense amounts below dates
  * - Tap day to see transaction details in tooltip popup
  */
-export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Props) {
+export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay, manualZeroSpendDays, onToggleZeroSpend }: Props) {
   const { year, month } = parseYYYYMM(monthYYYYMM)
   const [selectedDay, setSelectedDay] = useState<SelectedDay | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -140,9 +144,10 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
       income: v?.income ?? 0,
       expense: v?.expense ?? 0,
       txCount: v?.txCount ?? 0,
-      net: v?.net ?? 0
+      net: v?.net ?? 0,
+      isFuture: ymd > todayYMD
     })
-  }, [map])
+  }, [map, todayYMD])
 
   // Present bottom sheet when selectedDay changes
   useEffect(() => {
@@ -157,6 +162,10 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
       onPressDay?.(selectedDay.ymd)
     }
   }, [selectedDay, onPressDay])
+
+  const handleDismiss = useCallback(() => {
+    bottomSheetRef.current?.dismiss()
+  }, [])
 
   // Build weeks array for proper 7-column layout
   const weeks = useMemo(() => {
@@ -204,9 +213,11 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
     const ymd = `${monthYYYYMM}-${dd}`
     const v = map.get(ymd)
     const isToday = ymd === todayYMD
+    const isFuture = ymd > todayYMD
     const isSelected = selectedDay?.ymd === ymd
     const hasActivity = v !== undefined && (v.hasIncome || v.hasExpense)
-    const isZeroSpend = v?.isZeroSpend ?? false
+    // Zero-spend: either automatic (income but no expense) or manually marked
+    const isZeroSpend = (v?.isZeroSpend ?? false) || (manualZeroSpendDays?.has(ymd) ?? false)
     const bgColor = getBgColor()
 
     // Get semantic color style for amount
@@ -226,13 +237,17 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
     if (isZeroSpend) a11yParts.push('zero spend day')
     const a11yLabel = a11yParts.join(', ')
 
+    // Future dates without activity are disabled; future dates WITH activity are clickable
+    const isDisabled = isFuture && !hasActivity
+
     return (
       <View key={cellKey} style={wrapperStyle}>
         <Pressable
           onPress={() => handleDayPress(ymd, dayNum)}
+          disabled={isDisabled}
           accessibilityRole="button"
           accessibilityLabel={a11yLabel}
-          accessibilityState={{ selected: isSelected }}
+          accessibilityState={{ selected: isSelected, disabled: isDisabled }}
           style={{
             height: CELL_HEIGHT,
             backgroundColor: bgColor,
@@ -242,7 +257,8 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
             paddingTop: 6,
             paddingHorizontal: 2,
             alignItems: 'center',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            opacity: isDisabled ? 0.3 : 1
           }}
         >
         {/* Zero-spend indicator: top-left corner triangle */}
@@ -335,6 +351,9 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay }: Prop
         loadingTx={loadingTx}
         colors={colors}
         onViewAll={handleViewAll}
+        zeroSpendDays={manualZeroSpendDays}
+        onToggleZeroSpend={onToggleZeroSpend}
+        onDismiss={handleDismiss}
       />
     </View>
   )

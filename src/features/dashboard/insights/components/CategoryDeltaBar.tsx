@@ -22,10 +22,15 @@ type Props = {
 
 function formatDelta(value: number): string {
   const abs = Math.abs(value)
+  const sign = value >= 0 ? '+' : '-'
   if (abs >= 1000) {
-    return `${value >= 0 ? '+' : '-'}$${(abs / 1000).toFixed(1)}k`
+    return `${sign}$${(abs / 1000).toFixed(1)}k`
   }
-  return `${value >= 0 ? '+' : '-'}$${Math.round(abs)}`
+  // Smart format: show cents only when non-zero
+  const formatted = abs % 1 !== 0
+    ? abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : Math.round(abs).toLocaleString('en-US')
+  return `${sign}$${formatted}`
 }
 
 /**

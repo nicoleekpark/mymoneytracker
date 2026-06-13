@@ -28,6 +28,7 @@ import { m20260605100000_add_account_details } from './20260605100000_add_accoun
 import { m20260612100000_rename_cash_wallet } from './20260612100000_rename_cash_wallet'
 import { m20260612140403_add_transfer_fee } from './20260612140403_add_transfer_fee'
 import { m20260612152326_add_parent_transaction_id } from './20260612152326_add_parent_transaction_id'
+import { m20260613100000_add_account_archived_at } from './20260613100000_add_account_archived_at'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
@@ -54,5 +55,6 @@ export const MIGRATIONS: Migration[] = [
   m20260605100000_add_account_details,
   m20260612100000_rename_cash_wallet,
   m20260612140403_add_transfer_fee,
-  m20260612152326_add_parent_transaction_id
+  m20260612152326_add_parent_transaction_id,
+  m20260613100000_add_account_archived_at
 ]

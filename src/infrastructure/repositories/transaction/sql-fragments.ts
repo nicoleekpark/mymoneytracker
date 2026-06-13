@@ -74,14 +74,16 @@ export const ACCOUNT_ACTIVITY_SELECT = `
 /**
  * Account balance calculation query.
  * Returns income, expense, and transfer totals for balance calculation.
+ * Note: Uses 7 accountId parameters in order:
+ *   1-2: income/expense checks, 3-4: transfer checks, 5-7: WHERE clause
  */
 export const accountBalanceQuery = (accountId: string, dateCondition: string) => `
   SELECT
-    COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
-    COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+    COALESCE(SUM(CASE WHEN type = 'income' AND account_id = ? THEN amount_cents ELSE 0 END), 0) AS income_cents,
+    COALESCE(SUM(CASE WHEN type = 'expense' AND account_id = ? THEN amount_cents ELSE 0 END), 0) AS expense_cents,
     COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
     COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents
   FROM transactions
-  WHERE account_id = ?
+  WHERE (account_id = ? OR from_account_id = ? OR to_account_id = ?)
     AND ${dateCondition};
 `

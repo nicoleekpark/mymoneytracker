@@ -77,15 +77,10 @@ function upsertSystemAccount(args: {
 export function seedSystemAccounts(report: SeedReport): void {
   const now = new Date().toISOString()
 
-  const SYSTEM_ACCOUNTS = [
-    {
-      key: 'acct:cash_wallet',
-      name: 'Cash',
-      kind: 'cash',
-      nature: 'asset',
-      currency: 'USD'
-    }
-  ] as const
+  // Default system accounts
+  const SYSTEM_ACCOUNTS: readonly { key: string; name: string; kind: 'cash' | 'bank' | 'credit' | 'other'; nature: 'asset' | 'liability'; currency: string }[] = [
+    { key: 'cash', name: 'Cash', kind: 'cash', nature: 'asset', currency: 'USD' },
+  ]
 
   withTransaction(() => {
     let sort = 1

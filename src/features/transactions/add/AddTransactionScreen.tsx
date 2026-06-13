@@ -10,6 +10,7 @@ import {
 } from '@/core/services/price-tracker'
 import { addTransaction, getTransactionById, updateTransaction } from '@/core/services/transaction'
 import { CategoryIcon, ScalePressable } from '@/shared/components'
+import { formatCentsForDisplay } from '@/shared/format/currency'
 import { CATEGORIES, CATEGORIES_INDEX } from '@/shared/config'
 import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
@@ -272,7 +273,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   // Fee display in dollars
   const feeDisplay = useMemo(() => {
     if (!hasFee || feeCents <= 0) return null
-    return (feeCents / 100).toFixed(2)
+    return formatCentsForDisplay(feeCents)
   }, [hasFee, feeCents])
 
   // Load draft data if editing
@@ -1235,70 +1236,71 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
           </View>
         </View>
 
+        {/* Fee Section - for all transaction types */}
+        <View style={styles.fieldGroup}>
+          <Pressable
+            onPress={() => setHasFee(!hasFee)}
+            style={[styles.fieldRow, styles.fieldRowNoBorder, { justifyContent: 'center' }]}
+          >
+            <View style={styles.checkboxRow}>
+              <View
+                style={[
+                  styles.checkbox,
+                  {
+                    borderColor: hasFee ? theme.semantic.primary : theme.semantic.border,
+                    backgroundColor: hasFee ? theme.semantic.primary : 'transparent',
+                  },
+                ]}
+              >
+                {hasFee && (
+                  <FontAwesome name="check" size={10} color={theme.semantic.onPrimary} />
+                )}
+              </View>
+              <Text style={[styles.checkboxLabel, { color: theme.semantic.textSecondary }]}>
+                Add fee
+              </Text>
+            </View>
+          </Pressable>
+
+          {/* Fee input (shown when checkbox is checked) */}
+          {hasFee && (
+            <>
+              <Pressable
+                onPress={() => setShowFeeKeypad(true)}
+                style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingLeft: spacing.xl }]}
+              >
+                <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>
+                  Fee
+                </Text>
+                <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
+                  {feeDisplay ? `$${feeDisplay}` : '$0.00'}
+                </Text>
+                {feeCents > 0 && (
+                  <Pressable
+                    onPress={() => setFeeCents(0)}
+                    hitSlop={8}
+                    style={styles.clearButton}
+                  >
+                    <FontAwesome
+                      name="times-circle"
+                      size={16}
+                      color={theme.semantic.textSecondary}
+                    />
+                  </Pressable>
+                )}
+              </Pressable>
+              <View style={[styles.feeHint, { paddingLeft: spacing.xl }]}>
+                <Text style={[styles.feeHintText, { color: theme.semantic.textSecondary }]}>
+                  Recorded separately · Total: ${formatCentsForDisplay(amount.amountCents + feeCents)}
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+
         {/* Transfer Fields */}
         {type === 'transfer' && (
           <View style={styles.fieldGroup}>
-            {/* Fee checkbox under amount */}
-            <Pressable
-              onPress={() => setHasFee(!hasFee)}
-              style={[styles.fieldRow, styles.fieldRowNoBorder, { justifyContent: 'center' }]}
-            >
-              <View style={styles.checkboxRow}>
-                <View
-                  style={[
-                    styles.checkbox,
-                    {
-                      borderColor: hasFee ? theme.semantic.primary : theme.semantic.border,
-                      backgroundColor: hasFee ? theme.semantic.primary : 'transparent',
-                    },
-                  ]}
-                >
-                  {hasFee && (
-                    <FontAwesome name="check" size={10} color={theme.semantic.onPrimary} />
-                  )}
-                </View>
-                <Text style={[styles.checkboxLabel, { color: theme.semantic.textSecondary }]}>
-                  Add fee
-                </Text>
-              </View>
-            </Pressable>
-
-            {/* Fee input (shown when checkbox is checked) */}
-            {hasFee && (
-              <>
-                <Pressable
-                  onPress={() => setShowFeeKeypad(true)}
-                  style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingLeft: spacing.xl }]}
-                >
-                  <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>
-                    Fee
-                  </Text>
-                  <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
-                    {feeDisplay ? `$${feeDisplay}` : '$0.00'}
-                  </Text>
-                  {feeCents > 0 && (
-                    <Pressable
-                      onPress={() => setFeeCents(0)}
-                      hitSlop={8}
-                      style={styles.clearButton}
-                    >
-                      <FontAwesome
-                        name="times-circle"
-                        size={16}
-                        color={theme.semantic.textSecondary}
-                      />
-                    </Pressable>
-                  )}
-                </Pressable>
-                <View style={[styles.feeHint, { paddingLeft: spacing.xl }]}>
-                  <Text style={[styles.feeHintText, { color: theme.semantic.textSecondary }]}>
-                    Recorded separately · Total: ${((amount.amountCents + feeCents) / 100).toFixed(2)}
-                  </Text>
-                </View>
-              </>
-            )}
-            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-
             {/* From Account */}
             <View
               style={[
@@ -1691,67 +1693,6 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                 />
               </View>
             </View>
-            <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
-
-            {/* Add Fee - expense/income */}
-            <Pressable
-              onPress={() => setHasFee(!hasFee)}
-              style={[styles.fieldRow, styles.fieldRowNoBorder, { justifyContent: 'center' }]}
-            >
-              <View style={styles.checkboxRow}>
-                <View
-                  style={[
-                    styles.checkbox,
-                    {
-                      borderColor: hasFee ? theme.semantic.primary : theme.semantic.border,
-                      backgroundColor: hasFee ? theme.semantic.primary : 'transparent',
-                    },
-                  ]}
-                >
-                  {hasFee && (
-                    <FontAwesome name="check" size={10} color={theme.semantic.onPrimary} />
-                  )}
-                </View>
-                <Text style={[styles.checkboxLabel, { color: theme.semantic.textSecondary }]}>
-                  Add fee
-                </Text>
-              </View>
-            </Pressable>
-
-            {/* Fee input (shown when checkbox is checked) */}
-            {hasFee && (
-              <>
-                <Pressable
-                  onPress={() => setShowFeeKeypad(true)}
-                  style={[styles.fieldRow, styles.fieldRowNoBorder, { paddingLeft: spacing.xl }]}
-                >
-                  <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>
-                    Fee
-                  </Text>
-                  <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
-                    {feeDisplay ? `$${feeDisplay}` : '$0.00'}
-                  </Text>
-                  {feeCents > 0 && (
-                    <Pressable
-                      onPress={() => setFeeCents(0)}
-                      hitSlop={8}
-                      style={styles.clearButton}
-                    >
-                      <FontAwesome
-                        name="times-circle"
-                        size={16}
-                        color={theme.semantic.textSecondary}
-                      />
-                    </Pressable>
-                  )}
-                </Pressable>
-                <View style={[styles.feeHint, { paddingLeft: spacing.xl }]}>
-                  <Text style={[styles.feeHintText, { color: theme.semantic.textSecondary }]}>
-                    Recorded separately · Total: ${((amount.amountCents + feeCents) / 100).toFixed(2)}
-                  </Text>
-                </View>
-              </>
-            )}
 
             {/* Itemized Items - expense only */}
             {type === 'expense' && (
@@ -1915,13 +1856,14 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       {/* Fee Keypad Sheet (for transfers) */}
       <AmountKeypadSheet
         visible={showFeeKeypad}
-        amountDisplay={feeCents > 0 ? (feeCents / 100).toFixed(2) : '0'}
+        amountDisplay={formatCentsForDisplay(feeCents)}
         hideEstimated
         onDigit={(digit) => {
           const current = feeCents.toString()
           const newVal = current === '0' ? digit : current + digit
           const cents = parseInt(newVal, 10)
-          if (cents <= 99999) setFeeCents(cents) // Max $999.99
+          // Max 9 digits = $9,999,999.99 (same scale as main amount)
+          if (cents <= 999999999) setFeeCents(cents)
         }}
         onBackspace={() => {
           const current = feeCents.toString()

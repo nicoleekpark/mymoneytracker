@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Keyboard } from 'react-native'
+import { formatCentsForDisplay } from '@/shared/format/currency'
 
 function digitsOnly(s: string): string {
   return s.replace(/[^\d]/g, '')
@@ -8,9 +9,7 @@ function digitsOnly(s: string): string {
 function formatCentsDisplay(centsText: string): string {
   const digits = digitsOnly(centsText)
   const cents = digits ? Number(digits) : 0
-  if (!Number.isFinite(cents) || cents < 0) return '0.00'
-  const dollars = cents / 100
-  return dollars.toFixed(2)
+  return formatCentsForDisplay(cents)
 }
 
 function centsNumber(centsText: string): number {

@@ -156,4 +156,8 @@ export interface TransactionRepository {
   hasTransactionsForAccount(accountId: UUID): boolean
   countTransactionsForAccount(accountId: UUID): number
   deleteTransactionsForAccount(accountId: UUID): number // Returns count of deleted transactions
+
+  // Opening balance
+  getOpeningBalanceForAccount(accountId: UUID): number // Returns cents
+  hasTransactionsBeforeDate(accountId: UUID, dateYYYYMMDD: string): boolean
 }

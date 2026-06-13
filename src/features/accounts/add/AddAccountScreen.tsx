@@ -16,12 +16,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { AccountKind } from '@/core/domain/account'
 import { createAccount } from '@/core/services/account'
 import { AmountKeypadSheet, ModalSaveBar } from '@/shared/components'
+import { formatCentsForDisplay } from '@/shared/format/currency'
 import { CATEGORIES_INDEX } from '@/shared/config/categories.index'
 import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
-import { getFieldLabelColor, getScrollContentWithSimpleCTAPadding, MODAL_TOAST_DURATION, modalStyles } from '@/shared/theme/tokens/modal'
+import { getFieldLabelColor, getScrollContentWithSimpleCTAPadding, MODAL_TOAST_DURATION, modalStyles, selectionStyles } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -111,14 +112,16 @@ export default function AddAccountScreen() {
 
   // Amount keypad helpers
   const balanceDisplay = useMemo(() => {
-    const dollars = Math.floor(balanceCents / 100)
-    const cents = balanceCents % 100
-    return `${dollars}.${cents.toString().padStart(2, '0')}`
+    return formatCentsForDisplay(balanceCents)
   }, [balanceCents])
 
   const handleKeypadDigit = useCallback((digit: string) => {
     setBalanceCents((prev) => {
-      const next = prev * 10 + parseInt(digit, 10)
+      // Handle multi-digit input (e.g., '00')
+      let next = prev
+      for (const d of digit) {
+        next = next * 10 + parseInt(d, 10)
+      }
       // Cap at $999,999.99
       return next > 99999999 ? prev : next
     })
@@ -137,15 +140,14 @@ export default function AddAccountScreen() {
   }, [])
 
   // Auto-select first subtype when category changes
-  // For cash, also set default name
   useEffect(() => {
     const subtypes = ACCOUNT_SUBTYPES[category]
     if (subtypes.length > 0) {
       setKind(subtypes[0].key)
     }
-    // Auto-set name for cash
-    if (category === 'cash') {
-      setName('Cash')
+    // Clear name when switching categories (except when switching TO cash)
+    if (category !== 'cash') {
+      setName('')
     }
   }, [category])
 
@@ -157,7 +159,9 @@ export default function AddAccountScreen() {
   const handleSubmit = useCallback(() => {
     const trimmedName = name.trim()
 
-    if (!trimmedName) {
+    // For cash accounts, name is optional (defaults to "Cash")
+    // For other accounts, name is required
+    if (!trimmedName && category !== 'cash') {
       showToast('Please enter a nickname')
       setHighlightName(true)
       if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
@@ -165,9 +169,12 @@ export default function AddAccountScreen() {
       return
     }
 
+    // Use "Cash" as default name for cash accounts without a nickname
+    const accountName = trimmedName || (category === 'cash' ? 'Cash' : '')
+
     try {
       createAccount(CATEGORIES_INDEX, {
-        name: trimmedName,
+        name: accountName,
         kind,
         bankName: bankName.trim() || undefined,
         lastFourDigits: lastFour.trim() || undefined,
@@ -181,12 +188,15 @@ export default function AddAccountScreen() {
       Keyboard.dismiss()
       router.back()
     } catch (error) {
-      showToast('Failed to create account')
+      console.error('AddAccountScreen: Failed to create account', error)
+      const message = error instanceof Error ? error.message : 'Failed to create account'
+      showToast(message)
     }
-  }, [name, kind, bankName, lastFour, balanceCents, invalidateTransactions, showToast])
+  }, [name, kind, bankName, lastFour, balanceCents, category, invalidateTransactions, showToast])
 
   const isLiability = kind === 'credit_card' || kind === 'loan'
-  const canSubmit = name.trim().length > 0
+  // Cash accounts can submit without a name (defaults to "Cash")
+  const canSubmit = category === 'cash' || name.trim().length > 0
   const subtypes = ACCOUNT_SUBTYPES[category]
 
   // Get label for institution/source field based on kind
@@ -268,15 +278,22 @@ export default function AddAccountScreen() {
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero: Nickname Input (simplified for cash) */}
+          {/* Hero: Balance for cash, Nickname for others */}
           {category === 'cash' ? (
-            <View style={localStyles.heroContainer}>
-              <FontAwesome name="money" size={32} color={semantic.primary} />
-              <Text style={[localStyles.cashTitle, { color: semantic.text }]}>Cash</Text>
-              <Text style={[localStyles.heroHint, { color: semantic.textSecondary }]}>
-                Enter your current cash on hand
+            <Pressable
+              onPress={() => {
+                Keyboard.dismiss()
+                setShowKeypad(true)
+              }}
+              style={localStyles.heroContainer}
+            >
+              <Text style={[localStyles.balanceLabel, { color: semantic.textSecondary }]}>
+                Balance
               </Text>
-            </View>
+              <Text style={[localStyles.balanceValue, { color: semantic.text }]}>
+                ${balanceDisplay}
+              </Text>
+            </Pressable>
           ) : (
             <View
               style={[
@@ -318,13 +335,35 @@ export default function AddAccountScreen() {
             </View>
           )}
 
-          {/* Subtype Chips */}
-          {subtypes.length > 1 && (
+          {/* Subtype Chips - show single Cash pill for cash, multiple for others */}
+          {category === 'cash' ? (
+            <View style={{ marginBottom: spacing.lg }}>
+              <Text style={[localStyles.fieldSectionLabel, { color: semantic.textSecondary }]}>
+                Type
+              </Text>
+              <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
+                <View
+                  style={[
+                    selectionStyles.selectionChip,
+                    {
+                      backgroundColor: semantic.primary + '20',
+                      borderColor: semantic.primary,
+                    },
+                  ]}
+                >
+                  <FontAwesome name="money" size={14} color={semantic.primary} />
+                  <Text style={[selectionStyles.selectionChipText, { color: semantic.primary }]}>
+                    Cash
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : subtypes.length > 1 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              style={localStyles.chipsRow}
-              contentContainerStyle={localStyles.chipsContent}
+              style={{ marginBottom: spacing.lg }}
+              contentContainerStyle={{ gap: spacing.sm, paddingVertical: spacing.xs }}
             >
               {subtypes.map((subtype) => {
                 const selected = kind === subtype.key
@@ -333,7 +372,7 @@ export default function AddAccountScreen() {
                     key={subtype.key}
                     onPress={() => setKind(subtype.key)}
                     style={[
-                      localStyles.chip,
+                      selectionStyles.selectionChip,
                       {
                         backgroundColor: selected ? semantic.primary + '20' : semantic.surfaceAlt,
                         borderColor: selected ? semantic.primary : semantic.border,
@@ -347,7 +386,7 @@ export default function AddAccountScreen() {
                     />
                     <Text
                       style={[
-                        localStyles.chipText,
+                        selectionStyles.selectionChipText,
                         { color: selected ? semantic.primary : semantic.textSecondary },
                       ]}
                     >
@@ -357,57 +396,29 @@ export default function AddAccountScreen() {
                 )
               })}
             </ScrollView>
-          )}
+          ) : null}
 
           {/* Field Group */}
           <View style={modalStyles.fieldGroup}>
-            {/* Institution/Source (Optional) */}
-            <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
-              <Text
-                style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!bankName, semantic) }]}
-              >
-                {institutionLabel} <Text style={modalStyles.optionalLabel}>(optional)</Text>
-              </Text>
-              <View style={modalStyles.fieldInputWrapper}>
-                {!bankName && (
-                  <Text
-                    style={[
-                      modalStyles.fieldPlaceholder,
-                      modalStyles.fieldInputPlaceholder,
-                      { color: semantic.textSecondary },
-                    ]}
-                  >
-                    {institutionPlaceholder}
-                  </Text>
-                )}
-                <TextInput
-                  ref={institutionInputRef}
-                  value={bankName}
-                  onChangeText={setBankName}
-                  style={[modalStyles.fieldInput, { color: semantic.text }]}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                />
-              </View>
-            </View>
-            <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
-
-            {/* Last 4 Digits (Optional) - Only for bank accounts and cards (not cash) */}
-            {(category === 'bank' || category === 'card') && kind !== 'cash' && (
+            {/* Cash-specific fields: Nickname, Source */}
+            {category === 'cash' ? (
               <>
+                {/* Nickname */}
                 <View
-                  style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
+                  style={[
+                    modalStyles.fieldRow,
+                    modalStyles.fieldRowNoBorder,
+                    { paddingRight: 0 },
+                    highlightName && { backgroundColor: (semantic.warning ?? semantic.danger) + '15' },
+                  ]}
                 >
                   <Text
-                    style={[
-                      modalStyles.fieldLabel,
-                      { color: getFieldLabelColor(!!lastFour, semantic) },
-                    ]}
+                    style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!name, semantic) }]}
                   >
-                    Last 4 digits <Text style={modalStyles.optionalLabel}>(optional)</Text>
+                    Nickname <Text style={modalStyles.optionalLabel}>(optional)</Text>
                   </Text>
                   <View style={modalStyles.fieldInputWrapper}>
-                    {!lastFour && (
+                    {!name && (
                       <Text
                         style={[
                           modalStyles.fieldPlaceholder,
@@ -415,52 +426,155 @@ export default function AddAccountScreen() {
                           { color: semantic.textSecondary },
                         ]}
                       >
-                        For identification
+                        e.g., Vacation, Emergency
                       </Text>
                     )}
                     <TextInput
-                      ref={lastFourInputRef}
-                      value={lastFour}
-                      onChangeText={(text) => setLastFour(text.replace(/\D/g, '').slice(0, 4))}
+                      ref={nameInputRef}
+                      value={name}
+                      onChangeText={setName}
                       style={[modalStyles.fieldInput, { color: semantic.text }]}
-                      keyboardType="number-pad"
-                      maxLength={4}
+                      autoCapitalize="words"
+                      autoCorrect={false}
                     />
                   </View>
                 </View>
                 <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
-              </>
-            )}
 
-            {/* Current Balance (Optional) - Opens keypad */}
-            <Pressable
-              onPress={() => {
-                Keyboard.dismiss()
-                setShowKeypad(true)
-              }}
-              style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
-            >
-              <Text
-                style={[modalStyles.fieldLabel, { color: getFieldLabelColor(balanceCents > 0, semantic) }]}
-              >
-                {isLiability ? 'Current balance owed' : 'Current balance'}{' '}
-                <Text style={modalStyles.optionalLabel}>(optional)</Text>
-              </Text>
-              <View style={modalStyles.fieldInputWrapper}>
-                <Text
-                  style={[
-                    modalStyles.fieldInput,
-                    { color: balanceCents > 0 ? semantic.text : semantic.textSecondary },
-                  ]}
+                {/* Source */}
+                <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
+                  <Text
+                    style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!bankName, semantic) }]}
+                  >
+                    Source <Text style={modalStyles.optionalLabel}>(optional)</Text>
+                  </Text>
+                  <View style={modalStyles.fieldInputWrapper}>
+                    {!bankName && (
+                      <Text
+                        style={[
+                          modalStyles.fieldPlaceholder,
+                          modalStyles.fieldInputPlaceholder,
+                          { color: semantic.textSecondary },
+                        ]}
+                      >
+                        e.g., ATM, Gift, Salary
+                      </Text>
+                    )}
+                    <TextInput
+                      ref={institutionInputRef}
+                      value={bankName}
+                      onChangeText={setBankName}
+                      style={[modalStyles.fieldInput, { color: semantic.text }]}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                    />
+                  </View>
+                </View>
+              </>
+            ) : (
+              <>
+                {/* Institution/Source (Optional) */}
+                <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
+                  <Text
+                    style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!bankName, semantic) }]}
+                  >
+                    {institutionLabel} <Text style={modalStyles.optionalLabel}>(optional)</Text>
+                  </Text>
+                  <View style={modalStyles.fieldInputWrapper}>
+                    {!bankName && (
+                      <Text
+                        style={[
+                          modalStyles.fieldPlaceholder,
+                          modalStyles.fieldInputPlaceholder,
+                          { color: semantic.textSecondary },
+                        ]}
+                      >
+                        {institutionPlaceholder}
+                      </Text>
+                    )}
+                    <TextInput
+                      ref={institutionInputRef}
+                      value={bankName}
+                      onChangeText={setBankName}
+                      style={[modalStyles.fieldInput, { color: semantic.text }]}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                    />
+                  </View>
+                </View>
+                <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+
+                {/* Last 4 Digits (Optional) - Only for bank accounts and cards */}
+                {(category === 'bank' || category === 'card') && (
+                  <>
+                    <View
+                      style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
+                    >
+                      <Text
+                        style={[
+                          modalStyles.fieldLabel,
+                          { color: getFieldLabelColor(!!lastFour, semantic) },
+                        ]}
+                      >
+                        Last 4 digits <Text style={modalStyles.optionalLabel}>(optional)</Text>
+                      </Text>
+                      <View style={modalStyles.fieldInputWrapper}>
+                        {!lastFour && (
+                          <Text
+                            style={[
+                              modalStyles.fieldPlaceholder,
+                              modalStyles.fieldInputPlaceholder,
+                              { color: semantic.textSecondary },
+                            ]}
+                          >
+                            For identification
+                          </Text>
+                        )}
+                        <TextInput
+                          ref={lastFourInputRef}
+                          value={lastFour}
+                          onChangeText={(text) => setLastFour(text.replace(/\D/g, '').slice(0, 4))}
+                          style={[modalStyles.fieldInput, { color: semantic.text }]}
+                          keyboardType="number-pad"
+                          maxLength={4}
+                        />
+                      </View>
+                    </View>
+                    <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+                  </>
+                )}
+
+                {/* Current Balance (Optional) - Opens keypad */}
+                <Pressable
+                  onPress={() => {
+                    Keyboard.dismiss()
+                    setShowKeypad(true)
+                  }}
+                  style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
                 >
-                  ${balanceDisplay}
-                </Text>
-              </View>
-            </Pressable>
-            {isLiability && balanceCents > 0 && (
-              <Text style={[modalStyles.hint, { color: semantic.textSecondary }]}>
-                This will be tracked as a liability
-              </Text>
+                  <Text
+                    style={[modalStyles.fieldLabel, { color: getFieldLabelColor(balanceCents > 0, semantic) }]}
+                  >
+                    {isLiability ? 'Current balance owed' : 'Current balance'}{' '}
+                    <Text style={modalStyles.optionalLabel}>(optional)</Text>
+                  </Text>
+                  <View style={modalStyles.fieldInputWrapper}>
+                    <Text
+                      style={[
+                        modalStyles.fieldInput,
+                        { color: balanceCents > 0 ? semantic.text : semantic.textSecondary },
+                      ]}
+                    >
+                      ${balanceDisplay}
+                    </Text>
+                  </View>
+                </Pressable>
+                {isLiability && balanceCents > 0 && (
+                  <Text style={[modalStyles.hint, { color: semantic.textSecondary }]}>
+                    This will be tracked as a liability
+                  </Text>
+                )}
+              </>
             )}
           </View>
 
@@ -540,31 +654,24 @@ const localStyles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: spacing.md,
   },
-  cashTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.semibold,
-    marginTop: spacing.md,
-  },
-
-  // Chips
-  chipsRow: {
-    marginBottom: spacing.lg,
-  },
-  chipsContent: {
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.full,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: fontSize.sm,
+  // Cash balance hero
+  balanceLabel: {
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
+  },
+  balanceValue: {
+    fontSize: 32,
+    fontWeight: fontWeight.heavy,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -1,
+  },
+  fieldSectionLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 })

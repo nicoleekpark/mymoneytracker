@@ -161,12 +161,15 @@ export function MonthlyCategoryContent(props: ContentProps) {
                     <Text style={{ flex: 1, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text }} numberOfLines={1}>
                       {catMeta.name}
                     </Text>
-                    <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text }}>
-                      {formatUsdInt(cat.totalDollar)}
-                    </Text>
-                    <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
-                      {Math.round(percent)}%
-                    </Text>
+                    {/* Amount + Percent right-aligned together */}
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm }}>
+                      <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, fontVariant: ['tabular-nums'] }}>
+                        {formatUsdInt(cat.totalDollar)}
+                      </Text>
+                      <Text style={{ width: 40, textAlign: 'right', fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.textSecondary, fontVariant: ['tabular-nums'] }}>
+                        {Math.round(percent)}%
+                      </Text>
+                    </View>
                     {/* Chevron indicator - fixed width container for alignment */}
                     <View style={{ width: 20, alignItems: 'center' }}>
                       {hasSubcategories && (
@@ -217,12 +220,15 @@ export function MonthlyCategoryContent(props: ContentProps) {
                               <Text style={{ flex: 1, fontSize: fontSize.xs, color: colors.text, opacity: 0.8 }} numberOfLines={1}>
                                 {getSubcategoryMeta(categoryKey, sub.subCategoryKey).name}
                               </Text>
-                              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8 }}>
-                                {formatUsdInt(sub.totalDollar)}
-                              </Text>
-                              <Text style={{ width: 44, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary }}>
-                                {Math.round(subPercent)}%
-                              </Text>
+                              {/* Amount + Percent right-aligned together */}
+                              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm }}>
+                                <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.text, opacity: 0.8, fontVariant: ['tabular-nums'] }}>
+                                  {formatUsdInt(sub.totalDollar)}
+                                </Text>
+                                <Text style={{ width: 40, textAlign: 'right', fontSize: fontSize.xs, color: colors.textSecondary, fontVariant: ['tabular-nums'] }}>
+                                  {Math.round(subPercent)}%
+                                </Text>
+                              </View>
                               {/* Spacer for alignment with parent rows */}
                               <View style={{ width: 20 }} />
                             </View>

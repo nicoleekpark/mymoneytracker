@@ -100,4 +100,10 @@ export type Account = {
 
   /** Last 4 digits of account number (e.g., "1234") */
   lastFourDigits?: string
+
+  /** When the account was created (ISO 8601 string). Undefined for legacy accounts. */
+  createdAt?: string
+
+  /** When the account was archived (ISO 8601 string), null if not archived */
+  archivedAt?: string | null
 }

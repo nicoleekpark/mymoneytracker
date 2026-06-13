@@ -62,7 +62,10 @@ function formatCompactAmount(amount: number): string {
   if (abs >= 1000) {
     return `$${(amount / 1000).toFixed(0)}K`
   }
-  return `$${Math.round(amount)}`
+  // Smart format: show cents only when non-zero
+  return abs % 1 !== 0
+    ? `$${abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : `$${Math.round(abs).toLocaleString('en-US')}`
 }
 
 function filterDataByPeriod(data: CumulativeNetData[], period: PeriodKey): CumulativeNetData[] {

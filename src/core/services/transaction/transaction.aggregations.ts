@@ -428,3 +428,19 @@ export function getAccountBalanceAtEndOfMonth(accountId: UUID, monthYYYYMM: stri
   const balanceCents = transactionRepository.getAccountBalanceAtEndOfMonth(accountId, monthYYYYMM)
   return centsToDollars(balanceCents)
 }
+
+/**
+ * Get opening balance for an account (in dollars)
+ * Returns the amount from the first "Opening Balance" transaction
+ */
+export function getOpeningBalanceForAccount(accountId: UUID): number {
+  const balanceCents = transactionRepository.getOpeningBalanceForAccount(accountId)
+  return centsToDollars(balanceCents)
+}
+
+/**
+ * Check if there are any transactions before a given date
+ */
+export function hasTransactionsBeforeDate(accountId: UUID, dateYYYYMMDD: string): boolean {
+  return transactionRepository.hasTransactionsBeforeDate(accountId, dateYYYYMMDD)
+}

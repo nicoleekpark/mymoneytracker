@@ -26,7 +26,7 @@ docs/specs/
 |--------|--------|-------------|
 | [Add Transaction](screens/add-transaction.spec.md) | ✅ | Add/edit expense or income |
 | [Drafts](screens/drafts.spec.md) | ✅ | Saved draft transactions |
-| Dashboard | 🔲 | Monthly/yearly overview |
+| [Dashboard](screens/dashboard.spec.md) | ✅ | Overview, Accounts, Insights tabs |
 | Transactions List | 🔲 | Transaction history |
 | Accounts | 🔲 | Account management |
 | Settings | 🔲 | App preferences |

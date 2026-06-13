@@ -47,6 +47,9 @@ import { useCallback, useMemo, useState } from 'react'
 // ─── Domain Types ─────────────────────────────────────────────────────────────
 import type { Account } from '@/core/domain/account'
 
+// ─── Store ────────────────────────────────────────────────────────────────────
+import { useDataRefreshStore } from '@/shared/store'
+
 // ─── Application ──────────────────────────────────────────────────────────────
 import { getActiveAccounts } from '@/core/services/account'
 import {
@@ -55,6 +58,8 @@ import {
   getAccountActivityAllTime,
   getAccountBalanceBeforeDate,
   getAccountBalanceAtEndOfMonth,
+  getOpeningBalanceForAccount,
+  hasTransactionsBeforeDate,
 } from '@/core/services/transaction'
 import { transactionRepository } from '@/infrastructure/repositories'
 
@@ -72,6 +77,46 @@ function formatMonthYYYYMM(year: number, month: number): string {
 
 function getFirstDayOfMonth(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, '0')}-01`
+}
+
+function getLastDayOfMonth(year: number, month: number): string {
+  // Get the last day by going to the next month and subtracting 1 day
+  const lastDay = new Date(year, month, 0).getDate()
+  return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+}
+
+/**
+ * Check if an account was created before or during the given period.
+ * Returns true if the account should be visible in this period.
+ */
+function wasAccountCreatedByEndOfPeriod(
+  createdAt: string | undefined,
+  scope: Scope,
+  year: number,
+  month: number
+): boolean {
+  // If no createdAt (legacy accounts), assume created in the past - always show
+  if (!createdAt) {
+    return true
+  }
+
+  // Parse createdAt (ISO 8601 format: "2026-06-13T10:00:00.000Z")
+  const createdDate = createdAt.slice(0, 10) // "2026-06-13"
+
+  if (scope === 'all') {
+    // All time view - always show
+    return true
+  }
+
+  if (scope === 'year') {
+    // Yearly view - show if created before end of that year
+    const endOfYear = `${year}-12-31`
+    return createdDate <= endOfYear
+  }
+
+  // Monthly view - show if created before end of that month
+  const endOfMonth = getLastDayOfMonth(year, month)
+  return createdDate <= endOfMonth
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -120,11 +165,23 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
   const [refreshKey, setRefreshKey] = useState(0)
   const refetch = useCallback(() => setRefreshKey(k => k + 1), [])
 
+  // Subscribe to global data refresh (triggered when accounts/transactions change)
+  const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
+
   const data = useMemo((): Omit<AccountsData, 'refetch'> => {
-    // refreshKey dependency forces re-computation when refetch() is called
+    // refreshKey and transactionVersion dependencies force re-computation
     void refreshKey
+    void transactionVersion
     // ─── Step 1: Fetch all active accounts ────────────────────────────────
-    const accounts = getActiveAccounts()
+    const allAccounts = getActiveAccounts()
+
+    const year = period.year
+    const month = 'month' in period ? clampMonth(period.month) : 1
+
+    // Filter accounts to only include those created by end of period
+    const accounts = allAccounts.filter(account =>
+      wasAccountCreatedByEndOfPeriod(account.createdAt, scope, year, month)
+    )
 
     // ─── Step 2: Fetch activity aggregates based on scope ─────────────────
     // Activity = income, expense, transfers for each account in the period
@@ -139,9 +196,6 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
     let activityMap: Map<string, ActivityRecord>
     let periodLabel: string
     let firstTransactionDate: Date | null = null
-
-    const year = period.year
-    const month = 'month' in period ? clampMonth(period.month) : 1
 
     if (scope === 'month') {
       // Monthly: fetch activity for specific month
@@ -210,6 +264,14 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
         startBalance = getAccountBalanceBeforeDate(account.id, firstDayOfMonth)
         endBalance = getAccountBalanceAtEndOfMonth(account.id, monthYYYYMM)
 
+        // Option B: If no transactions before this month, use opening balance as start
+        if (startBalance === 0 && !hasTransactionsBeforeDate(account.id, firstDayOfMonth)) {
+          const openingBalance = getOpeningBalanceForAccount(account.id)
+          if (openingBalance > 0) {
+            startBalance = openingBalance
+          }
+        }
+
       } else if (scope === 'year') {
         // Yearly: start balance = before Jan 1, end balance = end of Dec
         const firstDayOfYear = `${year}-01-01`
@@ -218,9 +280,18 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
         const endOfYear = `${year}-12`
         endBalance = getAccountBalanceAtEndOfMonth(account.id, endOfYear)
 
+        // Option B: If no transactions before this year, use opening balance as start
+        if (startBalance === 0 && !hasTransactionsBeforeDate(account.id, firstDayOfYear)) {
+          const openingBalance = getOpeningBalanceForAccount(account.id)
+          if (openingBalance > 0) {
+            startBalance = openingBalance
+          }
+        }
+
       } else {
-        // All time: start balance = 0 (before any transactions), end = current balance
-        startBalance = 0
+        // All time: start balance = opening balance (or 0), end = current balance
+        const openingBalance = getOpeningBalanceForAccount(account.id)
+        startBalance = openingBalance > 0 ? openingBalance : 0
         const now = new Date()
         const currentMonth = formatMonthYYYYMM(now.getFullYear(), now.getMonth() + 1)
         endBalance = getAccountBalanceAtEndOfMonth(account.id, currentMonth)
@@ -325,7 +396,7 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
       periodLabel,
       firstTransactionDate,
     }
-  }, [scope, period, refreshKey])  // Recompute when scope, period, or refreshKey changes
+  }, [scope, period, refreshKey, transactionVersion])  // Recompute when scope, period, refreshKey, or transactionVersion changes
 
   return { ...data, refetch }
 }

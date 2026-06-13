@@ -242,6 +242,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'income'
+        AND (item IS NULL OR item != 'Opening Balance')
         AND substr(occurred_at, 1, 7) = ?;
       `,
       [monthYYYYMM]
@@ -325,6 +326,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.type = 'income'
+        AND (t.item IS NULL OR t.item != 'Opening Balance')
         AND substr(t.occurred_at, 1, 7) = ?
       GROUP BY t.category_id, c.name
       ORDER BY total_cents DESC;
@@ -367,6 +369,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE (type = 'income' OR type = 'expense')
+        AND (item IS NULL OR item != 'Opening Balance')
         AND substr(occurred_at, 1, 7) = ?
       GROUP BY day, type
       ORDER BY day ASC;
@@ -391,6 +394,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COUNT(*) AS tx_count
       FROM transactions
       WHERE (type = 'income' OR type = 'expense')
+        AND (item IS NULL OR item != 'Opening Balance')
         AND substr(occurred_at, 1, 7) = ?
       GROUP BY day, type
       ORDER BY day ASC;
@@ -448,6 +452,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE (type = 'income' OR type = 'expense')
+        AND (item IS NULL OR item != 'Opening Balance')
         AND substr(occurred_at, 1, 4) = ?
       GROUP BY month, type
       ORDER BY month ASC;
@@ -493,6 +498,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'income'
+        AND (item IS NULL OR item != 'Opening Balance')
         AND substr(occurred_at, 1, 4) = ?
       GROUP BY category_id
       ORDER BY total_cents DESC;
@@ -524,7 +530,8 @@ export class SqliteTransactionRepository implements TransactionRepository {
       `
       SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
-      WHERE type = 'income';
+      WHERE type = 'income'
+        AND (item IS NULL OR item != 'Opening Balance');
       `
     )
     return Number(rows[0]?.total_cents ?? 0)
@@ -562,6 +569,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type IN ('income', 'expense')
+        AND (item IS NULL OR item != 'Opening Balance')
       GROUP BY year, type
       ORDER BY year ASC;
       `
@@ -582,6 +590,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'income'
+        AND (item IS NULL OR item != 'Opening Balance')
       GROUP BY category_id
       ORDER BY total_cents DESC;
       `
@@ -628,6 +637,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type IN ('income', 'expense')
+        AND (item IS NULL OR item != 'Opening Balance')
       GROUP BY month, type
       ORDER BY month ASC;
       `
@@ -648,7 +658,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }>(
       `
       SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' AND (item IS NULL OR item != 'Opening Balance') THEN amount_cents ELSE 0 END), 0) AS income_cents,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents
       FROM transactions
       WHERE substr(occurred_at, 1, 4) = ?;
@@ -668,7 +678,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }>(
       `
       SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' AND (item IS NULL OR item != 'Opening Balance') THEN amount_cents ELSE 0 END), 0) AS income_cents,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents
       FROM transactions
       WHERE substr(occurred_at, 1, 7) = ?;
@@ -764,6 +774,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
   // ─────────────────────────────────────────────────────────────────────────────
 
   listAccountActivityForMonth(monthYYYYMM: string): AccountActivityTotals[] {
+    // Use UNION to combine income/expense and transfer transactions per account
     const rows = this.dataSource.queryAll<{
       account_id: string
       expense_cents: number
@@ -773,19 +784,41 @@ export class SqliteTransactionRepository implements TransactionRepository {
       tx_count: number
     }>(
       `
+      WITH account_txs AS (
+        -- Income/expense transactions (use account_id), exclude Opening Balance
+        SELECT account_id, type, amount_cents, NULL as is_transfer_out, NULL as is_transfer_in
+        FROM transactions
+        WHERE account_id IS NOT NULL AND type IN ('income', 'expense')
+          AND (item IS NULL OR item != 'Opening Balance')
+          AND substr(occurred_at, 1, 7) = ?
+
+        UNION ALL
+
+        -- Transfers out (use from_account_id)
+        SELECT from_account_id as account_id, type, amount_cents, 1 as is_transfer_out, NULL as is_transfer_in
+        FROM transactions
+        WHERE type = 'transfer' AND from_account_id IS NOT NULL
+          AND substr(occurred_at, 1, 7) = ?
+
+        UNION ALL
+
+        -- Transfers in (use to_account_id)
+        SELECT to_account_id as account_id, type, amount_cents, NULL as is_transfer_out, 1 as is_transfer_in
+        FROM transactions
+        WHERE type = 'transfer' AND to_account_id IS NOT NULL
+          AND substr(occurred_at, 1, 7) = ?
+      )
       SELECT
         account_id,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
         COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
-        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
-        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COALESCE(SUM(CASE WHEN is_transfer_out = 1 THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
+        COALESCE(SUM(CASE WHEN is_transfer_in = 1 THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
         COUNT(*) AS tx_count
-      FROM transactions
-      WHERE account_id IS NOT NULL
-        AND substr(occurred_at, 1, 7) = ?
+      FROM account_txs
       GROUP BY account_id;
       `,
-      [monthYYYYMM]
+      [monthYYYYMM, monthYYYYMM, monthYYYYMM]
     )
 
     return rows.map((r) => ({
@@ -809,19 +842,39 @@ export class SqliteTransactionRepository implements TransactionRepository {
       tx_count: number
     }>(
       `
+      WITH account_txs AS (
+        -- Income/expense transactions, exclude Opening Balance
+        SELECT account_id, type, amount_cents, NULL as is_transfer_out, NULL as is_transfer_in
+        FROM transactions
+        WHERE account_id IS NOT NULL AND type IN ('income', 'expense')
+          AND (item IS NULL OR item != 'Opening Balance')
+          AND substr(occurred_at, 1, 4) = ?
+
+        UNION ALL
+
+        SELECT from_account_id as account_id, type, amount_cents, 1 as is_transfer_out, NULL as is_transfer_in
+        FROM transactions
+        WHERE type = 'transfer' AND from_account_id IS NOT NULL
+          AND substr(occurred_at, 1, 4) = ?
+
+        UNION ALL
+
+        SELECT to_account_id as account_id, type, amount_cents, NULL as is_transfer_out, 1 as is_transfer_in
+        FROM transactions
+        WHERE type = 'transfer' AND to_account_id IS NOT NULL
+          AND substr(occurred_at, 1, 4) = ?
+      )
       SELECT
         account_id,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
         COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
-        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
-        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COALESCE(SUM(CASE WHEN is_transfer_out = 1 THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
+        COALESCE(SUM(CASE WHEN is_transfer_in = 1 THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
         COUNT(*) AS tx_count
-      FROM transactions
-      WHERE account_id IS NOT NULL
-        AND substr(occurred_at, 1, 4) = ?
+      FROM account_txs
       GROUP BY account_id;
       `,
-      [yearPrefix]
+      [yearPrefix, yearPrefix, yearPrefix]
     )
 
     return rows.map((r) => ({
@@ -844,15 +897,33 @@ export class SqliteTransactionRepository implements TransactionRepository {
       tx_count: number
     }>(
       `
+      WITH account_txs AS (
+        -- Income/expense transactions, exclude Opening Balance
+        SELECT account_id, type, amount_cents, NULL as is_transfer_out, NULL as is_transfer_in
+        FROM transactions
+        WHERE account_id IS NOT NULL AND type IN ('income', 'expense')
+          AND (item IS NULL OR item != 'Opening Balance')
+
+        UNION ALL
+
+        SELECT from_account_id as account_id, type, amount_cents, 1 as is_transfer_out, NULL as is_transfer_in
+        FROM transactions
+        WHERE type = 'transfer' AND from_account_id IS NOT NULL
+
+        UNION ALL
+
+        SELECT to_account_id as account_id, type, amount_cents, NULL as is_transfer_out, 1 as is_transfer_in
+        FROM transactions
+        WHERE type = 'transfer' AND to_account_id IS NOT NULL
+      )
       SELECT
         account_id,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
         COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
-        COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
-        COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = account_id THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
+        COALESCE(SUM(CASE WHEN is_transfer_out = 1 THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents,
+        COALESCE(SUM(CASE WHEN is_transfer_in = 1 THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
         COUNT(*) AS tx_count
-      FROM transactions
-      WHERE account_id IS NOT NULL
+      FROM account_txs
       GROUP BY account_id;
       `
     )
@@ -882,15 +953,15 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }>(
       `
       SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' AND account_id = ? THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'expense' AND account_id = ? THEN amount_cents ELSE 0 END), 0) AS expense_cents,
         COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
         COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents
       FROM transactions
-      WHERE account_id = ?
+      WHERE (account_id = ? OR from_account_id = ? OR to_account_id = ?)
         AND substr(occurred_at, 1, 10) < ?;
       `,
-      [accountId, accountId, accountId, dateYYYYMMDD]
+      [accountId, accountId, accountId, accountId, accountId, accountId, accountId, dateYYYYMMDD]
     )
 
     if (!row) return 0
@@ -922,15 +993,15 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }>(
       `
       SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) AS income_cents,
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' AND account_id = ? THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'expense' AND account_id = ? THEN amount_cents ELSE 0 END), 0) AS expense_cents,
         COALESCE(SUM(CASE WHEN type = 'transfer' AND to_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_in_cents,
         COALESCE(SUM(CASE WHEN type = 'transfer' AND from_account_id = ? THEN amount_cents ELSE 0 END), 0) AS transfer_out_cents
       FROM transactions
-      WHERE account_id = ?
+      WHERE (account_id = ? OR from_account_id = ? OR to_account_id = ?)
         AND substr(occurred_at, 1, 10) <= ?;
       `,
-      [accountId, accountId, accountId, endDate]
+      [accountId, accountId, accountId, accountId, accountId, accountId, accountId, endDate]
     )
 
     if (!row) return 0
@@ -998,5 +1069,37 @@ export class SqliteTransactionRepository implements TransactionRepository {
       `SELECT changes() as count;`
     )
     return row?.count ?? 0
+  }
+
+  /**
+   * Get the opening balance amount for an account (in cents).
+   * Returns the amount of the first "Opening Balance" transaction, or 0 if none exists.
+   */
+  getOpeningBalanceForAccount(accountId: UUID): number {
+    const row = this.dataSource.queryFirst<{ amount_cents: number }>(
+      `SELECT amount_cents
+       FROM transactions
+       WHERE account_id = ?
+         AND item = 'Opening Balance'
+       ORDER BY occurred_at ASC
+       LIMIT 1;`,
+      [accountId]
+    )
+    return row?.amount_cents ?? 0
+  }
+
+  /**
+   * Check if there are any transactions for an account before a given date.
+   */
+  hasTransactionsBeforeDate(accountId: UUID, dateYYYYMMDD: string): boolean {
+    const row = this.dataSource.queryFirst<{ count: number }>(
+      `SELECT COUNT(*) as count
+       FROM transactions
+       WHERE (account_id = ? OR from_account_id = ? OR to_account_id = ?)
+         AND substr(occurred_at, 1, 10) < ?
+       LIMIT 1;`,
+      [accountId, accountId, accountId, dateYYYYMMDD]
+    )
+    return (row?.count ?? 0) > 0
   }
 }

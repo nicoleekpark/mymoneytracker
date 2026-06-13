@@ -8,12 +8,15 @@ import {
 } from '@/core/domain/account/account.model'
 import type { Account } from '@/core/domain/account/account.types'
 
+const TEST_CREATED_AT = '2026-01-01T00:00:00.000Z'
+
 const mockAssetAccount: Account = {
   id: 'acc-1',
   key: 'acct:checking',
   name: 'Checking Account',
   nature: 'asset',
   kind: 'checking',
+  createdAt: TEST_CREATED_AT,
 }
 
 const mockLiabilityAccount: Account = {
@@ -22,6 +25,7 @@ const mockLiabilityAccount: Account = {
   name: 'Credit Card',
   nature: 'liability',
   kind: 'credit_card',
+  createdAt: TEST_CREATED_AT,
 }
 
 const mockCashAccount: Account = {
@@ -30,6 +34,7 @@ const mockCashAccount: Account = {
   name: 'Cash Wallet',
   nature: 'asset',
   kind: 'cash',
+  createdAt: TEST_CREATED_AT,
 }
 
 describe('account.model', () => {

@@ -70,6 +70,22 @@ export default function RootLayout() {
     try {
       initDbPragmas()         // 1. Set SQLite performance flags (foreign keys, journal mode)
       migrate()               // 2. Run all pending migrations (create/update tables)
+
+      // HOTFIX: Ensure new columns exist (in case migrations didn't run properly)
+      try {
+        const sqlite = require('@/infrastructure/db/sqlite')
+        const cols = (sqlite.queryAll(`PRAGMA table_info(transactions);`) as { name: string }[]).map((r) => r.name)
+        if (!cols.includes('fee_cents')) {
+          sqlite.exec(`ALTER TABLE transactions ADD COLUMN fee_cents INTEGER DEFAULT NULL;`)
+          console.log('[HOTFIX] Added fee_cents column')
+        }
+        if (!cols.includes('parent_transaction_id')) {
+          sqlite.exec(`ALTER TABLE transactions ADD COLUMN parent_transaction_id TEXT REFERENCES transactions(id) ON DELETE CASCADE;`)
+          console.log('[HOTFIX] Added parent_transaction_id column')
+        }
+      } catch (e) {
+        console.warn('[HOTFIX] Column check failed:', e)
+      }
       runSystemSeeds()        // 3. Seed default data (categories, accounts)
       runAppLaunchTriggers()  // 4. Check for notifications (budget alerts, draft reminders)
 

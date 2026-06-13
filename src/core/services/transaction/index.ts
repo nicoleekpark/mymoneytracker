@@ -49,6 +49,9 @@ export {
   getAccountActivityAllTime,
   getAccountBalanceBeforeDate,
   getAccountBalanceAtEndOfMonth,
+  // Opening Balance
+  getOpeningBalanceForAccount,
+  hasTransactionsBeforeDate,
 } from './transaction.aggregations'
 
 export type {

@@ -1,13 +1,11 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
-import { InfoSheet, SectionHeader } from '@/shared/components'
-import { fontSize, fontWeight, displaySize, letterSpacing } from '@/shared/theme/tokens/typography'
+import { SectionHeader } from '@/shared/components'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
-import { MODAL_SNAP_COMPACT } from '@/shared/theme/tokens/modal'
-import { formatUsdInt } from '@/shared/format/currency'
 
 import { NetSparkline, CategoryDeltaBar, DailyOutflowBars } from './components'
 import { useInsightsData } from './hooks'
@@ -19,64 +17,10 @@ type Props = {
   colors: InsightsColors
 }
 
-/**
- * Info sheet for "Typical" explanation
- */
-function TypicalInfoSheet({
-  visible,
-  onClose,
-  colors
-}: {
-  visible: boolean
-  onClose: () => void
-  colors: InsightsColors
-}) {
-  return (
-    <InfoSheet
-      visible={visible}
-      onClose={onClose}
-      title="What is 'Typical'?"
-      colors={{
-        surface: colors.surface,
-        text: colors.text,
-        textSecondary: colors.textSecondary,
-        surfaceAlt: colors.surfaceAlt
-      }}
-      snapPoints={MODAL_SNAP_COMPACT}
-    >
-      <View style={{ marginBottom: spacing.md }}>
-        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
-          Definition
-        </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
-          Your typical month is the median of your last 6-12 months of net cash flow.
-        </Text>
-      </View>
-      <View style={{ marginBottom: spacing.md }}>
-        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
-          Why median?
-        </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
-          More stable than average - one big expense won't skew it.
-        </Text>
-      </View>
-      <View>
-        <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text, marginBottom: spacing.sm }}>
-          How to use it
-        </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 19 }}>
-          Compare this month against typical to spot unusual patterns.
-        </Text>
-      </View>
-    </InfoSheet>
-  )
-}
-
 export function InsightsBody({ monthYYYYMM, colors }: Props) {
   const [duration, setDuration] = useState<InsightsDuration>(6)
   const [showDurationPicker, setShowDurationPicker] = useState(false)
   const { loading, error, data } = useInsightsData(monthYYYYMM, duration)
-  const [showTypicalInfo, setShowTypicalInfo] = useState(false)
 
   if (loading) {
     return (
@@ -96,14 +40,8 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
 
   const { summary, insights, categoryComparison, netTrend, dailyOutflow, medianNet, availableMonths, durationLabel } = data
 
-  // Extract key values from summary
-  const vsTypical = summary.baselineNetCents !== null
-    ? (summary.netCents - summary.baselineNetCents) / 100
-    : null
-  const netDollar = summary.netCents / 100
-
-  // Check if we have any transactions at all this month
-  const hasAnyData = data.hasEnoughData || netDollar !== 0
+  // Check if we have any transactions at all
+  const hasAnyData = data.hasEnoughData || summary.netCents !== 0
 
   // Only show completely empty state if there's literally no data
   if (!hasAnyData && availableMonths === 0) {
@@ -140,24 +78,11 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
   // Don't show if delta is effectively zero (less than $1)
   const showPrimaryDriver = primaryDriver && Math.abs(primaryDriverDelta) >= 1
 
-  // Format vs typical value - always with sign
-  const formatVsTypical = (val: number | null): string => {
-    if (val === null) return formatUsdInt(netDollar)
-    const abs = Math.abs(val)
-    const prefix = val >= 0 ? '+' : '-'
-    if (abs >= 1000) {
-      return `${prefix}$${(abs / 1000).toFixed(1)}k`
-    }
-    return `${prefix}$${Math.round(abs)}`
-  }
-
-  // Format delta for subtitle
-  const formatDeltaCompact = (val: number): string => {
-    const abs = Math.abs(val)
-    if (abs >= 1000) {
-      return `$${(abs / 1000).toFixed(1)}k`
-    }
-    return `$${Math.round(abs)}`
+  // Smart format helper - show cents only when non-zero
+  const smartFmt = (n: number): string => {
+    return n % 1 !== 0
+      ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : Math.round(n).toLocaleString('en-US')
   }
 
   // Format delta with sign
@@ -167,7 +92,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
     if (abs >= 1000) {
       return `${prefix}$${(abs / 1000).toFixed(1)}k`
     }
-    return `${prefix}$${Math.round(abs)}`
+    return `${prefix}$${smartFmt(abs)}`
   }
 
   // Data quality info
@@ -175,103 +100,13 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Info Sheets */}
-      <TypicalInfoSheet
-        visible={showTypicalInfo}
-        onClose={() => setShowTypicalInfo(false)}
-        colors={colors}
-      />
-
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
       >
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* Hero Section - NEUTRAL like Assets, colored delta in subtitle only */}
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        <View style={{ marginBottom: SECTION_GAP }}>
-          {/* Hero: vs Typical - centered */}
-          <Pressable
-            onPress={() => setShowTypicalInfo(true)}
-            style={{ alignItems: 'center', paddingVertical: spacing.xl }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
-                vs Typical
-              </Text>
-              <View
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: radius.full,
-                  borderWidth: 1,
-                  borderColor: colors.textSecondary,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: 0.6
-                }}
-              >
-                <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: colors.textSecondary }}>i</Text>
-              </View>
-            </View>
-
-            {/* Primary value - NEUTRAL */}
-            <Text
-              style={{
-                fontSize: displaySize.xl,
-                fontWeight: fontWeight.heavy,
-                color: colors.text,
-                letterSpacing: -1
-              }}
-            >
-              {formatVsTypical(vsTypical)}
-            </Text>
-
-            {/* Secondary text with colored delta indicator */}
-            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
-              {vsTypical !== null ? (
-                <>
-                  <Text style={{ fontWeight: fontWeight.semibold, color: vsTypical >= 0 ? colors.success : colors.danger }}>
-                    {vsTypical >= 0 ? '↑' : '↓'} {formatDeltaCompact(vsTypical)}
-                  </Text>
-                  {' '}{vsTypical >= 0 ? 'above' : 'below'} typical
-                </>
-              ) : (
-                'Not enough history yet'
-              )}
-            </Text>
-          </Pressable>
-
-          {/* Stats Row: This Month Net | Typical - NEUTRAL values */}
-          <View style={{ flexDirection: 'row' }}>
-            {/* This Month */}
-            <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
-                This month
-              </Text>
-              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, fontVariant: ['tabular-nums'] }}>
-                {formatUsdInt(netDollar)}
-              </Text>
-            </View>
-
-            {/* Subtle middle divider */}
-            <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
-
-            {/* Typical */}
-            <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.xs }}>
-                Typical
-              </Text>
-              <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, fontVariant: ['tabular-nums'] }}>
-                {medianNet !== null ? formatUsdInt(medianNet) : '—'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* Section: Primary Driver */}
+        {/* Section: Primary Driver (no hero - Overview has the net already) */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
@@ -339,16 +174,16 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
         </View>
 
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* Section: Spending Pattern */}
+        {/* Section: Spending Pattern - aggregated by day of month */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
-            title="Spending pattern"
-            description={volatilityInsight?.body ?? 'Daily outflow distribution'}
+            title="Spending by day"
+            description={`Average spending per day of month (${durationLabel})`}
             colors={colors}
           />
           {dailyOutflow.length > 0 ? (
-            <DailyOutflowBars data={dailyOutflow} monthYYYYMM={monthYYYYMM} colors={colors} />
+            <DailyOutflowBars data={dailyOutflow} colors={colors} />
           ) : (
             <View style={{
               backgroundColor: colors.surfaceAlt,
@@ -357,7 +192,7 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
               alignItems: 'center'
             }}>
               <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>
-                No spending data this month yet
+                No spending data yet
               </Text>
             </View>
           )}

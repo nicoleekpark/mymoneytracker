@@ -527,7 +527,7 @@ export function useInsightsData(monthYYYYMM: string, duration: InsightsDuration 
               body: `Target: ${formatSignedUsdCompact(suggestedGoal)} net next month`,
               sub: 'Typical + realistic boost.',
               evidence: [
-                { key: 'Breakdown', value: `Typical ${formatSignedUsdCompact(baselineNetDollar)}, boost ${formatSignedUsdCompact(Math.round(cappedStretch))}` },
+                { key: 'Breakdown', value: `Typical ${formatSignedUsdCompact(baselineNetDollar)}, boost ${formatSignedUsdCompact(cappedStretch)}` },
                 { key: 'Actions', value: 'Cut a category, shift a bill, plan big expenses' }
               ],
               ctas: [
@@ -618,11 +618,31 @@ export function useInsightsData(monthYYYYMM: string, duration: InsightsDuration 
           unknownDayCount
         }
 
-        // Daily outflow for volatility chart
-        const dailyOutflow: DailyOutflow[] = currentDailyFlow.map(d => ({
-          day: parseInt(d.day.split('-')[2], 10),
-          amount: d.variableExpenseDollar
-        })).sort((a, b) => a.day - b.day)
+        // Daily outflow aggregated by day-of-month across all months in duration
+        // Shows spending pattern: "You tend to spend more on the 1st and 15th"
+        const dayOfMonthTotals = new Map<number, { total: number; count: number }>()
+
+        // Combine current month + all previous months in duration
+        const allDailyFlows = [currentDailyFlow, ...prevDailyFlows]
+        for (const monthFlow of allDailyFlows) {
+          for (const d of monthFlow) {
+            const dayNum = parseInt(d.day.split('-')[2], 10)
+            const expense = d.variableExpenseDollar
+            const existing = dayOfMonthTotals.get(dayNum) || { total: 0, count: 0 }
+            dayOfMonthTotals.set(dayNum, {
+              total: existing.total + expense,
+              count: existing.count + 1
+            })
+          }
+        }
+
+        // Calculate average per day-of-month
+        const dailyOutflow: DailyOutflow[] = Array.from(dayOfMonthTotals.entries())
+          .map(([day, { total, count }]) => ({
+            day,
+            amount: count > 0 ? total / count : 0
+          }))
+          .sort((a, b) => a.day - b.day)
 
         setData({
           summary,

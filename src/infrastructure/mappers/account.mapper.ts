@@ -18,6 +18,8 @@ export type AccountRow = Readonly<{
   is_archived?: number
   bank_name?: string | null
   last_four_digits?: string | null
+  created_at?: string | null
+  archived_at?: string | null
 }>
 
 /**
@@ -37,13 +39,16 @@ export function rowToAccount(row: AccountRow): Account {
     isArchived: row.is_archived === 1,
     bankName: row.bank_name ?? undefined,
     lastFourDigits: row.last_four_digits ?? undefined,
+    createdAt: row.created_at ?? undefined,
+    archivedAt: row.archived_at ?? undefined,
   }
 }
 
 /**
  * Convert a domain Account to database row format.
+ * Note: created_at is handled by database default, archived_at by archive operation
  */
-export function accountToRow(account: Account): Omit<AccountRow, 'id'> & { id?: UUID } {
+export function accountToRow(account: Account): Omit<AccountRow, 'id' | 'created_at'> & { id?: UUID } {
   return {
     id: account.id,
     key: account.key,
@@ -56,5 +61,6 @@ export function accountToRow(account: Account): Omit<AccountRow, 'id'> & { id?: 
     is_archived: account.isArchived ? 1 : 0,
     bank_name: account.bankName ?? null,
     last_four_digits: account.lastFourDigits ?? null,
+    archived_at: account.archivedAt ?? null,
   }
 }

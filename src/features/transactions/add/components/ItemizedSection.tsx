@@ -5,7 +5,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
-import { formatCurrency } from '@/shared/format/currency'
+import { formatCurrency, formatCentsForDisplay } from '@/shared/format/currency'
 import {
   searchItems,
   getLatestPriceForItemAtStore,
@@ -31,11 +31,8 @@ type Props = {
   merchant?: string // For price lookup
 }
 
-// Helper: format cents to display string
-function formatCentsDisplay(cents: number): string {
-  if (!Number.isFinite(cents) || cents < 0) return '0.00'
-  return (cents / 100).toFixed(2)
-}
+// Use shared formatter with thousand separators
+const formatCentsDisplay = formatCentsForDisplay
 
 export function ItemizedSection({ items, onItemsChange, expanded, onExpandedChange, merchant }: Props) {
   const theme = useHoHTheme()

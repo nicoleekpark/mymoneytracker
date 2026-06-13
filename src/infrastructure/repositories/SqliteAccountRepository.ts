@@ -115,11 +115,12 @@ export class SqliteAccountRepository implements AccountRepository {
     const key = generateAccountKey(input.kind, input.name)
     const nature = getNatureFromKind(input.kind)
     const sortOrder = this.getNextSortOrder(input.kind)
+    const createdAt = new Date().toISOString()
 
     this.dataSource.exec(
       `
-      INSERT INTO accounts (id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits)
-      VALUES (?, ?, ?, ?, ?, 'USD', ?, 0, 0, ?, ?);
+      INSERT INTO accounts (id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits, created_at)
+      VALUES (?, ?, ?, ?, ?, 'USD', ?, 0, 0, ?, ?, ?);
       `,
       [
         id,
@@ -129,7 +130,8 @@ export class SqliteAccountRepository implements AccountRepository {
         input.kind,
         sortOrder,
         input.bankName ?? null,
-        input.lastFourDigits ?? null
+        input.lastFourDigits ?? null,
+        createdAt
       ]
     )
 
@@ -145,6 +147,7 @@ export class SqliteAccountRepository implements AccountRepository {
       isArchived: false,
       bankName: input.bankName,
       lastFourDigits: input.lastFourDigits,
+      createdAt,
     }
   }
 

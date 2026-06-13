@@ -170,10 +170,7 @@ export function AmountKeypadSheet({
           {/* Row 4: 00 0 ⌫ */}
           <View style={styles.keypadRow}>
             <ScalePressable
-              onPress={() => {
-                onDigit('0')
-                onDigit('0')
-              }}
+              onPress={() => onDigit('00')}
               style={[styles.key, { backgroundColor: theme.semantic.surfaceAlt }]}
             >
               <Text style={[styles.keyText, { color: theme.semantic.text }]}>00</Text>

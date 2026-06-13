@@ -1,20 +1,20 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet'
 import React, { forwardRef, useCallback, useMemo } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
-import {
-  BottomSheetModal,
-  BottomSheetBackdrop,
-  BottomSheetScrollView,
-  type BottomSheetBackdropProps
-} from '@gorhom/bottom-sheet'
 
 import type { Transaction } from '@/core/domain/transaction/transaction.types'
 import { formatUsdInt } from '@/shared/format/currency'
-import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { getScrollContentPadding, modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { radius } from '@/shared/theme/tokens/radius'
-import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
-import type { CalendarColors } from './calendar.types'
+import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { MONTH_NAMES_SHORT } from '../../utils'
+import type { CalendarColors } from './calendar.types'
 
 export type SelectedDay = {
   ymd: string
@@ -23,6 +23,7 @@ export type SelectedDay = {
   expense: number
   txCount: number
   net: number
+  isFuture: boolean
 }
 
 type Props = {
@@ -31,6 +32,12 @@ type Props = {
   loadingTx: boolean
   colors: CalendarColors
   onViewAll: () => void
+  /** Set of YMD strings that are marked as zero-spend */
+  zeroSpendDays?: Set<string>
+  /** Callback when zero-spend is toggled for a day */
+  onToggleZeroSpend?: (ymd: string, isZeroSpend: boolean) => void
+  /** Callback to dismiss the sheet */
+  onDismiss?: () => void
 }
 
 // Format amount with parentheses for negatives (accounting style)
@@ -55,30 +62,34 @@ function getTxDisplayName(tx: Transaction): string {
 }
 
 export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
-  ({ selectedDay, transactions, loadingTx, colors, onViewAll }, ref) => {
-    // Snap points: smaller for empty days, larger for days with transactions
+  (
+    {
+      selectedDay,
+      transactions,
+      loadingTx,
+      colors,
+      onViewAll,
+      zeroSpendDays,
+      onToggleZeroSpend,
+      onDismiss,
+    },
+    ref
+  ) => {
+    // Snap points: minimal for empty days, larger for days with transactions
     const hasTransactions = (selectedDay?.txCount ?? 0) > 0
-    const snapPoints = useMemo(
-      () => hasTransactions ? ['60%', '90%'] : ['25%'],
-      [hasTransactions]
-    )
+    const snapPoints = useMemo(() => (hasTransactions ? ['60%', '90%'] : [180]), [hasTransactions])
 
-    // Sort transactions by absolute value (impact-first)
+    // Filter out Opening Balance and sort by absolute value (impact-first)
     const sortedTx = useMemo(() => {
-      return [...transactions].sort(
-        (a, b) => Math.abs(b.money.amount) - Math.abs(a.money.amount)
-      )
+      return [...transactions]
+        .filter((tx) => tx.item !== 'Opening Balance')
+        .sort((a, b) => Math.abs(b.money.amount) - Math.abs(a.money.amount))
     }, [transactions])
 
     // Backdrop
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          opacity={0.5}
-        />
+        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
       ),
       []
     )
@@ -87,7 +98,12 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
     const renderHandle = useCallback(
       () => (
         <View style={modalStyles.dragHandleContainer}>
-          <View style={[modalStyles.dragHandle, { backgroundColor: colors.textSecondary, opacity: 0.4 }]} />
+          <View
+            style={[
+              modalStyles.dragHandle,
+              { backgroundColor: colors.textSecondary, opacity: 0.4 },
+            ]}
+          />
         </View>
       ),
       [colors.textSecondary]
@@ -106,7 +122,10 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
       >
         <BottomSheetScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: getScrollContentPadding(0) }}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.xl,
+            paddingBottom: getScrollContentPadding(0),
+          }}
         >
           {/* Header: Date + Close */}
           <View
@@ -114,10 +133,12 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: spacing.md
+              marginBottom: spacing.md,
             }}
           >
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>
+            <Text
+              style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}
+            >
               {formatDayLabel(selectedDay.ymd, selectedDay.dayNum)}
             </Text>
           </View>
@@ -126,8 +147,16 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
           {selectedDay.txCount > 0 ? (
             <>
               {/* Net - Same line layout */}
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: spacing.lg }}>
-                <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginRight: spacing.sm }}>
+              <View
+                style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: spacing.lg }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    color: colors.textSecondary,
+                    marginRight: spacing.sm,
+                  }}
+                >
                   Net
                 </Text>
                 <Text
@@ -135,7 +164,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                     fontSize: fontSize.lg,
                     fontWeight: fontWeight.bold,
                     color: selectedDay.net >= 0 ? colors.success : colors.danger,
-                    fontVariant: ['tabular-nums']
+                    fontVariant: ['tabular-nums'],
                   }}
                 >
                   {formatAmountAccounting(selectedDay.net)}
@@ -146,7 +175,15 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               <View style={{ flexDirection: 'row', marginBottom: spacing.xl }}>
                 {/* Inflow */}
                 <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: 2 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                      color: colors.textSecondary,
+                      letterSpacing: letterSpacing.wider,
+                      marginBottom: 2,
+                    }}
+                  >
                     Inflow
                   </Text>
                   <Text
@@ -154,7 +191,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                       fontSize: fontSize.md,
                       fontWeight: fontWeight.semibold,
                       color: selectedDay.income > 0 ? colors.success : colors.textSecondary,
-                      fontVariant: ['tabular-nums']
+                      fontVariant: ['tabular-nums'],
                     }}
                   >
                     {formatUsdInt(selectedDay.income)}
@@ -162,11 +199,21 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                 </View>
 
                 {/* Middle divider */}
-                <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.xs }} />
+                <View
+                  style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.xs }}
+                />
 
                 {/* Outflow */}
                 <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: 2 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                      color: colors.textSecondary,
+                      letterSpacing: letterSpacing.wider,
+                      marginBottom: 2,
+                    }}
+                  >
                     Outflow
                   </Text>
                   <Text
@@ -174,7 +221,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                       fontSize: fontSize.md,
                       fontWeight: fontWeight.semibold,
                       color: selectedDay.expense > 0 ? colors.danger : colors.textSecondary,
-                      fontVariant: ['tabular-nums']
+                      fontVariant: ['tabular-nums'],
                     }}
                   >
                     ({formatUsdInt(selectedDay.expense)})
@@ -189,7 +236,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
                     color: colors.textSecondary,
-                    marginBottom: spacing.md
+                    marginBottom: spacing.md,
                   }}
                 >
                   Top transactions
@@ -210,7 +257,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                           alignItems: 'flex-start',
                           paddingVertical: spacing.sm,
                           borderBottomWidth: idx < sortedTx.length - 1 ? 1 : 0,
-                          borderBottomColor: colors.border
+                          borderBottomColor: colors.border,
                         }}
                       >
                         <View style={{ flex: 1, marginRight: spacing.sm }}>
@@ -218,7 +265,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                             style={{
                               fontSize: fontSize.sm,
                               fontWeight: fontWeight.medium,
-                              color: colors.text
+                              color: colors.text,
                             }}
                             numberOfLines={1}
                           >
@@ -229,7 +276,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                               style={{
                                 fontSize: fontSize.xs,
                                 color: colors.textSecondary,
-                                marginTop: 2
+                                marginTop: 2,
                               }}
                             >
                               {tx.category.subCategoryKey || tx.category.categoryKey}
@@ -241,7 +288,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                             fontSize: fontSize.sm,
                             fontWeight: fontWeight.semibold,
                             color: tx.type === 'income' ? colors.success : colors.danger,
-                            fontVariant: ['tabular-nums']
+                            fontVariant: ['tabular-nums'],
                           }}
                         >
                           {tx.type === 'income'
@@ -257,10 +304,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               {/* View All CTA */}
               <Pressable
                 onPress={onViewAll}
-                style={[
-                  modalStyles.saveButton,
-                  { backgroundColor: colors.textSecondary + '10' }
-                ]}
+                style={[modalStyles.saveButton, { backgroundColor: colors.textSecondary + '10' }]}
               >
                 <Text style={[modalStyles.saveButtonText, { color: colors.textSecondary }]}>
                   View all {selectedDay.txCount} transactions →
@@ -268,10 +312,59 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
               </Pressable>
             </>
           ) : (
-            /* No transactions - minimal view */
-            <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.md }}>
-              No transactions recorded
-            </Text>
+            /* No transactions - clean centered view */
+            <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: spacing.lg }}>
+                No transactions
+              </Text>
+
+              {/* Zero-spend toggle (only for past/present dates) */}
+              {onToggleZeroSpend && !selectedDay.isFuture && (
+                <Pressable
+                  onPress={() => {
+                    const isCurrentlyMarked = zeroSpendDays?.has(selectedDay.ymd) ?? false
+                    onToggleZeroSpend(selectedDay.ymd, !isCurrentlyMarked)
+                    // Auto-dismiss after marking with slight delay for visual feedback
+                    setTimeout(() => onDismiss?.(), 150)
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing.sm,
+                    paddingVertical: spacing.sm,
+                    paddingHorizontal: spacing.lg,
+                    borderRadius: 20,
+                    backgroundColor: zeroSpendDays?.has(selectedDay.ymd)
+                      ? colors.highlight + '20'
+                      : colors.surfaceAlt,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      borderWidth: 2,
+                      borderColor: zeroSpendDays?.has(selectedDay.ymd)
+                        ? colors.highlight
+                        : colors.border,
+                      backgroundColor: zeroSpendDays?.has(selectedDay.ymd)
+                        ? colors.highlight
+                        : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {zeroSpendDays?.has(selectedDay.ymd) && (
+                      <FontAwesome name="check" size={10} color="#fff" />
+                    )}
+                  </View>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.text }}>
+                    Mark as zero-spend day
+                  </Text>
+                </Pressable>
+              )}
+            </View>
           )}
         </BottomSheetScrollView>
       </BottomSheetModal>
