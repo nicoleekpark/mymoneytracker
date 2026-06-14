@@ -180,7 +180,7 @@ function RootLayoutNav() {
                 <Stack.Screen
                   name="(modal)/add-transaction"
                   options={{
-                    presentation: 'modal',  // Slides up from bottom
+                    presentation: 'modal',
                     headerShown: false
                   }}
                 />

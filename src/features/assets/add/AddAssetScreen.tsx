@@ -252,7 +252,8 @@ export default function AddAssetScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={[
           modalStyles.content,
-          { paddingBottom: getScrollContentWithSimpleCTAPadding(insets.bottom, keyboardHeight) },
+          // Note: safeAreaBottom=0 because iOS card-style modals already handle safe area
+          { paddingBottom: getScrollContentWithSimpleCTAPadding(0, keyboardHeight) },
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
@@ -418,7 +419,7 @@ export default function AddAssetScreen() {
             {
               backgroundColor: semantic.text,
               position: 'absolute',
-              bottom: getScrollContentWithSimpleCTAPadding(insets.bottom, 0),
+              bottom: getScrollContentWithSimpleCTAPadding(0),
               alignSelf: 'center',
             },
           ]}

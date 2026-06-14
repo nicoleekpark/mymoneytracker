@@ -6,11 +6,12 @@ import {
   BottomSheetScrollView,
   type BottomSheetBackdropProps
 } from '@gorhom/bottom-sheet'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
-import { modalStyles } from '@/shared/theme/tokens/modal'
+import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
 
 export type InfoSheetColors = {
   surface: string
@@ -50,6 +51,7 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
     ref
   ) => {
     const bottomSheetRef = useRef<BottomSheetModal>(null)
+    const insets = useSafeAreaInsets()
     const snapPoints = useMemo(() => customSnapPoints || ['50%'], [customSnapPoints])
 
     // Expose present/dismiss methods
@@ -109,7 +111,7 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
           style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: spacing.xl,
-            paddingBottom: spacing['2xl']
+            paddingBottom: getScrollContentPadding(insets.bottom)
           }}
         >
           {/* Title */}

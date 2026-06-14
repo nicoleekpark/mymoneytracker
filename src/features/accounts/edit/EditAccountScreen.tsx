@@ -204,7 +204,8 @@ export default function EditAccountScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={[
             modalStyles.content,
-            { paddingBottom: getScrollContentWithSimpleCTAPadding(insets.bottom) },
+            // Note: safeAreaBottom=0 because iOS card-style modals already handle safe area
+            { paddingBottom: getScrollContentWithSimpleCTAPadding(0) },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"

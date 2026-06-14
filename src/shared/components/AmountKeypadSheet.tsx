@@ -28,13 +28,14 @@ import Animated, {
   SlideInDown,
   SlideOutDown,
 } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useHoHTheme } from '@/shared/providers'
 import { ScalePressable } from './ScalePressable'
 import { fontSize, fontWeight, displaySize } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
-import { MODAL_GRABBER_WIDTH, MODAL_GRABBER_HEIGHT } from '@/shared/theme/tokens/modal'
+import { MODAL_GRABBER_WIDTH, MODAL_GRABBER_HEIGHT, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 
 // Component-specific size
 const KEY_HEIGHT = spacing['3xl'] // 48 - standard touch target
@@ -69,6 +70,7 @@ export function AmountKeypadSheet({
   hideEstimated = false,
 }: AmountKeypadSheetProps) {
   const theme = useHoHTheme()
+  const insets = useSafeAreaInsets()
 
   return (
     <Modal
@@ -90,7 +92,7 @@ export function AmountKeypadSheet({
       <Animated.View
         entering={SlideInDown.duration(250)}
         exiting={SlideOutDown.duration(200)}
-        style={[styles.sheet, { backgroundColor: theme.semantic.surface }]}
+        style={[styles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}
       >
         {/* Handle */}
         <View style={styles.handleContainer}>
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
     right: 0,
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
-    paddingBottom: spacing['3xl'],
+    // paddingBottom is set dynamically with safe area insets
   },
   handleContainer: {
     alignItems: 'center',

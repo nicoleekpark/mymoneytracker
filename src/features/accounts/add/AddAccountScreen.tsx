@@ -272,7 +272,8 @@ export default function AddAccountScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={[
             modalStyles.content,
-            { paddingBottom: getScrollContentWithSimpleCTAPadding(insets.bottom, keyboardHeight) },
+            // Note: safeAreaBottom=0 because iOS card-style modals already handle safe area
+            { paddingBottom: getScrollContentWithSimpleCTAPadding(0, keyboardHeight) },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -581,10 +582,11 @@ export default function AddAccountScreen() {
         </ScrollView>
 
         {/* Save Button - fixed at bottom, moves with keyboard */}
+        {/* Note: bottomInset=0 because iOS card-style modals already handle safe area */}
         <ModalSaveBar
           label="Save"
           disabled={!canSubmit}
-          bottomInset={insets.bottom}
+          bottomInset={0}
           onPress={handleSubmit}
         />
 
@@ -596,7 +598,7 @@ export default function AddAccountScreen() {
             exiting={FadeOut.duration(150)}
             style={[
               modalStyles.toast,
-              { backgroundColor: semantic.text, position: 'absolute', bottom: getScrollContentWithSimpleCTAPadding(insets.bottom), alignSelf: 'center' }
+              { backgroundColor: semantic.text, position: 'absolute', bottom: getScrollContentWithSimpleCTAPadding(0), alignSelf: 'center' }
             ]}
             pointerEvents="none"
           >

@@ -1166,7 +1166,8 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         style={{ flex: 1 }}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: getScrollContentWithCTAPadding(insets.bottom, keyboardHeight) },
+          // Note: safeAreaBottom=0 because iOS card-style modals already handle safe area
+          { paddingBottom: getScrollContentWithCTAPadding(0, keyboardHeight) },
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
@@ -1879,10 +1880,11 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       />
 
       {/* Bottom CTA Bar - absolutely positioned */}
+      {/* Note: bottomInset=0 because iOS card-style modals already handle safe area */}
       <BottomCTABar
         amountDisplay={amount.amountDisplay}
         canSave={canSave}
-        bottomInset={insets.bottom}
+        bottomInset={0}
         onSave={onSave}
         onSaveAndNew={onSaveAndAddAnother}
         onSaveDraft={onSaveDraft}
@@ -1899,7 +1901,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
             {
               backgroundColor: theme.semantic.text,
               position: 'absolute',
-              bottom: getScrollContentWithCTAPadding(insets.bottom),
+              bottom: getScrollContentWithCTAPadding(0),
               alignSelf: 'center',
             },
           ]}
