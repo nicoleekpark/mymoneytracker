@@ -1,8 +1,7 @@
 import { router } from 'expo-router'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
   LayoutAnimation,
-  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -18,6 +17,7 @@ import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { MODAL_SNAP_HALF } from '@/shared/theme/tokens/modal'
 import { useAssetsData } from './hooks/useAssetsData'
+import { useRunwayData } from './hooks/useRunwayData'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -36,9 +36,13 @@ export type AssetsColors = Readonly<{
   warning: string
 }>
 
+type Scope = 'month' | 'year' | 'all'
+type Period = { year: number; month?: number }
+
 type Props = {
   colors: AssetsColors
-  year: number
+  scope: Scope
+  period: Period
   selectedMemberIds: string[]
 }
 
@@ -98,9 +102,86 @@ function LiquidityInfoSheet({
 }
 
 /**
- * Tied up assets info bottom sheet
+ * Runway info bottom sheet (All scope only)
  */
-function TiedUpInfoSheet({
+function RunwayInfoSheet({
+  visible,
+  onClose,
+  colors,
+  avgMonthlyExpense,
+  hasEnoughData,
+  monthCount,
+}: {
+  visible: boolean
+  onClose: () => void
+  colors: AssetsColors
+  avgMonthlyExpense: number
+  hasEnoughData: boolean
+  monthCount: number
+}) {
+  return (
+    <InfoSheet
+      visible={visible}
+      onClose={onClose}
+      title="Runway"
+      colors={{
+        surface: colors.surface,
+        text: colors.text,
+        textSecondary: colors.textSecondary,
+        surfaceAlt: colors.surfaceAlt
+      }}
+      snapPoints={MODAL_SNAP_HALF}
+    >
+      <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
+        How many months your accessible assets can cover your expenses.
+      </Text>
+
+      <View style={{ marginBottom: spacing.xl }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          How it's calculated:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          Runway = Accessible Assets ÷ Avg Monthly Expenses
+        </Text>
+        {hasEnoughData && avgMonthlyExpense > 0 && (
+          <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22, marginTop: spacing.sm }}>
+            Your avg monthly expense: {formatUsdInt(avgMonthlyExpense)}
+          </Text>
+        )}
+        {!hasEnoughData && (
+          <Text style={{ fontSize: fontSize.sm, color: colors.warning, lineHeight: 22, marginTop: spacing.sm }}>
+            Need at least 3 months of expense data to calculate. Currently: {monthCount} month{monthCount !== 1 ? 's' : ''}.
+          </Text>
+        )}
+      </View>
+
+      <View style={{ marginBottom: spacing.xl }}>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          General guidelines:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          {'\u2022'} 3-6 months: Basic emergency fund{'\n'}
+          {'\u2022'} 6-12 months: Solid financial cushion{'\n'}
+          {'\u2022'} 12+ months: Strong financial security
+        </Text>
+      </View>
+
+      <View>
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Why it matters:
+        </Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          Runway shows how long you could maintain your lifestyle without income. It's a practical measure of financial resilience.
+        </Text>
+      </View>
+    </InfoSheet>
+  )
+}
+
+/**
+ * Liabilities info bottom sheet (Monthly/Yearly scopes)
+ */
+function LiabilitiesInfoSheet({
   visible,
   onClose,
   colors,
@@ -113,69 +194,39 @@ function TiedUpInfoSheet({
     <InfoSheet
       visible={visible}
       onClose={onClose}
-      title="Tied Up Assets"
+      title="Liabilities"
       colors={{
         surface: colors.surface,
         text: colors.text,
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt
       }}
-      snapPoints={['70%']}
+      snapPoints={MODAL_SNAP_HALF}
     >
       <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
-        Assets that cannot be quickly converted to cash without significant loss, penalties, or time.
+        Total amount you owe — debts that reduce your net worth.
       </Text>
 
       <View style={{ marginBottom: spacing.xl }}>
         <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-          Examples:
+          Common liabilities:
         </Text>
         <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-          {'\u2022'} Retirement accounts (401k, IRA, 403b){'\n'}
-          {'\u2022'} Real estate equity{'\n'}
-          {'\u2022'} Vehicles{'\n'}
-          {'\u2022'} Private investments{'\n'}
-          {'\u2022'} CDs & time deposits
-        </Text>
-      </View>
-
-      <View style={{ marginBottom: spacing.xl }}>
-        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-          Early withdrawal penalties:
-        </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-          {'\u2022'} 401(k) / IRA: 10% penalty + income tax if withdrawn before age 59½{'\n'}
-          {'\u2022'} SIMPLE IRA: 25% penalty if within first 2 years{'\n'}
-          {'\u2022'} Real estate: Selling costs typically 6-10% of value
-        </Text>
-      </View>
-
-      <View style={{ marginBottom: spacing.xl }}>
-        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
-          Why it matters:
-        </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-          This is your long-term wealth. It grows over time but isn't available for emergencies without cost.
+          {'\u2022'} Credit card balances{'\n'}
+          {'\u2022'} Mortgage{'\n'}
+          {'\u2022'} Auto loans{'\n'}
+          {'\u2022'} Student loans{'\n'}
+          {'\u2022'} Personal loans
         </Text>
       </View>
 
       <View>
-        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: spacing.xs }}>
-          Sources:
+        <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm }}>
+          Why it matters:
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-          <Pressable onPress={() => Linking.openURL('https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-exceptions-to-tax-on-early-distributions')}>
-            <Text style={{ fontSize: fontSize.xs, color: colors.primary, textDecorationLine: 'underline' }}>
-              IRS
-            </Text>
-          </Pressable>
-          <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{'\u2022'}</Text>
-          <Pressable onPress={() => Linking.openURL('https://www.investopedia.com/terms/i/illiquid.asp')}>
-            <Text style={{ fontSize: fontSize.xs, color: colors.primary, textDecorationLine: 'underline' }}>
-              Investopedia
-            </Text>
-          </Pressable>
-        </View>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
+          Tracking debt paydown progress is motivating. Every dollar paid off increases your net worth.
+        </Text>
       </View>
     </InfoSheet>
   )
@@ -259,14 +310,74 @@ function InfoIndicator({ color }: { color: string }) {
   )
 }
 
-export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
-  const data = useAssetsData({ year, selectedMemberIds })
+export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) {
+  const data = useAssetsData({ scope, period, selectedMemberIds })
+  const runwayData = useRunwayData(data.summary.liquidifiableAmount)
   const [showLiquidityInfo, setShowLiquidityInfo] = useState(false)
-  const [showTiedUpInfo, setShowTiedUpInfo] = useState(false)
+  const [showRunwayInfo, setShowRunwayInfo] = useState(false)
+  const [showLiabilitiesInfo, setShowLiabilitiesInfo] = useState(false)
   const [showGoalModal, setShowGoalModal] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [balanceSheetFilter, setBalanceSheetFilter] = useState<'all' | 'liquid'>('all')
   const [longTermCollapsed, setLongTermCollapsed] = useState(true) // Default collapsed in Accessible mode
+
+  // Calculate accessible and liabilities change % based on scope
+  const { accessibleChangePercent, liabilitiesChangePercent, comparisonLabel } = useMemo(() => {
+    const trend = data.trend
+    if (trend.length < 2) {
+      return { accessibleChangePercent: null, liabilitiesChangePercent: null, comparisonLabel: '' }
+    }
+
+    // Determine comparison point based on scope
+    let compareIndex: number
+    let label: string
+
+    if (scope === 'all') {
+      // Compare vs first data point
+      compareIndex = 0
+      const firstPoint = trend[0]
+      if (firstPoint) {
+        const [year, month] = firstPoint.yearMonth.split('-')
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        label = `vs ${monthNames[Number(month) - 1]} ${year}`
+      } else {
+        label = ''
+      }
+    } else if (scope === 'year') {
+      // Compare vs Jan 1 of the selected year
+      const janYearMonth = `${period.year}-01`
+      compareIndex = trend.findIndex(t => t.yearMonth === janYearMonth)
+      if (compareIndex === -1) compareIndex = 0
+      label = `vs Jan ${period.year}`
+    } else {
+      // Monthly: compare vs last month
+      compareIndex = trend.length - 2
+      label = 'vs last mo'
+    }
+
+    const comparePoint = trend[compareIndex]
+    if (!comparePoint) {
+      return { accessibleChangePercent: null, liabilitiesChangePercent: null, comparisonLabel: '' }
+    }
+
+    const currentAccessible = data.summary.liquidifiableAmount
+    const compareAccessible = comparePoint.liquidifiable
+    const accessibleChange = compareAccessible > 0
+      ? Math.round(((currentAccessible - compareAccessible) / compareAccessible) * 1000) / 10
+      : null
+
+    const currentLiabilities = data.summary.totalLiabilities
+    const compareLiabilities = comparePoint.totalLiabilities
+    const liabilitiesChange = compareLiabilities > 0
+      ? Math.round(((currentLiabilities - compareLiabilities) / compareLiabilities) * 1000) / 10
+      : null
+
+    return {
+      accessibleChangePercent: accessibleChange,
+      liabilitiesChangePercent: liabilitiesChange,
+      comparisonLabel: label,
+    }
+  }, [data.trend, data.summary.liquidifiableAmount, data.summary.totalLiabilities, scope, period.year])
 
   const handleOpenSettings = useCallback(() => {
     router.push('/(modal)/asset-settings')
@@ -341,7 +452,15 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
     <View style={{ flex: 1 }}>
       {/* Bottom Sheets */}
       <LiquidityInfoSheet visible={showLiquidityInfo} onClose={() => setShowLiquidityInfo(false)} colors={colors} />
-      <TiedUpInfoSheet visible={showTiedUpInfo} onClose={() => setShowTiedUpInfo(false)} colors={colors} />
+      <RunwayInfoSheet
+        visible={showRunwayInfo}
+        onClose={() => setShowRunwayInfo(false)}
+        colors={colors}
+        avgMonthlyExpense={runwayData.avgMonthlyExpense}
+        hasEnoughData={runwayData.hasEnoughData}
+        monthCount={runwayData.monthCount}
+      />
+      <LiabilitiesInfoSheet visible={showLiabilitiesInfo} onClose={() => setShowLiabilitiesInfo(false)} colors={colors} />
       <WealthGoalInfoSheet
         visible={showGoalModal}
         onClose={() => setShowGoalModal(false)}
@@ -361,12 +480,8 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
       {/* Hero: Current Net Worth */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       {(() => {
-        // Calculate tied up = total assets - liquid assets
         const accessible = data.summary.liquidifiableAmount
-        const tiedUp = data.summary.totalAssets - accessible
-        const totalAssets = data.summary.totalAssets
-        const accessiblePercent = totalAssets > 0 ? Math.round((accessible / totalAssets) * 100) : 0
-        const tiedUpPercent = totalAssets > 0 ? Math.round((tiedUp / totalAssets) * 100) : 0
+        const liabilities = data.summary.totalLiabilities
 
         return (
           <View style={{ paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
@@ -378,25 +493,15 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
               <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: -1 }}>
                 {formatUsdInt(data.summary.netWorth)}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm }}>
-                <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
-                  <Text style={{ fontWeight: fontWeight.semibold, color: data.yearlySnapshot.growth >= 0 ? colors.success : colors.danger }}>
-                    {data.yearlySnapshot.growth >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(data.yearlySnapshot.growth))}
-                  </Text>
-                  {' '}since {data.isCurrentYear ? 'Jan 1' : `start of ${data.year}`}
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
+                <Text style={{ fontWeight: fontWeight.semibold, color: data.yearlySnapshot.growth >= 0 ? colors.success : colors.danger }}>
+                  {data.yearlySnapshot.growth >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(data.yearlySnapshot.growth))}
                 </Text>
-                <Pressable
-                  onPress={() => router.push('/(modal)/net-worth-history')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={{ fontSize: fontSize.sm, color: colors.primary }}>
-                    See history →
-                  </Text>
-                </Pressable>
-              </View>
+                {' '}since {data.isCurrentYear ? 'Jan 1' : `start of ${data.year}`}
+              </Text>
             </View>
 
-            {/* Accessible vs Tied up - two columns with subtle middle divider */}
+            {/* Accessible vs Liabilities - two columns with subtle middle divider */}
             <View style={{ flexDirection: 'row' }}>
               {/* Accessible */}
               <Pressable
@@ -416,17 +521,27 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
                 <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
                   {formatUsdInt(accessible)}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
-                  {accessiblePercent}%
-                </Text>
+                {accessibleChangePercent !== null && comparisonLabel ? (
+                  <Text style={{
+                    fontSize: fontSize.xs,
+                    color: accessibleChangePercent >= 0 ? colors.success : colors.danger,
+                    marginTop: spacing.xs,
+                  }}>
+                    {accessibleChangePercent >= 0 ? '↑' : '↓'} {Math.abs(accessibleChangePercent)}% {comparisonLabel}
+                  </Text>
+                ) : (
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                    —
+                  </Text>
+                )}
               </Pressable>
 
               {/* Subtle middle divider */}
               <View style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.sm, opacity: 0.5 }} />
 
-              {/* Tied up */}
+              {/* Liabilities */}
               <Pressable
-                onPress={() => setShowTiedUpInfo(true)}
+                onPress={() => setShowLiabilitiesInfo(true)}
                 style={{
                   flex: 1,
                   padding: spacing.lg,
@@ -435,19 +550,72 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs }}>
                   <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider }}>
-                    Tied up
+                    Liabilities
                   </Text>
                   <InfoIndicator color={colors.textSecondary} />
                 </View>
                 <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text }}>
-                  {formatUsdInt(tiedUp)}
+                  {formatUsdInt(liabilities)}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
-                  {tiedUpPercent}%
-                </Text>
+                {liabilitiesChangePercent !== null && comparisonLabel ? (
+                  <Text style={{
+                    fontSize: fontSize.xs,
+                    // For liabilities, decrease is good (green), increase is bad (red)
+                    color: liabilitiesChangePercent <= 0 ? colors.success : colors.danger,
+                    marginTop: spacing.xs,
+                  }}>
+                    {liabilitiesChangePercent <= 0 ? '↓' : '↑'} {Math.abs(liabilitiesChangePercent)}% {comparisonLabel}
+                  </Text>
+                ) : (
+                  <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, marginTop: spacing.xs }}>
+                    —
+                  </Text>
+                )}
               </Pressable>
             </View>
           </View>
+        )
+      })()}
+
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* Runway Section (All scope only) */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {scope === 'all' && (() => {
+        const runwayDisplay = runwayData.runwayMonths !== null
+          ? runwayData.runwayMonths >= 12
+            ? `${(runwayData.runwayMonths / 12).toFixed(1)} years`
+            : `${runwayData.runwayMonths.toFixed(1)} months`
+          : null
+
+        return (
+          <Pressable
+            onPress={() => setShowRunwayInfo(true)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.lg,
+              padding: spacing.lg,
+              marginBottom: spacing.lg,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+              <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text }}>
+                Runway
+              </Text>
+              <InfoIndicator color={colors.textSecondary} />
+            </View>
+            {runwayDisplay !== null ? (
+              <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>
+                {runwayDisplay}
+              </Text>
+            ) : (
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
+                Need more data
+              </Text>
+            )}
+          </Pressable>
         )
       })()}
 

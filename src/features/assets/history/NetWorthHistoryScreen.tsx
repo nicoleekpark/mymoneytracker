@@ -4,7 +4,6 @@
  * Shows net worth trend over time with:
  * - Range selector (6M, 1Y, All)
  * - Line chart visualization
- * - Monthly breakdown cards (expandable)
  */
 
 import { router } from 'expo-router'
@@ -154,109 +153,12 @@ function TrendChart({
   )
 }
 
-/**
- * Monthly breakdown card
- */
-function MonthCard({
-  point,
-  previousPoint,
-  colors,
-  isExpanded,
-  onToggle,
-}: {
-  point: AssetTrendPoint
-  previousPoint: AssetTrendPoint | null
-  colors: {
-    text: string
-    textSecondary: string
-    surface: string
-    surfaceAlt: string
-    border: string
-    success: string
-    danger: string
-  }
-  isExpanded: boolean
-  onToggle: () => void
-}) {
-  const assetChange = previousPoint ? point.totalAssets - previousPoint.totalAssets : 0
-  const liabilityChange = previousPoint ? point.totalLiabilities - previousPoint.totalLiabilities : 0
-
-  return (
-    <Pressable
-      onPress={onToggle}
-      style={[styles.monthCard, { backgroundColor: colors.surfaceAlt }]}
-    >
-      {/* Header */}
-      <View style={styles.monthHeader}>
-        <Text style={[styles.monthName, { color: colors.text }]}>
-          {formatYearMonth(point.yearMonth)}
-        </Text>
-        <Text style={[styles.monthNet, { color: colors.text }]}>
-          {formatUsdInt(point.netWorth)}
-        </Text>
-      </View>
-
-      {/* Breakdown row */}
-      <View style={styles.monthBreakdown}>
-        <View style={styles.breakdownItem}>
-          <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>Assets</Text>
-          <View style={styles.breakdownRow}>
-            <Text style={[styles.breakdownValue, { color: colors.text }]}>
-              {formatUsdInt(point.totalAssets)}
-            </Text>
-            {previousPoint && assetChange !== 0 && (
-              <Text style={[
-                styles.breakdownChange,
-                { color: assetChange >= 0 ? colors.success : colors.danger }
-              ]}>
-                {assetChange >= 0 ? '+' : ''}{formatUsdInt(assetChange)}
-              </Text>
-            )}
-          </View>
-        </View>
-        <View style={styles.breakdownItem}>
-          <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>Liabilities</Text>
-          <View style={styles.breakdownRow}>
-            <Text style={[styles.breakdownValue, { color: colors.text }]}>
-              {formatUsdInt(point.totalLiabilities)}
-            </Text>
-            {previousPoint && liabilityChange !== 0 && (
-              <Text style={[
-                styles.breakdownChange,
-                // For liabilities, increase is bad, decrease is good
-                { color: liabilityChange <= 0 ? colors.success : colors.danger }
-              ]}>
-                {liabilityChange >= 0 ? '+' : ''}{formatUsdInt(liabilityChange)}
-              </Text>
-            )}
-          </View>
-        </View>
-      </View>
-
-      {/* Expand hint */}
-      <Text style={[styles.expandHint, { color: colors.textSecondary }]}>
-        {isExpanded ? 'Tap to collapse' : 'Tap for details'}
-      </Text>
-
-      {/* Expanded details - TODO: Add category breakdown */}
-      {isExpanded && (
-        <View style={[styles.expandedContent, { borderTopColor: colors.border }]}>
-          <Text style={[styles.expandedNote, { color: colors.textSecondary }]}>
-            Accessible: {formatUsdInt(point.liquidifiable)}
-          </Text>
-        </View>
-      )}
-    </Pressable>
-  )
-}
-
 export default function NetWorthHistoryScreen() {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
   const { semantic } = theme
 
   const [range, setRange] = useState<RangeKey>('1y')
-  const [expandedMonth, setExpandedMonth] = useState<string | null>(null)
 
   // Get trend data based on range
   const trendData = useMemo(() => {
@@ -290,19 +192,10 @@ export default function NetWorthHistoryScreen() {
     router.back()
   }, [])
 
-  const handleToggleMonth = useCallback((yearMonth: string) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setExpandedMonth(prev => prev === yearMonth ? null : yearMonth)
-  }, [])
-
   const handleRangeChange = useCallback((newRange: RangeKey) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setRange(newRange)
-    setExpandedMonth(null)
   }, [])
-
-  // Reverse for display (newest first)
-  const displayDataReversed = useMemo(() => [...displayData].reverse(), [displayData])
 
   return (
     <Screen
@@ -388,35 +281,6 @@ export default function NetWorthHistoryScreen() {
             }}
           />
         </View>
-
-        {/* Monthly Cards */}
-        <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
-          Monthly Snapshots
-        </Text>
-
-        {displayDataReversed.map((point, index) => {
-          const previousIndex = displayData.findIndex(d => d.yearMonth === point.yearMonth) - 1
-          const previousPoint = previousIndex >= 0 ? displayData[previousIndex] : null
-
-          return (
-            <MonthCard
-              key={point.yearMonth}
-              point={point}
-              previousPoint={previousPoint}
-              colors={{
-                text: semantic.text,
-                textSecondary: semantic.textSecondary,
-                surface: semantic.surface,
-                surfaceAlt: semantic.surfaceAlt,
-                border: semantic.border,
-                success: semantic.success,
-                danger: semantic.danger,
-              }}
-              isExpanded={expandedMonth === point.yearMonth}
-              onToggle={() => handleToggleMonth(point.yearMonth)}
-            />
-          )
-        })}
       </ScrollView>
     </Screen>
   )
@@ -491,71 +355,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chartEmptyText: {
-    fontSize: fontSize.sm,
-  },
-  sectionTitle: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.md,
-  },
-  monthCard: {
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  monthHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  monthName: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-  },
-  monthNet: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    fontVariant: ['tabular-nums'],
-  },
-  monthBreakdown: {
-    flexDirection: 'row',
-    gap: spacing.lg,
-  },
-  breakdownItem: {
-    flex: 1,
-  },
-  breakdownLabel: {
-    fontSize: fontSize.xs,
-    marginBottom: spacing.xs,
-  },
-  breakdownRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
-  },
-  breakdownValue: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    fontVariant: ['tabular-nums'],
-  },
-  breakdownChange: {
-    fontSize: fontSize.xs,
-    fontVariant: ['tabular-nums'],
-  },
-  expandHint: {
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-    marginTop: spacing.md,
-  },
-  expandedContent: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-  },
-  expandedNote: {
     fontSize: fontSize.sm,
   },
 })

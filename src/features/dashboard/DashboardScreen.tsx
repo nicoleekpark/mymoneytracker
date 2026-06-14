@@ -30,7 +30,7 @@ import { SwipeGestureWrapper } from './shared/SwipeGestureWrapper'
 import { getFamilyMembers } from '@/core/services/asset'
 import { AccountsBody } from './accounts'
 import { AllBody } from './all'
-import { AssetsBody, useAssetsNavigation } from './assets'
+import { AssetsBody } from './assets'
 import { InsightsBody } from './insights'
 import { MonthlyBody } from './monthly/MonthlyBody'
 import { YearlyBody } from './yearly'
@@ -80,15 +80,9 @@ export default function DashboardScreen() {
 
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  // ─── Step 4: Assets Navigation (data-driven) ─────────────────────────────
-  // Assets mode navigates only to years with recorded data (not calendar-based)
-  const assetsNav = useAssetsNavigation(period, setPeriod)
-
   function handleOpenPicker() {
-    // Only block picker in overview mode when scope is 'all'
-    if (mode === 'overview' && scope === 'all') return
-    // Block picker for assets mode (data-driven years only)
-    if (mode === 'assets') return
+    // Block picker when scope is 'all'
+    if (scope === 'all') return
     setPickerOpen(true)
   }
 
@@ -139,22 +133,20 @@ export default function DashboardScreen() {
         selectedMemberIds={selectedMemberIds} // Currently selected member IDs ([] = all)
         onSelectMembers={setSelectedMemberIds} // Callback when user taps a member chip 
         // ─── Period Display ────────────────────────────────────────────
-        // Assets: always 'year' | Others: use store's scope
-        scope={mode === 'assets' ? 'year' : scope}
+        scope={scope}
         period={period} // Current period from store {year: 2024, month: 3} or {year: 2024}
         // ─── Navigation Arrows ─────────────────────────────────────────
-        // Assets: data-driven (only years with data)
-        // Others: calendar-driven (can't go past current month)
-        canPrev={mode === 'assets' ? assetsNav.canPrev : canPrev()}
-        canNext={mode === 'assets' ? assetsNav.canNext : canNext()}
-        onPrev={mode === 'assets' ? assetsNav.onPrev : () => shiftPeriod(-1)}
-        onNext={mode === 'assets' ? assetsNav.onNext : () => shiftPeriod(1)}
+        // Calendar-driven navigation (can't go past current month)
+        canPrev={canPrev()}
+        canNext={canNext()}
+        onPrev={() => shiftPeriod(-1)}
+        onNext={() => shiftPeriod(1)}
         // ─── Period Picker (disabled for Assets) ───────────────────────
         onOpenPicker={handleOpenPicker} // Opens month/year picker modal, disabled for Assets mode (see handleOpenPicker)
-        // ─── Scope Tabs (only Overview & Accounts) ─────────────────────
-        showScopeTabs={mode === 'overview' || mode === 'accounts'} // Only Overview and Accounts show the scope tabs
-        scopeTabsProps={ // When tabs shown: pass current scope + change handler + "Today" button
-          (mode === 'overview' || mode === 'accounts')
+        // ─── Scope Tabs (Overview, Accounts, Assets) ─────────────────────
+        showScopeTabs={mode === 'overview' || mode === 'accounts' || mode === 'assets'}
+        scopeTabsProps={
+          (mode === 'overview' || mode === 'accounts' || mode === 'assets')
             ? { scope, onScopeChange: setScope, onToday: resetToToday }
             : undefined
         }
@@ -172,13 +164,22 @@ export default function DashboardScreen() {
 
       {/* Assets mode - Net worth and asset tracking */}
       {mode === 'assets' && (
-        <View style={styles.body}>
-          <AssetsBody
-            colors={standardColors}
-            year={period.year}
-            selectedMemberIds={selectedMemberIds}
-          />
-        </View>
+        <SwipeGestureWrapper
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          canSwipeLeft={canNext()}
+          canSwipeRight={canPrev()}
+          enabled={scope !== 'all'}
+        >
+          <View style={styles.body}>
+            <AssetsBody
+              colors={standardColors}
+              scope={scope}
+              period={period}
+              selectedMemberIds={selectedMemberIds}
+            />
+          </View>
+        </SwipeGestureWrapper>
       )}
 
       {/* Accounts mode body */}

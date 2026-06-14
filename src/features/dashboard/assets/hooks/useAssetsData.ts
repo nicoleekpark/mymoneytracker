@@ -144,22 +144,38 @@ function filterItemsByMembers(
   )
 }
 
+export type Scope = 'month' | 'year' | 'all'
+export type Period = { year: number; month?: number }
+
 export type UseAssetsDataParams = {
-  year: number
+  scope: Scope
+  period: Period
   selectedMemberIds: string[]
 }
 
-export function useAssetsData({ year, selectedMemberIds }: UseAssetsDataParams) {
+export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDataParams) {
   const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
   const assetVersion = useDataRefreshStore((s) => s.assetVersion)
 
   const data = useMemo((): AssetsData => {
     try {
+      const year = period.year
+      const month = period.month ?? 12
       const isCurrentYear = year === currentYear
-      // For current year, use current month; for past years, use December
-      const yearMonth = isCurrentYear
-        ? getCurrentYearMonth()
-        : `${year}-12`
+      const isCurrentMonth = isCurrentYear && month === currentMonth
+
+      // Determine yearMonth based on scope
+      let yearMonth: string
+      if (scope === 'month') {
+        yearMonth = `${year}-${String(month).padStart(2, '0')}`
+      } else if (scope === 'year') {
+        // For year scope: current year uses current month, past years use December
+        yearMonth = isCurrentYear ? getCurrentYearMonth() : `${year}-12`
+      } else {
+        // 'all' scope: use current month
+        yearMonth = getCurrentYearMonth()
+      }
       const members = getFamilyMembers()
 
       // Get available years with data
@@ -391,7 +407,7 @@ export function useAssetsData({ year, selectedMemberIds }: UseAssetsDataParams) 
       logError('AssetsData', e)
       throw e
     }
-  }, [year, selectedMemberIds, currentYear, assetVersion])
+  }, [scope, period, selectedMemberIds, currentYear, currentMonth, assetVersion])
 
   return data
 }
