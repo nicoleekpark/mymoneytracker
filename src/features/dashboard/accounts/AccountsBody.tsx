@@ -1,10 +1,9 @@
-import { SectionHeader, TrackingSince } from '@/shared/components'
+import { SectionHeader, SettingsLink, TrackingSince } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
-import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native'
@@ -672,28 +671,11 @@ export function AccountsBody({ colors, scope, period }: Props) {
       ))}
 
       {/* Accounts Settings button at bottom */}
-      <Pressable
+      <SettingsLink
+        label="Accounts Settings"
         onPress={handleOpenSettings}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: spacing.sm,
-          paddingVertical: spacing.md,
-          marginTop: spacing.lg,
-        }}
-      >
-        <FontAwesome name="cog" size={14} color={colors.primary} />
-        <Text
-          style={{
-            fontSize: fontSize.sm,
-            fontWeight: fontWeight.semibold,
-            color: colors.primary,
-          }}
-        >
-          Accounts Settings
-        </Text>
-      </Pressable>
+        color={colors.primary}
+      />
     </ScrollView>
   )
 }

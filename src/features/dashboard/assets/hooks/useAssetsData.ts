@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useDataRefreshStore } from '@/shared/store'
 import { logError } from '@/shared/utils/logger'
 import {
   createEmptySummary,
@@ -150,6 +151,7 @@ export type UseAssetsDataParams = {
 
 export function useAssetsData({ year, selectedMemberIds }: UseAssetsDataParams) {
   const currentYear = new Date().getFullYear()
+  const assetVersion = useDataRefreshStore((s) => s.assetVersion)
 
   const data = useMemo((): AssetsData => {
     try {
@@ -389,7 +391,7 @@ export function useAssetsData({ year, selectedMemberIds }: UseAssetsDataParams) 
       logError('AssetsData', e)
       throw e
     }
-  }, [year, selectedMemberIds, currentYear])
+  }, [year, selectedMemberIds, currentYear, assetVersion])
 
   return data
 }

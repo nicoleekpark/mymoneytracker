@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { router } from 'expo-router'
+import React, { useCallback, useState } from 'react'
 import {
   LayoutAnimation,
   Linking,
@@ -9,7 +10,7 @@ import {
   UIManager,
   View,
 } from 'react-native'
-import { CategoryIcon, InfoSheet } from '@/shared/components'
+import { CategoryIcon, InfoSheet, SettingsLink } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
 import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -267,6 +268,10 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
   const [balanceSheetFilter, setBalanceSheetFilter] = useState<'all' | 'liquid'>('all')
   const [longTermCollapsed, setLongTermCollapsed] = useState(true) // Default collapsed in Accessible mode
 
+  const handleOpenSettings = useCallback(() => {
+    router.push('/(modal)/asset-settings')
+  }, [])
+
   function toggleCategory(categoryKey: string) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setExpandedCategories(prev => {
@@ -311,9 +316,23 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
         <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, marginTop: spacing.lg, textAlign: 'center' }}>
           No assets tracked yet
         </Text>
-        <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', marginBottom: spacing.xl }}>
           Add your first asset to start tracking your net worth.
         </Text>
+        <Pressable
+          onPress={() => router.push('/(modal)/add-asset')}
+          style={({ pressed }) => ({
+            backgroundColor: colors.primary,
+            paddingVertical: spacing.md,
+            paddingHorizontal: spacing.xl,
+            borderRadius: radius.lg,
+            opacity: pressed ? 0.8 : 1,
+          })}
+        >
+          <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.surface }}>
+            + Add Asset
+          </Text>
+        </Pressable>
       </View>
     )
   }
@@ -359,12 +378,22 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
               <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: -1 }}>
                 {formatUsdInt(data.summary.netWorth)}
               </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm }}>
-                Change since {data.isCurrentYear ? 'Jan 1' : `start of ${data.year}`}{' '}
-                <Text style={{ fontWeight: fontWeight.semibold, color: data.yearlySnapshot.growth >= 0 ? colors.success : colors.danger }}>
-                  {data.yearlySnapshot.growth >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(data.yearlySnapshot.growth))}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm }}>
+                <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
+                  <Text style={{ fontWeight: fontWeight.semibold, color: data.yearlySnapshot.growth >= 0 ? colors.success : colors.danger }}>
+                    {data.yearlySnapshot.growth >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(data.yearlySnapshot.growth))}
+                  </Text>
+                  {' '}since {data.isCurrentYear ? 'Jan 1' : `start of ${data.year}`}
                 </Text>
-              </Text>
+                <Pressable
+                  onPress={() => router.push('/(modal)/net-worth-history')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={{ fontSize: fontSize.sm, color: colors.primary }}>
+                    See history →
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             {/* Accessible vs Tied up - two columns with subtle middle divider */}
@@ -539,7 +568,7 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
                 fontWeight: fontWeight.semibold,
                 color: balanceSheetFilter === 'liquid' ? colors.surface : colors.textSecondary,
               }}>
-                Actionable
+                Accessible
               </Text>
             </Pressable>
           </View>
@@ -761,8 +790,8 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
                         <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, flex: 1 }}>
                           Long-term
                         </Text>
-                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>
-                          Included in Net Worth
+                        <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, fontStyle: 'italic' }}>
+                          Not included in calculation
                         </Text>
                       </Pressable>
 
@@ -797,6 +826,13 @@ export function AssetsBody({ colors, year, selectedMemberIds }: Props) {
           )
         })()}
       </View>
+
+      {/* Assets Settings button at bottom */}
+      <SettingsLink
+        label="Assets Settings"
+        onPress={handleOpenSettings}
+        color={colors.primary}
+      />
     </ScrollView>
     </View>
   )

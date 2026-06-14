@@ -13,6 +13,55 @@ Future feature ideas for MyMoneyTracker.
 | Auto-Complete | Suggest items/merchants from history | Low |
 | Data Export | Export transactions to CSV/JSON | Low |
 
+### Price Tracker (Detailed Spec)
+
+**Purpose:** Track price changes of items across stores and over time. Helps users find best deals and understand inflation impact.
+
+**Data Sources:**
+1. **Manual entry** - User inputs item, store, price, unit, date
+2. **Auto-populate from Items** - Pull from itemized expenses in transactions (merchant as store, item name, price)
+
+**Core Features:**
+- Track same item across multiple stores (e.g., "Organic Carrots" at Whole Foods vs Trader Joe's)
+- Historical price graph per item/store
+- Price comparison view across stores
+- Unit normalization ($/lb, $/oz, $/each)
+- Price alerts (optional: notify when price drops)
+
+**Example Use Case:**
+```
+Organic Carrots
+├── Whole Foods
+│   ├── Jan 2022: $4.00/lb
+│   ├── Jun 2024: $5.50/lb
+│   └── Jun 2026: $6.00/lb (+50% since 2022)
+├── Trader Joe's
+│   ├── Jan 2022: $3.50/lb
+│   └── Jun 2026: $4.00/lb (+14% since 2022)
+└── Costco
+    └── Jun 2026: $2.80/lb (best price)
+```
+
+**Data Model:**
+```
+PriceEntry {
+  id: UUID
+  itemName: string        // "Organic Carrots"
+  storeName: string       // "Whole Foods"
+  price: number           // 600 (cents)
+  unit: string            // "lb" | "oz" | "each" | "pack"
+  quantity: number        // 1 (for price per X units)
+  date: string            // "2026-06-13"
+  sourceTransactionId?: UUID  // Link to original transaction if auto-populated
+}
+```
+
+**Views:**
+1. **Item List** - All tracked items with latest price
+2. **Item Detail** - Price history chart, store comparison
+3. **Store View** - All prices at a specific store
+4. **Price Alerts** - Items with significant price changes
+
 ---
 
 ## v2 (Family & Cloud)

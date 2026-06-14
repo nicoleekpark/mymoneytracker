@@ -230,6 +230,33 @@ function RootLayoutNav() {
                   }}
                 />
 
+                {/* Add asset - slides up as modal */}
+                <Stack.Screen
+                  name="(modal)/add-asset"
+                  options={{
+                    presentation: 'modal',
+                    headerShown: false
+                  }}
+                />
+
+                {/* Asset settings - slides up as modal */}
+                <Stack.Screen
+                  name="(modal)/asset-settings"
+                  options={{
+                    presentation: 'modal',
+                    headerShown: false
+                  }}
+                />
+
+                {/* Net worth history - slides up as modal */}
+                <Stack.Screen
+                  name="(modal)/net-worth-history"
+                  options={{
+                    presentation: 'modal',
+                    headerShown: false
+                  }}
+                />
+
                 {/* Notifications - slides from right like normal screen */}
                 <Stack.Screen
                   name="notifications"
