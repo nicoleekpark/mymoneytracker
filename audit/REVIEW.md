@@ -114,3 +114,20 @@ This should be done in a dedicated PR with careful visual testing.
 3. Add new `BACKDROP.lightMedium` (0.4) - preserves exact value
 
 **Recommendation:** Flag for UX decision - is 0.4 intentionally between light and medium, or should it match one?
+
+---
+
+## 6. Percentage Column Width Inconsistency (Task 1.6)
+
+**Files:**
+- `MonthlyCategorySection.tsx`: uses `width: 40`
+- `MonthlyIncomeSection.tsx`: uses `width: 40`
+- `CategoryAccordion.styles.ts`: uses `width: 44`
+
+**Issue:** Percentage text column widths are not consistent (40 vs 44).
+
+**Applied:**
+- Only `CATEGORY_ROW_LAYOUT.chevronColumnWidth` (20) was applied as it's consistent across all files.
+- Created `src/shared/theme/tokens/layout.ts` with both constants.
+
+**Recommendation:** Determine if 44 or 40 is the correct width, then unify.

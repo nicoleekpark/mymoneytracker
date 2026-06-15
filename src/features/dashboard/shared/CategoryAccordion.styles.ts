@@ -4,6 +4,7 @@ import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { opacity } from '@/shared/theme/tokens/opacity'
 import { CATEGORY_DOT_SIZE } from '@/shared/theme/tokens/viewStyles'
+import { CATEGORY_ROW_LAYOUT } from '@/shared/theme/tokens/layout'
 
 export function createCategoryAccordionStyles() {
   return StyleSheet.create({
@@ -41,7 +42,7 @@ export function createCategoryAccordionStyles() {
       fontWeight: fontWeight.semibold,
     },
     chevronContainer: {
-      width: 20,
+      width: CATEGORY_ROW_LAYOUT.chevronColumnWidth,
       alignItems: 'center',
     },
     chevron: {
@@ -100,7 +101,7 @@ export function createCategoryAccordionStyles() {
       fontSize: fontSize.xs,
     },
     subcategorySpacer: {
-      width: 20,
+      width: CATEGORY_ROW_LAYOUT.chevronColumnWidth,
     },
     subcategoryBarContainer: {
       height: spacing.xs,
