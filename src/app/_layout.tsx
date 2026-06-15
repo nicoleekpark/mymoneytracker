@@ -26,6 +26,7 @@ import { runAppLaunchTriggers } from '@/core/services/notification' // Checks fo
 import { useSettingsStore } from '@/shared/store/settings.store' // Settings persistence
 import { useTagsStore } from '@/shared/store/tags.store' // Tags persistence
 import { useQuickChipsStore } from '@/shared/store/quickChips.store' // Quick chips persistence
+import { usePaymentChipsOrderStore } from '@/shared/store/paymentChipsOrder.store' // Payment chips order
 import { useDraftsStore } from '@/shared/store/drafts.store' // Drafts persistence
 import { logError } from '@/shared/utils/logger' // Centralized error logging
 
@@ -96,6 +97,7 @@ export default function RootLayout() {
       useSettingsStore.getState()._hydrate()
       useTagsStore.getState()._hydrate()
       useQuickChipsStore.getState()._hydrate()
+      usePaymentChipsOrderStore.getState()._hydrate()
       useDraftsStore.getState().loadDrafts() // Load drafts for FAB visibility
 
       setDbReady(true)        // 6. Signal: DB is ready!
