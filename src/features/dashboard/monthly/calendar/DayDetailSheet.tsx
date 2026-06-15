@@ -75,9 +75,9 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
     },
     ref
   ) => {
-    // Snap points: minimal for empty days, larger for days with transactions
+    // Snap points: use dynamic sizing for empty days, fixed percentages for days with transactions
     const hasTransactions = (selectedDay?.txCount ?? 0) > 0
-    const snapPoints = useMemo(() => (hasTransactions ? ['60%', '90%'] : [180]), [hasTransactions])
+    const snapPoints = useMemo(() => (hasTransactions ? ['60%', '90%'] : undefined), [hasTransactions])
 
     // Filter out Opening Balance and sort by absolute value (impact-first)
     const sortedTx = useMemo(() => {
@@ -115,6 +115,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
       <BottomSheetModal
         ref={ref}
         snapPoints={snapPoints}
+        enableDynamicSizing={!hasTransactions}
         backdropComponent={renderBackdrop}
         handleComponent={renderHandle}
         backgroundStyle={[modalStyles.modal, { backgroundColor: colors.surface }]}
