@@ -48,61 +48,62 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
- * Format a currency amount with smart decimals (hide .00).
- * Always shows absolute value: $ 123,456 or $ 5.80
+ * Format a currency amount as integer (rounds decimals).
+ * Always shows absolute value: $ 123,456 or $ 100
  */
 export function formatUsdInt(amount: number): string {
-  return `$ ${smartFormat(amount)}`
+  const rounded = Math.round(Math.abs(Number(amount) || 0))
+  return `$ ${withCommas(rounded)}`
 }
 
 /**
- * Format a currency amount with smart decimals and sign.
- * Positive: +$ 123 or +$ 5.80, Negative: -$ 123, Zero: $ 0
+ * Format a currency amount as integer with sign (rounds decimals).
+ * Positive: +$ 123, Negative: -$ 123, Zero: $ 0
  */
 export function formatSignedUsdInt(amount: number): string {
   const v = Number(amount) || 0
-  if (Math.abs(v) < 0.005) return '$ 0' // Handle floating point near-zero
-  return v > 0 ? `+$ ${smartFormat(v)}` : `-$ ${smartFormat(v)}`
+  const rounded = Math.round(Math.abs(v))
+  if (rounded < 1) return '$ 0'
+  return v > 0 ? `+$ ${withCommas(rounded)}` : `-$ ${withCommas(rounded)}`
 }
 
 /**
  * Format a currency amount in compact form for tight spaces.
- * < 1000: shows with smart decimals (e.g., "450", "5.80")
- * >= 1000: shows with K suffix (e.g., "1.2K", "25K")
+ * Rounds to integer first, then formats.
+ * < 1000: shows as integer (e.g., "450")
+ * 1000-9999: shows with K suffix (e.g., "1.5K", "2K")
+ * >= 10000: caps at "10K+"
  */
 export function formatCompactUsd(amount: number): string {
-  const abs = Math.abs(Number(amount) || 0)
-  if (abs < 0.005) return '0'
-  if (abs >= 1000) {
-    const k = abs / 1000
-    // >= 10K: show whole number (e.g., "25K")
-    if (k >= 10) return `${Math.round(k)}K`
-    // 1K-9.9K: show one decimal if not whole (e.g., "1.2K", "5K")
+  const rounded = Math.round(Math.abs(Number(amount) || 0))
+  if (rounded < 1) return '0'
+  if (rounded >= 10000) return '10K+'
+  if (rounded >= 1000) {
+    const k = rounded / 1000
     return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`
   }
-  // Smart format for amounts under 1000
-  return smartFormat(abs)
+  return withCommas(rounded)
 }
 
 /**
  * Format a signed currency amount in compact k format.
- * e.g., +$9.6k, -$1.5k, +$5.80, $0
+ * Rounds to integer first, then formats.
+ * e.g., +$9.6k, -$1.5k, +$500, $0
  */
 export function formatSignedUsdCompact(amount: number): string {
   const v = Number(amount) || 0
-  if (Math.abs(v) < 0.005) return '$0'
+  const rounded = Math.round(Math.abs(v))
+  if (rounded < 1) return '$0'
 
-  const abs = Math.abs(v)
   const sign = v > 0 ? '+' : '-'
 
-  if (abs >= 1000) {
-    const k = abs / 1000
-    // Show one decimal
+  if (rounded >= 1000) {
+    const k = rounded / 1000
     const kStr = k >= 10 ? Math.round(k).toString() : k.toFixed(1)
     return `${sign}$${kStr}k`
   }
 
-  return `${sign}$${smartFormat(abs)}`
+  return `${sign}$${rounded}`
 }
 
 /**
