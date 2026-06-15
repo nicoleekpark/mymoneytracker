@@ -86,6 +86,12 @@ export default function RootLayout() {
           sqlite.exec(`ALTER TABLE transactions ADD COLUMN parent_transaction_id TEXT REFERENCES transactions(id) ON DELETE CASCADE;`)
           console.log('[HOTFIX] Added parent_transaction_id column')
         }
+        if (!cols.includes('is_opening_balance')) {
+          sqlite.exec(`ALTER TABLE transactions ADD COLUMN is_opening_balance INTEGER NOT NULL DEFAULT 0 CHECK (is_opening_balance IN (0, 1));`)
+          // Mark existing "Opening Balance" transactions
+          sqlite.exec(`UPDATE transactions SET is_opening_balance = 1 WHERE item = 'Opening Balance' AND type = 'income';`)
+          console.log('[HOTFIX] Added is_opening_balance column')
+        }
       } catch (e) {
         console.warn('[HOTFIX] Column check failed:', e)
       }

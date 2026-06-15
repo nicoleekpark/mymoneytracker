@@ -132,6 +132,7 @@ export function createAccount(
       accountId: account.id,
       category: { type: 'income', categoryKey: 'adjustments', subCategoryKey: 'opening_balance' },
       note: `Initial balance for ${account.name}`,
+      isOpeningBalance: true, // Marks this as the first balance entry for this account
     })
 
     transactionRepository.insertWithTags(tx, [])

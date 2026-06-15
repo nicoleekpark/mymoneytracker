@@ -103,6 +103,7 @@ export function initTestSchema(ds: DataSource): void {
       note TEXT,
       member_id TEXT,
       is_estimated INTEGER NOT NULL DEFAULT 0 CHECK (is_estimated IN (0,1)),
+      is_opening_balance INTEGER NOT NULL DEFAULT 0 CHECK (is_opening_balance IN (0,1)),
       is_system INTEGER NOT NULL DEFAULT 0 CHECK (is_system IN (0,1)),
       fee_cents INTEGER DEFAULT NULL,
       parent_transaction_id TEXT REFERENCES transactions(id) ON DELETE CASCADE,

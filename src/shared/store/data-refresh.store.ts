@@ -16,15 +16,20 @@ type DataRefreshState = {
   transactionVersion: number
   /** Increment to trigger asset data refresh */
   assetVersion: number
+  /** Increment to trigger account data refresh */
+  accountVersion: number
   /** Call after adding/updating/deleting a transaction */
   invalidateTransactions: () => void
   /** Call after adding/updating/deleting an asset */
   invalidateAssets: () => void
+  /** Call after adding/updating/deleting an account */
+  invalidateAccounts: () => void
 }
 
 export const useDataRefreshStore = create<DataRefreshState>((set) => ({
   transactionVersion: 0,
   assetVersion: 0,
+  accountVersion: 0,
 
   invalidateTransactions: () => {
     set((state) => ({ transactionVersion: state.transactionVersion + 1 }))
@@ -32,5 +37,9 @@ export const useDataRefreshStore = create<DataRefreshState>((set) => ({
 
   invalidateAssets: () => {
     set((state) => ({ assetVersion: state.assetVersion + 1 }))
+  },
+
+  invalidateAccounts: () => {
+    set((state) => ({ accountVersion: state.accountVersion + 1 }))
   },
 }))

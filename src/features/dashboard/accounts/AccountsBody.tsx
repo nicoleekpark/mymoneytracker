@@ -4,6 +4,7 @@ import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
+import { useFocusEffect } from '@react-navigation/native'
 import { router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native'
@@ -536,7 +537,14 @@ function AccountSection({
 }
 
 export function AccountsBody({ colors, scope, period }: Props) {
-  const { groups, sectionSummaries, firstTransactionDate } = useAccountsData({ scope, period })
+  const { groups, sectionSummaries, firstTransactionDate, refetch } = useAccountsData({ scope, period })
+
+  // Refetch data when screen gains focus (e.g., returning from add-account modal)
+  useFocusEffect(
+    useCallback(() => {
+      refetch()
+    }, [refetch])
+  )
 
   const handleViewTransactions = useCallback((accountId: string) => {
     router.push({

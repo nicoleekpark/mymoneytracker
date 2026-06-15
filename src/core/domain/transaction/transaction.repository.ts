@@ -129,6 +129,7 @@ export interface TransactionRepository {
   listAllTimeIncomeByCategory(): AllTimeIncomeByCategory[]
   listYearlyFlowTotals(): YearlyFlowTotal[]
   getFirstTransactionDate(): string | null
+  getFirstTransactionDateByAccount(): Map<string, string>
   countDistinctMonths(): number
 
   // Personal bests

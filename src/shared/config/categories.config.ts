@@ -201,8 +201,7 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
   housing: [
     { key: 'utilities', name: 'Utilities', icon: 'lightbulb-o', color: '#4A7F74' },
     { key: 'hoa', name: 'HOA / Maintenance', icon: 'building', color: '#5A8F84' },
-    { key: 'repairs', name: 'Repairs & Updates', icon: 'wrench', color: '#2D5F54' },
-    { key: 'home_insurance', name: 'Home Insurance', icon: 'shield', color: '#3D6F64' }
+    { key: 'repairs', name: 'Repairs & Updates', icon: 'wrench', color: '#2D5F54' }
   ],
 
   // ---------------------------------------------------------------
@@ -256,8 +255,7 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
     { key: 'pet_food', name: 'Pet Food', icon: 'cutlery', color: '#8A7A34' },
     { key: 'vet', name: 'Vet Visit', icon: 'paw', color: '#7A6A24' },
     { key: 'pet_supplies', name: 'Supplies (Clothes / Toys)', icon: 'paw', color: '#9A8A44' },
-    { key: 'grooming', name: 'Grooming', icon: 'scissors', color: '#AA9A54' },
-    { key: 'pet_insurance', name: 'Pet Insurance', icon: 'shield', color: '#6A5A14' }
+    { key: 'grooming', name: 'Grooming', icon: 'scissors', color: '#AA9A54' }
   ],
 
   // ---------------------------------------------------------------
@@ -277,7 +275,7 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
     { key: 'wedding', name: 'Wedding Gifts', icon: 'diamond', color: '#7A6A7A' },
     { key: 'baby', name: 'Baby Gifts', icon: 'child', color: '#8A7A8A' },
     { key: 'birthday', name: 'Birthday / Holiday Gifts', icon: 'birthday-cake', color: '#6A5A6A' },
-    { key: 'cash_gift', name: 'Cash Gifts', icon: 'money', color: '#5A4A5A' }
+    { key: 'cash_gift_given', name: 'Cash Gift', icon: 'money', color: '#5A4A5A' }
   ],
 
   // ---------------------------------------------------------------
@@ -395,7 +393,7 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
   income: [
     { key: 'salary', name: 'Salary / Wages', icon: 'file-text', color: '#1F6B56' },
     { key: 'bonus', name: 'Bonus', icon: 'bullseye', color: '#2F7B66' },
-    { key: 'cash_gift', name: 'Cash Gift', icon: 'gift', color: '#3F8B76' },
+    { key: 'cash_gift_received', name: 'Cash Gift', icon: 'gift', color: '#3F8B76' },
     { key: 'equity_vesting', name: 'Equity Vesting (RSU/Stock)', icon: 'cube', color: '#0F5B46' },
     { key: 'capital_gains', name: 'Capital Gains (Stock Sale)', icon: 'line-chart', color: '#0F4B36' },
     { key: 'dividends', name: 'Dividends', icon: 'money', color: '#1F6B56' },
@@ -464,8 +462,9 @@ export const FIXED_CATEGORY_KEYS = CATEGORIES
 // {
 //   key: 'housing',
 //   name: 'Housing',
-//   icon: '🏡',
-//   color: '#F59E0B',
+//   icon: 'home',
+//   color: '#3D6F64',
 //   type: 'expense',
-//   subCategories: ['property_tax', 'utilities', 'hoa', 'repairs', 'home_insurance']
+//   isFixed: true,
+//   subCategories: [{ key: 'utilities', name: 'Utilities', icon: 'lightbulb-o', color: '#4A7F74' }, ...]
 // }

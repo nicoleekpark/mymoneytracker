@@ -91,6 +91,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       row.merchant,
       row.note,
       row.is_estimated,
+      row.is_opening_balance,
       now,
       now,
     ])
@@ -613,6 +614,39 @@ export class SqliteTransactionRepository implements TransactionRepository {
     return rows[0]?.first_date ?? null
   }
 
+  /**
+   * Get the earliest transaction date for each account.
+   * Returns a Map of accountId -> firstTxnDate (YYYY-MM-DD format).
+   * Used for account period visibility (show from min(createdAt, firstTxnDate)).
+   */
+  getFirstTransactionDateByAccount(): Map<string, string> {
+    const rows = this.dataSource.queryAll<{ account_id: string; first_date: string }>(
+      `
+      WITH account_txns AS (
+        -- Income/expense transactions (use account_id)
+        SELECT account_id, occurred_at FROM transactions
+        WHERE account_id IS NOT NULL
+
+        UNION ALL
+
+        -- Transfers from (use from_account_id)
+        SELECT from_account_id AS account_id, occurred_at FROM transactions
+        WHERE from_account_id IS NOT NULL
+
+        UNION ALL
+
+        -- Transfers to (use to_account_id)
+        SELECT to_account_id AS account_id, occurred_at FROM transactions
+        WHERE to_account_id IS NOT NULL
+      )
+      SELECT account_id, MIN(substr(occurred_at, 1, 10)) AS first_date
+      FROM account_txns
+      GROUP BY account_id;
+      `
+    )
+    return new Map(rows.map(r => [r.account_id, r.first_date]))
+  }
+
   countDistinctMonths(): number {
     const rows = this.dataSource.queryAll<{ month_count: number }>(
       `
@@ -1073,19 +1107,35 @@ export class SqliteTransactionRepository implements TransactionRepository {
 
   /**
    * Get the opening balance amount for an account (in cents).
-   * Returns the amount of the first "Opening Balance" transaction, or 0 if none exists.
+   * Returns the amount of the first opening balance transaction, or 0 if none exists.
+   * Uses is_opening_balance flag (preferred) or falls back to item text match.
    */
   getOpeningBalanceForAccount(accountId: UUID): number {
-    const row = this.dataSource.queryFirst<{ amount_cents: number }>(
-      `SELECT amount_cents
-       FROM transactions
-       WHERE account_id = ?
-         AND item = 'Opening Balance'
-       ORDER BY occurred_at ASC
-       LIMIT 1;`,
-      [accountId]
-    )
-    return row?.amount_cents ?? 0
+    // Try with is_opening_balance column first, fall back to text match if column doesn't exist
+    try {
+      const row = this.dataSource.queryFirst<{ amount_cents: number }>(
+        `SELECT amount_cents
+         FROM transactions
+         WHERE account_id = ?
+           AND (is_opening_balance = 1 OR item = 'Opening Balance')
+         ORDER BY occurred_at ASC
+         LIMIT 1;`,
+        [accountId]
+      )
+      return row?.amount_cents ?? 0
+    } catch {
+      // Fallback: column doesn't exist yet, use text match only
+      const row = this.dataSource.queryFirst<{ amount_cents: number }>(
+        `SELECT amount_cents
+         FROM transactions
+         WHERE account_id = ?
+           AND item = 'Opening Balance'
+         ORDER BY occurred_at ASC
+         LIMIT 1;`,
+        [accountId]
+      )
+      return row?.amount_cents ?? 0
+    }
   }
 
   /**

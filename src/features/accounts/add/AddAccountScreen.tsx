@@ -72,7 +72,7 @@ const ACCOUNT_SUBTYPES: Record<
 export default function AddAccountScreen() {
   const theme = useHoHTheme()
   const segments = useSegments()
-  const { invalidateTransactions } = useDataRefreshStore()
+  const { invalidateTransactions, invalidateAccounts } = useDataRefreshStore()
   const nameInputRef = useRef<TextInput>(null)
   const scrollViewRef = useRef<ScrollView>(null)
   const institutionInputRef = useRef<TextInput>(null)
@@ -206,6 +206,7 @@ export default function AddAccountScreen() {
 
       // Trigger data refresh for callers
       invalidateTransactions()
+      invalidateAccounts()
 
       // Navigate back
       Keyboard.dismiss()
@@ -215,7 +216,7 @@ export default function AddAccountScreen() {
       const message = error instanceof Error ? error.message : 'Failed to create account'
       showToast(message)
     }
-  }, [name, kind, customKindName, bankName, lastFour, balanceCents, uiCategory, invalidateTransactions, showToast])
+  }, [name, kind, customKindName, bankName, lastFour, balanceCents, uiCategory, invalidateTransactions, invalidateAccounts, showToast])
 
   const isLiability = kind === 'credit_card' || kind === 'loan' || kind === 'mortgage'
   // Cash accounts can submit without a name (defaults to "Cash")

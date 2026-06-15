@@ -38,6 +38,7 @@ describe('transaction.mapper', () => {
         note: 'Morning coffee',
         member_id: null,
         is_estimated: 0,
+        is_opening_balance: 0,
       }
 
       const tx = rowToTransaction(row, mockResolveCategoryRef)
@@ -79,6 +80,7 @@ describe('transaction.mapper', () => {
         note: null,
         member_id: null,
         is_estimated: 0,
+        is_opening_balance: 0,
       }
 
       const tx = rowToTransaction(row, mockResolveCategoryRef)
@@ -111,6 +113,7 @@ describe('transaction.mapper', () => {
         note: null,
         member_id: null,
         is_estimated: 0,
+        is_opening_balance: 0,
       }
 
       const tx = rowToTransaction(row, mockResolveCategoryRef)
@@ -142,6 +145,7 @@ describe('transaction.mapper', () => {
         note: null,
         member_id: null,
         is_estimated: 0,
+        is_opening_balance: 0,
       }
 
       const tx = rowToTransaction(row, mockResolveCategoryRef)
@@ -168,6 +172,7 @@ describe('transaction.mapper', () => {
         note: null,
         member_id: null,
         is_estimated: 1,
+        is_opening_balance: 0,
       }
 
       const tx = rowToTransaction(row, mockResolveCategoryRef)
@@ -194,11 +199,66 @@ describe('transaction.mapper', () => {
         note: null,
         member_id: null,
         is_estimated: 0,
+        is_opening_balance: 0,
       }
 
       const tx = rowToTransaction(row, mockResolveCategoryRef, ['tag1', 'tag2'])
 
       expect(tx.tags).toEqual(['tag1', 'tag2'])
+    })
+
+    it('sets isOpeningBalance when is_opening_balance is 1', () => {
+      const row: TransactionRow = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        key: 'tx:opening',
+        occurred_at: '2026-03-01T00:00:00.000Z',
+        type: 'income',
+        item: 'Opening Balance',
+        amount_cents: 100000,
+        currency: 'USD',
+        account_id: 'acc-1',
+        from_account_id: null,
+        to_account_id: null,
+        fee_cents: null,
+        parent_transaction_id: null,
+        category_id: null,
+        merchant: null,
+        note: null,
+        member_id: null,
+        is_estimated: 0,
+        is_opening_balance: 1,
+      }
+
+      const tx = rowToTransaction(row, mockResolveCategoryRef)
+
+      expect(tx.isOpeningBalance).toBe(true)
+    })
+
+    it('isOpeningBalance is undefined when is_opening_balance is 0', () => {
+      const row: TransactionRow = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        key: 'tx:adjustment',
+        occurred_at: '2026-03-01T00:00:00.000Z',
+        type: 'income',
+        item: 'Balance Adjustment',
+        amount_cents: 5000,
+        currency: 'USD',
+        account_id: 'acc-1',
+        from_account_id: null,
+        to_account_id: null,
+        fee_cents: null,
+        parent_transaction_id: null,
+        category_id: null,
+        merchant: null,
+        note: null,
+        member_id: null,
+        is_estimated: 0,
+        is_opening_balance: 0,
+      }
+
+      const tx = rowToTransaction(row, mockResolveCategoryRef)
+
+      expect(tx.isOpeningBalance).toBeUndefined()
     })
 
     it('uses fallback for invalid transaction type', () => {
@@ -220,6 +280,7 @@ describe('transaction.mapper', () => {
         note: null,
         member_id: null,
         is_estimated: 0,
+        is_opening_balance: 0,
       }
 
       const tx = rowToTransaction(row as unknown as TransactionRow, mockResolveCategoryRef)
@@ -294,6 +355,39 @@ describe('transaction.mapper', () => {
       const row = transactionToRow(tx, mockResolveCategoryId)
 
       expect(row.is_estimated).toBe(1)
+    })
+
+    it('sets is_opening_balance to 1 when true', () => {
+      const tx: Transaction = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        key: 'tx:opening',
+        occurredAt: new Date('2026-03-01T00:00:00.000Z'),
+        type: 'income',
+        item: 'Opening Balance',
+        money: { amount: 1000, currency: 'USD' },
+        accountId: 'acc-1',
+        isOpeningBalance: true,
+      }
+
+      const row = transactionToRow(tx, mockResolveCategoryId)
+
+      expect(row.is_opening_balance).toBe(1)
+    })
+
+    it('sets is_opening_balance to 0 when false or undefined', () => {
+      const tx: Transaction = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        key: 'tx:adjustment',
+        occurredAt: new Date('2026-03-01T00:00:00.000Z'),
+        type: 'income',
+        item: 'Balance Adjustment',
+        money: { amount: 50, currency: 'USD' },
+        accountId: 'acc-1',
+      }
+
+      const row = transactionToRow(tx, mockResolveCategoryId)
+
+      expect(row.is_opening_balance).toBe(0)
     })
 
     it('handles undefined optional fields as null', () => {
