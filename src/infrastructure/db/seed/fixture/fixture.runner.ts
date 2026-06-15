@@ -37,6 +37,7 @@ export function runFixtures(action: FixtureAction, targets: FixtureName[]): Seed
   for (const name of ordered) {
     if (name === 'accounts') {
       // Import dynamically to avoid circular deps
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { getFixture } = require('./fixture.loader')
       const file = getFixture(name) as SeedAccountsFile
       if (action === 'seed') applyFixtureAccounts(file, report)
@@ -44,6 +45,7 @@ export function runFixtures(action: FixtureAction, targets: FixtureName[]): Seed
     }
 
     if (name === 'transactions') {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { getFixture } = require('./fixture.loader')
       const file = getFixture(name) as SeedTransactionsFile
       if (action === 'seed') applyFixtureTransactions(file, report)

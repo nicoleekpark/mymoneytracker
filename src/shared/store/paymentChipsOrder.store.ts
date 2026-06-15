@@ -11,6 +11,7 @@
 import { create } from 'zustand'
 
 // Lazy import to avoid circular dependency / test issues
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const getStorage = () => require('@/infrastructure/db/settingsStorage') as typeof import('@/infrastructure/db/settingsStorage')
 
 const STORAGE_KEY = 'payment_chips_order'

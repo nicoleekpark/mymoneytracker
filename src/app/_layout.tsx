@@ -73,6 +73,7 @@ export default function RootLayout() {
 
       // HOTFIX: Ensure new columns exist (in case migrations didn't run properly)
       try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const sqlite = require('@/infrastructure/db/sqlite')
         const cols = (sqlite.queryAll(`PRAGMA table_info(transactions);`) as { name: string }[]).map((r) => r.name)
         if (!cols.includes('fee_cents')) {

@@ -82,7 +82,6 @@ export function useAsyncData<T>(
     return () => {
       alive = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, fetchCount, skip])
 
   return { loading, error, data, refetch }
