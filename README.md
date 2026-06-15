@@ -24,7 +24,7 @@ This project also served as a deep dive into **Clean Architecture** in a React N
 ## Quick Start
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/nicoleekpark/hoh_ledger
 cd hoh_ledger
 npm install
 npm run dev              # iOS Simulator
@@ -126,11 +126,11 @@ Understand your spending patterns with visual analytics and smart alerts.
 |--------|-------|
 | Test Suites | 36 |
 | Total Tests | 553 |
-| Code Coverage | ~78% |
+| Code Coverage | ~78% (unverified) |
 | Unit Tests | Models, Services, Stores, Mappers, Schemas |
 | Integration Tests | SQLite repositories with in-memory DB |
 | Component Tests | React Native components |
-| E2E Tests | Maestro mobile automation |
+| E2E Tests | Maestro mobile automation (planned) |
 
 ### Offline-First Design
 

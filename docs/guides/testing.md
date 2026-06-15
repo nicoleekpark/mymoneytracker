@@ -79,7 +79,7 @@ __tests__/
     └── repository/
         └── transaction.repository.test.ts
 
-e2e/
+e2e/                                  # (Planned - not yet added)
 └── maestro/
     └── flows/                        # E2E test flows (YAML)
 ```
@@ -136,11 +136,11 @@ Test React Native components with `@testing-library/react-native`.
 - User interactions
 - Accessibility
 
-### E2E Tests
+### E2E Tests (Planned)
 
 Full user flow testing with Maestro.
 
-**Location**: `e2e/maestro/flows/`
+**Location**: `e2e/maestro/flows/` *(to be added)*
 
 **What to test**:
 - Add transaction flow
@@ -280,7 +280,9 @@ jest.mock('react-native', () => ({
 
 ---
 
-## E2E Tests (Maestro)
+## E2E Tests (Maestro) - Planned
+
+> **Note**: E2E flows have not been added yet. Below is the planned setup.
 
 ### Install Maestro
 

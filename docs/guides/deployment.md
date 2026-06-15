@@ -18,7 +18,7 @@
 ### v1 Partial (Hide/Disable features)
 | Feature | Issue | Action |
 |---------|-------|--------|
-| Price Tracker Tab | 65% complete, missing add/edit/store UI | **Hide entire tab** |
+| Price Tracker Tab | Missing add/edit/store UI | **Hide entire tab** |
 | Notifications | Tap navigation not implemented | Keep display, disable tap actions |
 | AppBar buttons | Search/Messages/Sign-out are stubs | Hide or make no-op |
 | Goal Settings | Assets view has stub menu | Hide goal settings option |

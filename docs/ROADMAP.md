@@ -8,7 +8,7 @@ Future feature ideas for MyMoneyTracker.
 
 | Feature | Description | Complexity |
 |---------|-------------|------------|
-| **Price Tracker** | Track grocery/item prices over time (UI 65% done) | Medium |
+| **Price Tracker** | Track grocery/item prices over time | Medium |
 | Transfer Validation | Prevent same account for from/to in transfers | Low |
 | Auto-Complete | Suggest items/merchants from history | Low |
 | Data Export | Export transactions to CSV/JSON | Low |

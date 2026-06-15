@@ -50,7 +50,9 @@ features/ ──► core/services/ ──► infrastructure/
 
 See `src/shared/theme/tokens/viewStyles.ts` for pre-composed styles.
 
-### Token-First Development (CRITICAL)
+### Token-First Development
+
+> **Adoption Status:** Partial — tokens exist for colors, spacing, backdrop, shadow, layout, and modal patterns. Adoption is ongoing; some older code still uses hardcoded values.
 
 **ALWAYS check for existing tokens before creating any component:**
 
