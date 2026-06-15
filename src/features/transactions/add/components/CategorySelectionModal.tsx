@@ -4,6 +4,7 @@ import { CategoryIcon } from '@/shared/components'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 import React, { useMemo, useState } from 'react'
 import type { TextInput } from 'react-native'
 import {
@@ -467,7 +468,7 @@ export function CategorySelectionModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 0.12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: BACKDROP.dark,
   },
   sheet: {
     flex: 1,

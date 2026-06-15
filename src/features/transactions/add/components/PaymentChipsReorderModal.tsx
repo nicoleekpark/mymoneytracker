@@ -12,6 +12,7 @@ import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typog
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
+import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 import React, { useCallback, useMemo } from 'react'
 import {
   Modal,
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: BACKDROP.medium,
   },
   sheet: {
     maxHeight: '70%',

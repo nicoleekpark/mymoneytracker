@@ -16,6 +16,7 @@ import { useDevStore, useDraftsStore, useNotificationsStore } from '@/shared/sto
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 
 // Component-specific sizes (not in global tokens)
 const APPBAR_HEIGHT = 56
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: BACKDROP.light,
   },
   menu: {
     position: 'absolute',

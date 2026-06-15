@@ -27,6 +27,7 @@ import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
+import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 
 type SaveFABProps = {
   disabled?: boolean
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
   },
   backdropOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: BACKDROP.heavy,
   },
   menuContainer: {
     position: 'absolute',

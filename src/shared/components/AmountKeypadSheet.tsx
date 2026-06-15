@@ -36,6 +36,7 @@ import { fontSize, fontWeight, displaySize } from '@/shared/theme/tokens/typogra
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { MODAL_GRABBER_WIDTH, MODAL_GRABBER_HEIGHT, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
+import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 
 // Component-specific size
 const KEY_HEIGHT = spacing['3xl'] // 48 - standard touch target
@@ -214,7 +215,7 @@ export function AmountKeypadSheet({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: BACKDROP.medium,
   },
   sheet: {
     position: 'absolute',

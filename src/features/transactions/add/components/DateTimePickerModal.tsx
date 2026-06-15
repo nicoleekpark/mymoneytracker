@@ -3,6 +3,7 @@ import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
+import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import React, { useState } from 'react'
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
@@ -143,7 +144,7 @@ export function DateTimePickerModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: BACKDROP.dark,
   },
   sheet: {
     borderTopLeftRadius: 26,
