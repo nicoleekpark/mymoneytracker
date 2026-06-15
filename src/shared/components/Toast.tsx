@@ -17,6 +17,7 @@ import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
+import { TOAST_SHADOW } from '@/shared/theme/tokens/shadow'
 
 const TOAST_DURATION = 1500
 
@@ -96,11 +97,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    ...TOAST_SHADOW,
   },
   message: {
     fontSize: fontSize.md,

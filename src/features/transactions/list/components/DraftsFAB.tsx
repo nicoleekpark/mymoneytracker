@@ -11,6 +11,7 @@ import { useDraftsStore } from '@/shared/store'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
+import { FAB_SHADOW } from '@/shared/theme/tokens/shadow'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
@@ -71,11 +72,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    ...FAB_SHADOW,
   },
   badge: {
     position: 'absolute',
