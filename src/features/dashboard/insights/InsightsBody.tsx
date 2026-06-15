@@ -1,7 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
-import { SectionHeader } from '@/shared/components'
+import { EmptyState, SectionHeader } from '@/shared/components'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -46,14 +46,12 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
   // Only show completely empty state if there's literally no data
   if (!hasAnyData && availableMonths === 0) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] }}>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, textAlign: 'center', marginBottom: spacing.sm }}>
-          No transactions yet
-        </Text>
-        <Text style={{ fontSize: fontSize.md, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 }}>
-          Add some transactions to see insights about your spending patterns.
-        </Text>
-      </View>
+      <EmptyState
+        icon="line-chart"
+        title="Not enough data for insights"
+        description="Add more transactions to see spending patterns and trends."
+        colors={colors}
+      />
     )
   }
 

@@ -237,3 +237,60 @@ export async function restoreTransaction(tx: Transaction): Promise<void> {
   // Restore transaction + tags atomically
   transactionRepository.insertWithTags(tx, tx.tags)
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Balance Adjustment Operations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Adjust an account's balance by creating a balance adjustment transaction.
+ *
+ * Used when:
+ * - User manually edits the balance on Account Detail screen
+ * - Investment account market value changes
+ *
+ * @param categoryIndex - Category index for transaction creation
+ * @param accountId - The account to adjust
+ * @param adjustmentAmount - The amount to adjust by (positive = increase, negative = decrease)
+ * @returns The created adjustment transaction
+ */
+export async function adjustAccountBalance(
+  categoryIndex: CategoryIndex,
+  accountId: UUID,
+  adjustmentAmount: number
+): Promise<Transaction> {
+  if (adjustmentAmount === 0) {
+    throw new Error('Adjustment amount cannot be zero')
+  }
+
+  const occurredAt = new Date()
+
+  // Determine transaction type based on adjustment direction
+  // For assets: positive adjustment = income (balance increase), negative = expense (balance decrease)
+  // For liabilities: we track debt as positive amounts, so adjustments work the same way
+  const type = adjustmentAmount > 0 ? 'income' : 'expense'
+  const absAmount = Math.abs(adjustmentAmount)
+
+  const txKey = buildTxKey({
+    occurredAt,
+    type,
+    item: 'Balance Adjustment',
+    merchant: undefined,
+  })
+
+  const tx = createTransaction(categoryIndex, {
+    id: uuid(),
+    key: txKey,
+    occurredAt,
+    type,
+    item: 'Balance Adjustment',
+    money: { amount: absAmount, currency: 'USD' },
+    accountId,
+    category: { type, categoryKey: 'adjustments', subCategoryKey: 'balance_correction' },
+    note: 'Manual balance update',
+  })
+
+  transactionRepository.insertWithTags(tx, [])
+
+  return tx
+}

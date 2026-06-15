@@ -13,7 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Account, AccountKind } from '@/core/domain/account'
 import { getActiveAccounts, getArchivedAccounts, restoreAccount } from '@/core/services/account'
-import { useToast } from '@/shared/components'
+import { getAccountBalanceAtEndOfMonth } from '@/core/services/transaction'
+import { formatUsdInt } from '@/shared/format/currency'
+import { EmptyState, useToast } from '@/shared/components'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { modalStyles } from '@/shared/theme/tokens/modal'
@@ -64,11 +66,25 @@ export default function AccountSettingsScreen() {
   // Get accounts - refetch on focus to catch deletions/additions
   const [accounts, setAccounts] = useState<Account[]>([])
   const [archivedAccounts, setArchivedAccounts] = useState<Account[]>([])
+  const [balances, setBalances] = useState<Map<string, number>>(new Map())
   const [showArchived, setShowArchived] = useState(false)
 
   const refreshAccounts = useCallback(() => {
-    setAccounts(getActiveAccounts())
+    const activeAccounts = getActiveAccounts()
+    setAccounts(activeAccounts)
     setArchivedAccounts(getArchivedAccounts())
+
+    // Get current month for balance calculations
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+    // Load balances for all active accounts
+    const balanceMap = new Map<string, number>()
+    for (const account of activeAccounts) {
+      const balance = getAccountBalanceAtEndOfMonth(account.id, currentMonth)
+      balanceMap.set(account.id, balance)
+    }
+    setBalances(balanceMap)
   }, [])
 
   useFocusEffect(refreshAccounts)
@@ -187,58 +203,57 @@ export default function AccountSettingsScreen() {
             <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
               {group.label}
             </Text>
-            {group.accounts.map((account, index) => (
-              <Pressable
-                key={account.id}
-                onPress={() => handleAccountTap(account.id)}
-                style={({ pressed }) => [
-                  styles.accountRow,
-                  index < group.accounts.length - 1 && [
-                    styles.accountRowBorder,
-                    { borderBottomColor: semantic.border },
-                  ],
-                  { opacity: pressed ? 0.6 : 1 },
-                ]}
-              >
-                <View style={[styles.accountIcon, { backgroundColor: semantic.surfaceAlt }]}>
-                  <FontAwesome
-                    name={getAccountIcon(account.kind)}
-                    size={14}
-                    color={semantic.textSecondary}
-                  />
-                </View>
-                <View style={styles.accountInfo}>
-                  <Text style={[styles.accountName, { color: semantic.text }]} numberOfLines={1}>
-                    {account.name}
-                  </Text>
-                  {(account.bankName || account.lastFourDigits) && (
-                    <Text
-                      style={[styles.accountMeta, { color: semantic.textSecondary }]}
-                      numberOfLines={1}
-                    >
-                      {[
-                        account.lastFourDigits ? `••••${account.lastFourDigits}` : null,
-                        account.bankName,
-                      ]
-                        .filter(Boolean)
-                        .join(' • ')}
+            {group.accounts.map((account, index) => {
+              const balance = balances.get(account.id) ?? 0
+              const isDebt = account.nature === 'liability'
+              return (
+                <Pressable
+                  key={account.id}
+                  onPress={() => handleAccountTap(account.id)}
+                  style={({ pressed }) => [
+                    styles.accountRow,
+                    index < group.accounts.length - 1 && [
+                      styles.accountRowBorder,
+                      { borderBottomColor: semantic.border },
+                    ],
+                    { opacity: pressed ? 0.6 : 1 },
+                  ]}
+                >
+                  <View style={[styles.accountIcon, { backgroundColor: semantic.surfaceAlt }]}>
+                    <FontAwesome
+                      name={getAccountIcon(account.kind)}
+                      size={14}
+                      color={semantic.textSecondary}
+                    />
+                  </View>
+                  <View style={styles.accountInfo}>
+                    <Text style={[styles.accountName, { color: semantic.text }]} numberOfLines={1}>
+                      {account.name}
                     </Text>
-                  )}
-                </View>
-                <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
-              </Pressable>
-            ))}
+                  </View>
+                  <Text
+                    style={[
+                      styles.accountBalance,
+                      { color: isDebt && balance !== 0 ? semantic.danger : semantic.text },
+                    ]}
+                  >
+                    {formatUsdInt(Math.abs(balance))}
+                  </Text>
+                  <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} style={{ marginLeft: spacing.sm }} />
+                </Pressable>
+              )
+            })}
           </View>
         ))}
 
         {/* Empty State */}
         {accounts.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyTitle, { color: semantic.text }]}>No accounts yet</Text>
-            <Text style={[styles.emptyHint, { color: semantic.textSecondary }]}>
-              Add your first account to start tracking
-            </Text>
-          </View>
+          <EmptyState
+            icon="university"
+            title="No accounts yet"
+            description="Add your first account to start tracking"
+            colors={{ text: semantic.text, textSecondary: semantic.textSecondary }}
+          />
         )}
 
         {/* Archived Accounts - Collapsed by default */}
@@ -279,19 +294,6 @@ export default function AccountSettingsScreen() {
                   <Text style={[styles.accountName, { color: semantic.textSecondary }]} numberOfLines={1}>
                     {account.name}
                   </Text>
-                  {(account.bankName || account.lastFourDigits) && (
-                    <Text
-                      style={[styles.accountMeta, { color: semantic.textSecondary, opacity: 0.7 }]}
-                      numberOfLines={1}
-                    >
-                      {[
-                        account.lastFourDigits ? `••••${account.lastFourDigits}` : null,
-                        account.bankName,
-                      ]
-                        .filter(Boolean)
-                        .join(' • ')}
-                    </Text>
-                  )}
                 </View>
                 <Pressable
                   onPress={() => handleRestoreAccount(account)}
@@ -382,22 +384,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
   },
-  accountMeta: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing['3xl'],
-  },
-  emptyTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    marginBottom: spacing.sm,
-  },
-  emptyHint: {
+  accountBalance: {
     fontSize: fontSize.sm,
-    textAlign: 'center',
+    fontWeight: fontWeight.semibold,
+    fontVariant: ['tabular-nums'],
   },
   restoreButton: {
     paddingHorizontal: spacing.md,

@@ -1,5 +1,5 @@
 import type { UUID } from '@/core/domain/common/uuid'
-import type { Account, AccountKind } from './account.types'
+import type { Account, AccountCategory, AccountKind } from './account.types'
 
 /**
  * Input for creating a new account.
@@ -7,6 +7,10 @@ import type { Account, AccountKind } from './account.types'
 export type CreateAccountInput = {
   name: string
   kind: AccountKind
+  /** Optional: Override the default category derived from kind */
+  category?: AccountCategory
+  /** Required when kind is 'other' */
+  customKindName?: string
   bankName?: string
   lastFourDigits?: string
 }
@@ -16,6 +20,8 @@ export type CreateAccountInput = {
  */
 export type UpdateAccountInput = {
   name?: string
+  category?: AccountCategory
+  customKindName?: string | null
   bankName?: string | null
   lastFourDigits?: string | null
 }

@@ -16,6 +16,7 @@ const mockAssetAccount: Account = {
   name: 'Checking Account',
   nature: 'asset',
   kind: 'checking',
+  category: 'spending',
   createdAt: TEST_CREATED_AT,
 }
 
@@ -25,6 +26,7 @@ const mockLiabilityAccount: Account = {
   name: 'Credit Card',
   nature: 'liability',
   kind: 'credit_card',
+  category: 'liability',
   createdAt: TEST_CREATED_AT,
 }
 
@@ -34,6 +36,7 @@ const mockCashAccount: Account = {
   name: 'Cash Wallet',
   nature: 'asset',
   kind: 'cash',
+  category: 'spending',
   createdAt: TEST_CREATED_AT,
 }
 
@@ -69,18 +72,23 @@ describe('account.model', () => {
     })
 
     it('returns specific values', () => {
+      // Spending
       expect(accountKindSortRank('checking')).toBe(0)
       expect(accountKindSortRank('savings')).toBe(1)
       expect(accountKindSortRank('cash')).toBe(2)
-      expect(accountKindSortRank('credit_card')).toBe(3)
-      expect(accountKindSortRank('investment')).toBe(4)
-      expect(accountKindSortRank('loan')).toBe(5)
+      // Investment & Retirement
+      expect(accountKindSortRank('hsa')).toBe(10)
+      expect(accountKindSortRank('401k')).toBe(11)
+      expect(accountKindSortRank('investment')).toBe(16)
+      // Liabilities
+      expect(accountKindSortRank('credit_card')).toBe(20)
+      expect(accountKindSortRank('loan')).toBe(21)
     })
 
     it('returns high rank for other/unknown', () => {
-      expect(accountKindSortRank('other')).toBe(9)
+      expect(accountKindSortRank('other')).toBe(99)
       // @ts-expect-error testing invalid input
-      expect(accountKindSortRank('unknown')).toBe(9)
+      expect(accountKindSortRank('unknown')).toBe(99)
     })
   })
 

@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { AssetCategory, AssetItem } from '@/core/domain/asset'
 import { getCategoryMeta } from '@/core/domain/asset'
 import { getAssetItems, getBalancesForMonth, getCurrentYearMonth } from '@/core/services/asset'
+import { EmptyState } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
@@ -131,7 +132,7 @@ export default function AssetSettingsScreen() {
   }, [])
 
   const handleAddAsset = useCallback(() => {
-    router.push('/(modal)/add-asset')
+    router.push('/(modal)/asset-settings/add')
   }, [])
 
   const handleAssetTap = useCallback((assetId: string) => {
@@ -259,13 +260,13 @@ export default function AssetSettingsScreen() {
 
         {/* Empty State */}
         {manualAssetCount === 0 && (
-          <View style={styles.emptyState}>
-            <FontAwesome name="home" size={40} color={semantic.textSecondary} style={{ marginBottom: spacing.md }} />
-            <Text style={[styles.emptyTitle, { color: semantic.text }]}>No manual assets yet</Text>
-            <Text style={[styles.emptyHint, { color: semantic.textSecondary }]}>
-              Add real estate, retirement accounts, or other assets that need manual balance updates.
-            </Text>
-          </View>
+          <EmptyState
+            icon="home"
+            iconSize={40}
+            title="No manual assets yet"
+            description="Add real estate, retirement accounts, or other assets that need manual balance updates."
+            colors={{ text: semantic.text, textSecondary: semantic.textSecondary }}
+          />
         )}
 
         {/* Note about account-linked assets */}
@@ -368,20 +369,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     fontVariant: ['tabular-nums'],
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing['3xl'],
-  },
-  emptyTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    marginBottom: spacing.sm,
-  },
-  emptyHint: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-    paddingHorizontal: spacing.xl,
   },
   noteBox: {
     flexDirection: 'row',

@@ -396,7 +396,9 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
       periodLabel,
       firstTransactionDate,
     }
-  }, [scope, period, refreshKey, transactionVersion])  // Recompute when scope, period, refreshKey, or transactionVersion changes
+  // Extract primitive values from period for proper dependency tracking
+  // Using period object directly can cause missed updates due to reference comparison
+  }, [scope, period.year, 'month' in period ? period.month : 0, refreshKey, transactionVersion])
 
   return { ...data, refetch }
 }

@@ -230,15 +230,6 @@ function RootLayoutNav() {
                   }}
                 />
 
-                {/* Add asset - slides up as modal */}
-                <Stack.Screen
-                  name="(modal)/add-asset"
-                  options={{
-                    presentation: 'modal',
-                    headerShown: false
-                  }}
-                />
-
                 {/* Asset settings - slides up as modal */}
                 <Stack.Screen
                   name="(modal)/asset-settings"

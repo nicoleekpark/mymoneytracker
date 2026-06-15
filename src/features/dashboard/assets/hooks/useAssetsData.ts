@@ -26,6 +26,7 @@ import {
   getBalancesForMonth,
   type AssetProjection,
 } from '@/core/services/asset'
+import { transactionRepository } from '@/infrastructure/repositories'
 
 export type AssetFieldGroup = {
   field: AssetField
@@ -82,6 +83,8 @@ export type AssetsData = {
   projection: AssetProjection | null
   fieldGroups: AssetFieldGroup[]
   yearMonth: string
+  /** First transaction date (for "All" scope - "Tracking since" display) */
+  firstTransactionDate: Date | null
 }
 
 /**
@@ -332,6 +335,13 @@ export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDat
         }
       }
 
+      // Get first transaction date for "All" scope
+      let firstTransactionDate: Date | null = null
+      if (scope === 'all') {
+        const firstDateStr = transactionRepository.getFirstTransactionDate()
+        firstTransactionDate = firstDateStr ? new Date(firstDateStr) : null
+      }
+
       // Build field groups with balances
       const fieldGroups: AssetFieldGroup[] = []
       const fieldOrder: AssetField[] = ['fixed_assets', 'current_assets', 'liabilities']
@@ -402,6 +412,7 @@ export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDat
         projection,
         fieldGroups,
         yearMonth,
+        firstTransactionDate,
       }
     } catch (e) {
       logError('AssetsData', e)

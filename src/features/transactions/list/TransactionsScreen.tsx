@@ -4,7 +4,7 @@ import type { Transaction } from '@/core/domain/transaction'
 import { isExpense, safeDate } from '@/core/domain/transaction'
 import { removeTransaction, restoreTransaction } from '@/core/services/transaction'
 import { useHoHTheme } from '@/shared/providers'
-import { CategoryIcon } from '@/shared/components'
+import { CategoryIcon, EmptyState } from '@/shared/components'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -778,27 +778,23 @@ export default function TransactionsScreen() {
             )
           }}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <CategoryIcon name="list-alt" size={48} color={theme.semantic.textSecondary as string} />
-              <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
-                {filteredAccountName ? 'No transactions' : 'No transactions yet'}
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: theme.semantic.textSecondary }]}>
-                {filteredAccountName
-                  ? `No transactions found for ${filteredAccountName}.`
-                  : 'Add your first transaction to start tracking.'}
-              </Text>
-              {!filteredAccountName && (
-                <TouchableOpacity
-                  onPress={() => router.push('/(modal)/add-transaction')}
-                  style={[styles.emptyStateCTA, { backgroundColor: theme.semantic.primary }]}
-                  accessibilityLabel="Add first transaction"
-                >
-                  <FontAwesome name="plus" size={14} color={theme.semantic.onPrimary} />
-                  <Text style={[styles.emptyStateCTAText, { color: theme.semantic.onPrimary }]}>Add Transaction</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            <EmptyState
+              icon="list-alt"
+              title={filteredAccountName ? 'No transactions' : 'No transactions yet'}
+              description={filteredAccountName
+                ? `No transactions found for ${filteredAccountName}.`
+                : 'Add your first transaction to start tracking.'}
+              action={!filteredAccountName ? {
+                label: 'Add Transaction',
+                onPress: () => router.push('/(modal)/add-transaction'),
+              } : undefined}
+              colors={{
+                text: theme.semantic.text,
+                textSecondary: theme.semantic.textSecondary,
+                primary: theme.semantic.primary,
+                onPrimary: theme.semantic.onPrimary,
+              }}
+            />
           }
           ListFooterComponent={
             hasMore ? (
@@ -966,34 +962,6 @@ const styles = StyleSheet.create({
     opacity: 0.5
   },
   emptyContainer: { paddingTop: spacing.md },
-
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: spacing['3xl'],
-    gap: spacing.sm
-  },
-  emptyTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    marginTop: spacing.sm
-  },
-  emptySubtitle: {
-    fontSize: fontSize.md,
-    textAlign: 'center'
-  },
-  emptyStateCTA: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.lg
-  },
-  emptyStateCTAText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold
-  },
 
   dayBar: {
     flexDirection: 'row',

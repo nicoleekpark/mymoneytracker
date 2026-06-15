@@ -21,12 +21,11 @@ import {
   View,
 } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { AssetCategory, AssetCategoryMeta } from '@/core/domain/asset'
 import { ASSET_CATEGORIES, getCategoryMeta } from '@/core/domain/asset'
 import { createAssetItem, getCurrentYearMonth, setBalance } from '@/core/services/asset'
-import { AmountKeypadSheet } from '@/shared/components'
+import { AmountKeypadSheet, ModalSaveBar } from '@/shared/components'
 import { formatCentsForDisplay } from '@/shared/format/currency'
 import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
@@ -53,18 +52,19 @@ const ASSET_TABS: { key: AssetTab; label: string }[] = [
 ]
 
 /**
- * Categories per tab (excluding account-linked and kids)
+ * Categories per tab
+ *
+ * Note: Retirement accounts, investment accounts, and loans are added via
+ * "Add Account" and automatically appear in Assets tab. This modal is for
+ * assets/liabilities that aren't transaction-based (property values, valuables, etc.)
  */
 const CATEGORIES_BY_TAB: Record<AssetTab, { key: AssetCategory; label: string; icon: string }[]> = {
   assets: [
     { key: 'real_estate', label: 'Real Estate', icon: 'home' },
-    { key: 'retirement_funds', label: 'Retirement', icon: 'university' },
-    { key: 'investments', label: 'Investments', icon: 'line-chart' },
-    { key: 'other', label: 'Other', icon: 'ellipsis-h' },
+    { key: 'other', label: 'Other', icon: 'ellipsis-h' },  // Vehicles, collectibles, etc.
   ],
   liabilities: [
-    { key: 'loans', label: 'Loans', icon: 'bank' },
-    { key: 'other', label: 'Other', icon: 'ellipsis-h' },
+    { key: 'other', label: 'Other', icon: 'ellipsis-h' },  // Informal debts
   ],
 }
 
@@ -72,7 +72,6 @@ const CATEGORIES_BY_TAB: Record<AssetTab, { key: AssetCategory; label: string; i
 
 export default function AddAssetScreen() {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
   const { semantic } = theme
   const { invalidateAssets } = useDataRefreshStore()
   const nameInputRef = useRef<TextInput>(null)
@@ -204,19 +203,15 @@ export default function AddAssetScreen() {
       style={{ flex: 1 }}
       contentStyle={{ flex: 1 }}
     >
-      {/* Drag Handle */}
-      <View style={modalStyles.dragHandleContainer}>
-        <View style={[modalStyles.dragHandle, { backgroundColor: semantic.border }]} />
-      </View>
-
-      {/* Header */}
-      <View style={modalStyles.header}>
+      {/* Header - slide navigation style */}
+      <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
         <Pressable onPress={handleCancel} hitSlop={12} style={modalStyles.cancelButton}>
-          <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>
-            Cancel
-          </Text>
+          <Text style={[modalStyles.cancelText, { color: semantic.primary }]}>‹ Back</Text>
         </Pressable>
+        <Text style={[localStyles.headerTitle, { color: semantic.text }]}>Add Asset</Text>
+        <View style={{ minWidth: 50 }} />
       </View>
+      <View style={{ height: 1, backgroundColor: semantic.border }} />
 
       {/* Tab Bar - matches AddAccountScreen */}
       <View style={[modalStyles.typeTabs, { borderBottomColor: semantic.border }]}>
@@ -376,37 +371,14 @@ export default function AddAssetScreen() {
         </View>
       </ScrollView>
 
-      {/* Save Button - fixed at bottom */}
-      <View
-        style={[
-          localStyles.saveContainer,
-          {
-            backgroundColor: semantic.surface,
-            paddingBottom: Math.max(insets.bottom, spacing.lg),
-          },
-        ]}
-      >
-        <Pressable
-          onPress={handleSubmit}
-          disabled={!canSubmit}
-          style={({ pressed }) => [
-            localStyles.saveButton,
-            {
-              backgroundColor: canSubmit ? semantic.primary : semantic.surfaceAlt,
-              opacity: pressed ? 0.8 : 1,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              localStyles.saveButtonText,
-              { color: canSubmit ? semantic.onPrimary : semantic.textSecondary },
-            ]}
-          >
-            Save
-          </Text>
-        </Pressable>
-      </View>
+      {/* Save Button - fixed at bottom, moves with keyboard */}
+      {/* Note: bottomInset=0 because iOS card-style modals already handle safe area */}
+      <ModalSaveBar
+        label="Save"
+        disabled={!canSubmit}
+        bottomInset={0}
+        onPress={handleSubmit}
+      />
 
       {/* Toast */}
       {toastMessage && (
@@ -450,14 +422,8 @@ function getNamePlaceholder(category: AssetCategory): string {
   switch (category) {
     case 'real_estate':
       return 'e.g., Primary Residence'
-    case 'retirement_funds':
-      return 'e.g., 401(k)'
-    case 'investments':
-      return 'e.g., Fidelity Brokerage'
-    case 'loans':
-      return 'e.g., Mortgage'
     case 'other':
-      return 'e.g., Pokemon Cards'
+      return 'e.g., Car, Pokemon Cards'
     default:
       return 'Enter name'
   }
@@ -466,6 +432,13 @@ function getNamePlaceholder(category: AssetCategory): string {
 // ─── Local Styles (matches AddAccountScreen) ──────────────────────────────────
 
 const localStyles = StyleSheet.create({
+  headerTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    textAlign: 'center',
+    flex: 1,
+    marginHorizontal: spacing.md,
+  },
   heroContainer: {
     alignItems: 'center',
     paddingVertical: spacing['2xl'],
@@ -496,20 +469,5 @@ const localStyles = StyleSheet.create({
   heroHint: {
     fontSize: fontSize.xs,
     marginTop: spacing.md,
-  },
-  saveContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  saveButton: {
-    width: '100%',
-    height: spacing['3xl'],
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
   },
 })

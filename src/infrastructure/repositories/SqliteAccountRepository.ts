@@ -1,16 +1,17 @@
 import type { UUID } from '@/core/domain/common/uuid'
-import type { Account, AccountKind, AccountNature } from '@/core/domain/account/account.types'
+import type { Account, AccountCategory, AccountKind, AccountNature } from '@/core/domain/account/account.types'
 import type { AccountRepository, CreateAccountInput, UpdateAccountInput } from '@/core/domain/account/account.repository'
+import { getDefaultCategoryForKind } from '@/core/domain/account/account.model'
 import type { DataSource } from '../db/DataSource'
 import { rowToAccount, type AccountRow } from '../mappers/account.mapper'
 import { uuid } from '@/shared/utils/uuid'
 
 /**
  * Determine account nature from kind.
- * Credit cards and loans are liabilities; everything else is an asset.
+ * Credit cards, loans, and mortgages are liabilities; everything else is an asset.
  */
 function getNatureFromKind(kind: AccountKind): AccountNature {
-  return kind === 'credit_card' || kind === 'loan' ? 'liability' : 'asset'
+  return kind === 'credit_card' || kind === 'loan' || kind === 'mortgage' ? 'liability' : 'asset'
 }
 
 /**
@@ -30,23 +31,31 @@ export class SqliteAccountRepository implements AccountRepository {
   listActive(): Account[] {
     const rows = this.dataSource.queryAll<AccountRow>(
       `
-      SELECT id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits
+      SELECT id, key, name, nature, kind, category, custom_kind_name, currency, sort_order, is_system, is_archived, bank_name, last_four_digits, created_at, archived_at
       FROM accounts
       WHERE is_archived = 0
       ORDER BY
-        CASE nature
-          WHEN 'asset' THEN 0
-          WHEN 'liability' THEN 1
+        CASE category
+          WHEN 'spending' THEN 0
+          WHEN 'investment' THEN 1
+          WHEN 'liability' THEN 2
           ELSE 9
         END,
         CASE kind
           WHEN 'checking' THEN 0
           WHEN 'savings' THEN 1
           WHEN 'cash' THEN 2
-          WHEN 'credit_card' THEN 3
-          WHEN 'investment' THEN 4
-          WHEN 'loan' THEN 5
-          ELSE 9
+          WHEN 'hsa' THEN 10
+          WHEN '401k' THEN 11
+          WHEN 'ira' THEN 12
+          WHEN 'roth_ira' THEN 13
+          WHEN '403b' THEN 14
+          WHEN 'brokerage' THEN 15
+          WHEN 'investment' THEN 16
+          WHEN 'credit_card' THEN 20
+          WHEN 'loan' THEN 21
+          WHEN 'mortgage' THEN 22
+          ELSE 99
         END,
         sort_order ASC,
         name ASC;
@@ -59,7 +68,7 @@ export class SqliteAccountRepository implements AccountRepository {
   listArchived(): Account[] {
     const rows = this.dataSource.queryAll<AccountRow>(
       `
-      SELECT id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits
+      SELECT id, key, name, nature, kind, category, custom_kind_name, currency, sort_order, is_system, is_archived, bank_name, last_four_digits, created_at, archived_at
       FROM accounts
       WHERE is_archived = 1
       ORDER BY name ASC;
@@ -87,7 +96,7 @@ export class SqliteAccountRepository implements AccountRepository {
   getById(id: UUID): Account | null {
     const row = this.dataSource.queryFirst<AccountRow>(
       `
-      SELECT id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits
+      SELECT id, key, name, nature, kind, category, custom_kind_name, currency, sort_order, is_system, is_archived, bank_name, last_four_digits, created_at, archived_at
       FROM accounts
       WHERE id = ?
       LIMIT 1;
@@ -114,13 +123,14 @@ export class SqliteAccountRepository implements AccountRepository {
     const id = uuid()
     const key = generateAccountKey(input.kind, input.name)
     const nature = getNatureFromKind(input.kind)
+    const category = input.category ?? getDefaultCategoryForKind(input.kind)
     const sortOrder = this.getNextSortOrder(input.kind)
     const createdAt = new Date().toISOString()
 
     this.dataSource.exec(
       `
-      INSERT INTO accounts (id, key, name, nature, kind, currency, sort_order, is_system, is_archived, bank_name, last_four_digits, created_at)
-      VALUES (?, ?, ?, ?, ?, 'USD', ?, 0, 0, ?, ?, ?);
+      INSERT INTO accounts (id, key, name, nature, kind, category, custom_kind_name, currency, sort_order, is_system, is_archived, bank_name, last_four_digits, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'USD', ?, 0, 0, ?, ?, ?);
       `,
       [
         id,
@@ -128,6 +138,8 @@ export class SqliteAccountRepository implements AccountRepository {
         input.name,
         nature,
         input.kind,
+        category,
+        input.customKindName ?? null,
         sortOrder,
         input.bankName ?? null,
         input.lastFourDigits ?? null,
@@ -141,6 +153,8 @@ export class SqliteAccountRepository implements AccountRepository {
       name: input.name,
       nature,
       kind: input.kind,
+      category,
+      customKindName: input.customKindName,
       currency: 'USD',
       sortOrder,
       isSystem: false,
@@ -162,6 +176,14 @@ export class SqliteAccountRepository implements AccountRepository {
     if (input.name !== undefined) {
       updates.push('name = ?')
       values.push(input.name)
+    }
+    if (input.category !== undefined) {
+      updates.push('category = ?')
+      values.push(input.category)
+    }
+    if (input.customKindName !== undefined) {
+      updates.push('custom_kind_name = ?')
+      values.push(input.customKindName)
     }
     if (input.bankName !== undefined) {
       updates.push('bank_name = ?')

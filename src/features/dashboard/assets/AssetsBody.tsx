@@ -9,7 +9,7 @@ import {
   UIManager,
   View,
 } from 'react-native'
-import { CategoryIcon, InfoSheet, SettingsLink } from '@/shared/components'
+import { CategoryIcon, InfoSheet, SettingsLink, TrackingSince } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
 import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -431,7 +431,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
           Add your first asset to start tracking your net worth.
         </Text>
         <Pressable
-          onPress={() => router.push('/(modal)/add-asset')}
+          onPress={() => router.push('/(modal)/asset-settings/add')}
           style={({ pressed }) => ({
             backgroundColor: colors.primary,
             paddingVertical: spacing.md,
@@ -476,6 +476,11 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
         showsVerticalScrollIndicator={false}
       >
 
+      {/* Tracking since (All scope only) */}
+      {scope === 'all' && (
+        <TrackingSince date={data.firstTransactionDate} color={colors.textSecondary} />
+      )}
+
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       {/* Hero: Current Net Worth */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
@@ -483,12 +488,17 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
         const accessible = data.summary.liquidifiableAmount
         const liabilities = data.summary.totalLiabilities
 
+        // Determine label based on scope
+        // "Current Net Worth" only for 'all' scope (always current)
+        // "Net Worth" for past months/years
+        const netWorthLabel = scope === 'all' ? 'Current Net Worth' : 'Net Worth'
+
         return (
           <View style={{ paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
             {/* Net Worth - centered */}
             <View style={{ alignItems: 'center', marginBottom: spacing.xl }}>
               <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textSecondary, letterSpacing: letterSpacing.wider, marginBottom: spacing.sm }}>
-                Current Net Worth
+                {netWorthLabel}
               </Text>
               <Text style={{ fontSize: displaySize.xl, fontWeight: fontWeight.heavy, color: colors.text, letterSpacing: -1 }}>
                 {formatUsdInt(data.summary.netWorth)}
@@ -497,7 +507,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                 <Text style={{ fontWeight: fontWeight.semibold, color: data.yearlySnapshot.growth >= 0 ? colors.success : colors.danger }}>
                   {data.yearlySnapshot.growth >= 0 ? '+' : '-'}{formatUsdInt(Math.abs(data.yearlySnapshot.growth))}
                 </Text>
-                {' '}since {data.isCurrentYear ? 'Jan 1' : `start of ${data.year}`}
+                {' '}since Jan {data.year}
               </Text>
             </View>
 

@@ -19,6 +19,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Account } from '@/core/domain/account'
+import { EmptyState } from '@/shared/components'
 import { useHoHTheme } from '@/shared/providers'
 import {
   modalStyles,
@@ -245,14 +246,12 @@ export function AccountSettingsSheet({
 
         {/* Empty State */}
         {accounts.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: theme.semantic.textSecondary }]}>
-              No accounts yet
-            </Text>
-            <Text style={[styles.emptyHint, { color: theme.semantic.textSecondary }]}>
-              Add your first account to start tracking
-            </Text>
-          </View>
+          <EmptyState
+            icon="university"
+            title="No accounts yet"
+            description="Add your first account to start tracking"
+            colors={{ text: theme.semantic.text, textSecondary: theme.semantic.textSecondary }}
+          />
         )}
       </BottomSheetScrollView>
     </BottomSheetModal>
@@ -315,18 +314,5 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing['3xl'],
-  },
-  emptyText: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    marginBottom: spacing.sm,
-  },
-  emptyHint: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
   },
 })

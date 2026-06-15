@@ -13,8 +13,130 @@ import type {
   AssetCategory,
 } from '@/core/domain/asset'
 import type { AssetProjection } from '@/core/domain/asset/asset.types'
-import { getFieldSortOrder, getCategorySortOrder } from '@/core/domain/asset'
-import { assetRepository } from '@/infrastructure/repositories'
+import { getFieldSortOrder, getCategorySortOrder, createEmptySummary } from '@/core/domain/asset'
+import type { Account, AccountKind } from '@/core/domain/account'
+import { assetRepository, accountRepository, transactionRepository } from '@/infrastructure/repositories'
+
+// ─── Investment Account Integration ──────────────────────────────────────────
+
+/**
+ * Map account kind to asset category
+ */
+function accountKindToAssetCategory(kind: AccountKind): AssetCategory | null {
+  switch (kind) {
+    // Cash & savings accounts → current_assets/cash_savings
+    case 'checking':
+    case 'savings':
+    case 'cash':
+      return 'cash_savings'
+    // Retirement accounts → fixed_assets/retirement_funds
+    case '401k':
+    case 'ira':
+    case 'roth_ira':
+    case '403b':
+      return 'retirement_funds'
+    // Investment accounts → current_assets/investments
+    case 'hsa':
+    case 'brokerage':
+    case 'investment':
+      return 'investments'
+    // Liability accounts → liabilities
+    case 'credit_card':
+      return 'credit_card'
+    case 'loan':
+    case 'mortgage':
+      return 'loans'
+    default:
+      return null
+  }
+}
+
+/**
+ * Map asset category to asset field
+ */
+function assetCategoryToField(category: AssetCategory): AssetField {
+  switch (category) {
+    case 'retirement_funds':
+    case 'real_estate':
+      return 'fixed_assets'
+    case 'credit_card':
+    case 'loans':
+    case 'other':
+      return 'liabilities'
+    default:
+      return 'current_assets'
+  }
+}
+
+/**
+ * Check if an account should be shown in assets
+ */
+function isInvestmentAccountKind(kind: AccountKind): boolean {
+  return accountKindToAssetCategory(kind) !== null
+}
+
+/**
+ * Get accounts that should appear in the Assets tab as virtual AssetItems
+ * Includes: spending accounts (checking, savings, cash), investment accounts (401k, IRA, etc.),
+ * and liability accounts (credit card, loans)
+ */
+function getAccountsAsAssetItems(): AssetItem[] {
+  const accounts = accountRepository.listActive()
+  // Include spending (cash/savings), investment, and liability accounts
+  const relevantAccounts = accounts.filter(a =>
+    (a.category === 'spending' || a.category === 'investment' || a.category === 'liability') && !a.isArchived
+  )
+
+  return relevantAccounts.map((account, index) => {
+    const category = accountKindToAssetCategory(account.kind) ?? 'other'
+    const field = assetCategoryToField(category)
+
+    return {
+      id: `acct:${account.id}` as string, // Prefix to distinguish from asset items
+      field,
+      category,
+      name: account.name,
+      memberId: null, // Joint by default, could be extended later
+      isLiquidifiable: category === 'cash_savings' || category === 'investments', // Cash/savings and brokerage/HSA are liquidifiable
+      sortOrder: 1000 + index, // Sort after regular assets
+      isArchived: false,
+    }
+  })
+}
+
+/**
+ * Get investment account balance for a month
+ */
+function getInvestmentAccountBalance(accountId: string, yearMonth: string): number {
+  return transactionRepository.getAccountBalanceAtEndOfMonth(accountId, yearMonth)
+}
+
+/**
+ * Get all account balances for a month (spending + investment + liability accounts)
+ * Returns map of "acct:{accountId}" -> balance (in dollars)
+ * Note: Liability balances are returned as positive values (debt owed)
+ */
+function getAccountBalancesForMonth(yearMonth: string): Map<string, number> {
+  const accounts = accountRepository.listActive()
+  const relevantAccounts = accounts.filter(a =>
+    (a.category === 'spending' || a.category === 'investment' || a.category === 'liability') && !a.isArchived
+  )
+
+  const balances = new Map<string, number>()
+  for (const account of relevantAccounts) {
+    // getAccountBalanceAtEndOfMonth returns cents, convert to dollars
+    const balanceCents = transactionRepository.getAccountBalanceAtEndOfMonth(account.id, yearMonth)
+    if (balanceCents !== 0) {
+      // For liabilities, the balance represents debt owed (stored as positive in asset system)
+      // Transaction system stores liability balances as negative, so we flip the sign
+      const dollars = account.category === 'liability'
+        ? Math.abs(balanceCents / 100)  // Debt as positive value
+        : balanceCents / 100             // Assets as-is
+      balances.set(`acct:${account.id}`, dollars)
+    }
+  }
+  return balances
+}
 
 /**
  * Get current year-month string
@@ -71,9 +193,18 @@ export function createFamilyMember(
  * Get asset items, optionally filtered by family member
  * null memberId = joint assets only
  * undefined memberId = all assets
+ *
+ * Includes investment accounts converted to virtual asset items
  */
 export function getAssetItems(memberId?: string | null): AssetItem[] {
   const items = assetRepository.getAssetItems(memberId)
+
+  // Add investment accounts as virtual asset items
+  // Investment accounts are always "joint" (memberId = null) for now
+  if (memberId === undefined || memberId === null) {
+    const investmentAccounts = getAccountsAsAssetItems()
+    items.push(...investmentAccounts)
+  }
 
   return items.sort((a, b) => {
     // Sort by field first
@@ -136,6 +267,29 @@ export function createAssetItem(
 }
 
 /**
+ * Update an asset item's properties
+ */
+export function updateAssetItem(id: string, updates: { name?: string }): void {
+  assetRepository.updateAssetItem(id, updates)
+}
+
+/**
+ * Archive an asset item (soft delete)
+ * Hides from list but preserves balance history
+ */
+export function archiveAssetItem(id: string): void {
+  assetRepository.updateAssetItem(id, { isArchived: true })
+}
+
+/**
+ * Delete an asset item (hard delete)
+ * Removes the item and all associated balance history
+ */
+export function deleteAssetItem(id: string): void {
+  assetRepository.deleteAssetItem(id)
+}
+
+/**
  * Update asset balance for a month
  */
 export function setBalance(assetItemId: string, yearMonth: string, amount: number): void {
@@ -145,6 +299,8 @@ export function setBalance(assetItemId: string, yearMonth: string, amount: numbe
 /**
  * Get all balances for a specific month
  * Returns a map of assetItemId -> amount
+ *
+ * Includes investment account balances (prefixed with "acct:")
  */
 export function getBalancesForMonth(yearMonth: string, memberId?: string | null): Map<string, number> {
   const balances = assetRepository.getBalancesForMonth(yearMonth, memberId)
@@ -152,22 +308,95 @@ export function getBalancesForMonth(yearMonth: string, memberId?: string | null)
   for (const balance of balances) {
     map.set(balance.assetItemId, balance.amount)
   }
+
+  // Add investment account balances
+  // Investment accounts are always "joint" for now
+  if (memberId === undefined || memberId === null) {
+    const investmentBalances = getAccountBalancesForMonth(yearMonth)
+    for (const [key, amount] of investmentBalances) {
+      map.set(key, amount)
+    }
+  }
+
   return map
 }
 
 /**
  * Get asset summary for a month
+ * Includes investment account balances in the totals
  */
 export function getSummary(yearMonth?: string, memberId?: string | null): AssetSummary {
   const month = yearMonth ?? getCurrentYearMonth()
-  return assetRepository.getSummary(month, memberId)
+
+  // Get base summary from repository (asset items only)
+  const summary = assetRepository.getSummary(month, memberId)
+
+  // Add account balances (investment + liability accounts)
+  // These accounts are always "joint" for now
+  if (memberId === undefined || memberId === null) {
+    const accountItems = getAccountsAsAssetItems()
+    const accountBalances = getAccountBalancesForMonth(month)
+
+    for (const item of accountItems) {
+      const balance = accountBalances.get(item.id) ?? 0
+      if (balance === 0) continue
+
+      // Add to field totals
+      summary.byField[item.field] += balance
+
+      // Add to category totals
+      if (item.category in summary.byCategory) {
+        summary.byCategory[item.category] += balance
+      }
+
+      // Handle assets vs liabilities
+      if (item.field === 'liabilities') {
+        // Liability accounts add to total liabilities
+        summary.totalLiabilities += balance
+      } else {
+        // Investment accounts add to total assets
+        summary.totalAssets += balance
+
+        // Add to liquidifiable if applicable (investments but not retirement)
+        if (item.isLiquidifiable) {
+          summary.liquidifiableAmount += balance
+        }
+      }
+    }
+
+    // Recalculate net worth
+    summary.netWorth = summary.totalAssets - summary.totalLiabilities
+  }
+
+  return summary
 }
 
 /**
  * Get net worth trend over N months
+ * Includes investment account balances in the trend data
  */
 export function getTrend(months: number = 12, memberId?: string | null): AssetTrendPoint[] {
-  return assetRepository.getTrend(months, memberId)
+  // Generate list of year-months to query
+  const yearMonths: string[] = []
+  const now = new Date()
+
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    yearMonths.push(ym)
+  }
+
+  // Get summary for each month using the service's getSummary (includes investment accounts)
+  return yearMonths.map(ym => {
+    const summary = getSummary(ym, memberId)
+    return {
+      yearMonth: ym,
+      netWorth: summary.netWorth,
+      totalAssets: summary.totalAssets,
+      totalLiabilities: summary.totalLiabilities,
+      liquidifiable: summary.liquidifiableAmount,
+    }
+  })
 }
 
 /**

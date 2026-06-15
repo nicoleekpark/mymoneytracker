@@ -7,6 +7,7 @@
 
 import type { Notification, NotificationTab, TimeGroup } from '@/core/domain/notification'
 import { TIME_GROUP_LABELS, NOTIFICATION_TABS } from '@/core/domain/notification'
+import { EmptyState } from '@/shared/components'
 import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -467,20 +468,12 @@ export default function NotificationsScreen() {
               {renderDraftTimeGroup('older', groupedDrafts.older)}
             </>
           ) : (
-            <View style={styles.emptyState}>
-              <FontAwesome
-                name="file-text-o"
-                size={48}
-                color={theme.semantic.textSecondary}
-                style={{ opacity: 0.5, marginBottom: spacing.lg }}
-              />
-              <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
-                No drafts
-              </Text>
-              <Text style={[styles.emptyText, { color: theme.semantic.textSecondary }]}>
-                Saved drafts will appear here
-              </Text>
-            </View>
+            <EmptyState
+              icon="file-text-o"
+              title="No drafts"
+              description="Saved drafts will appear here"
+              colors={{ text: theme.semantic.text, textSecondary: theme.semantic.textSecondary }}
+            />
           )
         ) : (
           // All and Unread tabs content
@@ -493,20 +486,12 @@ export default function NotificationsScreen() {
               {renderTimeGroup('older', groupedNotifications.older)}
             </>
           ) : (
-            <View style={styles.emptyState}>
-              <FontAwesome
-                name="bell-o"
-                size={48}
-                color={theme.semantic.textSecondary}
-                style={{ opacity: 0.5, marginBottom: spacing.lg }}
-              />
-              <Text style={[styles.emptyTitle, { color: theme.semantic.text }]}>
-                No notifications
-              </Text>
-              <Text style={[styles.emptyText, { color: theme.semantic.textSecondary }]}>
-                {getEmptyStateMessage()}
-              </Text>
-            </View>
+            <EmptyState
+              icon="bell-o"
+              title="No notifications"
+              description={getEmptyStateMessage()}
+              colors={{ text: theme.semantic.text, textSecondary: theme.semantic.textSecondary }}
+            />
           )
         )}
       </ScrollView>
@@ -634,22 +619,6 @@ const styles = StyleSheet.create({
   },
   rowTime: {
     fontSize: fontSize.xs,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
-    paddingHorizontal: spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    marginBottom: spacing.sm,
-  },
-  emptyText: {
-    fontSize: fontSize.md,
-    textAlign: 'center',
   },
   // Drafts summary card
   draftsSummary: {

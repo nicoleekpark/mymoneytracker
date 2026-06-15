@@ -9,13 +9,26 @@ import { z } from 'zod'
 
 export const AccountNatureSchema = z.enum(['asset', 'liability'])
 
+export const AccountCategorySchema = z.enum(['spending', 'investment', 'liability'])
+
 export const AccountKindSchema = z.enum([
+  // Spending
   'cash',
   'checking',
   'savings',
+  // Investment & Retirement
+  'hsa',
+  '401k',
+  'ira',
+  'roth_ira',
+  '403b',
+  'brokerage',
+  'investment',
+  // Liabilities
   'credit_card',
   'loan',
-  'investment',
+  'mortgage',
+  // Custom
   'other',
 ])
 
@@ -27,6 +40,8 @@ export const AccountSchema = z.object({
   name: z.string().min(1),
   nature: AccountNatureSchema,
   kind: AccountKindSchema,
+  category: AccountCategorySchema,
+  customKindName: z.string().optional(),
   currency: z.string().optional(),
   sortOrder: z.number().optional(),
   isSystem: z.boolean().optional(),
@@ -69,6 +84,18 @@ export function parseAccountKind(value: unknown): z.infer<typeof AccountKindSche
   const result = AccountKindSchema.safeParse(value)
   if (result.success) return result.data
   return 'other'
+}
+
+/**
+ * Parse and validate account category from unknown input.
+ *
+ * Fallback Strategy: Returns 'spending' on invalid input.
+ * Rationale: Most accounts are spending accounts (checking, savings).
+ */
+export function parseAccountCategory(value: unknown): z.infer<typeof AccountCategorySchema> {
+  const result = AccountCategorySchema.safeParse(value)
+  if (result.success) return result.data
+  return 'spending'
 }
 
 /**

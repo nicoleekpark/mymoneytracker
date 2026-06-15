@@ -7,6 +7,7 @@
 
 export {
   addTransaction,
+  adjustAccountBalance,
   getTransactionById,
   getTransactions,
   getTransactionsForDate,

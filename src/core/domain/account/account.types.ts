@@ -22,6 +22,18 @@ import type { UUID } from '@/core/domain/common/uuid'
 /** Whether an account represents money you have (asset) or owe (liability) */
 export type AccountNature = 'asset' | 'liability'
 
+// ─── Account Category ───────────────────────────────────────────────────────
+// High-level grouping for accounts
+
+/**
+ * High-level account category for grouping and net worth calculation.
+ *
+ * - spending: Day-to-day transaction accounts (checking, savings, cash)
+ * - investment: Investment & retirement accounts (401k, IRA, HSA, brokerage)
+ * - liability: Money you owe (credit cards, loans, mortgages)
+ */
+export type AccountCategory = 'spending' | 'investment' | 'liability'
+
 // ─── Account Kind ───────────────────────────────────────────────────────────
 // More specific categorization for grouping and display
 
@@ -29,26 +41,46 @@ export type AccountNature = 'asset' | 'liability'
  * The specific type of account.
  * Used for grouping in the Accounts tab and determining behavior.
  *
- * Assets:
+ * Spending (day-to-day):
  * - cash: Physical cash, wallets
  * - checking: Bank checking accounts
  * - savings: Bank savings accounts, money market
- * - investment: Brokerage, 401k, IRA
+ *
+ * Investment & Retirement:
+ * - hsa: Health Savings Account
+ * - 401k: 401(k) retirement account
+ * - ira: Traditional IRA
+ * - roth_ira: Roth IRA
+ * - 403b: 403(b) retirement account
+ * - brokerage: Taxable brokerage account
+ * - investment: Generic investment account (legacy)
  *
  * Liabilities:
  * - credit_card: Credit cards
- * - loan: Mortgages, car loans, student loans
+ * - loan: Personal loans, car loans, student loans
+ * - mortgage: Home mortgage
  *
  * Other:
- * - other: Anything that doesn't fit above
+ * - other: Custom account type (use customKindName for display)
  */
 export type AccountKind =
+  // Spending
   | 'cash'
   | 'checking'
   | 'savings'
+  // Investment & Retirement
+  | 'hsa'
+  | '401k'
+  | 'ira'
+  | 'roth_ira'
+  | '403b'
+  | 'brokerage'
+  | 'investment'  // legacy/generic
+  // Liabilities
   | 'credit_card'
   | 'loan'
-  | 'investment'
+  | 'mortgage'
+  // Custom
   | 'other'
 
 // ─── Account Entity ─────────────────────────────────────────────────────────
@@ -82,6 +114,20 @@ export type Account = {
 
   /** Specific type for grouping (cash, checking, credit_card, etc.) */
   kind: AccountKind
+
+  /**
+   * High-level category for grouping and net worth display.
+   * - spending: Shows in Accounts, contributes to "Accessible" in Assets
+   * - investment: Shows in Accounts, contributes to "Investments" in Assets
+   * - liability: Shows in Accounts, contributes to "Liabilities" in Assets
+   */
+  category: AccountCategory
+
+  /**
+   * Custom kind name when kind is 'other'.
+   * Used for display (e.g., "SEP IRA", "529 Plan").
+   */
+  customKindName?: string
 
   /** Currency code (e.g., "USD"). Optional, defaults to app currency. */
   currency?: string

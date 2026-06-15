@@ -1,6 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router, useLocalSearchParams, useSegments } from 'expo-router'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Keyboard,
@@ -11,15 +11,19 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { archiveAccount, deleteAccount, getAccountById, getAccountTransactionCount, updateAccount } from '@/core/services/account'
-import { getAccountBalanceAtEndOfMonth } from '@/core/services/transaction'
+import { adjustAccountBalance, getAccountBalanceAtEndOfMonth } from '@/core/services/transaction'
+import { isInvestmentAccount } from '@/core/domain/account'
+import { AmountKeypadSheet } from '@/shared/components'
+import { CATEGORIES_INDEX } from '@/shared/config/categories.index'
 import { Screen } from '@/shared/layout/Screen'
-import { formatCurrency } from '@/shared/format/currency'
+import { formatCentsForDisplay, formatCurrency } from '@/shared/format/currency'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
-import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
+import { modalStyles, getScrollContentPadding, MODAL_TOAST_DURATION } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -54,6 +58,27 @@ export default function AccountDetailScreen() {
   const [lastFourDigits, setLastFourDigits] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
+  // Balance editing state
+  const [showKeypad, setShowKeypad] = useState(false)
+  const [balanceCents, setBalanceCents] = useState(0)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [toastKey, setToastKey] = useState(0)
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    }
+  }, [])
+
+  const showToast = useCallback((message: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToastMessage(message)
+    setToastKey((k) => k + 1)
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), MODAL_TOAST_DURATION)
+  }, [])
+
   // Initialize editable fields from account
   useEffect(() => {
     if (account) {
@@ -72,6 +97,70 @@ export default function AccountDetailScreen() {
       lastFourDigits !== (account.lastFourDigits || '')
     )
   }, [account, name, bankName, lastFourDigits])
+
+  // Balance keypad helpers
+  const balanceDisplay = useMemo(() => {
+    return formatCentsForDisplay(balanceCents)
+  }, [balanceCents])
+
+  const handleOpenKeypad = useCallback(() => {
+    if (!account) return
+    // Initialize keypad with current balance (in cents)
+    const balanceInCents = Math.abs(Math.round(currentBalance * 100))
+    setBalanceCents(balanceInCents)
+    Keyboard.dismiss()
+    setShowKeypad(true)
+  }, [account, currentBalance])
+
+  const handleKeypadDigit = useCallback((digit: string) => {
+    setBalanceCents((prev) => {
+      let next = prev
+      for (const d of digit) {
+        next = next * 10 + parseInt(d, 10)
+      }
+      // Cap at $999,999.99
+      return next > 99999999 ? prev : next
+    })
+  }, [])
+
+  const handleKeypadBackspace = useCallback(() => {
+    setBalanceCents((prev) => Math.floor(prev / 10))
+  }, [])
+
+  const handleKeypadClear = useCallback(() => {
+    setBalanceCents(0)
+  }, [])
+
+  const handleKeypadDone = useCallback(() => {
+    if (!account) {
+      setShowKeypad(false)
+      return
+    }
+
+    const currentBalanceInCents = Math.round(currentBalance * 100)
+    const newBalanceInCents = balanceCents
+
+    // No change, just close
+    if (currentBalanceInCents === newBalanceInCents) {
+      setShowKeypad(false)
+      return
+    }
+
+    // Calculate the adjustment amount (difference)
+    const adjustmentCents = newBalanceInCents - currentBalanceInCents
+    const adjustmentAmount = adjustmentCents / 100
+
+    try {
+      adjustAccountBalance(CATEGORIES_INDEX, account.id, adjustmentAmount)
+      invalidateTransactions()
+      showToast('Balance updated')
+      setShowKeypad(false)
+    } catch (error) {
+      console.error('Failed to adjust balance:', error)
+      const message = error instanceof Error ? error.message : 'Failed to update balance'
+      showToast(message)
+    }
+  }, [account, currentBalance, balanceCents, invalidateTransactions, showToast])
 
   const handleBack = useCallback(() => {
     if (hasChanges) {
@@ -265,20 +354,37 @@ export default function AccountDetailScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Balance Hero */}
-        <View style={styles.balanceHero}>
+        {/* Balance Hero - Tappable to edit */}
+        <Pressable
+          onPress={handleOpenKeypad}
+          style={({ pressed }) => [
+            styles.balanceHero,
+            { opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
           <Text style={[styles.balanceLabel, { color: semantic.textSecondary }]}>
             Current Balance
           </Text>
-          <Text
-            style={[
-              styles.balanceValue,
-              { color: isDebt ? semantic.danger : semantic.text },
-            ]}
-          >
-            {formatCurrency(displayBalance)}
+          <View style={styles.balanceRow}>
+            <Text
+              style={[
+                styles.balanceValue,
+                { color: isDebt ? semantic.danger : semantic.text },
+              ]}
+            >
+              {formatCurrency(displayBalance)}
+            </Text>
+            <FontAwesome
+              name="pencil"
+              size={14}
+              color={semantic.textSecondary}
+              style={styles.editIcon}
+            />
+          </View>
+          <Text style={[styles.balanceHint, { color: semantic.textSecondary }]}>
+            {isInvestmentAccount(account) ? 'Tap to update market value' : 'Tap to adjust balance'}
           </Text>
-        </View>
+        </Pressable>
 
         {/* Editable Fields */}
         <View style={styles.section}>
@@ -409,6 +515,34 @@ export default function AccountDetailScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Toast */}
+      {toastMessage && (
+        <Animated.View
+          key={toastKey}
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(150)}
+          style={[
+            modalStyles.toast,
+            { backgroundColor: semantic.text, position: 'absolute', bottom: getScrollContentPadding(insets.bottom), alignSelf: 'center' }
+          ]}
+          pointerEvents="none"
+        >
+          <Text style={[modalStyles.toastText, { color: semantic.surface }]}>{toastMessage}</Text>
+        </Animated.View>
+      )}
+
+      {/* Amount Keypad Sheet */}
+      <AmountKeypadSheet
+        visible={showKeypad}
+        amountDisplay={balanceDisplay}
+        hideEstimated
+        onDigit={handleKeypadDigit}
+        onBackspace={handleKeypadBackspace}
+        onClear={handleKeypadClear}
+        onDone={handleKeypadDone}
+        onClose={() => setShowKeypad(false)}
+      />
     </Screen>
   )
 }
@@ -436,11 +570,23 @@ const styles = StyleSheet.create({
     letterSpacing: letterSpacing.wider,
     marginBottom: spacing.xs,
   },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   balanceValue: {
     fontSize: 32,
     fontWeight: fontWeight.heavy,
     fontVariant: ['tabular-nums'],
     letterSpacing: -1,
+  },
+  editIcon: {
+    marginTop: spacing.xs,
+  },
+  balanceHint: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.sm,
   },
   section: {
     marginBottom: spacing.xl,

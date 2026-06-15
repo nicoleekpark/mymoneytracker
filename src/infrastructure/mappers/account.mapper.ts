@@ -1,6 +1,7 @@
 import type { UUID } from '@/core/domain/common/uuid'
 import type { Account } from '@/core/domain/account/account.types'
-import { parseAccountNature, parseAccountKind } from '@/core/domain/account/account.schema'
+import { parseAccountNature, parseAccountKind, parseAccountCategory } from '@/core/domain/account/account.schema'
+import { getDefaultCategoryForKind } from '@/core/domain/account/account.model'
 
 /**
  * Database row representation of an account.
@@ -12,6 +13,8 @@ export type AccountRow = Readonly<{
   name: string
   nature: string
   kind: string
+  category?: string
+  custom_kind_name?: string | null
   currency?: string
   sort_order?: number
   is_system?: number
@@ -27,12 +30,20 @@ export type AccountRow = Readonly<{
  * Uses Zod schemas for runtime validation of enum values.
  */
 export function rowToAccount(row: AccountRow): Account {
+  const kind = parseAccountKind(row.kind)
+  // If category is missing (legacy data), derive from kind
+  const category = row.category
+    ? parseAccountCategory(row.category)
+    : getDefaultCategoryForKind(kind)
+
   return {
     id: row.id,
     key: row.key,
     name: row.name,
     nature: parseAccountNature(row.nature),
-    kind: parseAccountKind(row.kind),
+    kind,
+    category,
+    customKindName: row.custom_kind_name ?? undefined,
     currency: row.currency,
     sortOrder: row.sort_order,
     isSystem: row.is_system === 1,
@@ -55,6 +66,8 @@ export function accountToRow(account: Account): Omit<AccountRow, 'id' | 'created
     name: account.name,
     nature: account.nature,
     kind: account.kind,
+    category: account.category,
+    custom_kind_name: account.customKindName ?? null,
     currency: account.currency ?? 'USD',
     sort_order: account.sortOrder ?? 0,
     is_system: account.isSystem ? 1 : 0,

@@ -99,11 +99,15 @@ export function DateTimePickerModal({
         {/* Calendar Container */}
         <View style={[styles.calendarContainer, { backgroundColor: theme.semantic.surfaceAlt }]}>
           {/* Date Picker - Calendar */}
+          {/*
+           * iOS: display="inline" shows full calendar (iOS 14+)
+           * Android: display="calendar" shows calendar picker
+           */}
           <View style={styles.calendarWrapper}>
             <DateTimePicker
               value={tempDate}
               mode="date"
-              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
               themeVariant={theme.mode}
               onChange={handleDateChange}
             />

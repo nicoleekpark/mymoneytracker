@@ -18,7 +18,7 @@
 // ─── Imports ────────────────────────────────────────────────────────────────
 
 import type { UUID } from '@/core/domain/common/uuid'
-import type { Account, AccountKind } from '@/core/domain/account'
+import type { Account, AccountKind, AccountCategory } from '@/core/domain/account'
 import type { CreateAccountInput, UpdateAccountInput } from '@/core/domain/account/account.repository'
 import { accountRepository, transactionRepository } from '@/infrastructure/repositories'
 import { createTransaction, buildTxKey } from '@/core/domain/transaction'
@@ -30,9 +30,11 @@ import { uuid } from '@/shared/utils/uuid'
 export type AddAccountInput = {
   name: string
   kind: AccountKind
+  category?: AccountCategory     // Explicitly set domain category (e.g., for 'other' kinds)
+  customKindName?: string        // Custom label when kind is 'other'
   bankName?: string
   lastFourDigits?: string
-  initialBalance?: number  // Always positive; system determines if asset/liability
+  initialBalance?: number        // Always positive; system determines if asset/liability
 }
 
 // ─── Use Cases ──────────────────────────────────────────────────────────────
@@ -100,6 +102,8 @@ export function createAccount(
   const createInput: CreateAccountInput = {
     name: input.name,
     kind: input.kind,
+    category: input.category,
+    customKindName: input.customKindName,
     bankName: input.bankName,
     lastFourDigits: input.lastFourDigits,
   }

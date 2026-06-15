@@ -23,6 +23,7 @@ export default function AssetSettingsLayout() {
         }}
       />
       <Stack.Screen name="asset-detail" />
+      <Stack.Screen name="add" />
     </Stack>
   )
 }

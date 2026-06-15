@@ -13,7 +13,8 @@ import {
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import type { AccountKind } from '@/core/domain/account'
+import type { AccountCategory as DomainAccountCategory, AccountKind } from '@/core/domain/account'
+import { getDefaultCategoryForKind } from '@/core/domain/account'
 import { createAccount } from '@/core/services/account'
 import { AmountKeypadSheet, ModalSaveBar } from '@/shared/components'
 import { formatCentsForDisplay } from '@/shared/format/currency'
@@ -27,30 +28,42 @@ import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
-// ─── Account Category Structure ─────────────────────────────────────────────
+// ─── Account Category Structure (UI) ────────────────────────────────────────
+// Note: This is the UI category for organizing tabs, not the domain AccountCategory
 
-type AccountCategory = 'bank' | 'card' | 'cash' | 'other'
+type UIAccountCategory = 'bank' | 'card' | 'investment' | 'other'
 
-const ACCOUNT_CATEGORIES: { key: AccountCategory; label: string }[] = [
+const UI_ACCOUNT_CATEGORIES: { key: UIAccountCategory; label: string }[] = [
   { key: 'bank', label: 'Bank' },
   { key: 'card', label: 'Card' },
-  { key: 'cash', label: 'Cash' },
+  { key: 'investment', label: 'Invest' },
   { key: 'other', label: 'Other' },
 ]
 
 const ACCOUNT_SUBTYPES: Record<
-  AccountCategory,
-  { key: AccountKind; label: string; icon: string }[]
+  UIAccountCategory,
+  { key: AccountKind; label: string; icon: string; domainCategory?: DomainAccountCategory }[]
 > = {
   bank: [
     { key: 'checking', label: 'Checking', icon: 'bank' },
     { key: 'savings', label: 'Savings', icon: 'bank' },
+    { key: 'cash', label: 'Cash', icon: 'money' },
   ],
-  card: [{ key: 'credit_card', label: 'Credit Card', icon: 'credit-card' }],
-  cash: [{ key: 'cash', label: 'Cash', icon: 'money' }],
+  card: [
+    { key: 'credit_card', label: 'Credit Card', icon: 'credit-card' },
+  ],
+  investment: [
+    { key: '401k', label: '401(k)', icon: 'line-chart' },
+    { key: 'ira', label: 'IRA', icon: 'line-chart' },
+    { key: 'roth_ira', label: 'Roth IRA', icon: 'line-chart' },
+    { key: '403b', label: '403(b)', icon: 'line-chart' },
+    { key: 'hsa', label: 'HSA', icon: 'plus-square' },
+    { key: 'brokerage', label: 'Brokerage', icon: 'line-chart' },
+    { key: 'other', label: 'Other', icon: 'cube', domainCategory: 'investment' },
+  ],
   other: [
-    { key: 'investment', label: 'Investment', icon: 'line-chart' },
     { key: 'loan', label: 'Loan', icon: 'file-text-o' },
+    { key: 'mortgage', label: 'Mortgage', icon: 'home' },
     { key: 'other', label: 'Other', icon: 'cube' },
   ],
 }
@@ -74,8 +87,9 @@ export default function AddAccountScreen() {
     segments.includes('account-settings' as never)
 
   // Form state
-  const [category, setCategory] = useState<AccountCategory>('bank')
+  const [uiCategory, setUICategory] = useState<UIAccountCategory>('bank')
   const [kind, setKind] = useState<AccountKind>('checking')
+  const [customKindName, setCustomKindName] = useState('')
   const [name, setName] = useState('')
   const [nameFocused, setNameFocused] = useState(false)
   const [bankName, setBankName] = useState('')
@@ -139,17 +153,16 @@ export default function AddAccountScreen() {
     setShowKeypad(false)
   }, [])
 
-  // Auto-select first subtype when category changes
+  // Auto-select first subtype when UI category changes
   useEffect(() => {
-    const subtypes = ACCOUNT_SUBTYPES[category]
+    const subtypes = ACCOUNT_SUBTYPES[uiCategory]
     if (subtypes.length > 0) {
       setKind(subtypes[0].key)
     }
-    // Clear name when switching categories (except when switching TO cash)
-    if (category !== 'cash') {
-      setName('')
-    }
-  }, [category])
+    // Clear name when switching categories
+    setName('')
+    setCustomKindName('')
+  }, [uiCategory])
 
   const handleCancel = useCallback(() => {
     Keyboard.dismiss()
@@ -160,8 +173,8 @@ export default function AddAccountScreen() {
     const trimmedName = name.trim()
 
     // For cash accounts, name is optional (defaults to "Cash")
-    // For other accounts, name is required
-    if (!trimmedName && category !== 'cash') {
+    // For other account types with kind='other', customKindName is required
+    if (!trimmedName && kind !== 'cash') {
       showToast('Please enter a nickname')
       setHighlightName(true)
       if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
@@ -169,13 +182,25 @@ export default function AddAccountScreen() {
       return
     }
 
+    // If kind is 'other' and customKindName is empty, require it
+    if (kind === 'other' && !customKindName.trim()) {
+      showToast('Please enter account type name')
+      return
+    }
+
     // Use "Cash" as default name for cash accounts without a nickname
-    const accountName = trimmedName || (category === 'cash' ? 'Cash' : '')
+    const accountName = trimmedName || (kind === 'cash' ? 'Cash' : '')
+
+    // Get the selected subtype to check for domainCategory override
+    const selectedSubtype = ACCOUNT_SUBTYPES[uiCategory].find(s => s.key === kind)
+    const domainCategory = selectedSubtype?.domainCategory ?? getDefaultCategoryForKind(kind)
 
     try {
       createAccount(CATEGORIES_INDEX, {
         name: accountName,
         kind,
+        category: domainCategory,
+        customKindName: kind === 'other' ? customKindName.trim() : undefined,
         bankName: bankName.trim() || undefined,
         lastFourDigits: lastFour.trim() || undefined,
         initialBalance: balanceCents > 0 ? balanceCents / 100 : undefined,
@@ -192,29 +217,31 @@ export default function AddAccountScreen() {
       const message = error instanceof Error ? error.message : 'Failed to create account'
       showToast(message)
     }
-  }, [name, kind, bankName, lastFour, balanceCents, category, invalidateTransactions, showToast])
+  }, [name, kind, customKindName, bankName, lastFour, balanceCents, uiCategory, invalidateTransactions, showToast])
 
-  const isLiability = kind === 'credit_card' || kind === 'loan'
+  const isLiability = kind === 'credit_card' || kind === 'loan' || kind === 'mortgage'
   // Cash accounts can submit without a name (defaults to "Cash")
-  const canSubmit = category === 'cash' || name.trim().length > 0
-  const subtypes = ACCOUNT_SUBTYPES[category]
+  // Other accounts with kind='other' need customKindName
+  const canSubmit = kind === 'cash'
+    || (kind === 'other' ? name.trim().length > 0 && customKindName.trim().length > 0 : name.trim().length > 0)
+  const subtypes = ACCOUNT_SUBTYPES[uiCategory]
 
   // Get label for institution/source field based on kind
   const institutionLabel = useMemo(() => {
     if (kind === 'cash') return 'Source'
     if (kind === 'credit_card') return 'Card issuer'
-    if (kind === 'loan') return 'Lender'
-    if (kind === 'investment') return 'Brokerage'
+    if (kind === 'loan' || kind === 'mortgage') return 'Lender'
+    if (uiCategory === 'investment') return 'Institution'
     return 'Bank name'
-  }, [kind])
+  }, [kind, uiCategory])
 
   const institutionPlaceholder = useMemo(() => {
     if (kind === 'cash') return 'e.g., ATM, Gift, Salary'
     if (kind === 'credit_card') return 'e.g., Chase, Amex'
-    if (kind === 'loan') return 'e.g., SoFi, Marcus'
-    if (kind === 'investment') return 'e.g., Fidelity, Vanguard'
+    if (kind === 'loan' || kind === 'mortgage') return 'e.g., SoFi, Marcus'
+    if (uiCategory === 'investment') return 'e.g., Fidelity, Vanguard'
     return 'e.g., Chase, Wells Fargo'
-  }, [kind])
+  }, [kind, uiCategory])
 
   return (
     <Screen
@@ -240,12 +267,12 @@ export default function AddAccountScreen() {
 
         {/* Category Tabs */}
         <View style={[modalStyles.typeTabs, { borderBottomColor: semantic.border }]}>
-          {ACCOUNT_CATEGORIES.map((cat) => {
-            const selected = cat.key === category
+          {UI_ACCOUNT_CATEGORIES.map((cat) => {
+            const selected = cat.key === uiCategory
             return (
               <Pressable
                 key={cat.key}
-                onPress={() => setCategory(cat.key)}
+                onPress={() => setUICategory(cat.key)}
                 style={[
                   modalStyles.typeTab,
                   { borderBottomColor: selected ? semantic.primary : 'transparent' },
@@ -280,7 +307,7 @@ export default function AddAccountScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Hero: Balance for cash, Nickname for others */}
-          {category === 'cash' ? (
+          {kind === 'cash' ? (
             <Pressable
               onPress={() => {
                 Keyboard.dismiss()
@@ -337,7 +364,7 @@ export default function AddAccountScreen() {
           )}
 
           {/* Subtype Chips - show single Cash pill for cash, multiple for others */}
-          {category === 'cash' ? (
+          {kind === 'cash' ? (
             <View style={{ marginBottom: spacing.lg }}>
               <Text style={[localStyles.fieldSectionLabel, { color: semantic.textSecondary }]}>
                 Type
@@ -402,7 +429,7 @@ export default function AddAccountScreen() {
           {/* Field Group */}
           <View style={modalStyles.fieldGroup}>
             {/* Cash-specific fields: Nickname, Source */}
-            {category === 'cash' ? (
+            {kind === 'cash' ? (
               <>
                 {/* Nickname */}
                 <View
@@ -506,7 +533,7 @@ export default function AddAccountScreen() {
                 <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
 
                 {/* Last 4 Digits (Optional) - Only for bank accounts and cards */}
-                {(category === 'bank' || category === 'card') && (
+                {(uiCategory === 'bank' || uiCategory === 'card') && (
                   <>
                     <View
                       style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
@@ -538,6 +565,40 @@ export default function AddAccountScreen() {
                           style={[modalStyles.fieldInput, { color: semantic.text }]}
                           keyboardType="number-pad"
                           maxLength={4}
+                        />
+                      </View>
+                    </View>
+                    <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+                  </>
+                )}
+
+                {/* Custom Type Name - Only for 'other' kind */}
+                {kind === 'other' && (
+                  <>
+                    <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
+                      <Text
+                        style={[modalStyles.fieldLabel, { color: getFieldLabelColor(!!customKindName, semantic) }]}
+                      >
+                        Account type
+                      </Text>
+                      <View style={modalStyles.fieldInputWrapper}>
+                        {!customKindName && (
+                          <Text
+                            style={[
+                              modalStyles.fieldPlaceholder,
+                              modalStyles.fieldInputPlaceholder,
+                              { color: semantic.textSecondary },
+                            ]}
+                          >
+                            e.g., 529 Plan, Pension
+                          </Text>
+                        )}
+                        <TextInput
+                          value={customKindName}
+                          onChangeText={setCustomKindName}
+                          style={[modalStyles.fieldInput, { color: semantic.text }]}
+                          autoCapitalize="words"
+                          autoCorrect={false}
                         />
                       </View>
                     </View>

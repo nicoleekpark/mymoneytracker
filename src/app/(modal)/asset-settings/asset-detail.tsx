@@ -1,79 +1,96 @@
 /**
  * Asset Detail Screen
  *
- * For viewing and editing manual asset details.
- * Shows balance history and allows updating current month balance.
+ * Matches AccountDetailScreen layout exactly:
+ * - Header: Back + asset name + Save
+ * - Tappable balance hero
+ * - Card-based editable fields
+ * - Asset Type section (read-only)
+ * - Quick Actions section
+ * - Asset Actions section (Archive/Delete)
  */
 
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
-import React, { useCallback, useMemo, useState } from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import type { AssetCategory, AssetItem } from '@/core/domain/asset'
+import type { AssetItem } from '@/core/domain/asset'
 import { getCategoryMeta } from '@/core/domain/asset'
 import {
+  archiveAssetItem,
+  deleteAssetItem,
   getAssetItems,
   getBalancesForMonth,
   getCurrentYearMonth,
   setBalance,
-  getTrend,
+  updateAssetItem,
 } from '@/core/services/asset'
-import { formatUsdInt } from '@/shared/format/currency'
+import { AmountKeypadSheet } from '@/shared/components'
+import { formatCentsForDisplay, formatUsdInt } from '@/shared/format/currency'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
-import { modalStyles } from '@/shared/theme/tokens/modal'
+import { useDataRefreshStore } from '@/shared/store'
+import { getScrollContentPadding, modalStyles, MODAL_TOAST_DURATION } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
-
-type BalanceHistory = {
-  yearMonth: string
-  amount: number
-}
 
 export default function AssetDetailScreen() {
   const { assetId } = useLocalSearchParams<{ assetId: string }>()
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
   const { semantic } = theme
+  const { invalidateAssets } = useDataRefreshStore()
 
   const [asset, setAsset] = useState<AssetItem | null>(null)
   const [currentBalance, setCurrentBalance] = useState<number>(0)
-  const [editingBalance, setEditingBalance] = useState<string>('')
-  const [isEditing, setIsEditing] = useState(false)
-  const [balanceHistory, setBalanceHistory] = useState<BalanceHistory[]>([])
+  const [name, setName] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Balance editing state
+  const [showKeypad, setShowKeypad] = useState(false)
+  const [balanceCents, setBalanceCents] = useState(0)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [toastKey, setToastKey] = useState(0)
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentMonth = getCurrentYearMonth()
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    }
+  }, [])
+
+  const showToast = useCallback((message: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToastMessage(message)
+    setToastKey((k) => k + 1)
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), MODAL_TOAST_DURATION)
+  }, [])
+
   const refreshAsset = useCallback(() => {
     if (!assetId) return
+
+    // Skip if this is an account-based asset (prefixed with "acct:")
+    if (assetId.startsWith('acct:')) {
+      setAsset(null)
+      return
+    }
 
     const items = getAssetItems()
     const found = items.find(a => a.id === assetId)
     setAsset(found ?? null)
 
     if (found) {
-      // Get current balance
+      setName(found.name)
       const balances = getBalancesForMonth(currentMonth)
       const balance = balances.get(assetId) ?? 0
       setCurrentBalance(balance)
-      setEditingBalance(Math.abs(balance).toString())
-
-      // Get balance history (last 12 months)
-      const history: BalanceHistory[] = []
-      for (let i = 0; i < 12; i++) {
-        const date = new Date()
-        date.setMonth(date.getMonth() - i)
-        const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-        const monthBalances = getBalancesForMonth(yearMonth)
-        const amount = monthBalances.get(assetId) ?? 0
-        if (amount !== 0 || i === 0) {
-          history.push({ yearMonth, amount })
-        }
-      }
-      setBalanceHistory(history)
     }
   }, [assetId, currentMonth])
 
@@ -84,273 +101,426 @@ export default function AssetDetailScreen() {
     return getCategoryMeta(asset.category)
   }, [asset])
 
-  const handleBack = useCallback(() => {
-    router.back()
+  const isLiability = asset?.field === 'liabilities'
+  const displayBalance = isLiability ? Math.abs(currentBalance) : currentBalance
+
+  // Check for unsaved changes
+  const hasChanges = useMemo(() => {
+    if (!asset) return false
+    return name !== asset.name
+  }, [asset, name])
+
+  // Balance keypad helpers
+  const balanceDisplay = useMemo(() => {
+    return formatCentsForDisplay(balanceCents)
+  }, [balanceCents])
+
+  const handleOpenKeypad = useCallback(() => {
+    if (!asset) return
+    const balanceInCents = Math.abs(Math.round(currentBalance * 100))
+    setBalanceCents(balanceInCents)
+    Keyboard.dismiss()
+    setShowKeypad(true)
+  }, [asset, currentBalance])
+
+  const handleKeypadDigit = useCallback((digit: string) => {
+    setBalanceCents((prev) => {
+      let next = prev
+      for (const d of digit) {
+        next = next * 10 + parseInt(d, 10)
+      }
+      return next > 99999999 ? prev : next
+    })
   }, [])
 
-  const handleSaveBalance = useCallback(() => {
-    if (!asset) return
+  const handleKeypadBackspace = useCallback(() => {
+    setBalanceCents((prev) => Math.floor(prev / 10))
+  }, [])
 
-    const newAmount = parseFloat(editingBalance.replace(/[^0-9.-]/g, ''))
-    if (isNaN(newAmount)) {
-      Alert.alert('Invalid Amount', 'Please enter a valid number.')
+  const handleKeypadClear = useCallback(() => {
+    setBalanceCents(0)
+  }, [])
+
+  const handleKeypadDone = useCallback(() => {
+    if (!asset) {
+      setShowKeypad(false)
       return
     }
 
-    // For liabilities, store as negative
-    const finalAmount = asset.field === 'liabilities' ? -Math.abs(newAmount) : Math.abs(newAmount)
-    setBalance(asset.id, currentMonth, finalAmount)
-    setCurrentBalance(finalAmount)
-    setIsEditing(false)
-    refreshAsset()
-  }, [asset, editingBalance, currentMonth, refreshAsset])
+    const currentBalanceInCents = Math.round(Math.abs(currentBalance) * 100)
+    const newBalanceInCents = balanceCents
 
+    if (currentBalanceInCents === newBalanceInCents) {
+      setShowKeypad(false)
+      return
+    }
+
+    try {
+      const dollars = newBalanceInCents / 100
+      const finalBalance = isLiability ? -dollars : dollars
+      setBalance(asset.id, currentMonth, finalBalance)
+      setCurrentBalance(finalBalance)
+      invalidateAssets()
+      showToast('Balance updated')
+      setShowKeypad(false)
+    } catch (error) {
+      console.error('Failed to update balance:', error)
+      const message = error instanceof Error ? error.message : 'Failed to update balance'
+      showToast(message)
+    }
+  }, [asset, currentBalance, balanceCents, currentMonth, isLiability, invalidateAssets, showToast])
+
+  const handleBack = useCallback(() => {
+    if (hasChanges) {
+      Alert.alert('Unsaved Changes', 'You have unsaved changes. Discard them?', [
+        { text: 'Keep Editing', style: 'cancel' },
+        { text: 'Discard', style: 'destructive', onPress: () => router.back() },
+      ])
+    } else {
+      router.back()
+    }
+  }, [hasChanges])
+
+  const handleSave = useCallback(() => {
+    if (!asset || !hasChanges) return
+
+    // Validate name
+    if (!name.trim()) {
+      Alert.alert('Error', 'Asset name is required')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      updateAssetItem(asset.id, { name: name.trim() })
+      invalidateAssets()
+      Keyboard.dismiss()
+      router.back()
+    } catch (error) {
+      console.error('Failed to save:', error)
+      showToast('Failed to save changes')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [asset, hasChanges, name, invalidateAssets, showToast])
+
+  // Archive = soft delete. Hides from list but preserves balance history.
   const handleArchive = useCallback(() => {
     if (!asset) return
 
     Alert.alert(
       'Archive Asset',
-      `Are you sure you want to archive "${asset.name}"? It will be hidden from the list but data will be preserved.`,
+      `This will hide "${asset.name}" from your assets list.\n\nBalance history will be preserved.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Archive',
           style: 'destructive',
           onPress: () => {
-            // TODO: Implement archive
-            router.back()
+            try {
+              const assetName = asset.name
+              archiveAssetItem(asset.id)
+              invalidateAssets()
+              router.replace({
+                pathname: '/(modal)/asset-settings',
+                params: { deleted: `"${assetName}" archived` },
+              })
+            } catch (error) {
+              Alert.alert('Error', 'Failed to archive asset')
+            }
           },
         },
       ]
     )
+  }, [asset, invalidateAssets])
+
+  // Delete = hard delete. Removes asset and all balance history.
+  const handleDelete = useCallback(() => {
+    if (!asset) return
+
+    Alert.alert(
+      'Delete Asset',
+      `Permanently delete "${asset.name}"?\n\nThis will remove all balance history. This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              const assetName = asset.name
+              deleteAssetItem(asset.id)
+              invalidateAssets()
+              router.replace({
+                pathname: '/(modal)/asset-settings',
+                params: { deleted: `"${assetName}" deleted` },
+              })
+            } catch (error) {
+              console.error('Delete asset error:', error)
+              const message = error instanceof Error ? error.message : 'Failed to delete asset'
+              Alert.alert('Error', message)
+            }
+          },
+        },
+      ]
+    )
+  }, [asset, invalidateAssets])
+
+  const handleViewHistory = useCallback(() => {
+    if (!asset) return
+    router.push({
+      pathname: '/(modal)/net-worth-history',
+      params: { assetId: asset.id },
+    })
   }, [asset])
 
-  const getAssetIcon = (category: AssetCategory): React.ComponentProps<typeof FontAwesome>['name'] => {
-    switch (category) {
-      case 'real_estate':
-        return 'home'
-      case 'retirement_funds':
-        return 'shield'
-      case 'investments':
-        return 'line-chart'
-      case 'kids':
-        return 'child'
-      case 'loans':
-        return 'file-text-o'
-      default:
-        return 'cube'
-    }
-  }
-
-  const formatMonthLabel = (yearMonth: string): string => {
-    const [year, month] = yearMonth.split('-')
-    const date = new Date(parseInt(year), parseInt(month) - 1)
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  }
-
-  if (!asset) {
+  // Account-based assets should redirect to account detail
+  if (assetId?.startsWith('acct:')) {
     return (
-      <Screen
-        edges={[]}
-        padded={false}
-        topPadding={false}
-        style={{ flex: 1 }}
-        contentStyle={{ flex: 1 }}
-      >
+      <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
+        <View style={modalStyles.dragHandleContainer}>
+          <View style={[modalStyles.dragHandle, { backgroundColor: semantic.border }]} />
+        </View>
         <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
-          <Pressable onPress={handleBack} hitSlop={12} style={modalStyles.cancelButton}>
-            <Text style={[modalStyles.cancelText, { color: semantic.primary }]}>← Back</Text>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={modalStyles.cancelButton}>
+            <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>‹ Back</Text>
           </Pressable>
           <Text style={[styles.headerTitle, { color: semantic.text }]}>Asset Detail</Text>
           <View style={styles.headerSpacer} />
         </View>
+        <View style={{ height: 1, backgroundColor: semantic.border }} />
         <View style={styles.emptyState}>
           <Text style={[styles.emptyText, { color: semantic.textSecondary }]}>
-            Asset not found
+            This is an account-based asset. Edit it from Account Settings.
           </Text>
         </View>
       </Screen>
     )
   }
 
+  if (!asset) {
+    return (
+      <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
+        <View style={modalStyles.dragHandleContainer}>
+          <View style={[modalStyles.dragHandle, { backgroundColor: semantic.border }]} />
+        </View>
+        <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={modalStyles.cancelButton}>
+            <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>‹ Back</Text>
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: semantic.text }]}>Asset Detail</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={{ height: 1, backgroundColor: semantic.border }} />
+        <View style={styles.emptyState}>
+          <Text style={[styles.emptyText, { color: semantic.textSecondary }]}>Asset not found</Text>
+        </View>
+      </Screen>
+    )
+  }
+
   return (
-    <Screen
-      edges={[]}
-      padded={false}
-      topPadding={false}
-      style={{ flex: 1 }}
-      contentStyle={{ flex: 1 }}
-    >
-      {/* Header */}
+    <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
+      {/* Drag Handle */}
+      <View style={modalStyles.dragHandleContainer}>
+        <View style={[modalStyles.dragHandle, { backgroundColor: semantic.border }]} />
+      </View>
+
+      {/* Header: Back + Title + Save */}
       <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
         <Pressable onPress={handleBack} hitSlop={12} style={modalStyles.cancelButton}>
-          <Text style={[modalStyles.cancelText, { color: semantic.primary }]}>← Back</Text>
+          <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>‹ Back</Text>
         </Pressable>
-        <Text style={[styles.headerTitle, { color: semantic.text }]} numberOfLines={1}>
+        <Text
+          style={[styles.headerTitle, { color: semantic.text }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {asset.name}
         </Text>
-        <View style={styles.headerSpacer} />
+        {hasChanges ? (
+          <Pressable
+            onPress={handleSave}
+            disabled={isSaving}
+            hitSlop={12}
+            style={[modalStyles.cancelButton, { opacity: isSaving ? 0.5 : 1 }]}
+          >
+            <Text style={[modalStyles.cancelText, { color: semantic.primary }]}>Save</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.headerSpacer} />
+        )}
       </View>
 
       {/* Header Divider */}
       <View style={{ height: 1, backgroundColor: semantic.border }} />
 
-      {/* Content */}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + spacing.xl },
-        ]}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingBottom: getScrollContentPadding(insets.bottom),
+        }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Asset Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: semantic.surfaceAlt }]}>
-          <View style={[styles.iconContainer, { backgroundColor: semantic.surface }]}>
-            <FontAwesome
-              name={getAssetIcon(asset.category)}
-              size={24}
-              color={semantic.primary}
-            />
-          </View>
-          <View style={styles.infoContent}>
-            <Text style={[styles.categoryLabel, { color: semantic.textSecondary }]}>
-              {categoryMeta?.name ?? asset.category}
-            </Text>
-            <Text style={[styles.assetName, { color: semantic.text }]}>
-              {asset.name}
-            </Text>
-          </View>
-        </View>
-
-        {/* Current Balance Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
-            CURRENT BALANCE
-          </Text>
-          <View style={[styles.balanceCard, { backgroundColor: semantic.surfaceAlt }]}>
-            <Text style={[styles.balanceMonth, { color: semantic.textSecondary }]}>
-              {formatMonthLabel(currentMonth)}
-            </Text>
-            {isEditing ? (
-              <View style={styles.editRow}>
-                <Text style={[styles.currencySign, { color: semantic.text }]}>$</Text>
-                <TextInput
-                  style={[styles.balanceInput, { color: semantic.text }]}
-                  value={editingBalance}
-                  onChangeText={setEditingBalance}
-                  keyboardType="numeric"
-                  autoFocus
-                  selectTextOnFocus
-                />
-                <Pressable
-                  onPress={handleSaveBalance}
-                  style={[styles.saveButton, { backgroundColor: semantic.primary }]}
-                >
-                  <Text style={[styles.saveButtonText, { color: semantic.onPrimary }]}>Save</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setIsEditing(false)
-                    setEditingBalance(Math.abs(currentBalance).toString())
-                  }}
-                  style={styles.cancelEditButton}
-                >
-                  <Text style={[styles.cancelEditText, { color: semantic.textSecondary }]}>Cancel</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                onPress={() => setIsEditing(true)}
-                style={({ pressed }) => [
-                  styles.balanceRow,
-                  { opacity: pressed ? 0.6 : 1 },
-                ]}
-              >
-                <Text style={[
-                  styles.balanceAmount,
-                  { color: currentBalance >= 0 ? semantic.text : semantic.danger }
-                ]}>
-                  {formatUsdInt(Math.abs(currentBalance))}
-                </Text>
-                <FontAwesome name="pencil" size={14} color={semantic.textSecondary} />
-              </Pressable>
-            )}
-          </View>
-        </View>
-
-        {/* Balance History Section */}
-        {balanceHistory.length > 1 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
-              BALANCE HISTORY
-            </Text>
-            <View style={[styles.historyCard, { backgroundColor: semantic.surfaceAlt }]}>
-              {balanceHistory.slice(1).map((entry, index) => (
-                <View
-                  key={entry.yearMonth}
-                  style={[
-                    styles.historyRow,
-                    index < balanceHistory.length - 2 && [
-                      styles.historyRowBorder,
-                      { borderBottomColor: semantic.border },
-                    ],
-                  ]}
-                >
-                  <Text style={[styles.historyMonth, { color: semantic.textSecondary }]}>
-                    {formatMonthLabel(entry.yearMonth)}
-                  </Text>
-                  <Text style={[
-                    styles.historyAmount,
-                    { color: entry.amount >= 0 ? semantic.text : semantic.danger }
-                  ]}>
-                    {formatUsdInt(Math.abs(entry.amount))}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Asset Settings Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
-            SETTINGS
-          </Text>
-          <View style={[styles.settingsCard, { backgroundColor: semantic.surfaceAlt }]}>
-            <View style={[styles.settingRow, { borderBottomColor: semantic.border }]}>
-              <Text style={[styles.settingLabel, { color: semantic.text }]}>Category</Text>
-              <Text style={[styles.settingValue, { color: semantic.textSecondary }]}>
-                {categoryMeta?.name ?? asset.category}
-              </Text>
-            </View>
-            <View style={[styles.settingRow, { borderBottomColor: semantic.border }]}>
-              <Text style={[styles.settingLabel, { color: semantic.text }]}>Liquidifiable</Text>
-              <Text style={[styles.settingValue, { color: semantic.textSecondary }]}>
-                {asset.isLiquidifiable ? 'Yes' : 'No'}
-              </Text>
-            </View>
-            <View style={styles.settingRowLast}>
-              <Text style={[styles.settingLabel, { color: semantic.text }]}>Type</Text>
-              <Text style={[styles.settingValue, { color: semantic.textSecondary }]}>
-                {asset.field === 'liabilities' ? 'Liability' : 'Asset'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Archive Button */}
+        {/* Balance Hero - Tappable to edit */}
         <Pressable
-          onPress={handleArchive}
+          onPress={handleOpenKeypad}
           style={({ pressed }) => [
-            styles.archiveButton,
-            { opacity: pressed ? 0.6 : 1 },
+            styles.balanceHero,
+            { opacity: pressed ? 0.7 : 1 },
           ]}
         >
-          <FontAwesome name="archive" size={14} color={semantic.danger} />
-          <Text style={[styles.archiveText, { color: semantic.danger }]}>Archive Asset</Text>
+          <Text style={[styles.balanceLabel, { color: semantic.textSecondary }]}>
+            {isLiability ? 'Amount Owed' : 'Current Value'}
+          </Text>
+          <View style={styles.balanceRow}>
+            <Text
+              style={[
+                styles.balanceValue,
+                { color: isLiability ? semantic.danger : semantic.text },
+              ]}
+            >
+              {formatUsdInt(displayBalance)}
+            </Text>
+            <FontAwesome
+              name="pencil"
+              size={14}
+              color={semantic.textSecondary}
+              style={styles.editIcon}
+            />
+          </View>
+          <Text style={[styles.balanceHint, { color: semantic.textSecondary }]}>
+            Tap to update {isLiability ? 'balance' : 'value'}
+          </Text>
         </Pressable>
+
+        {/* Editable Fields */}
+        <View style={styles.section}>
+          {/* Asset Name */}
+          <View style={[styles.editField, { backgroundColor: semantic.surfaceAlt }]}>
+            <Text style={[styles.editFieldLabel, { color: semantic.textSecondary }]}>
+              Asset Name
+            </Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              style={[modalStyles.fieldInput, { color: semantic.text }]}
+              placeholder="Enter asset name"
+              placeholderTextColor={semantic.textSecondary}
+            />
+          </View>
+        </View>
+
+        {/* Asset Type (Read-only) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
+            Asset Type
+          </Text>
+          <View style={[styles.readOnlyField, { backgroundColor: semantic.surfaceAlt }]}>
+            <Text style={[styles.readOnlyValue, { color: semantic.text }]}>
+              {categoryMeta?.name ?? asset.category} ({isLiability ? 'Liability' : 'Asset'})
+            </Text>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
+            Quick Actions
+          </Text>
+          <View style={[styles.actionList, { backgroundColor: semantic.surfaceAlt }]}>
+            <Pressable
+              onPress={handleViewHistory}
+              style={({ pressed }) => [
+                styles.actionRow,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <FontAwesome name="line-chart" size={16} color={semantic.textSecondary} />
+              <Text style={[styles.actionLabel, { color: semantic.text }]}>
+                View Balance History
+              </Text>
+              <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Asset Actions */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
+            Asset Actions
+          </Text>
+          <View style={[styles.actionList, { backgroundColor: semantic.surfaceAlt }]}>
+            <Pressable
+              onPress={handleArchive}
+              style={({ pressed }) => [
+                styles.actionRow,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <FontAwesome name="archive" size={16} color={semantic.textSecondary} />
+              <View style={styles.actionLabelGroup}>
+                <Text style={[styles.actionLabel, { color: semantic.text }]}>
+                  Archive Asset
+                </Text>
+                <Text style={[styles.actionHint, { color: semantic.textSecondary }]}>
+                  Keeps balance history
+                </Text>
+              </View>
+              <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} />
+            </Pressable>
+            <View style={[styles.actionDivider, { backgroundColor: semantic.border }]} />
+            <Pressable
+              onPress={handleDelete}
+              style={({ pressed }) => [
+                styles.actionRow,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <FontAwesome name="trash" size={16} color={semantic.danger} />
+              <View style={styles.actionLabelGroup}>
+                <Text style={[styles.actionLabel, { color: semantic.danger }]}>
+                  Delete Asset
+                </Text>
+                <Text style={[styles.actionHint, { color: semantic.textSecondary }]}>
+                  Removes all history
+                </Text>
+              </View>
+              <FontAwesome name="chevron-right" size={12} color={semantic.danger} />
+            </Pressable>
+          </View>
+        </View>
       </ScrollView>
+
+      {/* Toast */}
+      {toastMessage && (
+        <Animated.View
+          key={toastKey}
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(150)}
+          style={[
+            modalStyles.toast,
+            { backgroundColor: semantic.text, position: 'absolute', bottom: getScrollContentPadding(insets.bottom), alignSelf: 'center' },
+          ]}
+          pointerEvents="none"
+        >
+          <Text style={[modalStyles.toastText, { color: semantic.surface }]}>{toastMessage}</Text>
+        </Animated.View>
+      )}
+
+      {/* Amount Keypad Sheet */}
+      <AmountKeypadSheet
+        visible={showKeypad}
+        amountDisplay={balanceDisplay}
+        hideEstimated
+        onDigit={handleKeypadDigit}
+        onBackspace={handleKeypadBackspace}
+        onClear={handleKeypadClear}
+        onDone={handleKeypadDone}
+        onClose={() => setShowKeypad(false)}
+      />
     </Screen>
   )
 }
@@ -359,53 +529,52 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    textAlign: 'center',
     flex: 1,
-    marginHorizontal: spacing.md,
+    textAlign: 'center',
+    marginHorizontal: spacing.sm,
   },
   headerSpacer: {
-    minWidth: 50,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    width: 50,
   },
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
   },
   emptyText: {
     fontSize: fontSize.md,
+    textAlign: 'center',
   },
-  infoCard: {
-    flexDirection: 'row',
+  balanceHero: {
     alignItems: 'center',
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    gap: spacing.md,
-    marginBottom: spacing.xl,
+    paddingVertical: spacing.xl,
+    marginBottom: spacing.lg,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoContent: {
-    flex: 1,
-  },
-  categoryLabel: {
+  balanceLabel: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: letterSpacing.wider,
     marginBottom: spacing.xs,
   },
-  assetName: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  balanceValue: {
+    fontSize: 32,
+    fontWeight: fontWeight.heavy,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -1,
+  },
+  editIcon: {
+    marginTop: spacing.xs,
+  },
+  balanceHint: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.sm,
   },
   section: {
     marginBottom: spacing.xl,
@@ -416,115 +585,49 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: letterSpacing.wider,
     marginBottom: spacing.sm,
+    paddingLeft: spacing.xs,
   },
-  balanceCard: {
-    padding: spacing.lg,
+  editField: {
     borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
-  balanceMonth: {
+  editFieldLabel: {
     fontSize: fontSize.xs,
-    marginBottom: spacing.sm,
+    fontWeight: fontWeight.medium,
+    marginBottom: spacing.xs,
   },
-  balanceRow: {
+  readOnlyField: {
+    borderRadius: radius.lg,
+    padding: spacing.md,
+  },
+  readOnlyValue: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+  },
+  actionList: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    padding: spacing.md,
+    gap: spacing.md,
   },
-  balanceAmount: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
-    fontVariant: ['tabular-nums'],
-  },
-  editRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  currencySign: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
-  },
-  balanceInput: {
+  actionLabelGroup: {
     flex: 1,
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
-    fontVariant: ['tabular-nums'],
-    padding: 0,
   },
-  saveButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
-  },
-  saveButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-  },
-  cancelEditButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-  },
-  cancelEditText: {
-    fontSize: fontSize.sm,
-  },
-  historyCard: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  historyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  historyRowBorder: {
-    borderBottomWidth: 1,
-  },
-  historyMonth: {
-    fontSize: fontSize.sm,
-  },
-  historyAmount: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    fontVariant: ['tabular-nums'],
-  },
-  settingsCard: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-  },
-  settingRowLast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  settingLabel: {
+  actionLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
   },
-  settingValue: {
-    fontSize: fontSize.sm,
+  actionHint: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
   },
-  archiveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.lg,
-    marginTop: spacing.md,
-  },
-  archiveText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
+  actionDivider: {
+    height: 1,
+    marginLeft: spacing.md + 16 + spacing.md, // icon width + gaps
   },
 })
