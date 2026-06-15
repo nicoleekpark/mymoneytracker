@@ -1,6 +1,34 @@
-# Phase 1 Review Items
+# Review Items
 
-> Items flagged during Phase 1 refactor that need human decision.
+> Items flagged during refactoring that need human decision.
+
+---
+
+## Pre-Submission Polish (2026-06-15)
+
+### EmptyState Icon Audit
+
+**FontAwesome Version:** v4 bundled with `@expo/vector-icons` v15.0.3
+
+**Finding:** All icons used in EmptyState components exist in the FontAwesome v4 glyphmap. No invalid or pro-only icons found.
+
+**Icons in use:**
+| Icon | Component | Status |
+|------|-----------|--------|
+| `bank` | AccountSettingsSheet, AccountSettingsScreen | ✅ Valid (changed from `university` alias) |
+| `briefcase` | AssetsBody | ✅ Valid (new) |
+| `tag` | PriceTrackerScreen | ✅ Valid |
+| `file-text-o` | NotificationsScreen (drafts) | ✅ Valid |
+| `bell-o` | NotificationsScreen | ✅ Valid |
+| `line-chart` | InsightsBody | ✅ Valid |
+| `list-alt` | TransactionsScreen | ✅ Valid |
+| `home` | AssetSettingsScreen | ✅ Valid |
+
+**Note:** `university` was changed to `bank` as the canonical name (they share glyph code 61852).
+
+---
+
+## Phase 1 Review Items
 
 ---
 
