@@ -14,8 +14,9 @@ import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/moda
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { normalizeForSearch } from '@/shared/utils/search'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
+import { useFocusEffect } from '@react-navigation/native'
 import { router } from 'expo-router'
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
   KeyboardAvoidingView,
   Platform,
@@ -39,16 +40,25 @@ export function AccountSelectionScreen() {
   const insets = useSafeAreaInsets()
 
   // Get state from navigation store
-  const { accounts: initialAccounts, currentAccountKey, accountCallback, closeAccountSelection } =
+  const { currentAccountKey, accountCallback, closeAccountSelection } =
     useAddTransactionNavStore()
 
   // Local state
   const [accountQuery, setAccountQuery] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  // Use provided accounts or fetch fresh
+  // Refetch accounts when screen gains focus (e.g., returning from add-account)
+  useFocusEffect(
+    useCallback(() => {
+      setRefreshKey((k) => k + 1)
+    }, [])
+  )
+
+  // Use fresh accounts list (refreshKey forces re-fetch on focus)
   const accounts = useMemo(() => {
-    return initialAccounts.length > 0 ? initialAccounts : getActiveAccounts()
-  }, [initialAccounts])
+    void refreshKey // dependency to trigger refresh
+    return getActiveAccounts()
+  }, [refreshKey])
 
   // Filter accounts
   const filteredAccounts = useMemo(() => {

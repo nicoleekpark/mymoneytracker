@@ -30,6 +30,7 @@ import { m20260612140403_add_transfer_fee } from './20260612140403_add_transfer_
 import { m20260612152326_add_parent_transaction_id } from './20260612152326_add_parent_transaction_id'
 import { m20260613100000_add_account_archived_at } from './20260613100000_add_account_archived_at'
 import { m20260614100000_add_account_category } from './20260614100000_add_account_category'
+import { m20260615150446_add_is_opening_balance } from './20260615150446_add_is_opening_balance'
 
 export const MIGRATIONS: Migration[] = [
   m20260106121718_init,
@@ -58,5 +59,6 @@ export const MIGRATIONS: Migration[] = [
   m20260612140403_add_transfer_fee,
   m20260612152326_add_parent_transaction_id,
   m20260613100000_add_account_archived_at,
-  m20260614100000_add_account_category
+  m20260614100000_add_account_category,
+  m20260615150446_add_is_opening_balance
 ]

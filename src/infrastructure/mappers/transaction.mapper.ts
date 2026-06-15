@@ -49,6 +49,7 @@ export type TransactionRow = Readonly<{
   note: string | null
   member_id: UUID | null
   is_estimated: number // 0 or 1
+  is_opening_balance: number // 0 or 1 - first balance entry for an account
 }>
 
 /**
@@ -81,6 +82,7 @@ export function rowToTransaction(
     note: row.note ?? undefined,
     memberId: row.member_id ?? undefined,
     isEstimated: row.is_estimated === 1 ? true : undefined,
+    isOpeningBalance: row.is_opening_balance === 1 ? true : undefined,
     tags: tags && tags.length > 0 ? tags : undefined,
     parentTransactionId: row.parent_transaction_id ?? undefined,
   } as const
@@ -121,6 +123,7 @@ export function transactionToRow(
     note: tx.note ?? null,
     member_id: tx.memberId ?? null,
     is_estimated: tx.isEstimated ? 1 : 0,
+    is_opening_balance: tx.isOpeningBalance ? 1 : 0,
     parent_transaction_id: tx.parentTransactionId ?? null,
   }
 

@@ -33,24 +33,27 @@ export default function AccountDetailScreen() {
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ accountId: string }>()
   const segments = useSegments()
-  const { invalidateTransactions } = useDataRefreshStore()
+  const { transactionVersion, invalidateTransactions } = useDataRefreshStore()
   const { semantic } = theme
 
   // Determine if opened from nested flow (show "‹ Back") or directly (show "Close")
   const isNestedFlow = segments.includes('account-settings' as never)
 
+  // Re-fetch account when transactionVersion changes (account updates call invalidateTransactions)
   const account = useMemo(() => {
+    void transactionVersion // dependency to trigger re-fetch
     if (!params.accountId) return null
     return getAccountById(params.accountId)
-  }, [params.accountId])
+  }, [params.accountId, transactionVersion])
 
-  // Current balance
+  // Current balance - re-fetch when transactionVersion changes
   const currentBalance = useMemo(() => {
+    void transactionVersion // dependency to trigger re-fetch
     if (!account) return 0
     const now = new Date()
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     return getAccountBalanceAtEndOfMonth(account.id, currentMonth)
-  }, [account])
+  }, [account, transactionVersion])
 
   // Editable fields
   const [name, setName] = useState('')

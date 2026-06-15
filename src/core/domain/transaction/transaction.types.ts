@@ -23,6 +23,7 @@ type TransactionBase = Readonly<{
   tags?: string[] // tag names
   memberId?: UUID // null = shared/household
   isEstimated?: boolean // true = user marked amount as approximate
+  isOpeningBalance?: boolean // true = first balance entry for an account (vs. subsequent adjustments)
   parentTransactionId?: UUID // links child transactions (e.g., fee) to parent (e.g., transfer)
 }>
 

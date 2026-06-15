@@ -86,22 +86,45 @@ function getLastDayOfMonth(year: number, month: number): string {
 }
 
 /**
- * Check if an account was created before or during the given period.
- * Returns true if the account should be visible in this period.
+ * Get the "start date" for an account: min(createdAt, firstTxnDate).
+ * This determines when the account becomes visible in period views.
  */
-function wasAccountCreatedByEndOfPeriod(
+function getAccountStartDate(
   createdAt: string | undefined,
-  scope: Scope,
-  year: number,
-  month: number
-): boolean {
-  // If no createdAt (legacy accounts), assume created in the past - always show
+  firstTxnDate: string | undefined
+): string | undefined {
+  // If no createdAt (legacy accounts), use firstTxnDate if available
   if (!createdAt) {
-    return true
+    return firstTxnDate
   }
 
   // Parse createdAt (ISO 8601 format: "2026-06-13T10:00:00.000Z")
   const createdDate = createdAt.slice(0, 10) // "2026-06-13"
+
+  // If no firstTxnDate, use createdAt
+  if (!firstTxnDate) {
+    return createdDate
+  }
+
+  // Return the earlier of the two
+  return createdDate <= firstTxnDate ? createdDate : firstTxnDate
+}
+
+/**
+ * Check if an account should be visible in the given period.
+ * Account is visible if its start date (min of createdAt and firstTxnDate) <= period end.
+ * Once visible, the account shows in EVERY subsequent period, including empty ones.
+ */
+function isAccountVisibleInPeriod(
+  startDate: string | undefined,
+  scope: Scope,
+  year: number,
+  month: number
+): boolean {
+  // If no start date (legacy accounts with no transactions), always show
+  if (!startDate) {
+    return true
+  }
 
   if (scope === 'all') {
     // All time view - always show
@@ -109,14 +132,14 @@ function wasAccountCreatedByEndOfPeriod(
   }
 
   if (scope === 'year') {
-    // Yearly view - show if created before end of that year
+    // Yearly view - show if start date <= end of that year
     const endOfYear = `${year}-12-31`
-    return createdDate <= endOfYear
+    return startDate <= endOfYear
   }
 
-  // Monthly view - show if created before end of that month
+  // Monthly view - show if start date <= end of that month
   const endOfMonth = getLastDayOfMonth(year, month)
-  return createdDate <= endOfMonth
+  return startDate <= endOfMonth
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -167,21 +190,29 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
 
   // Subscribe to global data refresh (triggered when accounts/transactions change)
   const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
+  const accountVersion = useDataRefreshStore((s) => s.accountVersion)
 
   const data = useMemo((): Omit<AccountsData, 'refetch'> => {
-    // refreshKey and transactionVersion dependencies force re-computation
+    // refreshKey, transactionVersion, accountVersion dependencies force re-computation
     void refreshKey
     void transactionVersion
+    void accountVersion
     // ─── Step 1: Fetch all active accounts ────────────────────────────────
     const allAccounts = getActiveAccounts()
 
     const year = period.year
     const month = 'month' in period ? clampMonth(period.month) : 1
 
-    // Filter accounts to only include those created by end of period
-    const accounts = allAccounts.filter(account =>
-      wasAccountCreatedByEndOfPeriod(account.createdAt, scope, year, month)
-    )
+    // Get earliest transaction date for each account (for visibility calculation)
+    const firstTxnDates = transactionRepository.getFirstTransactionDateByAccount()
+
+    // Filter accounts using start date = min(createdAt, firstTxnDate)
+    // Account shows from its start date onward, including empty periods
+    const accounts = allAccounts.filter(account => {
+      const firstTxnDate = firstTxnDates.get(account.id)
+      const startDate = getAccountStartDate(account.createdAt, firstTxnDate)
+      return isAccountVisibleInPeriod(startDate, scope, year, month)
+    })
 
     // ─── Step 2: Fetch activity aggregates based on scope ─────────────────
     // Activity = income, expense, transfers for each account in the period
@@ -398,7 +429,7 @@ export function useAccountsData({ scope, period }: UseAccountsDataParams): Accou
     }
   // Extract primitive values from period for proper dependency tracking
   // Using period object directly can cause missed updates due to reference comparison
-  }, [scope, period.year, 'month' in period ? period.month : 0, refreshKey, transactionVersion])
+  }, [scope, period.year, 'month' in period ? period.month : 0, refreshKey, transactionVersion, accountVersion])
 
   return { ...data, refetch }
 }

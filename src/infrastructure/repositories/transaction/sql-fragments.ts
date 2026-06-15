@@ -12,7 +12,7 @@ export const SELECT_WITH_TAGS = `
     t.id, t.key, t.occurred_at, t.type, t.item, t.amount_cents, t.currency,
     t.account_id, t.category_id, t.merchant, t.note,
     t.from_account_id, t.to_account_id, t.fee_cents, t.parent_transaction_id,
-    t.member_id, t.is_estimated,
+    t.member_id, t.is_estimated, t.is_opening_balance,
     GROUP_CONCAT(tags.name) as tag_names
   FROM transactions t
   LEFT JOIN transaction_tags tt ON t.id = tt.transaction_id
@@ -27,9 +27,9 @@ export const INSERT_TRANSACTION = `
     id, key, occurred_at, type, item,
     amount_cents, currency,
     account_id, from_account_id, to_account_id, fee_cents, parent_transaction_id,
-    category_id, merchant, note, is_estimated,
+    category_id, merchant, note, is_estimated, is_opening_balance,
     created_at, updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 /**
