@@ -25,6 +25,12 @@ jest.mock('@/infrastructure/repositories', () => ({
     setGoal: jest.fn(),
     getYearsWithData: jest.fn(),
   },
+  accountRepository: {
+    listActive: jest.fn().mockReturnValue([]),
+  },
+  transactionRepository: {
+    getAccountBalanceAtEndOfMonth: jest.fn().mockReturnValue(0),
+  },
 }))
 
 import { assetRepository } from '@/infrastructure/repositories'
