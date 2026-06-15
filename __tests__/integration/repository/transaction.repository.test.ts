@@ -492,21 +492,19 @@ describe('SqliteTransactionRepository', () => {
     })
 
     describe('getAccountBalanceAtEndOfMonth', () => {
-      it('calculates balance at end of month for income/expense only', () => {
+      it('calculates balance at end of month including transfers', () => {
         const balance = repo.getAccountBalanceAtEndOfMonth(testAccounts.checking.id, '2024-01')
 
-        // Note: Current implementation only considers transactions with account_id matching,
-        // so transfers (which have account_id=NULL) are NOT included in the calculation.
-        // Balance = $1000 income - $300 expense = $700
-        expect(balance).toBe(70000)
+        // Balance = $1000 income - $300 expense - $200 transfer out = $500
+        expect(balance).toBe(50000)
       })
 
-      it('returns 0 for account with no direct transactions', () => {
-        // Savings only has a transfer TO it, but transfers have account_id=NULL
+      it('includes transfer in for receiving account', () => {
+        // Savings received $200 transfer from checking
         const balance = repo.getAccountBalanceAtEndOfMonth(testAccounts.savings.id, '2024-01')
 
-        // No direct income/expense transactions to savings account
-        expect(balance).toBe(0)
+        // Transfer in: +$200
+        expect(balance).toBe(20000)
       })
     })
   })

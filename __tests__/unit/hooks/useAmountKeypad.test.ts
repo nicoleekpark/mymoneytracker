@@ -353,8 +353,8 @@ describe('useAmountKeypad', () => {
         result.current.setAmountCents(12345678)
       })
 
-      // 12345678 cents = $123456.78
-      expect(result.current.amountDisplay).toBe('123456.78')
+      // 12345678 cents = $123,456.78 (with thousand separator)
+      expect(result.current.amountDisplay).toBe('123,456.78')
     })
   })
 
