@@ -9,18 +9,13 @@ import type { Account } from '@/core/domain/account'
 import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
 import { useQuickChipsStore, SPECIAL_CHIP_KEYS, type QuickChipConfig } from '@/shared/store'
-import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
-import { radius } from '@/shared/theme/tokens/radius'
-import { spacing } from '@/shared/theme/tokens/spacing'
-import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
-import { BACKDROP } from '@/shared/theme/tokens/backdrop'
+import { chipEditStyles, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useCallback, useMemo } from 'react'
 import {
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native'
@@ -163,25 +158,25 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <GestureHandlerRootView style={styles.gestureRoot}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+      <GestureHandlerRootView style={chipEditStyles.gestureRoot}>
+        <Pressable style={chipEditStyles.backdrop} onPress={onClose} />
 
-        <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
+        <View style={[chipEditStyles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
-            <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Edit Quick Actions</Text>
+          <View style={[chipEditStyles.header, { borderBottomColor: theme.semantic.border }]}>
+            <Text style={[chipEditStyles.headerTitle, { color: theme.semantic.text }]}>Edit Quick Actions</Text>
             <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={[styles.headerDone, { color: theme.semantic.primary }]}>Done</Text>
+              <Text style={[chipEditStyles.headerDone, { color: theme.semantic.primary }]}>Done</Text>
             </Pressable>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={chipEditStyles.content} showsVerticalScrollIndicator={false}>
             {/* Current Chips - Draggable */}
-            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+            <Text style={[chipEditStyles.sectionTitle, { color: theme.semantic.textSecondary }]}>
               YOUR QUICK ACTIONS
             </Text>
             {chipDisplayList.length > 0 && (
-              <Text style={[styles.dragHint, { color: theme.semantic.textSecondary }]}>
+              <Text style={[chipEditStyles.dragHint, { color: theme.semantic.textSecondary }]}>
                 Hold and drag to reorder
               </Text>
             )}
@@ -194,21 +189,21 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
             {/* Available to Add */}
             {availableItems.length > 0 && (
               <>
-                <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary, marginTop: spacing.xl }]}>
+                <Text style={[chipEditStyles.sectionTitleWithMargin, { color: theme.semantic.textSecondary }]}>
                   ADD MORE
                 </Text>
-                <View style={[styles.chipsList, { backgroundColor: theme.semantic.surfaceAlt }]}>
+                <View style={[chipEditStyles.chipsList, { backgroundColor: theme.semantic.surfaceAlt }]}>
                   {availableItems.map((item) => (
                     <Pressable
                       key={`${item.type}-${item.key}-${item.subCategoryKey ?? ''}`}
                       onPress={() => handleAdd(item)}
-                      style={[styles.chipRow, styles.addRow, { borderBottomColor: theme.semantic.border }]}
+                      style={[chipEditStyles.chipRow, chipEditStyles.chipRowAdd, { borderBottomColor: theme.semantic.border }]}
                     >
                       <CategoryIcon name={item.icon} size={16} color={item.color} />
-                      <Text style={[styles.chipLabel, { color: theme.semantic.text }]} numberOfLines={1}>
+                      <Text style={[chipEditStyles.chipLabel, { color: theme.semantic.text }]} numberOfLines={1}>
                         {item.label}
                       </Text>
-                      <Text style={[styles.chipType, { color: theme.semantic.textSecondary }]}>
+                      <Text style={[chipEditStyles.chipType, { color: theme.semantic.textSecondary }]}>
                         {item.type === 'special' ? 'Special' : item.subCategoryKey ? 'Subcategory' : 'Category'}
                       </Text>
                       <FontAwesome name="plus-circle" size={18} color={theme.semantic.primary} />
@@ -224,80 +219,3 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
   )
 }
 
-const styles = StyleSheet.create({
-  gestureRoot: {
-    flex: 1,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: BACKDROP.medium,
-  },
-  sheet: {
-    maxHeight: '80%',
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
-  },
-  headerDone: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-  },
-  content: {
-    padding: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-    letterSpacing: letterSpacing.wider,
-    marginBottom: spacing.sm,
-  },
-  dragHint: {
-    fontSize: fontSize.xs,
-    marginBottom: spacing.sm,
-    marginTop: -spacing.xs,
-  },
-  chipsList: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 1,
-    minHeight: 52,
-  },
-  addRow: {
-    paddingLeft: spacing.lg,
-  },
-  chipLabel: {
-    flex: 1,
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.medium,
-  },
-  chipType: {
-    fontSize: fontSize.xs,
-    marginRight: spacing.sm,
-  },
-  removeBtn: {
-    padding: spacing.xs,
-  },
-  emptyText: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-    paddingVertical: spacing.xl,
-  },
-})

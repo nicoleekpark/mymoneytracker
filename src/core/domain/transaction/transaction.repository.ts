@@ -160,5 +160,6 @@ export interface TransactionRepository {
 
   // Opening balance
   getOpeningBalanceForAccount(accountId: UUID): number // Returns cents
+  hasOpeningBalanceForAccount(accountId: UUID): boolean // Check if account already has opening balance
   hasTransactionsBeforeDate(accountId: UUID, dateYYYYMMDD: string): boolean
 }

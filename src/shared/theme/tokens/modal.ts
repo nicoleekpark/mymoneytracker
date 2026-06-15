@@ -55,12 +55,14 @@ export { coreStyles } from './modal/core.styles'
 export { fieldStyles } from './modal/field.styles'
 export { detailStyles } from './modal/detail.styles'
 export { selectionStyles } from './modal/selection.styles'
+export { chipEditStyles } from './modal/chipEdit.styles'
 
 // Import and compose modalStyles for backward compatibility
 import { coreStyles } from './modal/core.styles'
 import { fieldStyles } from './modal/field.styles'
 import { detailStyles } from './modal/detail.styles'
 import { selectionStyles } from './modal/selection.styles'
+import { chipEditStyles } from './modal/chipEdit.styles'
 
 /**
  * Combined modal styles for backward compatibility.
@@ -71,4 +73,5 @@ export const modalStyles = {
   ...fieldStyles,
   ...detailStyles,
   ...selectionStyles,
+  ...chipEditStyles,
 } as const

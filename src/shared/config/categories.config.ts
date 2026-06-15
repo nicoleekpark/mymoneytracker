@@ -150,6 +150,17 @@ const CATEGORY_META = {
   },
 
   // -------------------------
+  // EXPENSE ADJUSTMENTS (system category for negative balance adjustments)
+  // -------------------------
+  expense_adjustments: {
+    name: 'Adjustments',
+    icon: 'sliders',
+    color: '#6A6A6A',  // neutral gray
+    type: 'expense' as const satisfies CategoryType,
+    isFixed: false
+  },
+
+  // -------------------------
   // INCOME
   // -------------------------
   income: {
@@ -406,11 +417,19 @@ const SUBCATEGORIES: Record<string, SubCategoryMeta[]> = {
   ],
 
   // ---------------------------------------------------------------
-  // Adjustments (neutral gray family)
+  // Adjustments (neutral gray family) - for income type
   // ---------------------------------------------------------------
   adjustments: [
     { key: 'opening_balance', name: 'Opening Balance', icon: 'plus-circle', color: '#6A6A6A' },
     { key: 'balance_correction', name: 'Balance Correction', icon: 'pencil', color: '#5A5A5A' }
+  ],
+
+  // ---------------------------------------------------------------
+  // Expense Adjustments (neutral gray family) - for expense type
+  // ---------------------------------------------------------------
+  expense_adjustments: [
+    { key: 'expense_opening_balance', name: 'Opening Balance', icon: 'minus-circle', color: '#6A6A6A' },
+    { key: 'expense_balance_correction', name: 'Balance Correction', icon: 'pencil', color: '#5A5A5A' }
   ],
 
   // ---------------------------------------------------------------

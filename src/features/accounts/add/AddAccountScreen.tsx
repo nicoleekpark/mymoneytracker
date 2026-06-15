@@ -22,6 +22,7 @@ import { useKeyboardHeight } from '@/shared/hooks'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { useDataRefreshStore } from '@/shared/store'
+import { useAddTransactionNavStore } from '@/features/transactions/add/store/addTransactionNav.store'
 import { getFieldLabelColor, getScrollContentWithSimpleCTAPadding, MODAL_TOAST_DURATION, modalStyles, selectionStyles } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -73,6 +74,7 @@ export default function AddAccountScreen() {
   const theme = useHoHTheme()
   const segments = useSegments()
   const { invalidateTransactions, invalidateAccounts } = useDataRefreshStore()
+  const { setPendingNewAccountKey } = useAddTransactionNavStore()
   const nameInputRef = useRef<TextInput>(null)
   const scrollViewRef = useRef<ScrollView>(null)
   const institutionInputRef = useRef<TextInput>(null)
@@ -83,6 +85,9 @@ export default function AddAccountScreen() {
   const isNestedFlow =
     segments.includes('add-transaction' as never) ||
     segments.includes('account-settings' as never)
+
+  // Check if opened from add-transaction flow specifically (for auto-selection)
+  const isFromAddTransaction = segments.includes('add-transaction' as never)
 
   // Form state
   const [uiCategory, setUICategory] = useState<UIAccountCategory>('bank')
@@ -194,7 +199,7 @@ export default function AddAccountScreen() {
     const domainCategory = selectedSubtype?.domainCategory ?? getDefaultCategoryForKind(kind)
 
     try {
-      createAccount(CATEGORIES_INDEX, {
+      const newAccount = createAccount(CATEGORIES_INDEX, {
         name: accountName,
         kind,
         category: domainCategory,
@@ -208,6 +213,11 @@ export default function AddAccountScreen() {
       invalidateTransactions()
       invalidateAccounts()
 
+      // If opened from add-transaction flow, set pending key for auto-selection
+      if (isFromAddTransaction) {
+        setPendingNewAccountKey(newAccount.key)
+      }
+
       // Navigate back
       Keyboard.dismiss()
       router.back()
@@ -216,7 +226,7 @@ export default function AddAccountScreen() {
       const message = error instanceof Error ? error.message : 'Failed to create account'
       showToast(message)
     }
-  }, [name, kind, customKindName, bankName, lastFour, balanceCents, uiCategory, invalidateTransactions, invalidateAccounts, showToast])
+  }, [name, kind, customKindName, bankName, lastFour, balanceCents, uiCategory, invalidateTransactions, invalidateAccounts, isFromAddTransaction, setPendingNewAccountKey, showToast])
 
   const isLiability = kind === 'credit_card' || kind === 'loan' || kind === 'mortgage'
   // Cash accounts can submit without a name (defaults to "Cash")

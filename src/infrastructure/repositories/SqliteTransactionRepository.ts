@@ -230,6 +230,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'expense'
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(occurred_at, 1, 7) = ?;
       `,
       [monthYYYYMM]
@@ -243,7 +244,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'income'
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(occurred_at, 1, 7) = ?;
       `,
       [monthYYYYMM]
@@ -303,6 +304,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.type = 'expense'
+        AND (t.item IS NULL OR t.item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(t.occurred_at, 1, 7) = ?
       GROUP BY t.category_id, c.name
       ORDER BY total_cents DESC;
@@ -327,7 +329,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.type = 'income'
-        AND (t.item IS NULL OR t.item != 'Opening Balance')
+        AND (t.item IS NULL OR t.item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(t.occurred_at, 1, 7) = ?
       GROUP BY t.category_id, c.name
       ORDER BY total_cents DESC;
@@ -370,7 +372,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE (type = 'income' OR type = 'expense')
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(occurred_at, 1, 7) = ?
       GROUP BY day, type
       ORDER BY day ASC;
@@ -395,7 +397,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COUNT(*) AS tx_count
       FROM transactions
       WHERE (type = 'income' OR type = 'expense')
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(occurred_at, 1, 7) = ?
       GROUP BY day, type
       ORDER BY day ASC;
@@ -453,7 +455,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE (type = 'income' OR type = 'expense')
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(occurred_at, 1, 4) = ?
       GROUP BY month, type
       ORDER BY month ASC;
@@ -477,6 +479,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'expense'
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(occurred_at, 1, 4) = ?
       GROUP BY category_id
       ORDER BY total_cents DESC;
@@ -499,7 +502,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'income'
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
         AND substr(occurred_at, 1, 4) = ?
       GROUP BY category_id
       ORDER BY total_cents DESC;
@@ -532,7 +535,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
       SELECT COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'income'
-        AND (item IS NULL OR item != 'Opening Balance');
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'));
       `
     )
     return Number(rows[0]?.total_cents ?? 0)
@@ -546,6 +549,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'expense'
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
       GROUP BY category_id
       ORDER BY total_cents DESC;
       `
@@ -570,7 +574,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type IN ('income', 'expense')
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
       GROUP BY year, type
       ORDER BY year ASC;
       `
@@ -591,7 +595,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type = 'income'
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
       GROUP BY category_id
       ORDER BY total_cents DESC;
       `
@@ -671,7 +675,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         COALESCE(SUM(amount_cents), 0) AS total_cents
       FROM transactions
       WHERE type IN ('income', 'expense')
-        AND (item IS NULL OR item != 'Opening Balance')
+        AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
       GROUP BY month, type
       ORDER BY month ASC;
       `
@@ -692,7 +696,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }>(
       `
       SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' AND (item IS NULL OR item != 'Opening Balance') THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment')) THEN amount_cents ELSE 0 END), 0) AS income_cents,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents
       FROM transactions
       WHERE substr(occurred_at, 1, 4) = ?;
@@ -712,7 +716,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
     }>(
       `
       SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' AND (item IS NULL OR item != 'Opening Balance') THEN amount_cents ELSE 0 END), 0) AS income_cents,
+        COALESCE(SUM(CASE WHEN type = 'income' AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment')) THEN amount_cents ELSE 0 END), 0) AS income_cents,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense_cents
       FROM transactions
       WHERE substr(occurred_at, 1, 7) = ?;
@@ -823,7 +827,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         SELECT account_id, type, amount_cents, NULL as is_transfer_out, NULL as is_transfer_in
         FROM transactions
         WHERE account_id IS NOT NULL AND type IN ('income', 'expense')
-          AND (item IS NULL OR item != 'Opening Balance')
+          AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
           AND substr(occurred_at, 1, 7) = ?
 
         UNION ALL
@@ -881,7 +885,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         SELECT account_id, type, amount_cents, NULL as is_transfer_out, NULL as is_transfer_in
         FROM transactions
         WHERE account_id IS NOT NULL AND type IN ('income', 'expense')
-          AND (item IS NULL OR item != 'Opening Balance')
+          AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
           AND substr(occurred_at, 1, 4) = ?
 
         UNION ALL
@@ -936,7 +940,7 @@ export class SqliteTransactionRepository implements TransactionRepository {
         SELECT account_id, type, amount_cents, NULL as is_transfer_out, NULL as is_transfer_in
         FROM transactions
         WHERE account_id IS NOT NULL AND type IN ('income', 'expense')
-          AND (item IS NULL OR item != 'Opening Balance')
+          AND (item IS NULL OR item NOT IN ('Opening Balance', 'Balance Adjustment'))
 
         UNION ALL
 
@@ -1135,6 +1139,34 @@ export class SqliteTransactionRepository implements TransactionRepository {
         [accountId]
       )
       return row?.amount_cents ?? 0
+    }
+  }
+
+  /**
+   * Check if an account already has an opening balance transaction.
+   */
+  hasOpeningBalanceForAccount(accountId: UUID): boolean {
+    try {
+      const row = this.dataSource.queryFirst<{ count: number }>(
+        `SELECT COUNT(*) as count
+         FROM transactions
+         WHERE account_id = ?
+           AND (is_opening_balance = 1 OR item = 'Opening Balance')
+         LIMIT 1;`,
+        [accountId]
+      )
+      return (row?.count ?? 0) > 0
+    } catch {
+      // Fallback: column doesn't exist yet, use text match only
+      const row = this.dataSource.queryFirst<{ count: number }>(
+        `SELECT COUNT(*) as count
+         FROM transactions
+         WHERE account_id = ?
+           AND item = 'Opening Balance'
+         LIMIT 1;`,
+        [accountId]
+      )
+      return (row?.count ?? 0) > 0
     }
   }
 

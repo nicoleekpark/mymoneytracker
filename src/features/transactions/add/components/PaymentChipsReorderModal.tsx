@@ -7,16 +7,12 @@
 import type { Account } from '@/core/domain/account'
 import { useHoHTheme } from '@/shared/providers'
 import { usePaymentChipsOrderStore, getOrderedAccounts } from '@/shared/store'
-import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
-import { radius } from '@/shared/theme/tokens/radius'
-import { spacing } from '@/shared/theme/tokens/spacing'
-import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
-import { BACKDROP } from '@/shared/theme/tokens/backdrop'
+import { chipEditStyles, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import React, { useCallback, useMemo } from 'react'
 import {
   Modal,
   Pressable,
-  StyleSheet,
+  ScrollView,
   Text,
   View,
 } from 'react-native'
@@ -70,24 +66,24 @@ export function PaymentChipsReorderModal({ visible, accounts, onClose }: Props) 
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <GestureHandlerRootView style={styles.gestureRoot}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+      <GestureHandlerRootView style={chipEditStyles.gestureRoot}>
+        <Pressable style={chipEditStyles.backdrop} onPress={onClose} />
 
-        <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
+        <View style={[chipEditStyles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
-            <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Reorder Payment Methods</Text>
+          <View style={[chipEditStyles.header, { borderBottomColor: theme.semantic.border }]}>
+            <Text style={[chipEditStyles.headerTitle, { color: theme.semantic.text }]}>Reorder Payment Methods</Text>
             <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={[styles.headerDone, { color: theme.semantic.primary }]}>Done</Text>
+              <Text style={[chipEditStyles.headerDone, { color: theme.semantic.primary }]}>Done</Text>
             </Pressable>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView contentContainerStyle={chipEditStyles.content} showsVerticalScrollIndicator={false}>
             {/* Section title - matching QuickChipsEditModal */}
-            <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+            <Text style={[chipEditStyles.sectionTitle, { color: theme.semantic.textSecondary }]}>
               YOUR PAYMENT METHODS
             </Text>
-            <Text style={[styles.dragHint, { color: theme.semantic.textSecondary }]}>
+            <Text style={[chipEditStyles.dragHint, { color: theme.semantic.textSecondary }]}>
               Hold and drag to reorder
             </Text>
             <DraggableChipList
@@ -96,54 +92,10 @@ export function PaymentChipsReorderModal({ visible, accounts, onClose }: Props) 
               onRemove={handleRemove}
               showRemoveButton={false}
             />
-          </View>
+          </ScrollView>
         </View>
       </GestureHandlerRootView>
     </Modal>
   )
 }
 
-const styles = StyleSheet.create({
-  gestureRoot: {
-    flex: 1,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: BACKDROP.medium,
-  },
-  sheet: {
-    maxHeight: '70%',
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
-  },
-  headerDone: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-  },
-  content: {
-    padding: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-    letterSpacing: letterSpacing.wider,
-    marginBottom: spacing.sm,
-  },
-  dragHint: {
-    fontSize: fontSize.xs,
-    marginBottom: spacing.sm,
-    marginTop: -spacing.xs,
-  },
-})

@@ -249,6 +249,9 @@ export async function restoreTransaction(tx: Transaction): Promise<void> {
  * - User manually edits the balance on Account Detail screen
  * - Investment account market value changes
  *
+ * First balance adjustment for an account is marked as "Opening Balance".
+ * Subsequent adjustments are "Balance Correction".
+ *
  * @param categoryIndex - Category index for transaction creation
  * @param accountId - The account to adjust
  * @param adjustmentAmount - The amount to adjust by (positive = increase, negative = decrease)
@@ -265,16 +268,28 @@ export async function adjustAccountBalance(
 
   const occurredAt = new Date()
 
+  // Check if this is the first balance entry for this account
+  const hasExistingOpeningBalance = transactionRepository.hasOpeningBalanceForAccount(accountId)
+  const isOpeningBalance = !hasExistingOpeningBalance
+
   // Determine transaction type based on adjustment direction
   // For assets: positive adjustment = income (balance increase), negative = expense (balance decrease)
   // For liabilities: we track debt as positive amounts, so adjustments work the same way
   const type = adjustmentAmount > 0 ? 'income' : 'expense'
   const absAmount = Math.abs(adjustmentAmount)
 
+  const item = isOpeningBalance ? 'Opening Balance' : 'Balance Adjustment'
+  const note = isOpeningBalance ? 'Initial balance' : 'Manual balance update'
+  // Use different category key and subcategory for expense vs income adjustments
+  const categoryKey = type === 'income' ? 'adjustments' : 'expense_adjustments'
+  const subCategoryKey = type === 'income'
+    ? (isOpeningBalance ? 'opening_balance' : 'balance_correction')
+    : (isOpeningBalance ? 'expense_opening_balance' : 'expense_balance_correction')
+
   const txKey = buildTxKey({
     occurredAt,
     type,
-    item: 'Balance Adjustment',
+    item,
     merchant: undefined,
   })
 
@@ -283,11 +298,12 @@ export async function adjustAccountBalance(
     key: txKey,
     occurredAt,
     type,
-    item: 'Balance Adjustment',
+    item,
     money: { amount: absAmount, currency: 'USD' },
     accountId,
-    category: { type, categoryKey: 'adjustments', subCategoryKey: 'balance_correction' },
-    note: 'Manual balance update',
+    category: { type, categoryKey, subCategoryKey },
+    note,
+    isOpeningBalance,
   })
 
   transactionRepository.insertWithTags(tx, [])

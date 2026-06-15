@@ -35,6 +35,7 @@ type AddTransactionNavState = {
   accounts: Account[]
   currentAccountKey: string | null
   accountCallback: AccountSelectionCallback | null
+  pendingNewAccountKey: string | null // Set by AddAccountScreen after creating account
 
   // Actions
   openCategorySelection: (
@@ -50,6 +51,7 @@ type AddTransactionNavState = {
     callback: AccountSelectionCallback
   ) => void
   closeAccountSelection: () => void
+  setPendingNewAccountKey: (key: string | null) => void
 }
 
 export const useAddTransactionNavStore = create<AddTransactionNavState>((set) => ({
@@ -61,6 +63,7 @@ export const useAddTransactionNavStore = create<AddTransactionNavState>((set) =>
   accounts: [],
   currentAccountKey: null,
   accountCallback: null,
+  pendingNewAccountKey: null,
 
   // Actions
   openCategorySelection: (type, initialRef, callback) =>
@@ -88,5 +91,9 @@ export const useAddTransactionNavStore = create<AddTransactionNavState>((set) =>
       accountCallback: null,
       accounts: [],
       currentAccountKey: null,
+      pendingNewAccountKey: null,
     }),
+
+  setPendingNewAccountKey: (key) =>
+    set({ pendingNewAccountKey: key }),
 }))

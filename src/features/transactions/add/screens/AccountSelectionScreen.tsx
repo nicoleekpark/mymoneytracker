@@ -40,7 +40,7 @@ export function AccountSelectionScreen() {
   const insets = useSafeAreaInsets()
 
   // Get state from navigation store
-  const { currentAccountKey, accountCallback, closeAccountSelection } =
+  const { currentAccountKey, accountCallback, closeAccountSelection, pendingNewAccountKey, setPendingNewAccountKey } =
     useAddTransactionNavStore()
 
   // Local state
@@ -51,7 +51,24 @@ export function AccountSelectionScreen() {
   useFocusEffect(
     useCallback(() => {
       setRefreshKey((k) => k + 1)
-    }, [])
+
+      // Check if a new account was just created - auto-select it and go back
+      if (pendingNewAccountKey) {
+        const keyToSelect = pendingNewAccountKey
+        setPendingNewAccountKey(null)
+
+        // 1. First refresh the accounts list in useAccountPicker
+        accountCallback?.onAddAccount()
+
+        // 2. Use requestAnimationFrame to ensure React has processed the state update
+        //    before selecting and navigating back
+        requestAnimationFrame(() => {
+          accountCallback?.onChooseAccount(keyToSelect)
+          closeAccountSelection()
+          router.back()
+        })
+      }
+    }, [pendingNewAccountKey, accountCallback, setPendingNewAccountKey, closeAccountSelection])
   )
 
   // Use fresh accounts list (refreshKey forces re-fetch on focus)
@@ -148,7 +165,7 @@ export function AccountSelectionScreen() {
 
   const handleAddAccount = () => {
     accountCallback?.onAddAccount()
-    closeAccountSelection()
+    // Don't close account selection - we need the callback when returning
     // Navigate to add-account screen (within the same stack)
     router.push('/(modal)/add-transaction/add-account')
   }
