@@ -959,7 +959,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.md + CATEGORY_DOT_SIZE_SM + spacing.sm, // align with text after category dot
     opacity: 0.5
   },
-  emptyContainer: { paddingTop: spacing.md },
+  emptyContainer: { flexGrow: 1 },
 
   dayBar: {
     flexDirection: 'row',

@@ -9,7 +9,7 @@ import {
   UIManager,
   View,
 } from 'react-native'
-import { CategoryIcon, InfoSheet, SettingsLink, TrackingSince } from '@/shared/components'
+import { EmptyState, InfoSheet, SettingsLink, TrackingSince } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
 import { fontSize, displaySize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -422,29 +422,21 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
   // Empty state
   if (data.fieldGroups.length === 0 && data.summary.netWorth === 0) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['2xl'] }}>
-        <CategoryIcon name="pie-chart" size={48} color={colors.textSecondary} />
-        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, marginTop: spacing.lg, textAlign: 'center' }}>
-          No assets tracked yet
-        </Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', marginBottom: spacing.xl }}>
-          Add your first asset to start tracking your net worth.
-        </Text>
-        <Pressable
-          onPress={() => router.push('/(modal)/asset-settings/add')}
-          style={({ pressed }) => ({
-            backgroundColor: colors.primary,
-            paddingVertical: spacing.md,
-            paddingHorizontal: spacing.xl,
-            borderRadius: radius.lg,
-            opacity: pressed ? 0.8 : 1,
-          })}
-        >
-          <Text style={{ fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.surface }}>
-            + Add Asset
-          </Text>
-        </Pressable>
-      </View>
+      <EmptyState
+        icon="briefcase"
+        title="No assets tracked yet"
+        description="Add your first asset to start tracking your net worth."
+        action={{
+          label: '+ Add Asset',
+          onPress: () => router.push('/(modal)/asset-settings/add'),
+        }}
+        colors={{
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          primary: colors.primary,
+          onPrimary: colors.surface,
+        }}
+      />
     )
   }
 

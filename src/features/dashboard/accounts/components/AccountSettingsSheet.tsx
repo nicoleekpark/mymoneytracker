@@ -248,7 +248,7 @@ export function AccountSettingsSheet({
         {/* Empty State */}
         {accounts.length === 0 && (
           <EmptyState
-            icon="university"
+            icon="bank"
             title="No accounts yet"
             description="Add your first account to start tracking"
             colors={{ text: theme.semantic.text, textSecondary: theme.semantic.textSecondary }}
