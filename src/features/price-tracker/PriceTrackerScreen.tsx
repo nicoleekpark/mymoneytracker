@@ -11,7 +11,8 @@ import type { ItemPriceSummaryDollar } from '@/core/services/price-tracker'
 import type { PricePointWithStore, TrackedItem } from '@/core/domain/price-tracker'
 
 import { usePriceTracker } from './hooks'
-import { CategoryTabs, EmptyState, ItemSearchInput, PriceItemCard } from './components'
+import { CategoryTabs, ItemSearchInput, PriceItemCard } from './components'
+import { EmptyState } from '@/shared/components'
 import { ItemPriceHistorySheet } from './sheets'
 
 const CATEGORY_TABS = [
@@ -118,7 +119,15 @@ export default function PriceTrackerScreen() {
 
         {/* List */}
         {filteredItems.length === 0 && !isLoading ? (
-          <EmptyState />
+          <EmptyState
+            icon="tag"
+            title="No items tracked yet"
+            description="Add items to your transactions to start tracking prices across stores."
+            colors={{
+              text: theme.semantic.text as string,
+              textSecondary: theme.semantic.textSecondary as string,
+            }}
+          />
         ) : (
           <FlatList
             data={filteredItems}
