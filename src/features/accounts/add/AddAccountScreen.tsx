@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { AccountCategory as DomainAccountCategory, AccountKind } from '@/core/domain/account'
 import { getDefaultCategoryForKind } from '@/core/domain/account'
@@ -72,7 +71,6 @@ const ACCOUNT_SUBTYPES: Record<
 
 export default function AddAccountScreen() {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
   const segments = useSegments()
   const { invalidateTransactions } = useDataRefreshStore()
   const nameInputRef = useRef<TextInput>(null)
@@ -408,6 +406,7 @@ export default function AddAccountScreen() {
                     ]}
                   >
                     <FontAwesome
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FontAwesome icon name typing
                       name={subtype.icon as any}
                       size={14}
                       color={selected ? semantic.primary : semantic.textSecondary}

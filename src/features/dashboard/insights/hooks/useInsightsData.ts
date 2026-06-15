@@ -214,7 +214,6 @@ export function useInsightsData(monthYYYYMM: string, duration: InsightsDuration 
         // === FIND PRIMARY DRIVER (vs average of selected duration) ===
         let driverCategory: string | null = null
         let driverDeltaDollar: number | null = null
-        let driverConfidence: 'high' | 'low' = 'low'
 
         if (hasEnoughForComparison && currentExpenseByCategory.length > 0) {
           // Build current month map
@@ -251,14 +250,6 @@ export function useInsightsData(monthYYYYMM: string, duration: InsightsDuration 
             if (meetsAbsThreshold || meetsRelThreshold) {
               driverCategory = top.name
               driverDeltaDollar = top.delta
-
-              // High confidence if top delta is clearly separated from #2
-              if (categoryDeltas.length > 1) {
-                const secondDelta = Math.abs(categoryDeltas[1].delta)
-                driverConfidence = Math.abs(top.delta) > secondDelta * 1.5 ? 'high' : 'low'
-              } else {
-                driverConfidence = 'high'
-              }
             }
           }
         }

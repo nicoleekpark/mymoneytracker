@@ -4,7 +4,7 @@ import type { Transaction } from '@/core/domain/transaction'
 import { isExpense, safeDate } from '@/core/domain/transaction'
 import { removeTransaction, restoreTransaction } from '@/core/services/transaction'
 import { useHoHTheme } from '@/shared/providers'
-import { CategoryIcon, EmptyState } from '@/shared/components'
+import { EmptyState } from '@/shared/components'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -27,7 +27,7 @@ import {
   getActiveFilterChips,
   DEFAULT_FILTERS,
 } from './components'
-import type { TransactionFilters, ActiveFilterChip } from './components'
+import type { TransactionFilters, TransactionType, ActiveFilterChip } from './components'
 import {
   LayoutAnimation,
   Platform,
@@ -42,7 +42,6 @@ import {
 } from 'react-native'
 
 import { Screen } from '@/shared/layout/Screen'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 // Extended transaction type that can also be a draft
 type TransactionOrDraft = Transaction & { isDraft?: boolean }
@@ -143,7 +142,6 @@ function findScrollTarget(sections: DaySection[], focusDate?: string) {
 
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
 
   const params = useLocalSearchParams<{ focusDate?: string; accountId?: string; showDrafts?: string }>()
   const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
@@ -294,7 +292,7 @@ export default function TransactionsScreen() {
 
     // Filter by transaction type
     if (filters.types.length > 0) {
-      result = result.filter(tx => filters.types.includes(tx.type as any))
+      result = result.filter(tx => filters.types.includes(tx.type as TransactionType))
     }
 
     // Filter by category
@@ -522,7 +520,7 @@ export default function TransactionsScreen() {
 
           const removeFilter = (chip: ActiveFilterChip) => {
             if (chip.type === 'type') {
-              const typeKey = chip.key.replace('type-', '') as any
+              const typeKey = chip.key.replace('type-', '') as TransactionType
               setFilters({
                 ...filters,
                 types: filters.types.filter((t) => t !== typeKey),

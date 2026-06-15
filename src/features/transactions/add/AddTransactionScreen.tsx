@@ -62,7 +62,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AmountKeypadSheet } from '@/shared/components'
 import {
@@ -103,7 +102,6 @@ type Props = {
 
 export default function AddTransactionScreen({ mode = 'add' }: Props) {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ draftId?: string; transactionId?: string }>()
   const editingDraftId = params.draftId
   const editingTransactionId = mode === 'edit' ? params.transactionId : undefined

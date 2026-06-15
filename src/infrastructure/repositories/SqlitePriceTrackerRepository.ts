@@ -4,6 +4,7 @@ import type {
   AddPricePointInput,
   AddStoreInput,
   AddTransactionItemInput,
+  ItemCategory,
   ItemPriceSummary,
   PricePoint,
   PricePointWithStore,
@@ -467,7 +468,7 @@ export class SqlitePriceTrackerRepository implements PriceTrackerRepository {
 
     return this.insertItem({
       name,
-      category: category as any,
+      category: category as ItemCategory | undefined,
     })
   }
 

@@ -11,6 +11,7 @@ import {
   BottomSheetFooter,
   BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetBackdropProps,
   type BottomSheetFooterProps,
 } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
@@ -85,7 +86,7 @@ export function AccountSettingsSheet({
   }, [accounts])
 
   const renderBackdrop = useCallback(
-    (props: any) => (
+    (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []

@@ -1,5 +1,5 @@
 import type { UUID } from '@/core/domain/common/uuid'
-import type { Account, AccountCategory, AccountKind, AccountNature } from '@/core/domain/account/account.types'
+import type { Account, AccountKind, AccountNature } from '@/core/domain/account/account.types'
 import type { AccountRepository, CreateAccountInput, UpdateAccountInput } from '@/core/domain/account/account.repository'
 import { getDefaultCategoryForKind } from '@/core/domain/account/account.model'
 import type { DataSource } from '../db/DataSource'

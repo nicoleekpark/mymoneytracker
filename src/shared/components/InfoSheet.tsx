@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { radius } from '@/shared/theme/tokens/radius'
 import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
 
 export type InfoSheetColors = {

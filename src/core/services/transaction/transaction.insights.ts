@@ -133,7 +133,7 @@ function calculateStreaks(monthlyNet: Map<string, number>): {
   let currentNegativeStreak = 0
   let lastWasPositive = true
 
-  for (const [_month, net] of sortedMonths) {
+  for (const [, net] of sortedMonths) {
     if (net >= 0) {
       currentPositiveStreak++
       currentNegativeStreak = 0

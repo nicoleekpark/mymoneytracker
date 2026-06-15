@@ -31,7 +31,7 @@ type SuggestionsState = {
   init: () => void
 }
 
-export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
+export const useSuggestionsStore = create<SuggestionsState>((set, _get) => ({
   isLoaded: false,
 
   init: () => {

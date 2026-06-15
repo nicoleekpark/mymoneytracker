@@ -22,8 +22,8 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   const { monthYYYYMM, colors } = props
   const router = useRouter()
 
-  const { loading: loadingDaily, error, daily } = useMonthlyDailyFlow(monthYYYYMM)
-  const { loading: loadingBudget, data: budgetData } = useBudgetSummary(monthYYYYMM)
+  const { error, daily } = useMonthlyDailyFlow(monthYYYYMM)
+  const { data: budgetData } = useBudgetSummary(monthYYYYMM)
   const { loading: loadingSummary, data: summaryData } = useMonthlySummary(monthYYYYMM)
   const { loading: loadingHero, data: heroData } = useMonthlyHeroData(monthYYYYMM)
 

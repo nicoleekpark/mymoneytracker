@@ -51,7 +51,8 @@ function getSubcategoryMeta(categoryKey: string, subCategoryKey: string) {
 type ContentProps = Readonly<{
   monthYYYYMM: string
   colors: CalendarColors
-  accordionColors?: any // kept for backward compatibility
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Kept for backward compatibility
+  accordionColors?: any
   onPressCategory?: (colorKey: string) => void
   hideHeader?: boolean
 }>

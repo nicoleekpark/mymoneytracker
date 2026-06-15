@@ -11,7 +11,6 @@ import React from 'react'
 import { View, type ViewStyle, type StyleProp } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useHoHTheme } from '@/shared/providers'
-import { modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 

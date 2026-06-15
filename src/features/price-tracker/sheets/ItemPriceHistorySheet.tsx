@@ -111,7 +111,7 @@ export function ItemPriceHistorySheet({
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.semantic.textSecondary }]}>PRICE COMPARISON</Text>
 
-            {latestByStore.map((pp, index) => {
+            {latestByStore.map((pp, _index) => {
               const isBest = lowestPrice && pp.id === lowestPrice.id
               const isCurrentStore = currentTransactionStoreId && pp.storeId === currentTransactionStoreId
               const unitPrice = pp.priceCents / pp.quantity / 100

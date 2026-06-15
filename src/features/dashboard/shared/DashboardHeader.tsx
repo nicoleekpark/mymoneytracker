@@ -17,7 +17,6 @@ import {
   getScopeTabTextStyle,
   getScopeTabUnderlineColor,
 } from '@/shared/theme/tokens/dashboard'
-import { fontWeight } from '@/shared/theme/tokens/typography'
 
 import type { Period, Scope } from '../types'
 import { formatPeriodLabelFull, isCurrentPeriod } from '../utils'
@@ -219,6 +218,7 @@ export function DashboardHeader({
               >
                 <Text style={[
                   dashboardStyles.scopeTabText,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RN fontWeight type narrowing
                   { fontWeight: textStyle.fontWeight as any, color: textStyle.color },
                 ]}>
                   {s.label}

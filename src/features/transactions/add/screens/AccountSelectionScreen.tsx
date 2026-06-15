@@ -151,7 +151,7 @@ export function AccountSelectionScreen() {
     </View>
   )
 
-  const renderItem = ({ item: a, index }: { item: Account; index: number }) => {
+  const renderItem = ({ item: a, index: _index }: { item: Account; index: number }) => {
     const selected = a.key === currentAccountKey
     const badge = `${a.kind}${a.nature === 'liability' ? ' • liability' : ''}`
 

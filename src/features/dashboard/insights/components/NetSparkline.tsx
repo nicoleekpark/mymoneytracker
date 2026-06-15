@@ -106,7 +106,7 @@ export function NetSparkline({ data, baseline, colors }: Props) {
   const usableWidth = chartWidth - PADDING_HORIZONTAL * 2
 
   // Calculate points for SVG
-  const { points, linePath, areaPath, baselineY, zeroY } = useMemo(() => {
+  const { points, linePath, baselineY, zeroY } = useMemo(() => {
     if (sortedData.length < 2) {
       return { points: [], linePath: '', areaPath: '', baselineY: AXIS_Y, zeroY: AXIS_Y }
     }

@@ -5,6 +5,7 @@ import seedSuggestions from '../data/seed_suggestions.json'
 
 export type FixtureName = 'accounts' | 'transactions' | 'notifications' | 'suggestions' | 'assets'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Fixtures have varied shapes, typed at call site
 export function getFixture(name: FixtureName): any {
   switch (name) {
     case 'accounts':

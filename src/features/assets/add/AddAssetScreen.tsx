@@ -22,8 +22,8 @@ import {
 } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
-import type { AssetCategory, AssetCategoryMeta } from '@/core/domain/asset'
-import { ASSET_CATEGORIES, getCategoryMeta } from '@/core/domain/asset'
+import type { AssetCategory } from '@/core/domain/asset'
+import { getCategoryMeta } from '@/core/domain/asset'
 import { createAssetItem, getCurrentYearMonth, setBalance } from '@/core/services/asset'
 import { AmountKeypadSheet, ModalSaveBar } from '@/shared/components'
 import { formatCentsForDisplay } from '@/shared/format/currency'
@@ -40,7 +40,7 @@ import {
 } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
 // ─── Tab Structure (matches AddAccountScreen pattern) ─────────────────────────
 
@@ -316,6 +316,7 @@ export default function AddAssetScreen() {
                 ]}
               >
                 <FontAwesome
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FontAwesome icon name typing
                   name={cat.icon as any}
                   size={14}
                   color={selected ? semantic.primary : semantic.textSecondary}

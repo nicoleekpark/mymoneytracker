@@ -11,7 +11,6 @@ import {
   type AssetItem,
   ASSET_FIELD_NAMES,
   getCategoryMeta,
-  isLiquidifiableCategory,
 } from '@/core/domain/asset'
 import {
   getFamilyMembers,
@@ -166,7 +165,6 @@ export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDat
       const year = period.year
       const month = period.month ?? 12
       const isCurrentYear = year === currentYear
-      const isCurrentMonth = isCurrentYear && month === currentMonth
 
       // Determine yearMonth based on scope
       let yearMonth: string
@@ -194,7 +192,6 @@ export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDat
 
       const isAllSelected = isEffectivelyAll
       const isSingleMember = !isEffectivelyAll && selectedMemberIds.length === 1
-      const isMultiMember = !isEffectivelyAll && selectedMemberIds.length > 1
 
       // For single-member or all, use existing optimized methods
       // For multi-member, we need to aggregate manually
@@ -351,7 +348,6 @@ export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDat
         if (!categoryMap || categoryMap.size === 0) continue
 
         const categories: AssetCategoryGroup[] = []
-        let fieldTotal = 0
 
         for (const [category, items] of categoryMap) {
           const meta = getCategoryMeta(category)
@@ -364,7 +360,6 @@ export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDat
           }))
 
           const categoryTotal = itemsWithBalance.reduce((sum, item) => sum + item.balance, 0)
-          fieldTotal += categoryTotal
 
           categories.push({
             category,

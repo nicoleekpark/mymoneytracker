@@ -57,7 +57,6 @@ export default function EditAccountScreen() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastKey, setToastKey] = useState(0)
   const [highlightName, setHighlightName] = useState(false)
-  const [keyboardVisible, setKeyboardVisible] = useState(false)
 
   // Timeout refs
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -68,20 +67,6 @@ export default function EditAccountScreen() {
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
       if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
-    }
-  }, [])
-
-  // Track keyboard visibility
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
-
-    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true))
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false))
-
-    return () => {
-      showSub.remove()
-      hideSub.remove()
     }
   }, [])
 

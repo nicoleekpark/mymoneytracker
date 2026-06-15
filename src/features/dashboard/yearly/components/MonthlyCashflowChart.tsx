@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
 import Svg, { Path, Circle, Line } from 'react-native-svg'
 

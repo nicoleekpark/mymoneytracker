@@ -50,6 +50,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
   const showDevChip = APP_CONFIG.featureFlags.devTools && devToolsVisible
 
   const handleAddPress = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- expo-router modal route type limitation
     router.push('/(modal)/add-transaction' as any)
   }
 
@@ -64,8 +65,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
     try {
       runFixtures('seed', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
       Alert.alert('Done', 'All fixtures seeded')
-    } catch (e: any) {
-      Alert.alert('Failed', String(e?.message ?? e))
+    } catch (e: unknown) {
+      Alert.alert('Failed', e instanceof Error ? e.message : String(e))
     }
     setDevMenuOpen(false)
   }
@@ -74,8 +75,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
     try {
       runFixtures('delete', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
       Alert.alert('Done', 'All fixtures cleared')
-    } catch (e: any) {
-      Alert.alert('Failed', String(e?.message ?? e))
+    } catch (e: unknown) {
+      Alert.alert('Failed', e instanceof Error ? e.message : String(e))
     }
     setDevMenuOpen(false)
   }
@@ -93,8 +94,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
             runSystemSeeds()
             runFixtures('seed', ['accounts', 'transactions', 'notifications', 'suggestions', 'assets'])
             Alert.alert('Done', 'DB reset & all fixtures seeded')
-          } catch (e: any) {
-            Alert.alert('Failed', String(e?.message ?? e))
+          } catch (e: unknown) {
+            Alert.alert('Failed', e instanceof Error ? e.message : String(e))
           }
           setDevMenuOpen(false)
         },
@@ -112,8 +113,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
     try {
       const count = seedNotificationsStandalone()
       Alert.alert('Done', `${count} notifications seeded`)
-    } catch (e: any) {
-      Alert.alert('Failed', String(e?.message ?? e))
+    } catch (e: unknown) {
+      Alert.alert('Failed', e instanceof Error ? e.message : String(e))
     }
     setDevMenuOpen(false)
   }
@@ -122,8 +123,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
     try {
       const count = clearNotificationsStandalone()
       Alert.alert('Done', `${count} notifications cleared`)
-    } catch (e: any) {
-      Alert.alert('Failed', String(e?.message ?? e))
+    } catch (e: unknown) {
+      Alert.alert('Failed', e instanceof Error ? e.message : String(e))
     }
     setDevMenuOpen(false)
   }
@@ -133,8 +134,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
       const count = seedDraftsStandalone()
       loadDrafts()
       Alert.alert('Done', `${count} drafts seeded`)
-    } catch (e: any) {
-      Alert.alert('Failed', String(e?.message ?? e))
+    } catch (e: unknown) {
+      Alert.alert('Failed', e instanceof Error ? e.message : String(e))
     }
     setDevMenuOpen(false)
   }
@@ -144,8 +145,8 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
       const count = clearDraftsStandalone()
       loadDrafts()
       Alert.alert('Done', `${count} drafts cleared`)
-    } catch (e: any) {
-      Alert.alert('Failed', String(e?.message ?? e))
+    } catch (e: unknown) {
+      Alert.alert('Failed', e instanceof Error ? e.message : String(e))
     }
     setDevMenuOpen(false)
   }

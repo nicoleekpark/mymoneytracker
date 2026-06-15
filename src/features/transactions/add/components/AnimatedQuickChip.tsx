@@ -43,7 +43,7 @@ export function AnimatedQuickChip({
   selected,
   selectedColor,
   surfaceColor,
-  borderColor,
+  borderColor: _borderColor,
   selectedBorderColor,
   textColor,
   onPress,

@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- This is the logger utility, intentionally wraps console */
 // ═══════════════════════════════════════════════════════════════════════════
 // LOGGER UTILITY
 // Centralized logging for the application.

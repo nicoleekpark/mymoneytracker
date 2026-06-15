@@ -6,7 +6,6 @@
 
 import type { Account } from '@/core/domain/account'
 import { useHoHTheme } from '@/shared/providers'
-import { CategoryIcon } from '@/shared/components'
 import { usePaymentChipsOrderStore, getOrderedAccounts } from '@/shared/store'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'

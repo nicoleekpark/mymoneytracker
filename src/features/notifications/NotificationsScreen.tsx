@@ -234,6 +234,7 @@ export default function NotificationsScreen() {
     const icon = getIcon(notification)
     return (
       <View style={[styles.iconContainer, { backgroundColor: theme.semantic.surfaceAlt }]}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- FontAwesome icon name typing */}
         <FontAwesome name={icon.name as any} size={14} color={icon.color} />
       </View>
     )

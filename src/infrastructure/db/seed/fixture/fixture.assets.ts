@@ -129,7 +129,7 @@ function generateBalanceHistory(): BalanceData[] {
   const endDate = new Date(now.getFullYear(), now.getMonth(), 1)
 
   // Reference point: 2025/12
-  let currentDate = new Date(startDate)
+  const currentDate = new Date(startDate)
 
   while (currentDate <= endDate) {
     const ym = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`

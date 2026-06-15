@@ -20,6 +20,9 @@ export type CategorySpendingRow = Readonly<{
   subcategories: SubCategoryBreakdown[]
 }>
 
+/** Raw row shape from getMonthlyExpenseByCategoryDollar */
+type CategoryResultRow = { categoryId: string | null; totalDollar: number }
+
 /**
  * Aggregate category data by parent categoryKey.
  * Combines subcategories under their parent category and tracks subcategory breakdown.
@@ -119,9 +122,9 @@ export function useMonthlyCategorySpending(monthYYYYMM: string) {
 
         // Aggregate by parent category to avoid duplicates
         const aggregated = aggregateByParentCategory(
-          (Array.isArray(byCat) ? byCat : []).map((r: any) => ({
-            categoryId: (r?.categoryId ?? null) as UUID | null,
-            totalDollar: Number(r?.totalDollar ?? 0)
+          (Array.isArray(byCat) ? byCat : []).map((r: CategoryResultRow) => ({
+            categoryId: (r.categoryId ?? null) as UUID | null,
+            totalDollar: Number(r.totalDollar ?? 0)
           }))
         )
 

@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 import FontAwesome from '@expo/vector-icons/FontAwesome' // Icon library (pie-chart, list, etc)
 import { useFonts } from 'expo-font'                     // Hook to load custom fonts async
-import { Stack, useRouter } from 'expo-router'           // Stack = screen stack, useRouter = navigation
+import { Stack } from 'expo-router'                       // Stack = screen stack navigation
 import * as SplashScreen from 'expo-splash-screen'       // Native splash screen control
 import { useEffect, useState } from 'react'              // React hooks for state & side effects
 import { GestureHandlerRootView } from 'react-native-gesture-handler' // Enables swipe gestures
@@ -71,6 +71,7 @@ export default function RootLayout() {
       initDbPragmas()         // 1. Set SQLite performance flags (foreign keys, journal mode)
       migrate()               // 2. Run all pending migrations (create/update tables)
 
+      /* eslint-disable no-console -- Hotfix logging for critical schema migrations */
       // HOTFIX: Ensure new columns exist (in case migrations didn't run properly)
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -87,6 +88,7 @@ export default function RootLayout() {
       } catch (e) {
         console.warn('[HOTFIX] Column check failed:', e)
       }
+      /* eslint-enable no-console */
       runSystemSeeds()        // 3. Seed default data (categories, accounts)
       runAppLaunchTriggers()  // 4. Check for notifications (budget alerts, draft reminders)
 
@@ -156,8 +158,6 @@ export default function RootLayout() {
 // features to ALL child components. Order matters: inner can access outer.
 // ═══════════════════════════════════════════════════════════════════════════
 function RootLayoutNav() {
-  const router = useRouter() // Hook to navigate programmatically
-
   return (
     // Layer 1: Gesture support (swipes, drags)
     <GestureHandlerRootView style={{ flex: 1 }}>

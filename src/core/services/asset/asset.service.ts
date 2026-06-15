@@ -13,8 +13,8 @@ import type {
   AssetCategory,
 } from '@/core/domain/asset'
 import type { AssetProjection } from '@/core/domain/asset/asset.types'
-import { getFieldSortOrder, getCategorySortOrder, createEmptySummary } from '@/core/domain/asset'
-import type { Account, AccountKind } from '@/core/domain/account'
+import { getFieldSortOrder, getCategorySortOrder } from '@/core/domain/asset'
+import type { AccountKind } from '@/core/domain/account'
 import { assetRepository, accountRepository, transactionRepository } from '@/infrastructure/repositories'
 
 // ─── Investment Account Integration ──────────────────────────────────────────

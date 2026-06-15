@@ -11,6 +11,7 @@ export function initDbPragmas() {
   exec(`PRAGMA busy_timeout = 5000;`)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- SQLite bind parameters accept multiple types
 export function exec(sql: string, args: any[] = []) {
   const stmt = db.prepareSync(sql)
   try {
@@ -20,6 +21,7 @@ export function exec(sql: string, args: any[] = []) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- SQLite bind parameters accept multiple types
 export function queryAll<T>(sql: string, args: any[] = []): T[] {
   const stmt = db.prepareSync(sql)
   try {
@@ -31,6 +33,7 @@ export function queryAll<T>(sql: string, args: any[] = []): T[] {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- SQLite bind parameters accept multiple types
 export function queryFirst<T>(sql: string, args: any[] = []): T | null {
   const rows = queryAll<T>(sql, args)
   return rows[0] ?? null

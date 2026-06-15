@@ -10,6 +10,7 @@ import {
   BottomSheetFooter,
   BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetBackdropProps,
   type BottomSheetFooterProps,
 } from '@gorhom/bottom-sheet'
 import React, { useCallback, useMemo } from 'react'
@@ -70,7 +71,7 @@ export function TransactionFilterSheet({
   }
 
   const renderBackdrop = useCallback(
-    (props: any) => (
+    (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
     ),
     []
@@ -180,6 +181,7 @@ export function TransactionFilterSheet({
                   ]}
                 >
                   <FontAwesome
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FontAwesome icon name typing
                     name={opt.icon as any}
                     size={12}
                     color={selected ? theme.semantic.primary : theme.semantic.textSecondary}

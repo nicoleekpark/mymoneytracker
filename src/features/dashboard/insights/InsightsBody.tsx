@@ -2,7 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { EmptyState, SectionHeader } from '@/shared/components'
-import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { radius } from '@/shared/theme/tokens/radius'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
@@ -56,7 +56,6 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
   }
 
   // Find specific insights for section content
-  const volatilityInsight = insights.find(i => i.id === 'volatility')
   const opportunityInsight = insights.find(i => i.id === 'opportunities')
 
   // Primary driver - find the category with biggest absolute delta vs average

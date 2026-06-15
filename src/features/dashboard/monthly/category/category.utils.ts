@@ -1,4 +1,5 @@
 import { CATEGORIES } from '@/shared/config/categories.config'
+import type { CategoryMeta, SubCategoryMeta } from '@/shared/config/categories.types'
 import { UNCATEGORIZED_KEY, type CategoryRef } from '@/core/domain/category'
 import { formatUsdInt } from '@/shared/format/currency'
 
@@ -22,13 +23,13 @@ export { formatUsdInt }
 export function findCategoryName(ref?: CategoryRef): string {
   if (!ref) return 'Uncategorized'
 
-  const cat = CATEGORIES.find((c: any) => c.type === ref.type && c.key === ref.categoryKey)
+  const cat = CATEGORIES.find((c: CategoryMeta) => c.type === ref.type && c.key === ref.categoryKey)
   if (!cat) return ref.categoryKey
 
   // nicole rule: label 대신 name 사용
   if (!ref.subCategoryKey) return String(cat.name ?? cat.key)
 
-  const sub = (cat.subCategories ?? []).find((s: any) => s.key === ref.subCategoryKey)
+  const sub = (cat.subCategories ?? []).find((s: SubCategoryMeta) => s.key === ref.subCategoryKey)
   return String(sub?.name ?? ref.subCategoryKey)
 }
 
