@@ -1230,6 +1230,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                       : theme.semantic.border,
                 },
               ]}
+              autoCapitalize="words"
               returnKeyType="done"
             />
           </View>
@@ -1432,6 +1433,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                   value={note}
                   onChangeText={setNote}
                   style={[modalStyles.fieldInput, { color: theme.semantic.text }]}
+                  autoCapitalize="sentences"
                   multiline
                 />
               </View>
@@ -1688,6 +1690,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                   value={note}
                   onChangeText={setNote}
                   style={[modalStyles.fieldInput, { color: theme.semantic.text }]}
+                  autoCapitalize="sentences"
                   multiline
                 />
               </View>
