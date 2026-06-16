@@ -7,24 +7,22 @@
 
 import { CategoryIcon } from '@/shared/components'
 import { useHoHTheme } from '@/shared/providers'
+import { MODAL_ROW_HEIGHT } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
-  withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
 
-const ROW_HEIGHT = 52
-const SPRING_CONFIG = { damping: 20, stiffness: 200 }
+const ROW_HEIGHT = MODAL_ROW_HEIGHT
 
 export type ChipDisplayInfo = {
   key: string
@@ -67,66 +65,90 @@ function DraggableRow({
 
   const isDragging = useSharedValue(false)
   const translateY = useSharedValue(0)
-  const scale = useSharedValue(1)
   const zIndex = useSharedValue(0)
+
+  // Use shared values for index/totalCount so worklets always have current values
+  const indexValue = useSharedValue(index)
+  const totalCountValue = useSharedValue(totalCount)
+
+  // Update shared values when props change
+  React.useEffect(() => {
+    indexValue.value = index
+  }, [index])
+
+  React.useEffect(() => {
+    totalCountValue.value = totalCount
+  }, [totalCount])
+
+  // Use ref for callback to avoid stale closures - accessed via runOnJS wrapper
+  const onDragEndRef = useRef(onDragEnd)
+  onDragEndRef.current = onDragEnd
+
+  // Stable wrapper function that reads from ref
+  const callOnDragEnd = useCallback((fromIndex: number, toIndex: number) => {
+    onDragEndRef.current(fromIndex, toIndex)
+  }, [])
 
   const gesture = Gesture.Pan()
     .activateAfterLongPress(200)
     .onStart(() => {
       isDragging.value = true
-      scale.value = withSpring(1.03, SPRING_CONFIG)
       zIndex.value = 100
-      activeIndex.value = index
+      activeIndex.value = indexValue.value
     })
     .onUpdate((event) => {
       translateY.value = event.translationY
 
+      const currentIndex = indexValue.value
+      const total = totalCountValue.value
+
       // Calculate which position we're hovering over
-      const currentY = index * ROW_HEIGHT + event.translationY
+      const currentY = currentIndex * ROW_HEIGHT + event.translationY
       let newIndex = Math.round(currentY / ROW_HEIGHT)
-      newIndex = Math.max(0, Math.min(totalCount - 1, newIndex))
+      newIndex = Math.max(0, Math.min(total - 1, newIndex))
 
       // Update positions for other items
       const positions = [...currentPositions.value]
-      for (let i = 0; i < totalCount; i++) {
-        if (i === index) {
+      for (let i = 0; i < total; i++) {
+        if (i === currentIndex) {
           positions[i] = newIndex
         } else {
           // Calculate where this item should be based on the dragged item's position
-          if (index < newIndex) {
+          if (currentIndex < newIndex) {
             // Dragging down
-            positions[i] = i > index && i <= newIndex ? i - 1 : i
+            positions[i] = i > currentIndex && i <= newIndex ? i - 1 : i
           } else {
             // Dragging up
-            positions[i] = i >= newIndex && i < index ? i + 1 : i
+            positions[i] = i >= newIndex && i < currentIndex ? i + 1 : i
           }
         }
       }
       currentPositions.value = positions
     })
     .onEnd(() => {
-      const currentY = index * ROW_HEIGHT + translateY.value
+      const currentIndex = indexValue.value
+      const total = totalCountValue.value
+
+      const currentY = currentIndex * ROW_HEIGHT + translateY.value
       let newIndex = Math.round(currentY / ROW_HEIGHT)
-      newIndex = Math.max(0, Math.min(totalCount - 1, newIndex))
+      newIndex = Math.max(0, Math.min(total - 1, newIndex))
 
       isDragging.value = false
-      translateY.value = withSpring(0, SPRING_CONFIG)
-      scale.value = withSpring(1, SPRING_CONFIG)
+      translateY.value = 0
       zIndex.value = 0
       activeIndex.value = -1
 
       // Reset positions
-      const resetPositions = Array.from({ length: totalCount }, (_, i) => i)
+      const resetPositions = Array.from({ length: total }, (_, i) => i)
       currentPositions.value = resetPositions
 
-      if (newIndex !== index) {
-        runOnJS(onDragEnd)(index, newIndex)
+      if (newIndex !== currentIndex) {
+        runOnJS(callOnDragEnd)(currentIndex, newIndex)
       }
     })
     .onFinalize(() => {
       isDragging.value = false
-      translateY.value = withSpring(0, SPRING_CONFIG)
-      scale.value = withSpring(1, SPRING_CONFIG)
+      translateY.value = 0
       zIndex.value = 0
       activeIndex.value = -1
     })
@@ -137,21 +159,21 @@ function DraggableRow({
       return {
         transform: [
           { translateY: translateY.value },
-          { scale: scale.value },
+          { scale: 1.02 },
         ],
-        zIndex: zIndex.value,
-        shadowOpacity: withTiming(0.15),
+        zIndex: 100,
+        shadowOpacity: 0.15,
         elevation: 8,
       }
     }
 
-    // When another item is being dragged - animate to make space
+    // When another item is being dragged - instant position change
     if (activeIndex.value !== -1 && activeIndex.value !== index) {
       const targetPosition = currentPositions.value[index] ?? index
       const offset = (targetPosition - index) * ROW_HEIGHT
       return {
         transform: [
-          { translateY: withSpring(offset, SPRING_CONFIG) },
+          { translateY: offset },
           { scale: 1 },
         ],
         zIndex: 0,
@@ -163,7 +185,7 @@ function DraggableRow({
     // Default state
     return {
       transform: [
-        { translateY: withSpring(0, SPRING_CONFIG) },
+        { translateY: 0 },
         { scale: 1 },
       ],
       zIndex: 0,

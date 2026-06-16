@@ -23,7 +23,10 @@ type PaymentChipsOrderState = {
 
   // Actions
   setOrder: (keys: string[]) => void
+  /** @deprecated Use moveChipInOrder instead */
   moveChip: (fromIndex: number, toIndex: number, allKeys: string[]) => void
+  /** Move chip within the current ordered list (requires orderedKeys to be set) */
+  moveChipInOrder: (fromIndex: number, toIndex: number) => void
   resetOrder: () => void
   _hydrate: () => void
 }
@@ -49,6 +52,16 @@ export const usePaymentChipsOrderStore = create<PaymentChipsOrderState>((set, ge
   moveChip: (fromIndex, toIndex, allKeys) => {
     // If no custom order yet, use the provided allKeys as base
     const current = get().orderedKeys ?? [...allKeys]
+    const newOrder = [...current]
+    const [item] = newOrder.splice(fromIndex, 1)
+    newOrder.splice(toIndex, 0, item)
+    set({ orderedKeys: newOrder })
+    persistOrder(newOrder)
+  },
+
+  moveChipInOrder: (fromIndex, toIndex) => {
+    const current = get().orderedKeys
+    if (!current) return // Can't move if no order set yet
     const newOrder = [...current]
     const [item] = newOrder.splice(fromIndex, 1)
     newOrder.splice(toIndex, 0, item)

@@ -57,6 +57,12 @@ export const MODAL_PULSE_DURATION = 1200
 /** Fade animation duration in ms */
 export const MODAL_FADE_DURATION = 150
 
+/** Spring config for draggable list reordering (overdamped - smooth, no bounce) */
+export const DRAG_SPRING_CONFIG = { damping: 100, stiffness: 300 }
+
+/** Spring config for drag scale effect (overdamped - smooth, no bounce) */
+export const DRAG_SCALE_SPRING_CONFIG = { damping: 100, stiffness: 400 }
+
 // -----------------------------------------------------------------------------
 // Opacity (for color overlays)
 // -----------------------------------------------------------------------------

@@ -34,6 +34,8 @@ export {
   OPACITY_SOFT,
   OPACITY_SUBTLE,
   OPACITY_BORDER,
+  DRAG_SPRING_CONFIG,
+  DRAG_SCALE_SPRING_CONFIG,
 } from './constants'
 
 // Re-export types

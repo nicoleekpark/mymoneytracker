@@ -31,6 +31,9 @@ export {
   MODAL_SNAP_HALF,
   MODAL_SNAP_COMPACT,
   MODAL_SNAP_DYNAMIC,
+  // Drag animation
+  DRAG_SPRING_CONFIG,
+  DRAG_SCALE_SPRING_CONFIG,
 } from './modal/constants'
 
 // Re-export types

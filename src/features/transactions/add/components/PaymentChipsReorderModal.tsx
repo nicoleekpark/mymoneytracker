@@ -7,17 +7,10 @@
 import type { Account } from '@/core/domain/account'
 import { useHoHTheme } from '@/shared/providers'
 import { usePaymentChipsOrderStore, getOrderedAccounts } from '@/shared/store'
-import { chipEditStyles, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
-import React, { useCallback, useMemo } from 'react'
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { chipEditStyles } from '@/shared/theme/tokens/modal'
+import React, { useCallback, useEffect, useMemo } from 'react'
+import { Text } from 'react-native'
+import { ChipEditModalShell } from './ChipEditModalShell'
 import { DraggableChipList, type ChipDisplayInfo } from './DraggableChipList'
 
 type Props = {
@@ -28,32 +21,62 @@ type Props = {
 
 export function PaymentChipsReorderModal({ visible, accounts, onClose }: Props) {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
 
-  const { orderedKeys, moveChip } = usePaymentChipsOrderStore()
+  // Use explicit selectors to ensure proper Zustand subscription
+  const orderedKeys = usePaymentChipsOrderStore((state) => state.orderedKeys)
+  const setOrder = usePaymentChipsOrderStore((state) => state.setOrder)
+  const moveChipInOrder = usePaymentChipsOrderStore((state) => state.moveChipInOrder)
 
-  // Get ordered accounts
-  const orderedAccounts = useMemo(() => {
-    return getOrderedAccounts(accounts, orderedKeys)
-  }, [accounts, orderedKeys])
+  // Initialize or repair orderedKeys when modal opens
+  // This ensures moveChipInOrder has clean data to work with
+  useEffect(() => {
+    if (!visible || accounts.length === 0) return
+
+    // Check for corrupted data (null values in orderedKeys)
+    const hasNulls = orderedKeys?.some((k) => k === null || k === undefined)
+    if (hasNulls) {
+      // Rebuild clean order: keep valid keys in their order, append any missing accounts
+      const validKeys = (orderedKeys ?? []).filter((k): k is string => k != null)
+      const accountKeys = accounts.map((a) => a.key)
+      const orderedValid = validKeys.filter((k) => accountKeys.includes(k))
+      const missing = accountKeys.filter((k) => !orderedValid.includes(k))
+      setOrder([...orderedValid, ...missing])
+      return
+    }
+
+    // Initialize if not set
+    if (!orderedKeys || orderedKeys.length === 0) {
+      setOrder(accounts.map((a) => a.key))
+    }
+  }, [visible, accounts, orderedKeys, setOrder])
+
+  // Get ordered accounts (computed fresh each render)
+  const orderedAccounts = useMemo(
+    () => getOrderedAccounts(accounts, orderedKeys),
+    [accounts, orderedKeys]
+  )
 
   // Build chip display list for draggable component
-  const chipDisplayList = useMemo((): ChipDisplayInfo[] => {
-    return orderedAccounts.map(acc => ({
-      key: acc.key,
-      type: 'payment' as const,
-      label: acc.name,
-      icon: acc.kind === 'credit_card' ? 'credit-card' : acc.kind === 'cash' ? 'money' : 'bank',
-      color: '#5A6A6A',
-    }))
-  }, [orderedAccounts])
+  const chipDisplayList: ChipDisplayInfo[] = useMemo(
+    () =>
+      orderedAccounts.map((acc) => ({
+        key: acc.key,
+        type: 'payment' as const,
+        label: acc.name,
+        icon: acc.kind === 'credit_card' ? 'credit-card' : acc.kind === 'cash' ? 'money' : 'bank',
+        color: '#5A6A6A',
+      })),
+    [orderedAccounts]
+  )
 
-  // Get all account keys for moveChip
-  const allAccountKeys = useMemo(() => accounts.map(a => a.key), [accounts])
-
-  const handleReorder = useCallback((fromIndex: number, toIndex: number) => {
-    moveChip(fromIndex, toIndex, allAccountKeys)
-  }, [moveChip, allAccountKeys])
+  // Use stable callback that calls store action directly (same pattern as QuickChipsEditModal)
+  // The store's moveChipInOrder uses get() internally, avoiding stale closure issues
+  const handleReorder = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      moveChipInOrder(fromIndex, toIndex)
+    },
+    [moveChipInOrder]
+  )
 
   // No remove functionality - just reorder
   const handleRemove = useCallback(() => {
@@ -65,37 +88,19 @@ export function PaymentChipsReorderModal({ visible, accounts, onClose }: Props) 
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <GestureHandlerRootView style={chipEditStyles.gestureRoot}>
-        <Pressable style={chipEditStyles.backdrop} onPress={onClose} />
-
-        <View style={[chipEditStyles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
-          {/* Header */}
-          <View style={[chipEditStyles.header, { borderBottomColor: theme.semantic.border }]}>
-            <Text style={[chipEditStyles.headerTitle, { color: theme.semantic.text }]}>Reorder Payment Methods</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={[chipEditStyles.headerDone, { color: theme.semantic.primary }]}>Done</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView contentContainerStyle={chipEditStyles.content} showsVerticalScrollIndicator={false}>
-            {/* Section title - matching QuickChipsEditModal */}
-            <Text style={[chipEditStyles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-              YOUR PAYMENT METHODS
-            </Text>
-            <Text style={[chipEditStyles.dragHint, { color: theme.semantic.textSecondary }]}>
-              Hold and drag to reorder
-            </Text>
-            <DraggableChipList
-              chips={chipDisplayList}
-              onReorder={handleReorder}
-              onRemove={handleRemove}
-              showRemoveButton={false}
-            />
-          </ScrollView>
-        </View>
-      </GestureHandlerRootView>
-    </Modal>
+    <ChipEditModalShell visible={visible} title="Reorder Payment Methods" onClose={onClose}>
+      <Text style={[chipEditStyles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+        YOUR PAYMENT METHODS
+      </Text>
+      <Text style={[chipEditStyles.dragHint, { color: theme.semantic.textSecondary }]}>
+        Hold and drag to reorder
+      </Text>
+      <DraggableChipList
+        chips={chipDisplayList}
+        onReorder={handleReorder}
+        onRemove={handleRemove}
+        showRemoveButton={false}
+      />
+    </ChipEditModalShell>
   )
 }
-

@@ -4,23 +4,16 @@
  * Modal for editing quick action chips - add, remove, reorder.
  */
 
-import { CATEGORIES } from '@/shared/config'
 import type { Account } from '@/core/domain/account'
-import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
-import { useQuickChipsStore, SPECIAL_CHIP_KEYS, type QuickChipConfig } from '@/shared/store'
-import { chipEditStyles, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
+import { CATEGORIES } from '@/shared/config'
+import { useHoHTheme } from '@/shared/providers'
+import { SPECIAL_CHIP_KEYS, useQuickChipsStore, type QuickChipConfig } from '@/shared/store'
+import { chipEditStyles } from '@/shared/theme/tokens/modal'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useCallback, useMemo } from 'react'
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable, Text, View } from 'react-native'
+import { ChipEditModalShell } from './ChipEditModalShell'
 import { DraggableChipList, type ChipDisplayInfo } from './DraggableChipList'
 
 type Props = {
@@ -32,29 +25,31 @@ type Props = {
 
 export function QuickChipsEditModal({ visible, transactionType, accounts, onClose }: Props) {
   const theme = useHoHTheme()
-  const insets = useSafeAreaInsets()
 
-  const {
-    expenseChips,
-    incomeChips,
-    addChip,
-    removeChip,
-    moveChip,
-  } = useQuickChipsStore()
+  const { expenseChips, incomeChips, addChip, removeChip, moveChip } = useQuickChipsStore()
 
   const currentChips = transactionType === 'expense' ? expenseChips : incomeChips
 
   // Available categories for this transaction type
   const availableCategories = useMemo(() => {
-    return CATEGORIES.filter(c => c.type === transactionType)
+    return CATEGORIES.filter((c) => c.type === transactionType)
   }, [transactionType])
 
   // Build list of available items (not already in chips)
   const availableItems = useMemo(() => {
-    const items: { type: 'category' | 'payment' | 'special'; key: string; subCategoryKey?: string; label: string; icon: string; color: string }[] = []
+    const items: {
+      type: 'category' | 'payment' | 'special'
+      key: string
+      subCategoryKey?: string
+      label: string
+      icon: string
+      color: string
+    }[] = []
 
     // Special chips first - Repeat Last
-    if (!currentChips.some(c => c.type === 'special' && c.key === SPECIAL_CHIP_KEYS.REPEAT_LAST)) {
+    if (
+      !currentChips.some((c) => c.type === 'special' && c.key === SPECIAL_CHIP_KEYS.REPEAT_LAST)
+    ) {
       items.push({
         type: 'special',
         key: SPECIAL_CHIP_KEYS.REPEAT_LAST,
@@ -65,9 +60,11 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
     }
 
     // Categories and subcategories not in current chips
-    availableCategories.forEach(cat => {
+    availableCategories.forEach((cat) => {
       // Parent category (only if no subcategory version of it is in chips)
-      if (!currentChips.some(c => c.type === 'category' && c.key === cat.key && !c.subCategoryKey)) {
+      if (
+        !currentChips.some((c) => c.type === 'category' && c.key === cat.key && !c.subCategoryKey)
+      ) {
         items.push({
           type: 'category',
           key: cat.key,
@@ -78,8 +75,12 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
       }
 
       // Subcategories
-      cat.subCategories?.forEach(sub => {
-        if (!currentChips.some(c => c.type === 'category' && c.key === cat.key && c.subCategoryKey === sub.key)) {
+      cat.subCategories?.forEach((sub) => {
+        if (
+          !currentChips.some(
+            (c) => c.type === 'category' && c.key === cat.key && c.subCategoryKey === sub.key
+          )
+        ) {
           items.push({
             type: 'category',
             key: cat.key,
@@ -101,16 +102,22 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
   const getChipDisplay = (chip: QuickChipConfig): ChipDisplayInfo | null => {
     if (chip.type === 'special') {
       if (chip.key === SPECIAL_CHIP_KEYS.REPEAT_LAST) {
-        return { key: chip.key, type: 'special', label: 'Repeat Last', icon: 'repeat', color: '#5A7A8A' }
+        return {
+          key: chip.key,
+          type: 'special',
+          label: 'Repeat Last',
+          icon: 'repeat',
+          color: '#5A7A8A',
+        }
       }
       return null
     } else if (chip.type === 'category') {
-      const cat = CATEGORIES.find(c => c.key === chip.key)
+      const cat = CATEGORIES.find((c) => c.key === chip.key)
       if (!cat) return null
 
       // If subcategory, find it and show combined label
       if (chip.subCategoryKey) {
-        const sub = cat.subCategories?.find(s => s.key === chip.subCategoryKey)
+        const sub = cat.subCategories?.find((s) => s.key === chip.subCategoryKey)
         if (sub) {
           return {
             key: chip.key,
@@ -125,14 +132,17 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
 
       return { key: chip.key, type: 'category', label: cat.name, icon: cat.icon, color: cat.color }
     } else if (chip.type === 'payment') {
-      const acc = accounts.find(a => a.key === chip.key)
-      return acc ? {
-        key: chip.key,
-        type: 'payment',
-        label: acc.name,
-        icon: acc.kind === 'credit_card' ? 'credit-card' : acc.kind === 'cash' ? 'money' : 'bank',
-        color: '#5A6A6A',
-      } : null
+      const acc = accounts.find((a) => a.key === chip.key)
+      return acc
+        ? {
+            key: chip.key,
+            type: 'payment',
+            label: acc.name,
+            icon:
+              acc.kind === 'credit_card' ? 'credit-card' : acc.kind === 'cash' ? 'money' : 'bank',
+            color: '#5A6A6A',
+          }
+        : null
     }
     return null
   }
@@ -140,82 +150,92 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
   // Build chip display list for draggable component
   const chipDisplayList = useMemo((): ChipDisplayInfo[] => {
     return currentChips
-      .map(chip => getChipDisplay(chip))
+      .map((chip) => getChipDisplay(chip))
       .filter((d): d is ChipDisplayInfo => d !== null)
   }, [currentChips, accounts])
 
-  const handleReorder = useCallback((fromIndex: number, toIndex: number) => {
-    moveChip(transactionType, fromIndex, toIndex)
-  }, [transactionType, moveChip])
+  const handleReorder = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      moveChip(transactionType, fromIndex, toIndex)
+    },
+    [transactionType, moveChip]
+  )
 
-  const handleRemove = useCallback((chip: ChipDisplayInfo) => {
-    removeChip(transactionType, chip.key, chip.subCategoryKey)
-  }, [transactionType, removeChip])
+  const handleRemove = useCallback(
+    (chip: ChipDisplayInfo) => {
+      removeChip(transactionType, chip.key, chip.subCategoryKey)
+    },
+    [transactionType, removeChip]
+  )
 
-  const handleAdd = (item: { type: 'category' | 'payment' | 'special'; key: string; subCategoryKey?: string }) => {
-    addChip(transactionType, { type: item.type, key: item.key, subCategoryKey: item.subCategoryKey })
+  const handleAdd = (item: {
+    type: 'category' | 'payment' | 'special'
+    key: string
+    subCategoryKey?: string
+  }) => {
+    addChip(transactionType, {
+      type: item.type,
+      key: item.key,
+      subCategoryKey: item.subCategoryKey,
+    })
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <GestureHandlerRootView style={chipEditStyles.gestureRoot}>
-        <Pressable style={chipEditStyles.backdrop} onPress={onClose} />
+    <ChipEditModalShell visible={visible} title="Reorder Categories" onClose={onClose}>
+      {/* Current Chips - Draggable */}
+      <Text style={[chipEditStyles.sectionTitle, { color: theme.semantic.textSecondary }]}>
+        YOUR CATEGORIES
+      </Text>
+      {chipDisplayList.length > 0 && (
+        <Text style={[chipEditStyles.dragHint, { color: theme.semantic.textSecondary }]}>
+          Hold and drag to reorder
+        </Text>
+      )}
+      <DraggableChipList
+        chips={chipDisplayList}
+        onReorder={handleReorder}
+        onRemove={handleRemove}
+      />
 
-        <View style={[chipEditStyles.sheet, { backgroundColor: theme.semantic.surface, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
-          {/* Header */}
-          <View style={[chipEditStyles.header, { borderBottomColor: theme.semantic.border }]}>
-            <Text style={[chipEditStyles.headerTitle, { color: theme.semantic.text }]}>Edit Quick Actions</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={[chipEditStyles.headerDone, { color: theme.semantic.primary }]}>Done</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView style={chipEditStyles.content} showsVerticalScrollIndicator={false}>
-            {/* Current Chips - Draggable */}
-            <Text style={[chipEditStyles.sectionTitle, { color: theme.semantic.textSecondary }]}>
-              YOUR QUICK ACTIONS
-            </Text>
-            {chipDisplayList.length > 0 && (
-              <Text style={[chipEditStyles.dragHint, { color: theme.semantic.textSecondary }]}>
-                Hold and drag to reorder
-              </Text>
-            )}
-            <DraggableChipList
-              chips={chipDisplayList}
-              onReorder={handleReorder}
-              onRemove={handleRemove}
-            />
-
-            {/* Available to Add */}
-            {availableItems.length > 0 && (
-              <>
-                <Text style={[chipEditStyles.sectionTitleWithMargin, { color: theme.semantic.textSecondary }]}>
-                  ADD MORE
+      {/* Available to Add */}
+      {availableItems.length > 0 && (
+        <>
+          <Text
+            style={[chipEditStyles.sectionTitleWithMargin, { color: theme.semantic.textSecondary }]}
+          >
+            ADD MORE
+          </Text>
+          <View style={[chipEditStyles.chipsList, { backgroundColor: theme.semantic.surfaceAlt }]}>
+            {availableItems.map((item) => (
+              <Pressable
+                key={`${item.type}-${item.key}-${item.subCategoryKey ?? ''}`}
+                onPress={() => handleAdd(item)}
+                style={[
+                  chipEditStyles.chipRow,
+                  chipEditStyles.chipRowAdd,
+                  { borderBottomColor: theme.semantic.border },
+                ]}
+              >
+                <CategoryIcon name={item.icon} size={16} color={item.color} />
+                <Text
+                  style={[chipEditStyles.chipLabel, { color: theme.semantic.text }]}
+                  numberOfLines={1}
+                >
+                  {item.label}
                 </Text>
-                <View style={[chipEditStyles.chipsList, { backgroundColor: theme.semantic.surfaceAlt }]}>
-                  {availableItems.map((item) => (
-                    <Pressable
-                      key={`${item.type}-${item.key}-${item.subCategoryKey ?? ''}`}
-                      onPress={() => handleAdd(item)}
-                      style={[chipEditStyles.chipRow, chipEditStyles.chipRowAdd, { borderBottomColor: theme.semantic.border }]}
-                    >
-                      <CategoryIcon name={item.icon} size={16} color={item.color} />
-                      <Text style={[chipEditStyles.chipLabel, { color: theme.semantic.text }]} numberOfLines={1}>
-                        {item.label}
-                      </Text>
-                      <Text style={[chipEditStyles.chipType, { color: theme.semantic.textSecondary }]}>
-                        {item.type === 'special' ? 'Special' : item.subCategoryKey ? 'Subcategory' : 'Category'}
-                      </Text>
-                      <FontAwesome name="plus-circle" size={18} color={theme.semantic.primary} />
-                    </Pressable>
-                  ))}
-                </View>
-              </>
-            )}
-          </ScrollView>
-        </View>
-      </GestureHandlerRootView>
-    </Modal>
+                <Text style={[chipEditStyles.chipType, { color: theme.semantic.textSecondary }]}>
+                  {item.type === 'special'
+                    ? 'Special'
+                    : item.subCategoryKey
+                      ? 'Subcategory'
+                      : 'Category'}
+                </Text>
+                <FontAwesome name="plus-circle" size={18} color={theme.semantic.primary} />
+              </Pressable>
+            ))}
+          </View>
+        </>
+      )}
+    </ChipEditModalShell>
   )
 }
-
