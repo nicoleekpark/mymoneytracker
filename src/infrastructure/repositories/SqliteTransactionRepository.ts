@@ -736,29 +736,29 @@ export class SqliteTransactionRepository implements TransactionRepository {
   /**
    * Save tags for a transaction.
    * Creates tags in the tags table if they don't exist.
-   * Wrapped in a transaction to ensure atomicity.
+   * Must be called from within a transaction (insertWithTags or updateWithTags).
    */
   saveTags(transactionId: UUID, tagNames: string[]): void {
     if (!tagNames || tagNames.length === 0) return
 
-    this.dataSource.withTransaction(() => {
-      for (const name of tagNames) {
-        const trimmed = name.trim().toLowerCase()
-        if (!trimmed) continue
+    // Note: This method is always called from within a transaction
+    // (insertWithTags or updateWithTags), so we don't wrap in another transaction
+    for (const name of tagNames) {
+      const trimmed = name.trim().toLowerCase()
+      if (!trimmed) continue
 
-        // Find or create tag
-        let tagId = this.findTagIdByName(trimmed)
-        if (!tagId) {
-          tagId = this.createTag(trimmed)
-        }
-
-        // Insert into junction table (ignore if already exists)
-        this.dataSource.exec(
-          `INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)`,
-          [transactionId, tagId]
-        )
+      // Find or create tag
+      let tagId = this.findTagIdByName(trimmed)
+      if (!tagId) {
+        tagId = this.createTag(trimmed)
       }
-    })
+
+      // Insert into junction table (ignore if already exists)
+      this.dataSource.exec(
+        `INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)`,
+        [transactionId, tagId]
+      )
+    }
   }
 
   /**
