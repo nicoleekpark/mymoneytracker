@@ -14,8 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { Account, AccountKind } from '@/core/domain/account'
 import { getActiveAccounts, getArchivedAccounts, restoreAccount } from '@/core/services/account'
 import { getAccountBalanceAtEndOfMonth } from '@/core/services/transaction'
-import { formatUsdInt } from '@/shared/format/currency'
 import { EmptyState, useToast } from '@/shared/components'
+import { formatUsdInt } from '@/shared/format/currency'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { modalStyles } from '@/shared/theme/tokens/modal'
@@ -139,11 +139,14 @@ export default function AccountSettingsScreen() {
     })
   }, [])
 
-  const handleRestoreAccount = useCallback((account: Account) => {
-    restoreAccount(account.id)
-    refreshAccounts()
-    showToast(`"${account.name}" restored`)
-  }, [refreshAccounts, showToast])
+  const handleRestoreAccount = useCallback(
+    (account: Account) => {
+      restoreAccount(account.id)
+      refreshAccounts()
+      showToast(`"${account.name}" restored`)
+    },
+    [refreshAccounts, showToast]
+  )
 
   const getAccountIcon = (kind: string): React.ComponentProps<typeof FontAwesome>['name'] => {
     switch (kind) {
@@ -177,16 +180,20 @@ export default function AccountSettingsScreen() {
       </View>
 
       {/* Header */}
-      <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
+      <View style={[modalStyles.header, { borderBottomWidth: 0 }]}>
         <Pressable onPress={handleClose} hitSlop={12} style={modalStyles.cancelButton}>
           <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>Close</Text>
         </Pressable>
-        <Text style={[styles.headerTitle, { color: semantic.text }]}>Accounts</Text>
-        <View style={styles.headerSpacer} />
       </View>
 
-      {/* Header Divider */}
-      <View style={{ height: 1, backgroundColor: semantic.border }} />
+      {/* Title - Center aligned */}
+      <View
+        style={{ paddingHorizontal: spacing.xl, marginBottom: spacing.md, alignItems: 'center' }}
+      >
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: semantic.text }}>
+          Accounts
+        </Text>
+      </View>
 
       {/* Content */}
       <ScrollView
@@ -239,7 +246,12 @@ export default function AccountSettingsScreen() {
                   >
                     {formatUsdInt(Math.abs(balance))}
                   </Text>
-                  <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} style={{ marginLeft: spacing.sm }} />
+                  <FontAwesome
+                    name="chevron-right"
+                    size={12}
+                    color={semantic.textSecondary}
+                    style={{ marginLeft: spacing.sm }}
+                  />
                 </Pressable>
               )
             })}
@@ -263,7 +275,9 @@ export default function AccountSettingsScreen() {
               onPress={() => setShowArchived(!showArchived)}
               style={styles.collapsibleHeader}
             >
-              <Text style={[styles.sectionTitle, { color: semantic.textSecondary, marginBottom: 0 }]}>
+              <Text
+                style={[styles.sectionTitle, { color: semantic.textSecondary, marginBottom: 0 }]}
+              >
                 Closed Accounts ({archivedAccounts.length})
               </Text>
               <FontAwesome
@@ -272,41 +286,52 @@ export default function AccountSettingsScreen() {
                 color={semantic.textSecondary}
               />
             </Pressable>
-            {showArchived && archivedAccounts.map((account, index) => (
-              <View
-                key={account.id}
-                style={[
-                  styles.accountRow,
-                  index < archivedAccounts.length - 1 && [
-                    styles.accountRowBorder,
-                    { borderBottomColor: semantic.border },
-                  ],
-                ]}
-              >
-                <View style={[styles.accountIcon, { backgroundColor: semantic.surfaceAlt, opacity: 0.6 }]}>
-                  <FontAwesome
-                    name={getAccountIcon(account.kind)}
-                    size={14}
-                    color={semantic.textSecondary}
-                  />
-                </View>
-                <View style={styles.accountInfo}>
-                  <Text style={[styles.accountName, { color: semantic.textSecondary }]} numberOfLines={1}>
-                    {account.name}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => handleRestoreAccount(account)}
-                  hitSlop={8}
-                  style={({ pressed }) => [
-                    styles.restoreButton,
-                    { backgroundColor: semantic.surfaceAlt, opacity: pressed ? 0.6 : 1 },
+            {showArchived &&
+              archivedAccounts.map((account, index) => (
+                <View
+                  key={account.id}
+                  style={[
+                    styles.accountRow,
+                    index < archivedAccounts.length - 1 && [
+                      styles.accountRowBorder,
+                      { borderBottomColor: semantic.border },
+                    ],
                   ]}
                 >
-                  <Text style={[styles.restoreButtonText, { color: semantic.primary }]}>Restore</Text>
-                </Pressable>
-              </View>
-            ))}
+                  <View
+                    style={[
+                      styles.accountIcon,
+                      { backgroundColor: semantic.surfaceAlt, opacity: 0.6 },
+                    ]}
+                  >
+                    <FontAwesome
+                      name={getAccountIcon(account.kind)}
+                      size={14}
+                      color={semantic.textSecondary}
+                    />
+                  </View>
+                  <View style={styles.accountInfo}>
+                    <Text
+                      style={[styles.accountName, { color: semantic.textSecondary }]}
+                      numberOfLines={1}
+                    >
+                      {account.name}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => handleRestoreAccount(account)}
+                    hitSlop={8}
+                    style={({ pressed }) => [
+                      styles.restoreButton,
+                      { backgroundColor: semantic.surfaceAlt, opacity: pressed ? 0.6 : 1 },
+                    ]}
+                  >
+                    <Text style={[styles.restoreButtonText, { color: semantic.primary }]}>
+                      Restore
+                    </Text>
+                  </Pressable>
+                </View>
+              ))}
           </View>
         )}
       </ScrollView>

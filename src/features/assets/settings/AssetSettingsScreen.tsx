@@ -54,10 +54,7 @@ const MANUAL_CATEGORIES: AssetCategory[] = [
  * Account-linked categories - shown at the bottom of the list
  * These categories only contain account-synced items (no manual assets possible)
  */
-const ACCOUNT_LINKED_CATEGORIES: AssetCategory[] = [
-  'cash_savings',
-  'credit_card',
-]
+const ACCOUNT_LINKED_CATEGORIES: AssetCategory[] = ['cash_savings', 'credit_card']
 
 export default function AssetSettingsScreen() {
   const theme = useHoHTheme()
@@ -71,7 +68,7 @@ export default function AssetSettingsScreen() {
     const items = getAssetItems()
     const currentMonth = getCurrentYearMonth()
     const balanceMap = getBalancesForMonth(currentMonth)
-    setAssets(items.filter(a => !a.isArchived))
+    setAssets(items.filter((a) => !a.isArchived))
     setBalances(balanceMap)
   }, [])
 
@@ -143,7 +140,9 @@ export default function AssetSettingsScreen() {
     })
   }, [])
 
-  const getAssetIcon = (category: AssetCategory): React.ComponentProps<typeof FontAwesome>['name'] => {
+  const getAssetIcon = (
+    category: AssetCategory
+  ): React.ComponentProps<typeof FontAwesome>['name'] => {
     switch (category) {
       case 'real_estate':
         return 'home'
@@ -172,8 +171,7 @@ export default function AssetSettingsScreen() {
     return asset.id.startsWith('acct:')
   }
 
-
-  const manualAssetCount = assets.filter(a => MANUAL_CATEGORIES.includes(a.category)).length
+  const manualAssetCount = assets.filter((a) => MANUAL_CATEGORIES.includes(a.category)).length
 
   return (
     <Screen
@@ -189,24 +187,25 @@ export default function AssetSettingsScreen() {
       </View>
 
       {/* Header */}
-      <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
+      <View style={[modalStyles.header, { borderBottomWidth: 0 }]}>
         <Pressable onPress={handleClose} hitSlop={12} style={modalStyles.cancelButton}>
           <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>Close</Text>
         </Pressable>
-        <Text style={[styles.headerTitle, { color: semantic.text }]}>Assets</Text>
-        <View style={styles.headerSpacer} />
       </View>
 
-      {/* Header Divider */}
-      <View style={{ height: 1, backgroundColor: semantic.border }} />
+      {/* Title - Center aligned */}
+      <View
+        style={{ paddingHorizontal: spacing.xl, marginBottom: spacing.md, alignItems: 'center' }}
+      >
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: semantic.text }}>
+          Assets
+        </Text>
+      </View>
 
       {/* Content */}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Asset Sections */}
@@ -214,14 +213,20 @@ export default function AssetSettingsScreen() {
           <View key={group.category} style={styles.section}>
             {(() => {
               // Show section badge if ALL assets in this group are account-linked
-              const allAccountLinked = group.assets.length > 0 && group.assets.every(a => isAccountLinked(a))
+              const allAccountLinked =
+                group.assets.length > 0 && group.assets.every((a) => isAccountLinked(a))
               return (
                 <View style={styles.sectionHeader}>
                   <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
                     {group.categoryName}
                   </Text>
                   {allAccountLinked && (
-                    <Text style={[styles.linkedBadge, { color: semantic.textSecondary, backgroundColor: semantic.surfaceAlt }]}>
+                    <Text
+                      style={[
+                        styles.linkedBadge,
+                        { color: semantic.textSecondary, backgroundColor: semantic.surfaceAlt },
+                      ]}
+                    >
                       Via Accounts
                     </Text>
                   )}
@@ -230,7 +235,8 @@ export default function AssetSettingsScreen() {
             })()}
             {(() => {
               // Check if all assets in group are account-linked (section has badge)
-              const allAccountLinked = group.assets.length > 0 && group.assets.every(a => isAccountLinked(a))
+              const allAccountLinked =
+                group.assets.length > 0 && group.assets.every((a) => isAccountLinked(a))
 
               return group.assets.map((asset, index) => {
                 const linkedToAccount = isAccountLinked(asset)
@@ -266,16 +272,23 @@ export default function AssetSettingsScreen() {
                         </Text>
                       )}
                     </View>
-                    <Text style={[
-                      styles.assetBalance,
-                      {
-                        color: asset.balance >= 0 ? semantic.text : semantic.danger,
-                      }
-                    ]}>
+                    <Text
+                      style={[
+                        styles.assetBalance,
+                        {
+                          color: asset.balance >= 0 ? semantic.text : semantic.danger,
+                        },
+                      ]}
+                    >
                       {formatUsdInt(Math.abs(asset.balance))}
                     </Text>
                     {!linkedToAccount && (
-                      <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} style={{ marginLeft: spacing.sm }} />
+                      <FontAwesome
+                        name="chevron-right"
+                        size={12}
+                        color={semantic.textSecondary}
+                        style={{ marginLeft: spacing.sm }}
+                      />
                     )}
                   </Pressable>
                 )
@@ -296,11 +309,12 @@ export default function AssetSettingsScreen() {
         )}
 
         {/* Note about account-linked assets */}
-        {groupedAssets.some(g => g.assets.some(a => isAccountLinked(a))) && (
+        {groupedAssets.some((g) => g.assets.some((a) => isAccountLinked(a))) && (
           <View style={[styles.noteBox, { backgroundColor: semantic.surfaceAlt }]}>
             <FontAwesome name="info-circle" size={14} color={semantic.textSecondary} />
             <Text style={[styles.noteText, { color: semantic.textSecondary }]}>
-              Bank accounts and credit cards are auto-calculated from your transactions. Manage them in Accounts Settings.
+              Bank accounts and credit cards are auto-calculated from your transactions. Manage them
+              in Accounts Settings.
             </Text>
           </View>
         )}
