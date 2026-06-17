@@ -78,7 +78,15 @@ export function ItemPriceHistorySheet({
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
       handleComponent={renderHandle}
-      backgroundStyle={[modalStyles.modal, { backgroundColor: theme.semantic.surface }]}
+      backgroundStyle={[
+        modalStyles.modal,
+        {
+          backgroundColor: theme.semantic.surface,
+          borderWidth: 0,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+      ]}
       enablePanDownToClose
       onDismiss={onDismiss}
     >

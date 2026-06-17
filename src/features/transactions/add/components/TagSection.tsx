@@ -9,6 +9,7 @@
 import type { Tag } from '@/core/domain/tag'
 import { useHoHTheme } from '@/shared/providers'
 import { useTagsStore } from '@/shared/store'
+import { HIT_SLOP_SM, SCALE_PRESSED } from '@/shared/theme/tokens/buttons'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -133,6 +134,7 @@ export function TagSection({ selectedTags, onTagsChange }: Props) {
         ) : (
           <Pressable
             onPress={startCreating}
+            hitSlop={HIT_SLOP_SM}
             style={[styles.chip, { backgroundColor: 'transparent', borderColor: theme.semantic.border }]}
           >
             <FontAwesome name="plus" size={10} color={theme.semantic.textSecondary} style={{ marginRight: 4 }} />
@@ -197,7 +199,7 @@ function AnimatedTagChip({ tag, selected, onPress, theme }: AnimatedTagChipProps
   })
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.96, { damping: 15, stiffness: 400 })
+    scale.value = withSpring(SCALE_PRESSED, { damping: 15, stiffness: 400 })
   }
 
   const handlePressOut = () => {
@@ -209,6 +211,7 @@ function AnimatedTagChip({ tag, selected, onPress, theme }: AnimatedTagChipProps
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      hitSlop={HIT_SLOP_SM}
       style={[styles.chip, animatedStyle]}
     >
       <Animated.Text style={[styles.chipText, textAnimatedStyle]}>

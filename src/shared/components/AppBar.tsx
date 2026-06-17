@@ -17,6 +17,7 @@ import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typog
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { BACKDROP } from '@/shared/theme/tokens/backdrop'
+import { HIT_SLOP_LG, HIT_SLOP_MD, HIT_SLOP_MD_VALUE, OPACITY_PRESSED } from '@/shared/theme/tokens/buttons'
 
 // Component-specific sizes (not in global tokens)
 const APPBAR_HEIGHT = 56
@@ -197,10 +198,10 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
         {/* Add button - 44pt minimum touch target (Apple HIG) */}
         <Pressable
           onPress={handleAddPress}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          hitSlop={HIT_SLOP_LG}
           style={({ pressed }) => [
             styles.addButton,
-            { opacity: pressed ? 0.7 : 1 }
+            { opacity: pressed ? OPACITY_PRESSED : 1 }
           ]}
         >
           <FontAwesome name="plus" size={20} color={theme.semantic.text} />
@@ -212,7 +213,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
             onPress={() => setDevMenuOpen(true)}
             onLongPress={handleDevToggle}
             style={[styles.devChip, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border }]}
-            hitSlop={8}
+            hitSlop={HIT_SLOP_MD_VALUE}
           >
             <Text style={[styles.devChipText, { color: theme.semantic.text }]}>
               DEV {devMenuOpen ? '▾' : '▸'}
@@ -233,7 +234,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
             <Pressable
               onPress={handleDraftsPress}
               style={styles.iconBtn}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              hitSlop={HIT_SLOP_LG}
               accessibilityLabel={`${draftCount} drafts`}
               accessibilityRole="button"
             >
@@ -248,7 +249,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
           <Pressable
             onPress={handleBellPress}
             style={styles.iconBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={HIT_SLOP_LG}
             accessibilityLabel={hasNotifications ? `${unreadCount} notifications` : 'Notifications'}
             accessibilityRole="button"
           >
@@ -274,7 +275,7 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
                 borderColor: menuOpen ? theme.semantic.primary : theme.semantic.border
               }
             ]}
-            hitSlop={4}
+            hitSlop={HIT_SLOP_MD}
             accessibilityLabel="Open menu"
             accessibilityRole="button"
           >

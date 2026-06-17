@@ -16,6 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { CategoryIcon } from '@/shared/components'
+import { HIT_SLOP_SM, SCALE_PRESSED } from '@/shared/theme/tokens/buttons'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -84,7 +85,7 @@ export function AnimatedQuickChip({
   })
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.96, {
+    scale.value = withSpring(SCALE_PRESSED, {
       damping: 15,
       stiffness: 400,
     })
@@ -102,6 +103,7 @@ export function AnimatedQuickChip({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      hitSlop={HIT_SLOP_SM}
       style={[styles.chip, style, animatedStyle]}
     >
       <CategoryIcon

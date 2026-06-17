@@ -75,9 +75,9 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
     },
     ref
   ) => {
-    // Snap points: use dynamic sizing for empty days, fixed percentages for days with transactions
-    const hasTransactions = (selectedDay?.txCount ?? 0) > 0
-    const snapPoints = useMemo(() => (hasTransactions ? ['60%', '90%'] : undefined), [hasTransactions])
+    // Single fixed snap point - dynamic calculation doesn't work well with BottomSheetModal
+    // because snapPoints are cached when sheet opens
+    const snapPoints = ['50%']
 
     // Filter out Opening Balance and sort by absolute value (impact-first)
     const sortedTx = useMemo(() => {
@@ -115,20 +115,26 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
       <BottomSheetModal
         ref={ref}
         snapPoints={snapPoints}
-        enableDynamicSizing={!hasTransactions}
         backdropComponent={renderBackdrop}
         handleComponent={renderHandle}
-        backgroundStyle={[modalStyles.modal, { backgroundColor: colors.surface }]}
+        backgroundStyle={[
+          modalStyles.modal,
+          {
+            backgroundColor: colors.surface,
+            borderWidth: 0,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+        ]}
         enablePanDownToClose
       >
         <BottomSheetScrollView
-          style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: spacing.xl,
             paddingBottom: getScrollContentPadding(0),
           }}
         >
-          {/* Header: Date + Close */}
+          {/* Header: Date */}
           <View
             style={{
               flexDirection: 'row',
@@ -325,7 +331,6 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                   onPress={() => {
                     const isCurrentlyMarked = zeroSpendDays?.has(selectedDay.ymd) ?? false
                     onToggleZeroSpend(selectedDay.ymd, !isCurrentlyMarked)
-                    // Auto-dismiss after marking with slight delay for visual feedback
                     setTimeout(() => onDismiss?.(), 150)
                   }}
                   style={{

@@ -23,6 +23,7 @@ import type { UUID } from '@/core/domain/common/uuid'
 import type { CategoryDbId, CategoryRef } from '@/core/domain/category/category.types'
 import type { Transaction, TransactionType } from '@/core/domain/transaction/transaction.types'
 import { parseTransactionType } from '@/core/domain/transaction/transaction.schema'
+import { toLocalISOString } from '@/shared/utils/date'
 
 /**
  * Database row representation of a transaction.
@@ -113,7 +114,7 @@ export function transactionToRow(
   const base = {
     id: tx.id,
     key: tx.key,
-    occurred_at: tx.occurredAt.toISOString(),
+    occurred_at: toLocalISOString(tx.occurredAt),
     type: tx.type,
     item: tx.item ?? null,
     amount_cents: dollarsToCents(tx.money.amount),

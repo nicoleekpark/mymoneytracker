@@ -164,7 +164,15 @@ export function AccountSettingsSheet({
       backdropComponent={renderBackdrop}
       footerComponent={renderFooter}
       onDismiss={onDismiss}
-      backgroundStyle={[modalStyles.modal, { backgroundColor: theme.semantic.surface }]}
+      backgroundStyle={[
+        modalStyles.modal,
+        {
+          backgroundColor: theme.semantic.surface,
+          borderWidth: 0,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+      ]}
       handleIndicatorStyle={{ backgroundColor: theme.semantic.border }}
     >
       {/* Drag Handle */}

@@ -1,12 +1,12 @@
-import { CATEGORIES } from '@/shared/config/categories.config'
 import type { CategoryRef } from '@/core/domain/category'
-import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
+import { CATEGORIES } from '@/shared/config/categories.config'
 import { Screen } from '@/shared/layout/Screen'
+import { useHoHTheme } from '@/shared/providers'
+import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontWeight } from '@/shared/theme/tokens/typography'
-import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import React from 'react'
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -38,8 +38,19 @@ export function SubCategorySelectionModal({
   const listData: ({ key: string } | SubCategory)[] = [{ key: '__none__' }, ...subCategories]
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <Screen edges={[]} padded={false} topPadding={false} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      onRequestClose={onClose}
+    >
+      <Screen
+        edges={[]}
+        padded={false}
+        topPadding={false}
+        style={{ flex: 1 }}
+        contentStyle={{ flex: 1 }}
+      >
         <View
           style={[
             styles.headerBar,
@@ -51,10 +62,14 @@ export function SubCategorySelectionModal({
           ]}
         >
           <Pressable onPress={onClose} hitSlop={10}>
-            <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.heavy }}>Cancel</Text>
+            <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.heavy }}>
+              Cancel
+            </Text>
           </Pressable>
 
-          <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>Subcategory</Text>
+          <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>
+            Subcategory
+          </Text>
 
           <View style={{ width: 56 }} />
         </View>
@@ -62,16 +77,29 @@ export function SubCategorySelectionModal({
         <View style={[styles.topRowWrap, { borderBottomColor: theme.semantic.border }]}>
           <Pressable
             onPress={onReopenCategory}
-            style={[styles.topRow, { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface }]}
+            style={[
+              styles.topRow,
+              { borderColor: theme.semantic.border, backgroundColor: theme.semantic.surface },
+            ]}
           >
-            <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.heavy }}>Category</Text>
+            <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.heavy }}>
+              Category
+            </Text>
             {selectedCategory ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <CategoryIcon name={selectedCategory.icon} size={16} color={selectedCategory.color} />
-                <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>{selectedCategory.name}</Text>
+                <CategoryIcon
+                  name={selectedCategory.icon}
+                  size={16}
+                  color={selectedCategory.color}
+                />
+                <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>
+                  {selectedCategory.name}
+                </Text>
               </View>
             ) : (
-              <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>Select</Text>
+              <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>
+                Select
+              </Text>
             )}
             <Text style={{ color: theme.semantic.textSecondary, fontWeight: fontWeight.black }} />
           </Pressable>
@@ -83,14 +111,27 @@ export function SubCategorySelectionModal({
           keyExtractor={(x) => x.key}
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="none"
-          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: getScrollContentPadding(insets.bottom) }}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingBottom: getScrollContentPadding(insets.bottom),
+          }}
           renderItem={({ item: row }) => {
             if (row.key === '__none__') {
               const selected = !categoryRef?.subCategoryKey
               return (
-                <Pressable onPress={() => onChoose(undefined)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
-                  <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>None</Text>
-                  <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: fontWeight.black }}>
+                <Pressable
+                  onPress={() => onChoose(undefined)}
+                  style={[styles.row, { borderBottomColor: theme.semantic.border }]}
+                >
+                  <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>
+                    None
+                  </Text>
+                  <Text
+                    style={{
+                      color: selected ? theme.semantic.primary : theme.semantic.textSecondary,
+                      fontWeight: fontWeight.black,
+                    }}
+                  >
                     {selected ? '✓' : ''}
                   </Text>
                 </Pressable>
@@ -101,14 +142,24 @@ export function SubCategorySelectionModal({
             const selected = categoryRef?.subCategoryKey === sc.key
 
             return (
-              <Pressable onPress={() => onChoose(sc.key)} style={[styles.row, { borderBottomColor: theme.semantic.border }]}>
+              <Pressable
+                onPress={() => onChoose(sc.key)}
+                style={[styles.row, { borderBottomColor: theme.semantic.border }]}
+              >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={styles.iconContainer}>
                     <CategoryIcon name={sc.icon} size={18} color={sc.color} />
                   </View>
-                  <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>{sc.name}</Text>
+                  <Text style={{ color: theme.semantic.text, fontWeight: fontWeight.black }}>
+                    {sc.name}
+                  </Text>
                 </View>
-                <Text style={{ color: selected ? theme.semantic.primary : theme.semantic.textSecondary, fontWeight: fontWeight.black }}>
+                <Text
+                  style={{
+                    color: selected ? theme.semantic.primary : theme.semantic.textSecondary,
+                    fontWeight: fontWeight.black,
+                  }}
+                >
                   {selected ? '✓' : ''}
                 </Text>
               </Pressable>

@@ -10,7 +10,7 @@ import { getActiveAccounts } from '@/core/services/account'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { usePaymentFrequencyStore } from '@/shared/store'
-import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
+import { getScrollContentPadding, modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { normalizeForSearch } from '@/shared/utils/search'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
@@ -40,8 +40,13 @@ export function AccountSelectionScreen() {
   const insets = useSafeAreaInsets()
 
   // Get state from navigation store
-  const { currentAccountKey, accountCallback, closeAccountSelection, pendingNewAccountKey, setPendingNewAccountKey } =
-    useAddTransactionNavStore()
+  const {
+    currentAccountKey,
+    accountCallback,
+    closeAccountSelection,
+    pendingNewAccountKey,
+    setPendingNewAccountKey,
+  } = useAddTransactionNavStore()
 
   // Local state
   const [accountQuery, setAccountQuery] = useState('')
@@ -171,7 +176,12 @@ export function AccountSelectionScreen() {
   }
 
   const renderSectionHeader = ({ section }: { section: SectionData }) => (
-    <View style={[modalStyles.selectionSectionHeader, { backgroundColor: semantic.surface, paddingHorizontal: spacing.lg }]}>
+    <View
+      style={[
+        modalStyles.selectionSectionHeader,
+        { backgroundColor: semantic.surface, paddingHorizontal: spacing.lg },
+      ]}
+    >
       <Text style={[modalStyles.selectionSectionTitle, { color: semantic.textSecondary }]}>
         {section.title.toUpperCase()}
       </Text>
@@ -187,18 +197,20 @@ export function AccountSelectionScreen() {
         onPress={() => handleChoose(a.key)}
         style={[
           modalStyles.selectionListRow,
-          { paddingHorizontal: spacing.lg, borderBottomWidth: 1, borderBottomColor: semantic.border }
+          {
+            paddingHorizontal: spacing.lg,
+            borderBottomWidth: 1,
+            borderBottomColor: semantic.border,
+          },
         ]}
       >
         <View style={[modalStyles.selectionListRowIcon, { backgroundColor: semantic.surfaceAlt }]}>
-          <FontAwesome
-            name={getAccountIcon(a.kind)}
-            size={14}
-            color={semantic.textSecondary}
-          />
+          <FontAwesome name={getAccountIcon(a.kind)} size={14} color={semantic.textSecondary} />
         </View>
         <View style={modalStyles.selectionListRowContent}>
-          <Text style={[modalStyles.selectionListRowTitle, { color: semantic.text }]}>{a.name}</Text>
+          <Text style={[modalStyles.selectionListRowTitle, { color: semantic.text }]}>
+            {a.name}
+          </Text>
           <Text style={[modalStyles.selectionListRowSubtitle, { color: semantic.textSecondary }]}>
             {badge}
           </Text>
@@ -227,16 +239,14 @@ export function AccountSelectionScreen() {
         </View>
 
         {/* Header (Cancel only - matches AddTransactionScreen) */}
-        <View style={modalStyles.header}>
+        <View style={[modalStyles.header, { borderBottomWidth: 0 }]}>
           <Pressable onPress={handleClose} hitSlop={12} style={modalStyles.cancelButton}>
-            <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>
-              Cancel
-            </Text>
+            <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>Cancel</Text>
           </Pressable>
         </View>
 
-        {/* Title Row (matches Type Tabs position) */}
-        <View style={[modalStyles.typeTabs, { borderBottomColor: semantic.border, paddingVertical: spacing.md }]}>
+        {/* Title Row */}
+        <View style={[modalStyles.typeTabs, { borderBottomWidth: 0, paddingVertical: spacing.md }]}>
           <Text style={[modalStyles.typeTabText, { color: semantic.text, fontWeight: '700' }]}>
             Payment Method
           </Text>
@@ -244,7 +254,12 @@ export function AccountSelectionScreen() {
 
         {/* Search */}
         <View style={modalStyles.searchContainer}>
-          <View style={[modalStyles.searchBox, { borderColor: semantic.border, backgroundColor: semantic.surfaceAlt }]}>
+          <View
+            style={[
+              modalStyles.searchBox,
+              { borderColor: semantic.border, backgroundColor: semantic.surfaceAlt },
+            ]}
+          >
             <FontAwesome name="search" size={14} color={semantic.textSecondary} />
             <TextInput
               value={accountQuery}

@@ -5,25 +5,19 @@
  * Uses modal design system for consistent styling.
  */
 
-import { CATEGORIES } from '@/shared/config/categories.config'
-import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
+import { CATEGORIES } from '@/shared/config/categories.config'
 import { Screen } from '@/shared/layout/Screen'
-import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
+import { useHoHTheme } from '@/shared/providers'
+import { getScrollContentPadding, modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { router } from 'expo-router'
-import React, { useMemo, useState, useRef, useEffect } from 'react'
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput as RNTextInput,
-  View,
-} from 'react-native'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Pressable, TextInput as RNTextInput, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { useAddTransactionNavStore } from '../store/addTransactionNav.store'
 import { normalizeForSearch, scoreText } from '@/shared/utils/search'
+import { useAddTransactionNavStore } from '../store/addTransactionNav.store'
 
 type CategoryItem = (typeof CATEGORIES)[number]
 type SubCategoryItem = CategoryItem['subCategories'][number]
@@ -36,9 +30,17 @@ const DEFAULT_RECENT_KEYS: string[] = ['food', 'transport', 'subscriptions']
 // Category grouping
 const CATEGORY_GROUPS: { key: string; title: string; categoryKeys: string[] }[] = [
   { key: 'everyday', title: 'Everyday', categoryKeys: ['food', 'transport', 'lifestyle'] },
-  { key: 'monthly', title: 'Monthly Fixed', categoryKeys: ['housing', 'communication', 'subscriptions', 'insurance'] },
+  {
+    key: 'monthly',
+    title: 'Monthly Fixed',
+    categoryKeys: ['housing', 'communication', 'subscriptions', 'insurance'],
+  },
   { key: 'care', title: 'Care', categoryKeys: ['health', 'family', 'pets'] },
-  { key: 'occasional', title: 'Occasional', categoryKeys: ['social', 'travel', 'gifts', 'donations'] },
+  {
+    key: 'occasional',
+    title: 'Occasional',
+    categoryKeys: ['social', 'travel', 'gifts', 'donations'],
+  },
   { key: 'financial', title: 'Financial', categoryKeys: ['taxes', 'debt', 'fees'] },
   { key: 'professional', title: 'Professional', categoryKeys: ['education', 'business'] },
 ]
@@ -59,7 +61,7 @@ export function CategorySelectionScreen() {
   // Initialize with initial category if provided
   useEffect(() => {
     if (initialCategoryRef) {
-      const cat = CATEGORIES.find(c => c.key === initialCategoryRef.categoryKey)
+      const cat = CATEGORIES.find((c) => c.key === initialCategoryRef.categoryKey)
       if (cat && cat.subCategories?.length > 0 && !initialCategoryRef.subCategoryKey) {
         setSelectedCategory(cat)
       }
@@ -68,21 +70,21 @@ export function CategorySelectionScreen() {
 
   // Filter categories by type
   const categoriesForType = useMemo(() => {
-    return CATEGORIES.filter(c => c.type === categoryType)
+    return CATEGORIES.filter((c) => c.type === categoryType)
   }, [categoryType])
 
   // Recent categories (chips)
   const recentCategories = useMemo(() => {
-    return DEFAULT_RECENT_KEYS
-      .map(key => categoriesForType.find(c => c.key === key))
-      .filter((c): c is CategoryItem => !!c)
+    return DEFAULT_RECENT_KEYS.map((key) => categoriesForType.find((c) => c.key === key)).filter(
+      (c): c is CategoryItem => !!c
+    )
   }, [categoriesForType])
 
   // Frequent categories (chips)
   const frequentCategories = useMemo(() => {
-    return DEFAULT_FREQUENT_KEYS
-      .map(key => categoriesForType.find(c => c.key === key))
-      .filter((c): c is CategoryItem => !!c)
+    return DEFAULT_FREQUENT_KEYS.map((key) => categoriesForType.find((c) => c.key === key)).filter(
+      (c): c is CategoryItem => !!c
+    )
   }, [categoriesForType])
 
   // Search results
@@ -130,7 +132,7 @@ export function CategorySelectionScreen() {
     const groups: { key: string; title: string; items: CategoryItem[] }[] = []
 
     for (const group of CATEGORY_GROUPS) {
-      const items = categoriesForType.filter(c => group.categoryKeys.includes(c.key))
+      const items = categoriesForType.filter((c) => group.categoryKeys.includes(c.key))
       if (items.length > 0) {
         groups.push({ key: group.key, title: group.title, items })
       }
@@ -173,7 +175,10 @@ export function CategorySelectionScreen() {
   // Get subcategory preview text
   const getSubcategoryPreview = (cat: CategoryItem) => {
     if (!cat.subCategories?.length) return ''
-    return cat.subCategories.slice(0, 3).map(s => s.name).join(' • ')
+    return cat.subCategories
+      .slice(0, 3)
+      .map((s) => s.name)
+      .join(' • ')
   }
 
   // Render subcategory screen (drill-down)
@@ -181,9 +186,9 @@ export function CategorySelectionScreen() {
     if (!selectedCategory) return null
 
     const q = categoryQuery.trim().toLowerCase()
-    const filteredSubs = selectedCategory.subCategories?.filter(
-      sub => !q || sub.name.toLowerCase().includes(q)
-    ) || []
+    const filteredSubs =
+      selectedCategory.subCategories?.filter((sub) => !q || sub.name.toLowerCase().includes(q)) ||
+      []
 
     return (
       <>
@@ -205,17 +210,21 @@ export function CategorySelectionScreen() {
               onPress={() => handleSubCategoryPress(selectedCategory, sub)}
               style={[
                 modalStyles.selectionListRow,
-                index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border }
+                index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border },
               ]}
             >
-              <View style={[modalStyles.selectionListRowIcon, { backgroundColor: sub.color + '20' }]}>
+              <View
+                style={[modalStyles.selectionListRowIcon, { backgroundColor: sub.color + '20' }]}
+              >
                 <CategoryIcon name={sub.icon} size={18} color={sub.color} />
               </View>
               <View style={modalStyles.selectionListRowContent}>
                 <Text style={[modalStyles.selectionListRowTitle, { color: semantic.text }]}>
                   {sub.name}
                 </Text>
-                <Text style={[modalStyles.selectionListRowSubtitle, { color: semantic.textSecondary }]}>
+                <Text
+                  style={[modalStyles.selectionListRowSubtitle, { color: semantic.textSecondary }]}
+                >
                   in {selectedCategory.name}
                 </Text>
               </View>
@@ -231,10 +240,15 @@ export function CategorySelectionScreen() {
             }}
             style={[
               modalStyles.selectionListRow,
-              { borderTopWidth: 1, borderTopColor: semantic.border }
+              { borderTopWidth: 1, borderTopColor: semantic.border },
             ]}
           >
-            <View style={[modalStyles.selectionListRowIcon, { backgroundColor: selectedCategory.color + '20' }]}>
+            <View
+              style={[
+                modalStyles.selectionListRowIcon,
+                { backgroundColor: selectedCategory.color + '20' },
+              ]}
+            >
               <CategoryIcon name={selectedCategory.icon} size={18} color={selectedCategory.color} />
             </View>
             <View style={modalStyles.selectionListRowContent}>
@@ -272,22 +286,39 @@ export function CategorySelectionScreen() {
                     onPress={() => handleCategoryPress(row.cat)}
                     style={[
                       modalStyles.selectionListRow,
-                      index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border }
+                      index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border },
                     ]}
                   >
-                    <View style={[modalStyles.selectionListRowIcon, { backgroundColor: row.cat.color + '20' }]}>
+                    <View
+                      style={[
+                        modalStyles.selectionListRowIcon,
+                        { backgroundColor: row.cat.color + '20' },
+                      ]}
+                    >
                       <CategoryIcon name={row.cat.icon} size={18} color={row.cat.color} />
                     </View>
                     <View style={modalStyles.selectionListRowContent}>
                       <Text style={[modalStyles.selectionListRowTitle, { color: semantic.text }]}>
                         {row.cat.name}
                       </Text>
-                      <Text style={[modalStyles.selectionListRowSubtitle, { color: semantic.textSecondary }]}>
+                      <Text
+                        style={[
+                          modalStyles.selectionListRowSubtitle,
+                          { color: semantic.textSecondary },
+                        ]}
+                      >
                         Category
                       </Text>
                     </View>
                     {row.cat.subCategories?.length > 0 && (
-                      <Text style={[modalStyles.selectionListRowChevron, { color: semantic.textSecondary }]}>›</Text>
+                      <Text
+                        style={[
+                          modalStyles.selectionListRowChevron,
+                          { color: semantic.textSecondary },
+                        ]}
+                      >
+                        ›
+                      </Text>
                     )}
                   </Pressable>
                 )
@@ -298,17 +329,27 @@ export function CategorySelectionScreen() {
                     onPress={() => handleSubCategoryPress(row.cat, row.sub)}
                     style={[
                       modalStyles.selectionListRow,
-                      index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border }
+                      index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border },
                     ]}
                   >
-                    <View style={[modalStyles.selectionListRowIcon, { backgroundColor: row.sub.color + '20' }]}>
+                    <View
+                      style={[
+                        modalStyles.selectionListRowIcon,
+                        { backgroundColor: row.sub.color + '20' },
+                      ]}
+                    >
                       <CategoryIcon name={row.sub.icon} size={18} color={row.sub.color} />
                     </View>
                     <View style={modalStyles.selectionListRowContent}>
                       <Text style={[modalStyles.selectionListRowTitle, { color: semantic.text }]}>
                         {row.sub.name}
                       </Text>
-                      <Text style={[modalStyles.selectionListRowSubtitle, { color: semantic.textSecondary }]}>
+                      <Text
+                        style={[
+                          modalStyles.selectionListRowSubtitle,
+                          { color: semantic.textSecondary },
+                        ]}
+                      >
                         in {row.cat.name}
                       </Text>
                     </View>
@@ -336,13 +377,18 @@ export function CategorySelectionScreen() {
               </Text>
             </View>
             <View style={modalStyles.selectionChipRow}>
-              {recentCategories.map(cat => (
+              {recentCategories.map((cat) => (
                 <Pressable
                   key={cat.key}
                   onPress={() => handleCategoryPress(cat)}
-                  style={[modalStyles.selectionChip, { backgroundColor: semantic.surfaceAlt, borderColor: semantic.border }]}
+                  style={[
+                    modalStyles.selectionChip,
+                    { backgroundColor: semantic.surfaceAlt, borderColor: semantic.border },
+                  ]}
                 >
-                  <View style={[modalStyles.selectionChipIcon, { backgroundColor: cat.color + '20' }]}>
+                  <View
+                    style={[modalStyles.selectionChipIcon, { backgroundColor: cat.color + '20' }]}
+                  >
                     <CategoryIcon name={cat.icon} size={14} color={cat.color} />
                   </View>
                   <Text style={[modalStyles.selectionChipText, { color: semantic.text }]}>
@@ -366,13 +412,18 @@ export function CategorySelectionScreen() {
               </Text>
             </View>
             <View style={modalStyles.selectionChipRow}>
-              {frequentCategories.map(cat => (
+              {frequentCategories.map((cat) => (
                 <Pressable
                   key={cat.key}
                   onPress={() => handleCategoryPress(cat)}
-                  style={[modalStyles.selectionChip, { backgroundColor: semantic.surfaceAlt, borderColor: semantic.border }]}
+                  style={[
+                    modalStyles.selectionChip,
+                    { backgroundColor: semantic.surfaceAlt, borderColor: semantic.border },
+                  ]}
                 >
-                  <View style={[modalStyles.selectionChipIcon, { backgroundColor: cat.color + '20' }]}>
+                  <View
+                    style={[modalStyles.selectionChipIcon, { backgroundColor: cat.color + '20' }]}
+                  >
                     <CategoryIcon name={cat.icon} size={14} color={cat.color} />
                   </View>
                   <Text style={[modalStyles.selectionChipText, { color: semantic.text }]}>
@@ -391,7 +442,7 @@ export function CategorySelectionScreen() {
           </Text>
         </View>
 
-        {groupedCategories.map(group => (
+        {groupedCategories.map((group) => (
           <View key={group.key} style={modalStyles.selectionGroup}>
             <Text style={[modalStyles.selectionGroupTitle, { color: semantic.textSecondary }]}>
               {group.title}
@@ -403,10 +454,15 @@ export function CategorySelectionScreen() {
                   onPress={() => handleCategoryPress(cat)}
                   style={[
                     modalStyles.selectionListRow,
-                    index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border }
+                    index > 0 && { borderTopWidth: 1, borderTopColor: semantic.border },
                   ]}
                 >
-                  <View style={[modalStyles.selectionListRowIcon, { backgroundColor: cat.color + '20' }]}>
+                  <View
+                    style={[
+                      modalStyles.selectionListRowIcon,
+                      { backgroundColor: cat.color + '20' },
+                    ]}
+                  >
                     <CategoryIcon name={cat.icon} size={18} color={cat.color} />
                   </View>
                   <View style={modalStyles.selectionListRowContent}>
@@ -415,14 +471,21 @@ export function CategorySelectionScreen() {
                     </Text>
                     {cat.subCategories?.length > 0 && (
                       <Text
-                        style={[modalStyles.selectionListRowSubtitle, { color: semantic.textSecondary }]}
+                        style={[
+                          modalStyles.selectionListRowSubtitle,
+                          { color: semantic.textSecondary },
+                        ]}
                         numberOfLines={1}
                       >
                         {getSubcategoryPreview(cat)}
                       </Text>
                     )}
                   </View>
-                  <Text style={[modalStyles.selectionListRowChevron, { color: semantic.textSecondary }]}>›</Text>
+                  <Text
+                    style={[modalStyles.selectionListRowChevron, { color: semantic.textSecondary }]}
+                  >
+                    ›
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -445,7 +508,7 @@ export function CategorySelectionScreen() {
       </View>
 
       {/* Header (Cancel/Back only - matches AddTransactionScreen) */}
-      <View style={modalStyles.header}>
+      <View style={[modalStyles.header, { borderBottomWidth: 0 }]}>
         <Pressable onPress={handleBack} hitSlop={12} style={modalStyles.cancelButton}>
           <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>
             {selectedCategory ? 'Back' : 'Cancel'}
@@ -453,8 +516,8 @@ export function CategorySelectionScreen() {
         </Pressable>
       </View>
 
-      {/* Title Row (matches Type Tabs position) */}
-      <View style={[modalStyles.typeTabs, { borderBottomColor: semantic.border, paddingVertical: spacing.md }]}>
+      {/* Title Row */}
+      <View style={[modalStyles.typeTabs, { borderBottomWidth: 0, paddingVertical: spacing.md }]}>
         <Text style={[modalStyles.typeTabText, { color: semantic.text, fontWeight: '700' }]}>
           {selectedCategory ? selectedCategory.name : 'Category'}
         </Text>
@@ -462,13 +525,20 @@ export function CategorySelectionScreen() {
 
       {/* Search Input */}
       <View style={modalStyles.searchContainer}>
-        <View style={[modalStyles.searchBox, { backgroundColor: semantic.surfaceAlt, borderColor: semantic.border }]}>
+        <View
+          style={[
+            modalStyles.searchBox,
+            { backgroundColor: semantic.surfaceAlt, borderColor: semantic.border },
+          ]}
+        >
           <Text style={modalStyles.searchIcon}>🔍</Text>
           <RNTextInput
             ref={searchInputRef}
             value={categoryQuery}
             onChangeText={setCategoryQuery}
-            placeholder={selectedCategory ? "Search subcategories..." : "Search categories + subcategories..."}
+            placeholder={
+              selectedCategory ? 'Search subcategories...' : 'Search categories + subcategories...'
+            }
             placeholderTextColor={semantic.textSecondary}
             style={[modalStyles.searchInput, { color: semantic.text }]}
             autoCorrect={false}
@@ -481,7 +551,10 @@ export function CategorySelectionScreen() {
       {/* Content */}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: getScrollContentPadding(insets.bottom) }}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingBottom: getScrollContentPadding(insets.bottom),
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

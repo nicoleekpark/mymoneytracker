@@ -6,10 +6,10 @@
 // =============================================================================
 
 import { StyleSheet } from 'react-native'
-import { fontSize, fontWeight, letterSpacing } from '../typography'
-import { spacing } from '../spacing'
-import { radius } from '../radius'
 import { BACKDROP } from '../backdrop'
+import { radius } from '../radius'
+import { spacing } from '../spacing'
+import { fontSize, fontWeight, letterSpacing } from '../typography'
 import { MODAL_ROW_HEIGHT } from './constants'
 
 export const chipEditStyles = StyleSheet.create({

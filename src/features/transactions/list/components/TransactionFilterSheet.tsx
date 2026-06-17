@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { CATEGORIES } from '@/shared/config'
 import { useHoHTheme } from '@/shared/providers'
+import { HIT_SLOP_MD_VALUE } from '@/shared/theme/tokens/buttons'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -143,7 +144,15 @@ export function TransactionFilterSheet({
       backdropComponent={renderBackdrop}
       footerComponent={renderFooter}
       onDismiss={onDismiss}
-      backgroundStyle={[modalStyles.modal, { backgroundColor: theme.semantic.surface }]}
+      backgroundStyle={[
+        modalStyles.modal,
+        {
+          backgroundColor: theme.semantic.surface,
+          borderWidth: 0,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+      ]}
       handleIndicatorStyle={{ backgroundColor: theme.semantic.border }}
     >
       <BottomSheetScrollView
@@ -154,7 +163,7 @@ export function TransactionFilterSheet({
         <View style={styles.header}>
           <Text style={[styles.title, { color: theme.semantic.text }]}>Filters</Text>
           {activeCount > 0 && (
-            <Pressable onPress={clearAll} hitSlop={8}>
+            <Pressable onPress={clearAll} hitSlop={HIT_SLOP_MD_VALUE}>
               <Text style={[styles.clearBtn, { color: theme.semantic.primary }]}>Clear all</Text>
             </Pressable>
           )}

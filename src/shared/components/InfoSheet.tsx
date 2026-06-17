@@ -1,16 +1,16 @@
-import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useImperativeHandle } from 'react'
-import { Pressable, Text, View } from 'react-native'
 import {
-  BottomSheetModal,
   BottomSheetBackdrop,
+  BottomSheetModal,
   BottomSheetScrollView,
-  type BottomSheetBackdropProps
+  type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet'
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { getScrollContentPadding, modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { modalStyles, getScrollContentPadding } from '@/shared/theme/tokens/modal'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
 export type InfoSheetColors = {
   surface: string
@@ -32,6 +32,7 @@ type Props = {
   children: React.ReactNode
   showCloseButton?: boolean
   closeButtonText?: string
+  /** Fixed snap points - defaults to ['40%'] for reliability */
   snapPoints?: string[]
 }
 
@@ -45,18 +46,19 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
       children,
       showCloseButton = true,
       closeButtonText = 'Got it',
-      snapPoints: customSnapPoints
+      snapPoints: customSnapPoints,
     },
     ref
   ) => {
     const bottomSheetRef = useRef<BottomSheetModal>(null)
     const insets = useSafeAreaInsets()
-    const snapPoints = useMemo(() => customSnapPoints || ['50%'], [customSnapPoints])
+    // Always use fixed snap points - dynamic sizing is unreliable
+    const snapPoints = customSnapPoints ?? ['40%']
 
     // Expose present/dismiss methods
     useImperativeHandle(ref, () => ({
       present: () => bottomSheetRef.current?.present(),
-      dismiss: () => bottomSheetRef.current?.dismiss()
+      dismiss: () => bottomSheetRef.current?.dismiss(),
     }))
 
     // Present/dismiss based on visible prop
@@ -76,12 +78,7 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
     // Backdrop
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          opacity={0.5}
-        />
+        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
       ),
       []
     )
@@ -90,7 +87,12 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
     const renderHandle = useCallback(
       () => (
         <View style={modalStyles.dragHandleContainer}>
-          <View style={[modalStyles.dragHandle, { backgroundColor: colors.textSecondary, opacity: 0.4 }]} />
+          <View
+            style={[
+              modalStyles.dragHandle,
+              { backgroundColor: colors.textSecondary, opacity: 0.4 },
+            ]}
+          />
         </View>
       ),
       [colors.textSecondary]
@@ -102,15 +104,22 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         handleComponent={renderHandle}
-        backgroundStyle={[modalStyles.modal, { backgroundColor: colors.surface }]}
+        backgroundStyle={[
+          modalStyles.modal,
+          {
+            backgroundColor: colors.surface,
+            borderWidth: 0,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+        ]}
         enablePanDownToClose
         onDismiss={handleDismiss}
       >
         <BottomSheetScrollView
-          style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: spacing.xl,
-            paddingBottom: getScrollContentPadding(insets.bottom)
+            paddingBottom: getScrollContentPadding(insets.bottom),
           }}
         >
           {/* Title */}
@@ -119,7 +128,7 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
               fontSize: fontSize.lg,
               fontWeight: fontWeight.bold,
               color: colors.text,
-              marginBottom: spacing.lg
+              marginBottom: spacing.lg,
             }}
           >
             {title}
@@ -134,7 +143,7 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
               onPress={onClose}
               style={[
                 modalStyles.saveButton,
-                { backgroundColor: colors.surfaceAlt, marginTop: spacing.lg }
+                { backgroundColor: colors.surfaceAlt, marginTop: spacing.lg },
               ]}
             >
               <Text style={[modalStyles.saveButtonText, { color: colors.text }]}>

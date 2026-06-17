@@ -2,6 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { OPACITY_PRESSED } from '@/shared/theme/tokens/buttons'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
@@ -86,7 +87,7 @@ export function EmptyState({
           onPress={action.onPress}
           style={({ pressed }) => [
             styles.actionButton,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
+            { backgroundColor: colors.primary, opacity: pressed ? OPACITY_PRESSED : 1 },
           ]}
         >
           <Text style={[styles.actionLabel, { color: colors.onPrimary }]}>

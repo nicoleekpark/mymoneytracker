@@ -5,6 +5,7 @@
 
 import type { CategoryIndex } from '@/shared/config/categories.index'
 import { uuid } from '@/shared/utils/uuid'
+import { toLocalDateString } from '@/shared/utils/date'
 import type { UUID } from '@/core/domain/common/uuid'
 import type { AddTransactionInput, Transaction } from '@/core/domain/transaction'
 import { createTransaction, buildTxKey } from '@/core/domain/transaction'
@@ -132,8 +133,8 @@ export async function getTransactionsInRange(
   const to = toDate ?? now
   const from = fromDate ?? new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
 
-  const fromStr = from.toISOString().slice(0, 10)
-  const toStr = to.toISOString().slice(0, 10)
+  const fromStr = toLocalDateString(from)
+  const toStr = toLocalDateString(to)
 
   return transactionRepository.listInDateRange(fromStr, toStr, limit)
 }

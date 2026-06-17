@@ -3,6 +3,7 @@ import type { Transaction } from '@/core/domain/transaction'
 import { formatCompactUsd } from '@/shared/format/currency'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
+import { getTodayYMD } from '@/shared/utils/date'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import type { BottomSheetModal } from '@gorhom/bottom-sheet'
@@ -107,7 +108,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay, manual
     return { first: firstWeekdayIndex(year, month), dim: getDaysInMonth(year, month) }
   }, [year, month])
 
-  const todayYMD = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const todayYMD = useMemo(() => getTodayYMD(), [])
 
   // Fetch transactions when a day is selected
   useEffect(() => {
@@ -343,8 +344,9 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay, manual
       ))}
 
 
-      {/* Day Detail Bottom Sheet */}
+      {/* Day Detail Bottom Sheet - key forces remount on day change for fresh sizing */}
       <DayDetailSheet
+        key={selectedDay?.ymd ?? 'none'}
         ref={bottomSheetRef}
         selectedDay={selectedDay}
         transactions={transactions}

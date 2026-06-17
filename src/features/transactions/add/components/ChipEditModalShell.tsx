@@ -6,6 +6,7 @@
  */
 
 import { useHoHTheme } from '@/shared/providers'
+import { HIT_SLOP_LG_VALUE } from '@/shared/theme/tokens/buttons'
 import { chipEditStyles, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import React from 'react'
 import {
@@ -39,7 +40,7 @@ export function ChipEditModalShell({ visible, title, onClose, children }: Props)
           {/* Header */}
           <View style={[chipEditStyles.header, { borderBottomColor: theme.semantic.border }]}>
             <Text style={[chipEditStyles.headerTitle, { color: theme.semantic.text }]}>{title}</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
+            <Pressable onPress={onClose} hitSlop={HIT_SLOP_LG_VALUE}>
               <Text style={[chipEditStyles.headerDone, { color: theme.semantic.primary }]}>Done</Text>
             </Pressable>
           </View>

@@ -5,9 +5,10 @@
  * - Tap: Opens menu with circular buttons stacked vertically
  * - Shows dimmed backdrop when menu is open
  * - Options appear above the main FAB with labels on the left
+ * - Supports inline "Saved ✓" success state (Option D feedback)
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Modal,
   Pressable,
@@ -21,6 +22,11 @@ import Animated, {
   FadeOut,
   FadeInUp,
   FadeOutDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  withSpring,
 } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useHoHTheme } from '@/shared/providers'
@@ -32,6 +38,8 @@ import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 type SaveFABProps = {
   disabled?: boolean
   bottomOffset?: number
+  /** Show success state ("Saved ✓") instead of normal checkmark */
+  saved?: boolean
   onSaveAndClose: () => void
   onSaveAndNew: () => void
   onSaveAsDraft: () => void
@@ -44,6 +52,7 @@ const OPTION_SIZE = spacing['3xl'] // 48
 export function SaveFAB({
   disabled,
   bottomOffset = spacing.xl,
+  saved,
   onSaveAndClose,
   onSaveAndNew,
   onSaveAsDraft,
@@ -51,8 +60,39 @@ export function SaveFAB({
   const theme = useHoHTheme()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  // Animation for success state
+  const scale = useSharedValue(1)
+  const labelOpacity = useSharedValue(0)
+  const labelTranslateX = useSharedValue(20)
+
+  useEffect(() => {
+    if (saved) {
+      // Pop animation on success
+      scale.value = withSequence(
+        withSpring(1.15, { damping: 8, stiffness: 400 }),
+        withSpring(1, { damping: 10, stiffness: 300 })
+      )
+      // Fade in label
+      labelOpacity.value = withTiming(1, { duration: 200 })
+      labelTranslateX.value = withSpring(0, { damping: 12, stiffness: 300 })
+    } else {
+      scale.value = 1
+      labelOpacity.value = 0
+      labelTranslateX.value = 20
+    }
+  }, [saved, scale, labelOpacity, labelTranslateX])
+
+  const animatedFABStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
+
+  const animatedLabelStyle = useAnimatedStyle(() => ({
+    opacity: labelOpacity.value,
+    transform: [{ translateX: labelTranslateX.value }],
+  }))
+
   const handleFABPress = () => {
-    if (disabled) return
+    if (disabled || saved) return
     setMenuOpen(true)
   }
 
@@ -77,23 +117,38 @@ export function SaveFAB({
 
   return (
     <>
-      {/* Main FAB Button */}
-      <TouchableOpacity
-        onPress={handleFABPress}
-        activeOpacity={0.8}
-        disabled={disabled}
-        style={[
-          styles.fabMain,
-          {
-            bottom: bottomOffset,
-            backgroundColor: disabled
-              ? theme.semantic.primary + '60'
-              : theme.semantic.primary,
-          },
-        ]}
-      >
-        <FontAwesome name="check" size={spacing.xl} color={theme.semantic.onPrimary} />
-      </TouchableOpacity>
+      {/* Main FAB Button - shows success state when saved */}
+      <View style={[styles.fabContainer, { bottom: bottomOffset }]}>
+        {/* "Saved" label that appears on success */}
+        <Animated.Text
+          style={[
+            styles.savedLabel,
+            { color: theme.semantic.success },
+            animatedLabelStyle,
+          ]}
+        >
+          Saved
+        </Animated.Text>
+        <Animated.View style={animatedFABStyle}>
+          <TouchableOpacity
+            onPress={handleFABPress}
+            activeOpacity={0.8}
+            disabled={disabled || saved}
+            style={[
+              styles.fabMain,
+              {
+                backgroundColor: saved
+                  ? theme.semantic.success
+                  : disabled
+                  ? theme.semantic.primary + '60'
+                  : theme.semantic.primary,
+              },
+            ]}
+          >
+            <FontAwesome name="check" size={spacing.xl} color={theme.semantic.onPrimary} />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
 
       {/* Menu Modal */}
       <Modal
@@ -170,9 +225,18 @@ export function SaveFAB({
 }
 
 const styles = StyleSheet.create({
-  fabMain: {
+  fabContainer: {
     position: 'absolute',
     right: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  savedLabel: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+  },
+  fabMain: {
     width: MAIN_SIZE,
     height: MAIN_SIZE,
     borderRadius: radius.full,

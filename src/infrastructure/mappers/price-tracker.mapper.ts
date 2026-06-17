@@ -8,6 +8,7 @@ import type {
   TrackedItem,
   TransactionItem,
 } from '@/core/domain/price-tracker/price-tracker.types'
+import { toLocalISOString } from '@/shared/utils/date'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Row Types (snake_case to match database columns)
@@ -175,7 +176,7 @@ export function pricePointToRow(pp: PricePoint): Omit<PricePointRow, 'created_at
     store_id: pp.storeId,
     price_cents: pp.priceCents,
     quantity: pp.quantity,
-    occurred_at: pp.occurredAt.toISOString(),
+    occurred_at: toLocalISOString(pp.occurredAt),
     transaction_id: pp.transactionId ?? null,
     note: pp.note ?? null,
   }

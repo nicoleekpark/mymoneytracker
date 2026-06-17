@@ -201,14 +201,21 @@ export default function TransactionsScreen() {
     }
   }, [])
 
-  // focusDate로 들어오면 query 자동 초기화
+  // focusDate로 들어오면 query와 filters 자동 초기화
   useEffect(() => {
     if (!focusDate) return
-    if (query.length === 0 && debouncedQuery.length === 0) return
 
     LayoutAnimation.easeInEaseOut()
-    setQuery('')
-    setDebouncedQuery('')
+    // Clear search query
+    if (query.length > 0 || debouncedQuery.length > 0) {
+      setQuery('')
+      setDebouncedQuery('')
+    }
+    // Clear filters (except showDrafts which is controlled by params)
+    setFilters((prev) => ({
+      ...DEFAULT_FILTERS,
+      showDrafts: prev.showDrafts,
+    }))
     didAutoScrollRef.current = false
   }, [focusDate])
 

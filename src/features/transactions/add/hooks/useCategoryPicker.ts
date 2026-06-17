@@ -46,6 +46,7 @@ export type CategoryPickerState = Readonly<{
   openSubCategory: () => void
   closeSubCategory: () => void
   chooseCategory: (cat: (typeof CATEGORIES)[number]) => void
+  chooseCategoryWithSub: (cat: (typeof CATEGORIES)[number], subCategoryKey?: string) => void
   chooseSubFromSearch: (
     cat: (typeof CATEGORIES)[number],
     sub: (typeof CATEGORIES)[number]['subCategories'][number]
@@ -169,6 +170,21 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
     [type]
   )
 
+  // Atomic method to set both category and subcategory in one call
+  // Used by quick chips to avoid stale closure issues
+  const chooseCategoryWithSub = useCallback(
+    (cat: (typeof CATEGORIES)[number], subCategoryKey?: string) => {
+      if (subCategoryKey) {
+        setCategoryRef({ type, categoryKey: cat.key, subCategoryKey })
+      } else {
+        setCategoryRef({ type, categoryKey: cat.key })
+      }
+      setShowCategoryModal(false)
+      setCategoryQuery('')
+    },
+    [type]
+  )
+
   const chooseSubFromSearch = useCallback(
     (cat: (typeof CATEGORIES)[number], sub: (typeof CATEGORIES)[number]['subCategories'][number]) => {
       setCategoryRef({ type, categoryKey: cat.key, subCategoryKey: sub.key })
@@ -237,6 +253,7 @@ export function useCategoryPicker(type: TransactionType): CategoryPickerState {
     openSubCategory,
     closeSubCategory,
     chooseCategory,
+    chooseCategoryWithSub,
     chooseSubFromSearch,
     chooseSubCategory,
     reopenCategoryFromSub,

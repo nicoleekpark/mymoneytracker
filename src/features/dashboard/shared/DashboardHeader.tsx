@@ -9,6 +9,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
+import { HIT_SLOP_MD } from '@/shared/theme/tokens/buttons'
 import {
   dashboardStyles,
   SCOPE_OPTIONS,
@@ -158,7 +159,7 @@ export function DashboardHeader({
               <Pressable
                 onPress={onPrev}
                 disabled={!canPrev}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={HIT_SLOP_MD}
                 style={[dashboardStyles.periodNavArrow, { opacity: canPrev ? 1 : 0.2 }]}
               >
                 <CategoryIcon name="chevron-left" size={18} color={colors.textSecondary} />
@@ -171,7 +172,7 @@ export function DashboardHeader({
               <Pressable
                 onPress={onNext}
                 disabled={!canNext}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={HIT_SLOP_MD}
                 style={[dashboardStyles.periodNavArrow, { opacity: canNext ? 1 : 0.2 }]}
               >
                 <CategoryIcon name="chevron-right" size={18} color={colors.textSecondary} />
@@ -192,7 +193,7 @@ export function DashboardHeader({
           {!isCurrent && showNav && scopeTabsProps.onToday ? (
             <Pressable
               onPress={scopeTabsProps.onToday}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={HIT_SLOP_MD}
               style={dashboardStyles.todayButton}
             >
               <Text style={[dashboardStyles.todayButtonText, { color: colors.textSecondary }]}>

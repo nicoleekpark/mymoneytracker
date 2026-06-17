@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router'
+import { useHoHTheme } from '@/shared/providers'
 
 /**
  * Add Transaction Stack Layout
@@ -7,6 +8,8 @@ import { Stack } from 'expo-router'
  * Child screens slide from right (like Notifications).
  */
 export default function AddTransactionLayout() {
+  const { semantic } = useHoHTheme()
+
   return (
     <Stack
       screenOptions={{
@@ -14,6 +17,8 @@ export default function AddTransactionLayout() {
         animation: 'slide_from_right',
         gestureEnabled: true,
         gestureDirection: 'horizontal',
+        // Remove iOS card shadow that causes black line
+        contentStyle: { backgroundColor: semantic.surface },
       }}
     >
       <Stack.Screen

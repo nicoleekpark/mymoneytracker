@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
 
 import { useHoHTheme } from '@/shared/providers'
+import { HIT_SLOP_MD } from '@/shared/theme/tokens/buttons'
 
 import type { Period, Scope } from '../types'
 import { getMaxYearMonth, getMonthNameFull } from '../utils'
@@ -90,7 +91,7 @@ export function DashboardPeriodPicker(props: Props) {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Select {scope === 'year' ? 'Year' : 'Month'}</Text>
-            <Pressable onPress={handleDone} style={styles.doneBtn}>
+            <Pressable onPress={handleDone} hitSlop={HIT_SLOP_MD} style={styles.doneBtn}>
               <Text style={styles.doneBtnText}>Done</Text>
             </Pressable>
           </View>

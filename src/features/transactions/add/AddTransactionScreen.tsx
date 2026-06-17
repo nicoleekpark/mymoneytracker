@@ -31,6 +31,7 @@ import {
   MODAL_ROW_HEIGHT,
   modalStyles,
 } from '@/shared/theme/tokens/modal'
+import { HIT_SLOP_LG_VALUE, HIT_SLOP_MD_VALUE } from '@/shared/theme/tokens/buttons'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -109,7 +110,10 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
   // Track if we're editing an existing transaction
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
 
-  // Local toast state (positioned above CTA bar)
+  // Inline success state for CTA bar (Option D feedback)
+  const [saveSucceeded, setSaveSucceeded] = useState(false)
+
+  // Local toast state (positioned above CTA bar) - for errors only
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastKey, setToastKey] = useState(0)
 
@@ -673,15 +677,12 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       // Invalidate dashboard data so it refreshes when modal closes
       useDataRefreshStore.getState().invalidateTransactions()
 
-      // Show toast then close modal
-      const toastMsg = editingTransaction
-        ? `$${amount.amountDisplay} updated`
-        : `$${amount.amountDisplay} added`
-      showToast(toastMsg)
+      // Show inline success state then close modal
+      setSaveSucceeded(true)
       if (navigationTimeoutRef.current) {
         clearTimeout(navigationTimeoutRef.current)
       }
-      navigationTimeoutRef.current = setTimeout(() => router.back(), 800)
+      navigationTimeoutRef.current = setTimeout(() => router.back(), 600)
     } catch (e: unknown) {
       logError('AddTransaction', e)
       const message = e instanceof Error ? e.message : 'Save failed'
@@ -722,12 +723,12 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       addDraft(draftData)
     }
 
-    // Show toast then close modal
-    showToast('Saved as draft')
+    // Show inline success state then close modal
+    setSaveSucceeded(true)
     if (navigationTimeoutRef.current) {
       clearTimeout(navigationTimeoutRef.current)
     }
-    navigationTimeoutRef.current = setTimeout(() => router.back(), 800)
+    navigationTimeoutRef.current = setTimeout(() => router.back(), 600)
   }
 
   // Reset form for "Add Another"
@@ -1051,13 +1052,9 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
       // Find the full category object and select it
       const fullCategory = CATEGORIES.find((c) => c.key === chip.key)
       if (fullCategory) {
-        if (chip.subCategoryKey) {
-          // For subcategory chips, set both category and subcategory
-          category.chooseCategory(fullCategory)
-          category.chooseSubCategory(chip.subCategoryKey)
-        } else {
-          category.chooseCategory(fullCategory)
-        }
+        // Use atomic method to set both category and subcategory in one call
+        // This avoids stale closure issues with sequential calls
+        category.chooseCategoryWithSub(fullCategory, chip.subCategoryKey)
         triggerHighlight('category')
       }
     } else if (chip.type === 'payment') {
@@ -1101,7 +1098,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={onCancel} hitSlop={12} style={styles.cancelButton}>
+        <Pressable onPress={onCancel} hitSlop={HIT_SLOP_LG_VALUE} style={styles.cancelButton}>
           <Text style={[styles.cancelText, { color: theme.semantic.textSecondary }]}>Cancel</Text>
         </Pressable>
       </View>
@@ -1278,7 +1275,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                 {feeCents > 0 && (
                   <Pressable
                     onPress={() => setFeeCents(0)}
-                    hitSlop={8}
+                    hitSlop={HIT_SLOP_MD_VALUE}
                     style={styles.clearButton}
                   >
                     <FontAwesome
@@ -1334,7 +1331,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                 )}
               </Pressable>
               {account.accountKey && (
-                <Pressable onPress={account.clearAccount} hitSlop={8} style={styles.clearButton}>
+                <Pressable onPress={account.clearAccount} hitSlop={HIT_SLOP_MD_VALUE} style={styles.clearButton}>
                   <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
                 </Pressable>
               )}
@@ -1382,7 +1379,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               {toAccountKey && (
                 <Pressable
                   onPress={() => setToAccountKey(null)}
-                  hitSlop={8}
+                  hitSlop={HIT_SLOP_MD_VALUE}
                   style={styles.clearButton}
                 >
                   <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
@@ -1485,8 +1482,9 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
             </View>
             <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
 
-            {/* Category (optional) */}
-            <View
+            {/* Category (optional) - whole row is tappable */}
+            <Pressable
+              onPress={category.navigateToCategorySelection}
               style={[
                 styles.fieldRow,
                 styles.fieldRowNoBorder,
@@ -1503,10 +1501,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               >
                 Category <Text style={styles.optionalLabel}>(optional)</Text>
               </Text>
-              <Pressable
-                onPress={category.navigateToCategorySelection}
-                style={styles.fieldValueTouchable}
-              >
+              <View style={styles.fieldValueTouchable}>
                 {categoryDisplay ? (
                   <View style={styles.fieldValueRow}>
                     <CategoryIcon
@@ -1523,13 +1518,13 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                     Add category
                   </Text>
                 )}
-              </Pressable>
+              </View>
               {categoryDisplay && (
-                <Pressable onPress={category.resetCategory} hitSlop={8} style={styles.clearButton}>
+                <Pressable onPress={(e) => { e.stopPropagation(); category.resetCategory(); }} hitSlop={HIT_SLOP_MD_VALUE} style={styles.clearButton}>
                   <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
                 </Pressable>
               )}
-            </View>
+            </Pressable>
 
             {/* Category chips */}
             {categoryChips.length > 0 && (
@@ -1569,8 +1564,9 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
             )}
             <View style={[styles.sectionDivider, { backgroundColor: theme.semantic.border }]} />
 
-            {/* Paid with */}
-            <View
+            {/* Paid with - whole row is tappable */}
+            <Pressable
+              onPress={account.navigateToAccountSelection}
               style={[
                 styles.fieldRow,
                 styles.fieldRowNoBorder,
@@ -1592,10 +1588,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               >
                 {type === 'expense' ? 'Paid with' : 'Account'}
               </Text>
-              <Pressable
-                onPress={account.navigateToAccountSelection}
-                style={styles.fieldValueTouchable}
-              >
+              <View style={styles.fieldValueTouchable}>
                 {account.selectedAccount ? (
                   <Text style={[styles.fieldValue, { color: theme.semantic.text }]}>
                     {account.accountDisplay}
@@ -1605,13 +1598,13 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                     Add account
                   </Text>
                 )}
-              </Pressable>
+              </View>
               {account.selectedAccount && (
-                <Pressable onPress={account.clearAccount} hitSlop={8} style={styles.clearButton}>
+                <Pressable onPress={(e) => { e.stopPropagation(); account.clearAccount(); }} hitSlop={HIT_SLOP_MD_VALUE} style={styles.clearButton}>
                   <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
                 </Pressable>
               )}
-            </View>
+            </Pressable>
 
             {/* Account chips */}
             {accountChips.length > 0 && (
@@ -1886,6 +1879,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         amountDisplay={amount.amountDisplay}
         canSave={canSave}
         bottomInset={0}
+        saved={saveSucceeded}
         onSave={onSave}
         onSaveAndNew={onSaveAndAddAnother}
         onSaveDraft={onSaveDraft}

@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
 
 import { SPRING_CONFIG, SCALE_VALUES } from '@/shared/theme/tokens/animation'
+import { HIT_SLOP_MD } from '@/shared/theme/tokens/buttons'
 import type { DashboardMode } from '../types'
 import type { DashboardStyles } from './DashboardScreen.styles'
 
@@ -38,6 +39,7 @@ function AnimatedTab({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      hitSlop={HIT_SLOP_MD}
       style={[selected ? styles.tabSelected : styles.tab, animatedStyle]}
       accessibilityRole="tab"
       accessibilityState={{ selected }}

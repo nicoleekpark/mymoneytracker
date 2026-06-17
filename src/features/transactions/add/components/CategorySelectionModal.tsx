@@ -1,6 +1,7 @@
 import { CATEGORIES } from '@/shared/config/categories.config'
 import { useHoHTheme } from '@/shared/providers'
 import { CategoryIcon } from '@/shared/components'
+import { HIT_SLOP_LG_VALUE } from '@/shared/theme/tokens/buttons'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -417,11 +418,11 @@ export function CategorySelectionModal({
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
           {selectedCategory ? (
-            <Pressable onPress={handleBack} hitSlop={10}>
+            <Pressable onPress={handleBack} hitSlop={HIT_SLOP_LG_VALUE}>
               <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Back</Text>
             </Pressable>
           ) : (
-            <Pressable onPress={handleCancel} hitSlop={10}>
+            <Pressable onPress={handleCancel} hitSlop={HIT_SLOP_LG_VALUE}>
               <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Cancel</Text>
             </Pressable>
           )}

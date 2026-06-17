@@ -1,4 +1,5 @@
 import { useHoHTheme } from '@/shared/providers'
+import { HIT_SLOP_LG_VALUE } from '@/shared/theme/tokens/buttons'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -86,13 +87,13 @@ export function DateTimePickerModal({
 
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
-          <Pressable onPress={handleCancel} hitSlop={10}>
+          <Pressable onPress={handleCancel} hitSlop={HIT_SLOP_LG_VALUE}>
             <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Cancel</Text>
           </Pressable>
 
           <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Date & Time</Text>
 
-          <Pressable onPress={handleConfirm} hitSlop={10}>
+          <Pressable onPress={handleConfirm} hitSlop={HIT_SLOP_LG_VALUE}>
             <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Done</Text>
           </Pressable>
         </View>

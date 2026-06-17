@@ -7,6 +7,7 @@
 
 import { CategoryIcon } from '@/shared/components'
 import { useHoHTheme } from '@/shared/providers'
+import { HIT_SLOP_MD_VALUE } from '@/shared/theme/tokens/buttons'
 import { MODAL_ROW_HEIGHT } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -238,7 +239,7 @@ function DraggableRow({
 
         {/* Remove button */}
         {showRemoveButton && (
-          <Pressable onPress={handleRemove} hitSlop={8} style={styles.removeBtn}>
+          <Pressable onPress={handleRemove} hitSlop={HIT_SLOP_MD_VALUE} style={styles.removeBtn}>
             <FontAwesome name="times-circle" size={18} color={theme.semantic.danger} />
           </Pressable>
         )}

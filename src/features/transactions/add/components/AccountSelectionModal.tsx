@@ -9,10 +9,11 @@ import type { Account } from '@/core/domain/account'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { usePaymentFrequencyStore } from '@/shared/store'
+import { HIT_SLOP_LG_VALUE, HIT_SLOP_MD_VALUE } from '@/shared/theme/tokens/buttons'
+import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
-import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React, { useMemo } from 'react'
 import {
@@ -190,7 +191,7 @@ export function AccountSelectionModal({
               },
             ]}
           >
-            <Pressable onPress={onClose} hitSlop={10}>
+            <Pressable onPress={onClose} hitSlop={HIT_SLOP_LG_VALUE}>
               <Text style={[styles.headerCancel, { color: theme.semantic.textSecondary }]}>
                 Cancel
               </Text>
@@ -222,7 +223,7 @@ export function AccountSelectionModal({
                 blurOnSubmit={false}
               />
               {accountQuery.length > 0 && (
-                <Pressable onPress={() => onQueryChange('')} hitSlop={8}>
+                <Pressable onPress={() => onQueryChange('')} hitSlop={HIT_SLOP_MD_VALUE}>
                   <FontAwesome name="times-circle" size={16} color={theme.semantic.textSecondary} />
                 </Pressable>
               )}
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: fontSize.md,
-    fontWeight: fontWeight.normal,  // Normal weight for lighter placeholders
+    fontWeight: fontWeight.normal, // Normal weight for lighter placeholders
     paddingVertical: spacing.xs,
   },
   sectionHeader: {

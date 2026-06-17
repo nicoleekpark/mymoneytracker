@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 
 import { useHoHTheme } from '@/shared/providers'
 import { SPRING_CONFIG, SCALE_VALUES } from '@/shared/theme/tokens/animation'
+import { HIT_SLOP_MD } from '@/shared/theme/tokens/buttons'
 
 import type { Scope } from '../types'
 import { createScopeChipsStyles } from './ScopeChips.styles'
@@ -51,6 +52,7 @@ function AnimatedChip({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      hitSlop={HIT_SLOP_MD}
       style={[styles.chip, isActive && styles.chipActive, animatedStyle]}
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}

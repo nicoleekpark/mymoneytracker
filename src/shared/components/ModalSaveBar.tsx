@@ -15,6 +15,7 @@ import { Pressable, Text } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useHoHTheme } from '@/shared/providers'
 import { useKeyboardOffset } from '@/shared/hooks'
+import { OPACITY_PRESSED, OPACITY_DISABLED } from '@/shared/theme/tokens/buttons'
 import { modalStyles } from '@/shared/theme/tokens/modal'
 
 type Props = {
@@ -22,11 +23,6 @@ type Props = {
   disabled?: boolean
   bottomInset: number
   onPress: () => void
-}
-
-const OPACITY = {
-  pressed: 0.7,
-  disabled: 0.4,
 }
 
 export function ModalSaveBar({ label, disabled = false, bottomInset, onPress }: Props) {
@@ -42,7 +38,7 @@ export function ModalSaveBar({ label, disabled = false, bottomInset, onPress }: 
           modalStyles.ctaPrimaryButton,
           {
             backgroundColor: disabled ? theme.semantic.surfaceAlt : theme.semantic.primary,
-            opacity: pressed && !disabled ? OPACITY.pressed : 1,
+            opacity: pressed && !disabled ? OPACITY_PRESSED : 1,
           },
         ]}
       >

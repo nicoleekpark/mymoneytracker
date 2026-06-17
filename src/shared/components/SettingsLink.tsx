@@ -2,6 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome'
 import React from 'react'
 import { Pressable, Text } from 'react-native'
 
+import { OPACITY_PRESSED_MUTED } from '@/shared/theme/tokens/buttons'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
@@ -30,7 +31,7 @@ export function SettingsLink({ label, onPress, color }: Props) {
         gap: spacing.sm,
         paddingVertical: spacing.md,
         marginTop: spacing.lg,
-        opacity: pressed ? 0.6 : 1,
+        opacity: pressed ? OPACITY_PRESSED_MUTED : 1,
       })}
     >
       <FontAwesome name="cog" size={14} color={color} />
