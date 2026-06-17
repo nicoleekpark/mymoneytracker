@@ -138,7 +138,7 @@ export default function NotificationsScreen() {
     return groups
   }
 
-  // Helper to group actual drafts by time period
+  // Helper to group actual drafts by transaction date (occurredAt)
   const groupDraftsByTime = (drafts: DraftTransaction[]): Record<DraftTimeGroup, DraftTransaction[]> => {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -150,13 +150,13 @@ export default function NotificationsScreen() {
       older: [],
     }
 
-    // Sort by createdAt descending (most recent first)
+    // Sort by occurredAt descending (most recent transaction first)
     const sorted = [...drafts].sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
     )
 
     sorted.forEach((draft) => {
-      const date = new Date(draft.createdAt)
+      const date = new Date(draft.occurredAt)
       if (date >= today) {
         groups.today.push(draft)
       } else if (date >= weekAgo) {
@@ -226,7 +226,7 @@ export default function NotificationsScreen() {
 
   // Navigate to transactions with drafts filter enabled
   const handleGoToTransactions = () => {
-    router.push('/transactions?showDrafts=only')
+    router.push('/transactions?draftMode=only')
   }
 
   // Render icon
@@ -302,7 +302,7 @@ export default function NotificationsScreen() {
   const renderDraftRow = (draft: DraftTransaction) => {
     const amount = draft.amountCents > 0 ? formatCurrency(draft.amountCents / 100) : null
     const description = draft.item || draft.merchant || 'Untitled draft'
-    const timeAgo = formatTime(draft.createdAt)
+    const timeAgo = formatTime(draft.occurredAt)
 
     return (
       <Pressable

@@ -143,10 +143,10 @@ function findScrollTarget(sections: DaySection[], focusDate?: string) {
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
-  const params = useLocalSearchParams<{ focusDate?: string; accountId?: string; showDrafts?: string }>()
+  const params = useLocalSearchParams<{ focusDate?: string; accountId?: string; draftMode?: string }>()
   const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
   const accountIdFilter = typeof params.accountId === 'string' ? params.accountId : undefined
-  const showDraftsOnly = params.showDrafts === 'only'
+  const draftModeParam = params.draftMode as 'only' | 'all' | undefined
 
   const listRef = useRef<SectionList<TransactionOrDraft, DaySection>>(null)
   const didAutoScrollRef = useRef(false)
@@ -162,16 +162,18 @@ export default function TransactionsScreen() {
   // Initialize filters - if coming from drafts FAB, show drafts by default
   const [filters, setFilters] = useState<TransactionFilters>(() => ({
     ...DEFAULT_FILTERS,
-    showDrafts: showDraftsOnly,
+    draftMode: draftModeParam ?? 'hidden',
   }))
 
-  // Sync filter state when showDrafts param changes (e.g., tapping draft button while already on page)
+  // Sync filter state when draftMode param changes (e.g., tapping draft button while already on page)
   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      showDrafts: showDraftsOnly,
-    }))
-  }, [showDraftsOnly])
+    if (draftModeParam) {
+      setFilters((prev) => ({
+        ...prev,
+        draftMode: draftModeParam,
+      }))
+    }
+  }, [draftModeParam])
 
   // Drafts store
   const { drafts, loadDrafts, isLoaded: draftsLoaded } = useDraftsStore()
@@ -211,10 +213,10 @@ export default function TransactionsScreen() {
       setQuery('')
       setDebouncedQuery('')
     }
-    // Clear filters (except showDrafts which is controlled by params)
+    // Clear filters (except draftMode which may be controlled by params)
     setFilters((prev) => ({
       ...DEFAULT_FILTERS,
-      showDrafts: prev.showDrafts,
+      draftMode: prev.draftMode,
     }))
     didAutoScrollRef.current = false
   }, [focusDate])
@@ -257,7 +259,7 @@ export default function TransactionsScreen() {
 
   // Convert drafts to TransactionOrDraft format
   const draftsAsTransactions: TransactionOrDraft[] = useMemo(() => {
-    if (!filters.showDrafts) return []
+    if (filters.draftMode === 'hidden') return []
     return drafts.map((draft) => ({
       id: draft.id,
       key: `draft-${draft.id}`,
@@ -272,25 +274,22 @@ export default function TransactionsScreen() {
       category: draft.categoryRef,
       isDraft: true,
     } as TransactionOrDraft))
-  }, [filters.showDrafts, drafts, accounts])
+  }, [filters.draftMode, drafts, accounts])
 
-  // Merge transactions and drafts (only for timeline mode)
+  // All items - for 'all' and 'only' modes, drafts are shown separately at top
   const allItems: TransactionOrDraft[] = useMemo(() => {
-    if (!filters.showDrafts) return items
-    // In grouped mode, don't merge drafts into timeline - they'll be shown separately
-    if (filters.draftViewMode === 'grouped') return items
-    // In timeline mode, merge drafts into the list
-    return [...items, ...draftsAsTransactions]
-  }, [items, filters.showDrafts, filters.draftViewMode, draftsAsTransactions])
+    // Drafts are always shown separately at top (not merged into timeline)
+    return items
+  }, [items])
 
   // Apply all filters
   const filteredItems: TransactionOrDraft[] = useMemo(() => {
-    let result = allItems
-
-    // If showDraftsOnly mode (from FAB), only show drafts
-    if (showDraftsOnly && filters.showDrafts) {
-      result = result.filter(tx => tx.isDraft === true)
+    // If 'only' mode, we only show drafts (no regular transactions)
+    if (filters.draftMode === 'only') {
+      return []
     }
+
+    let result = allItems
 
     // Filter by accountId (from URL params)
     if (accountIdFilter) {
@@ -311,9 +310,9 @@ export default function TransactionsScreen() {
     }
 
     return result
-  }, [allItems, accountIdFilter, filters.types, filters.categoryKeys, showDraftsOnly, filters.showDrafts])
+  }, [allItems, accountIdFilter, filters.types, filters.categoryKeys, filters.draftMode])
 
-  // Build sections - add drafts section at top when in grouped mode
+  // Build sections - add drafts section at top when in 'only' or 'all' mode
   const sections = useMemo(() => {
     // Filter drafts by search query if present
     const q = debouncedQuery.trim().toLowerCase()
@@ -326,8 +325,9 @@ export default function TransactionsScreen() {
         })
       : draftsAsTransactions
 
-    // If showDraftsOnly mode, only show drafts (no timeline sections)
-    if (showDraftsOnly && filters.showDrafts && filteredDrafts.length > 0) {
+    // If 'only' mode, only show drafts section (no timeline)
+    if (filters.draftMode === 'only') {
+      if (filteredDrafts.length === 0) return []
       const draftsSection: DaySection = {
         key: 'drafts',
         dayTitle: `${filteredDrafts.length} pending`,
@@ -342,8 +342,8 @@ export default function TransactionsScreen() {
 
     const baseSections = buildDaySections(filteredItems, debouncedQuery)
 
-    // If grouped mode and showing drafts, prepend a drafts section
-    if (filters.showDrafts && filters.draftViewMode === 'grouped' && filteredDrafts.length > 0) {
+    // If 'all' mode, prepend a drafts section at top
+    if (filters.draftMode === 'all' && filteredDrafts.length > 0) {
       const draftsSection: DaySection = {
         key: 'drafts',
         dayTitle: `${filteredDrafts.length} pending`,
@@ -357,7 +357,7 @@ export default function TransactionsScreen() {
     }
 
     return baseSections
-  }, [filteredItems, debouncedQuery, filters.showDrafts, filters.draftViewMode, draftsAsTransactions, showDraftsOnly])
+  }, [filteredItems, debouncedQuery, filters.draftMode, draftsAsTransactions])
 
   // Get filtered account name for display
   const filteredAccountName = accountIdFilter ? accountNameById.get(accountIdFilter) : null
@@ -539,7 +539,7 @@ export default function TransactionsScreen() {
                 categoryKeys: filters.categoryKeys.filter((c) => c !== catKey),
               })
             } else if (chip.type === 'status') {
-              setFilters({ ...filters, showDrafts: false })
+              setFilters({ ...filters, draftMode: 'hidden' })
             }
           }
 

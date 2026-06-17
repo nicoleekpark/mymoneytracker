@@ -26,20 +26,18 @@ import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { modalStyles, MODAL_SNAP_FULL } from '@/shared/theme/tokens/modal'
 
 export type TransactionType = 'expense' | 'income' | 'transfer'
-export type DraftViewMode = 'grouped' | 'timeline'
+export type DraftMode = 'hidden' | 'only' | 'all'
 
 export type TransactionFilters = {
   types: TransactionType[]
   categoryKeys: string[]
-  showDrafts: boolean
-  draftViewMode: DraftViewMode
+  draftMode: DraftMode
 }
 
 export const DEFAULT_FILTERS: TransactionFilters = {
   types: [],
   categoryKeys: [],
-  showDrafts: false,
-  draftViewMode: 'timeline', // default: show drafts inline with dates
+  draftMode: 'hidden',
 }
 
 type TransactionFilterSheetProps = {
@@ -79,7 +77,7 @@ export function TransactionFilterSheet({
   )
 
   const activeCount =
-    filters.types.length + filters.categoryKeys.length + (filters.showDrafts ? 1 : 0)
+    filters.types.length + filters.categoryKeys.length + (filters.draftMode !== 'hidden' ? 1 : 0)
 
   // Tab bar height + some padding to ensure button is fully visible
   // const TAB_BAR_HEIGHT = 5
@@ -126,8 +124,8 @@ export function TransactionFilterSheet({
     onFiltersChange({ ...filters, categoryKeys: newCategories })
   }
 
-  const toggleDrafts = () => {
-    onFiltersChange({ ...filters, showDrafts: !filters.showDrafts })
+  const setDraftMode = (mode: DraftMode) => {
+    onFiltersChange({ ...filters, draftMode: mode })
   }
 
   const clearAll = () => {
@@ -253,119 +251,129 @@ export function TransactionFilterSheet({
               Drafts ({draftCount})
             </Text>
             <View style={styles.chipRow}>
+              {/* Hidden */}
               <Pressable
-                onPress={toggleDrafts}
+                onPress={() => setDraftMode('hidden')}
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: filters.showDrafts
-                      ? theme.semantic.warningSoft
-                      : theme.semantic.surfaceAlt,
-                    borderColor: filters.showDrafts
-                      ? theme.semantic.warning
-                      : theme.semantic.border,
+                    backgroundColor:
+                      filters.draftMode === 'hidden'
+                        ? theme.semantic.surfaceAlt
+                        : theme.semantic.surfaceAlt,
+                    borderColor:
+                      filters.draftMode === 'hidden'
+                        ? theme.semantic.text
+                        : theme.semantic.border,
                   },
                 ]}
               >
                 <FontAwesome
-                  name="eye"
+                  name="eye-slash"
                   size={12}
-                  color={filters.showDrafts ? theme.semantic.warning : theme.semantic.textSecondary}
+                  color={
+                    filters.draftMode === 'hidden'
+                      ? theme.semantic.text
+                      : theme.semantic.textSecondary
+                  }
                 />
                 <Text
                   style={[
                     styles.chipText,
-                    { color: filters.showDrafts ? theme.semantic.warning : theme.semantic.text },
+                    {
+                      color:
+                        filters.draftMode === 'hidden'
+                          ? theme.semantic.text
+                          : theme.semantic.textSecondary,
+                    },
                   ]}
                 >
-                  {filters.showDrafts ? 'Showing' : 'Hidden'}
+                  Hidden
+                </Text>
+              </Pressable>
+
+              {/* Only Drafts */}
+              <Pressable
+                onPress={() => setDraftMode('only')}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor:
+                      filters.draftMode === 'only'
+                        ? theme.semantic.warningSoft
+                        : theme.semantic.surfaceAlt,
+                    borderColor:
+                      filters.draftMode === 'only'
+                        ? theme.semantic.warning
+                        : theme.semantic.border,
+                  },
+                ]}
+              >
+                <FontAwesome
+                  name="file-text-o"
+                  size={12}
+                  color={
+                    filters.draftMode === 'only'
+                      ? theme.semantic.warning
+                      : theme.semantic.textSecondary
+                  }
+                />
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color:
+                        filters.draftMode === 'only'
+                          ? theme.semantic.warning
+                          : theme.semantic.textSecondary,
+                    },
+                  ]}
+                >
+                  Only Drafts
+                </Text>
+              </Pressable>
+
+              {/* All (with drafts at top) */}
+              <Pressable
+                onPress={() => setDraftMode('all')}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor:
+                      filters.draftMode === 'all'
+                        ? theme.semantic.primarySoft
+                        : theme.semantic.surfaceAlt,
+                    borderColor:
+                      filters.draftMode === 'all'
+                        ? theme.semantic.primary
+                        : theme.semantic.border,
+                  },
+                ]}
+              >
+                <FontAwesome
+                  name="list"
+                  size={12}
+                  color={
+                    filters.draftMode === 'all'
+                      ? theme.semantic.primary
+                      : theme.semantic.textSecondary
+                  }
+                />
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color:
+                        filters.draftMode === 'all'
+                          ? theme.semantic.primary
+                          : theme.semantic.textSecondary,
+                    },
+                  ]}
+                >
+                  All
                 </Text>
               </Pressable>
             </View>
-
-            {/* Draft View Mode - only show when drafts are visible */}
-            {filters.showDrafts && (
-              <View style={[styles.chipRow, { marginTop: spacing.sm }]}>
-                <Pressable
-                  onPress={() => onFiltersChange({ ...filters, draftViewMode: 'grouped' })}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor:
-                        filters.draftViewMode === 'grouped'
-                          ? theme.semantic.primarySoft
-                          : theme.semantic.surfaceAlt,
-                      borderColor:
-                        filters.draftViewMode === 'grouped'
-                          ? theme.semantic.primary
-                          : theme.semantic.border,
-                    },
-                  ]}
-                >
-                  <FontAwesome
-                    name="list"
-                    size={12}
-                    color={
-                      filters.draftViewMode === 'grouped'
-                        ? theme.semantic.primary
-                        : theme.semantic.textSecondary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.chipText,
-                      {
-                        color:
-                          filters.draftViewMode === 'grouped'
-                            ? theme.semantic.primary
-                            : theme.semantic.text,
-                      },
-                    ]}
-                  >
-                    Grouped at top
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => onFiltersChange({ ...filters, draftViewMode: 'timeline' })}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor:
-                        filters.draftViewMode === 'timeline'
-                          ? theme.semantic.primarySoft
-                          : theme.semantic.surfaceAlt,
-                      borderColor:
-                        filters.draftViewMode === 'timeline'
-                          ? theme.semantic.primary
-                          : theme.semantic.border,
-                    },
-                  ]}
-                >
-                  <FontAwesome
-                    name="calendar"
-                    size={12}
-                    color={
-                      filters.draftViewMode === 'timeline'
-                        ? theme.semantic.primary
-                        : theme.semantic.textSecondary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.chipText,
-                      {
-                        color:
-                          filters.draftViewMode === 'timeline'
-                            ? theme.semantic.primary
-                            : theme.semantic.text,
-                      },
-                    ]}
-                  >
-                    In timeline
-                  </Text>
-                </Pressable>
-              </View>
-            )}
           </View>
         )}
       </BottomSheetScrollView>
@@ -374,7 +382,7 @@ export function TransactionFilterSheet({
 }
 
 export function getActiveFilterCount(filters: TransactionFilters): number {
-  return filters.types.length + filters.categoryKeys.length + (filters.showDrafts ? 1 : 0)
+  return filters.types.length + filters.categoryKeys.length + (filters.draftMode !== 'hidden' ? 1 : 0)
 }
 
 export type ActiveFilterChip = {
@@ -404,7 +412,9 @@ export function getActiveFilterChips(filters: TransactionFilters): ActiveFilterC
   }
 
   // Drafts chip
-  if (filters.showDrafts) {
+  if (filters.draftMode === 'only') {
+    chips.push({ key: 'drafts', label: 'Only Drafts', type: 'status' })
+  } else if (filters.draftMode === 'all') {
     chips.push({ key: 'drafts', label: 'Drafts', type: 'status' })
   }
 
