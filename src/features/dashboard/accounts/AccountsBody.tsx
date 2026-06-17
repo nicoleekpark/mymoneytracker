@@ -1,6 +1,5 @@
-import { SectionHeader, SettingsLink, TrackingSince } from '@/shared/components'
+import { EmptyState, SectionHeader, SettingsLink, TrackingSince } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
-import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
@@ -582,57 +581,21 @@ export function AccountsBody({ colors, scope, period }: Props) {
 
   if (groups.length === 0) {
     return (
-      <>
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: spacing['3xl'],
-          }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.text,
-              marginBottom: spacing.sm,
-              textAlign: 'center',
-            }}
-          >
-            No accounts yet
-          </Text>
-          <Text
-            style={{
-              fontSize: fontSize.md,
-              color: colors.textSecondary,
-              textAlign: 'center',
-              marginBottom: spacing.lg,
-            }}
-          >
-            Add accounts to track your balances and activity.
-          </Text>
-          <Pressable
-            onPress={handleAddAccount}
-            style={{
-              backgroundColor: colors.text,
-              paddingHorizontal: spacing.xl,
-              paddingVertical: spacing.md,
-              borderRadius: radius.full,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize.md,
-                fontWeight: fontWeight.semibold,
-                color: colors.surface,
-              }}
-            >
-              Add Account
-            </Text>
-          </Pressable>
-        </View>
-      </>
+      <EmptyState
+        icon="bank"
+        title="No accounts yet"
+        description="Add accounts to track your balances and activity."
+        action={{
+          label: '+ Add Account',
+          onPress: handleAddAccount,
+        }}
+        colors={{
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          primary: colors.primary,
+          onPrimary: colors.surface,
+        }}
+      />
     )
   }
 

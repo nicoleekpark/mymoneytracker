@@ -14,6 +14,8 @@ import {
   View,
 } from 'react-native'
 
+import { useFocusEffect } from '@react-navigation/native'
+
 import { UNCATEGORIZED_KEY } from '@/core/domain/category'
 import {
   CategoryIcon,
@@ -120,8 +122,8 @@ function SavingsRateInfoSheet({
         text: colors.text,
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt,
+        primary: colors.primary,
       }}
-      snapPoints={['60%']}
     >
       {/* Description */}
       <Text
@@ -217,6 +219,15 @@ export function AllBody({ colors }: Props) {
   const [showAllExpense, setShowAllExpense] = useState(false)
   const [showAllIncome, setShowAllIncome] = useState(false)
   const [showSavingsInfo, setShowSavingsInfo] = useState(false)
+
+  // Close info sheet when navigating away to prevent stale state on return
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setShowSavingsInfo(false)
+      }
+    }, [])
+  )
 
   // Collapsible section states from persisted store
   // Net worth growth: needs 2+ months of data

@@ -1,16 +1,19 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import {
   BottomSheetBackdrop,
+  BottomSheetFooter,
   BottomSheetModal,
   BottomSheetScrollView,
   type BottomSheetBackdropProps,
+  type BottomSheetFooterProps,
 } from '@gorhom/bottom-sheet'
 import React, { forwardRef, useCallback, useMemo } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Transaction } from '@/core/domain/transaction/transaction.types'
 import { formatUsdInt } from '@/shared/format/currency'
-import { getScrollContentPadding, modalStyles } from '@/shared/theme/tokens/modal'
+import { modalStyles } from '@/shared/theme/tokens/modal'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { MONTH_NAMES_SHORT } from '../../utils'
@@ -75,9 +78,10 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
     },
     ref
   ) => {
-    // Single fixed snap point - dynamic calculation doesn't work well with BottomSheetModal
-    // because snapPoints are cached when sheet opens
-    const snapPoints = ['50%']
+    const insets = useSafeAreaInsets()
+    // Full height for transactions, compact for empty days
+    const hasTransactions = (selectedDay?.txCount ?? 0) > 0
+    const snapPoints = hasTransactions ? ['90%'] : ['30%']
 
     // Filter out Opening Balance and sort by absolute value (impact-first)
     const sortedTx = useMemo(() => {
@@ -109,14 +113,50 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
       [colors.textSecondary]
     )
 
+    // Footer with fixed "View all" button (only when there are transactions)
+    const renderFooter = useCallback(
+      (props: BottomSheetFooterProps) => {
+        if (!selectedDay || selectedDay.txCount === 0) return null
+
+        return (
+          <BottomSheetFooter {...props} bottomInset={0}>
+            <View
+              style={{
+                backgroundColor: colors.surface,
+                borderTopWidth: 1,
+                borderTopColor: colors.border,
+                paddingHorizontal: spacing.xl,
+                paddingTop: spacing.md,
+                paddingBottom: Math.max(insets.bottom, spacing.lg),
+              }}
+            >
+              <Pressable
+                onPress={onViewAll}
+                style={[modalStyles.saveButton, { backgroundColor: colors.primary }]}
+              >
+                <Text style={[modalStyles.saveButtonText, { color: '#fff' }]}>
+                  View all {selectedDay.txCount} transactions
+                </Text>
+              </Pressable>
+            </View>
+          </BottomSheetFooter>
+        )
+      },
+      [selectedDay, colors, insets.bottom, onViewAll]
+    )
+
     if (!selectedDay) return null
 
     return (
       <BottomSheetModal
         ref={ref}
+        index={0}
         snapPoints={snapPoints}
+        bottomInset={0}
+        enableDynamicSizing={false}
         backdropComponent={renderBackdrop}
         handleComponent={renderHandle}
+        footerComponent={renderFooter}
         backgroundStyle={[
           modalStyles.modal,
           {
@@ -127,35 +167,34 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
           },
         ]}
         enablePanDownToClose
+        onDismiss={onDismiss}
       >
+        {/* Header with Close button */}
+        <View style={[modalStyles.header, { borderBottomWidth: 0 }]}>
+          <Pressable onPress={onDismiss} hitSlop={12} style={modalStyles.cancelButton}>
+            <Text style={[modalStyles.cancelText, { color: colors.textSecondary }]}>Close</Text>
+          </Pressable>
+        </View>
+
+        {/* Title - Center aligned */}
+        <View style={{ paddingHorizontal: spacing.xl, marginBottom: spacing.md, alignItems: 'center' }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>
+            {formatDayLabel(selectedDay.ymd, selectedDay.dayNum)}
+          </Text>
+        </View>
+
         <BottomSheetScrollView
           contentContainerStyle={{
             paddingHorizontal: spacing.xl,
-            paddingBottom: getScrollContentPadding(0),
+            paddingBottom: spacing.xl,
           }}
         >
-          {/* Header: Date */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: spacing.md,
-            }}
-          >
-            <Text
-              style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}
-            >
-              {formatDayLabel(selectedDay.ymd, selectedDay.dayNum)}
-            </Text>
-          </View>
-
           {/* Content depends on whether there are transactions */}
           {selectedDay.txCount > 0 ? (
             <>
-              {/* Net - Same line layout */}
+              {/* Net - Center aligned */}
               <View
-                style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: spacing.lg }}
+                style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', marginBottom: spacing.lg }}
               >
                 <Text
                   style={{
@@ -246,7 +285,7 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                     marginBottom: spacing.md,
                   }}
                 >
-                  Top transactions
+                  Transactions
                 </Text>
 
                 {loadingTx ? (
@@ -307,21 +346,17 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                   </View>
                 )}
               </View>
-
-              {/* View All CTA */}
-              <Pressable
-                onPress={onViewAll}
-                style={[modalStyles.saveButton, { backgroundColor: colors.textSecondary + '10' }]}
-              >
-                <Text style={[modalStyles.saveButtonText, { color: colors.textSecondary }]}>
-                  View all {selectedDay.txCount} transactions →
-                </Text>
-              </Pressable>
             </>
           ) : (
             /* No transactions - clean centered view */
             <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, marginBottom: spacing.lg }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  color: colors.textSecondary,
+                  marginBottom: spacing.lg,
+                }}
+              >
                 No transactions
               </Text>
 

@@ -7,6 +7,7 @@ import { getTodayYMD } from '@/shared/utils/date'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import type { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { useFocusEffect } from '@react-navigation/native'
 
 import { getDaysInMonth } from '@/core/domain/transaction'
 import { parseYYYYMM } from '@/features/dashboard/utils/period.utils'
@@ -76,6 +77,16 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay, manual
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loadingTx, setLoadingTx] = useState(false)
   const bottomSheetRef = useRef<BottomSheetModal>(null)
+
+  // Dismiss sheet when navigating away to prevent stale state on return
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        bottomSheetRef.current?.dismiss()
+        setSelectedDay(null)
+      }
+    }, [])
+  )
 
   const map = useMemo(() => {
     const m = new Map<string, {

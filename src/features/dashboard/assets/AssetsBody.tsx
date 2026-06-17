@@ -5,6 +5,7 @@ import { MODAL_SNAP_HALF } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
+import { useFocusEffect } from '@react-navigation/native'
 import { router } from 'expo-router'
 import React, { useCallback, useMemo, useState } from 'react'
 import {
@@ -68,6 +69,7 @@ function LiquidityInfoSheet({
         text: colors.text,
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt,
+        primary: colors.primary,
       }}
       snapPoints={MODAL_SNAP_HALF}
     >
@@ -150,6 +152,7 @@ function RunwayInfoSheet({
         text: colors.text,
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt,
+        primary: colors.primary,
       }}
       snapPoints={MODAL_SNAP_HALF}
     >
@@ -265,6 +268,7 @@ function LiabilitiesInfoSheet({
         text: colors.text,
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt,
+        primary: colors.primary,
       }}
       snapPoints={MODAL_SNAP_HALF}
     >
@@ -347,6 +351,7 @@ function WealthGoalInfoSheet({
         text: colors.text,
         textSecondary: colors.textSecondary,
         surfaceAlt: colors.surfaceAlt,
+        primary: colors.primary,
       }}
       snapPoints={MODAL_SNAP_HALF}
     >
@@ -428,6 +433,18 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [balanceSheetFilter, setBalanceSheetFilter] = useState<'all' | 'liquid'>('all')
   const [longTermCollapsed, setLongTermCollapsed] = useState(true) // Default collapsed in Accessible mode
+
+  // Close info sheets when navigating away to prevent stale state on return
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setShowLiquidityInfo(false)
+        setShowRunwayInfo(false)
+        setShowLiabilitiesInfo(false)
+        setShowGoalModal(false)
+      }
+    }, [])
+  )
 
   // Calculate accessible and liabilities change % based on scope
   const { accessibleChangePercent, liabilitiesChangePercent, comparisonLabel } = useMemo(() => {
