@@ -51,7 +51,8 @@ const MANUAL_CATEGORIES: AssetCategory[] = [
 ]
 
 /**
- * Account-linked categories - shown but with note that they're managed via Accounts
+ * Account-linked categories - shown at the bottom of the list
+ * These categories only contain account-synced items (no manual assets possible)
  */
 const ACCOUNT_LINKED_CATEGORIES: AssetCategory[] = [
   'cash_savings',
@@ -163,9 +164,14 @@ export default function AssetSettingsScreen() {
     }
   }
 
-  const isAccountLinked = (category: AssetCategory): boolean => {
-    return ACCOUNT_LINKED_CATEGORIES.includes(category)
+  /**
+   * Check if an asset is account-linked (synced from Accounts, not manually added)
+   * Account-derived assets have IDs prefixed with "acct:"
+   */
+  const isAccountLinked = (asset: AssetItem): boolean => {
+    return asset.id.startsWith('acct:')
   }
+
 
   const manualAssetCount = assets.filter(a => MANUAL_CATEGORIES.includes(a.category)).length
 
@@ -206,55 +212,75 @@ export default function AssetSettingsScreen() {
         {/* Asset Sections */}
         {groupedAssets.map((group) => (
           <View key={group.category} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
-                {group.categoryName}
-              </Text>
-              {isAccountLinked(group.category) && (
-                <Text style={[styles.linkedBadge, { color: semantic.textSecondary, backgroundColor: semantic.surfaceAlt }]}>
-                  Via Accounts
-                </Text>
-              )}
-            </View>
-            {group.assets.map((asset, index) => (
-              <Pressable
-                key={asset.id}
-                onPress={() => !isAccountLinked(group.category) && handleAssetTap(asset.id)}
-                disabled={isAccountLinked(group.category)}
-                style={({ pressed }) => [
-                  styles.assetRow,
-                  index < group.assets.length - 1 && [
-                    styles.assetRowBorder,
-                    { borderBottomColor: semantic.border },
-                  ],
-                  { opacity: pressed && !isAccountLinked(group.category) ? 0.6 : 1 },
-                ]}
-              >
-                <View style={[styles.assetIcon, { backgroundColor: semantic.surfaceAlt }]}>
-                  <FontAwesome
-                    name={getAssetIcon(group.category)}
-                    size={14}
-                    color={semantic.textSecondary}
-                  />
-                </View>
-                <View style={styles.assetInfo}>
-                  <Text style={[styles.assetName, { color: semantic.text }]} numberOfLines={1}>
-                    {asset.name}
+            {(() => {
+              // Show section badge if ALL assets in this group are account-linked
+              const allAccountLinked = group.assets.length > 0 && group.assets.every(a => isAccountLinked(a))
+              return (
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
+                    {group.categoryName}
                   </Text>
+                  {allAccountLinked && (
+                    <Text style={[styles.linkedBadge, { color: semantic.textSecondary, backgroundColor: semantic.surfaceAlt }]}>
+                      Via Accounts
+                    </Text>
+                  )}
                 </View>
-                <Text style={[
-                  styles.assetBalance,
-                  {
-                    color: asset.balance >= 0 ? semantic.text : semantic.danger,
-                  }
-                ]}>
-                  {formatUsdInt(Math.abs(asset.balance))}
-                </Text>
-                {!isAccountLinked(group.category) && (
-                  <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} style={{ marginLeft: spacing.sm }} />
-                )}
-              </Pressable>
-            ))}
+              )
+            })()}
+            {(() => {
+              // Check if all assets in group are account-linked (section has badge)
+              const allAccountLinked = group.assets.length > 0 && group.assets.every(a => isAccountLinked(a))
+
+              return group.assets.map((asset, index) => {
+                const linkedToAccount = isAccountLinked(asset)
+                return (
+                  <Pressable
+                    key={asset.id}
+                    onPress={() => !linkedToAccount && handleAssetTap(asset.id)}
+                    disabled={linkedToAccount}
+                    style={({ pressed }) => [
+                      styles.assetRow,
+                      index < group.assets.length - 1 && [
+                        styles.assetRowBorder,
+                        { borderBottomColor: semantic.border },
+                      ],
+                      { opacity: pressed && !linkedToAccount ? 0.6 : 1 },
+                    ]}
+                  >
+                    <View style={[styles.assetIcon, { backgroundColor: semantic.surfaceAlt }]}>
+                      <FontAwesome
+                        name={getAssetIcon(group.category)}
+                        size={14}
+                        color={semantic.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.assetInfo}>
+                      <Text style={[styles.assetName, { color: semantic.text }]} numberOfLines={1}>
+                        {asset.name}
+                      </Text>
+                      {/* Show individual "Via Accounts" only if section doesn't have the badge */}
+                      {linkedToAccount && !allAccountLinked && (
+                        <Text style={[styles.viaAccountsLabel, { color: semantic.textSecondary }]}>
+                          Via Accounts
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={[
+                      styles.assetBalance,
+                      {
+                        color: asset.balance >= 0 ? semantic.text : semantic.danger,
+                      }
+                    ]}>
+                      {formatUsdInt(Math.abs(asset.balance))}
+                    </Text>
+                    {!linkedToAccount && (
+                      <FontAwesome name="chevron-right" size={12} color={semantic.textSecondary} style={{ marginLeft: spacing.sm }} />
+                    )}
+                  </Pressable>
+                )
+              })
+            })()}
           </View>
         ))}
 
@@ -270,7 +296,7 @@ export default function AssetSettingsScreen() {
         )}
 
         {/* Note about account-linked assets */}
-        {groupedAssets.some(g => isAccountLinked(g.category)) && (
+        {groupedAssets.some(g => g.assets.some(a => isAccountLinked(a))) && (
           <View style={[styles.noteBox, { backgroundColor: semantic.surfaceAlt }]}>
             <FontAwesome name="info-circle" size={14} color={semantic.textSecondary} />
             <Text style={[styles.noteText, { color: semantic.textSecondary }]}>
@@ -364,6 +390,10 @@ const styles = StyleSheet.create({
   assetName: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+  },
+  viaAccountsLabel: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
   },
   assetBalance: {
     fontSize: fontSize.sm,

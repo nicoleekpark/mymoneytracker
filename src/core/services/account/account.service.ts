@@ -18,7 +18,7 @@
 // ─── Imports ────────────────────────────────────────────────────────────────
 
 import type { UUID } from '@/core/domain/common/uuid'
-import type { Account, AccountKind, AccountCategory } from '@/core/domain/account'
+import type { Account, AccountKind, AccountCategory, AccountNature } from '@/core/domain/account'
 import type { CreateAccountInput, UpdateAccountInput } from '@/core/domain/account/account.repository'
 import { accountRepository, transactionRepository } from '@/infrastructure/repositories'
 import { createTransaction, buildTxKey } from '@/core/domain/transaction'
@@ -31,6 +31,7 @@ export type AddAccountInput = {
   name: string
   kind: AccountKind
   category?: AccountCategory     // Explicitly set domain category (e.g., for 'other' kinds)
+  nature?: AccountNature         // Explicitly set nature (useful for 'other' kind)
   customKindName?: string        // Custom label when kind is 'other'
   bankName?: string
   lastFourDigits?: string
@@ -103,6 +104,7 @@ export function createAccount(
     name: input.name,
     kind: input.kind,
     category: input.category,
+    nature: input.nature,
     customKindName: input.customKindName,
     bankName: input.bankName,
     lastFourDigits: input.lastFourDigits,

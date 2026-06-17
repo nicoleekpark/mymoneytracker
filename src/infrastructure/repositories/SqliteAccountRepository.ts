@@ -122,7 +122,8 @@ export class SqliteAccountRepository implements AccountRepository {
   create(input: CreateAccountInput): Account {
     const id = uuid()
     const key = generateAccountKey(input.kind, input.name)
-    const nature = getNatureFromKind(input.kind)
+    // Use provided nature or derive from kind
+    const nature = input.nature ?? getNatureFromKind(input.kind)
     const category = input.category ?? getDefaultCategoryForKind(input.kind)
     const sortOrder = this.getNextSortOrder(input.kind)
     const createdAt = new Date().toISOString()

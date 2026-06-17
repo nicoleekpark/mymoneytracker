@@ -88,7 +88,14 @@ function getAccountsAsAssetItems(): AssetItem[] {
   )
 
   return relevantAccounts.map((account, index) => {
-    const category = accountKindToAssetCategory(account.kind) ?? 'other'
+    // For 'other' kind accounts, use the account's nature to determine asset vs liability
+    // Assets with kind='other' go to 'investments', liabilities go to 'other' (which maps to liabilities field)
+    let category: AssetCategory
+    if (account.kind === 'other') {
+      category = account.nature === 'liability' ? 'other' : 'investments'
+    } else {
+      category = accountKindToAssetCategory(account.kind) ?? 'other'
+    }
     const field = assetCategoryToField(category)
 
     return {
@@ -129,7 +136,11 @@ function getAccountBalancesForMonth(yearMonth: string): Map<string, number> {
     if (balanceCents !== 0) {
       // For liabilities, the balance represents debt owed (stored as positive in asset system)
       // Transaction system stores liability balances as negative, so we flip the sign
-      const dollars = account.category === 'liability'
+      // Use nature for 'other' kind accounts, domain category for standard kinds
+      const isLiability = account.kind === 'other'
+        ? account.nature === 'liability'
+        : account.category === 'liability'
+      const dollars = isLiability
         ? Math.abs(balanceCents / 100)  // Debt as positive value
         : balanceCents / 100             // Assets as-is
       balances.set(`acct:${account.id}`, dollars)

@@ -12,7 +12,7 @@ import {
 } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
-import type { AccountCategory as DomainAccountCategory, AccountKind } from '@/core/domain/account'
+import type { AccountCategory as DomainAccountCategory, AccountKind, AccountNature } from '@/core/domain/account'
 import { getDefaultCategoryForKind } from '@/core/domain/account'
 import { createAccount } from '@/core/services/account'
 import { AmountKeypadSheet, ModalSaveBar } from '@/shared/components'
@@ -93,6 +93,7 @@ export default function AddAccountScreen() {
   const [uiCategory, setUICategory] = useState<UIAccountCategory>('bank')
   const [kind, setKind] = useState<AccountKind>('checking')
   const [customKindName, setCustomKindName] = useState('')
+  const [nature, setNature] = useState<AccountNature>('asset')
   const [name, setName] = useState('')
   const [nameFocused, setNameFocused] = useState(false)
   const [bankName, setBankName] = useState('')
@@ -162,9 +163,10 @@ export default function AddAccountScreen() {
     if (subtypes.length > 0) {
       setKind(subtypes[0].key)
     }
-    // Clear name when switching categories
+    // Clear form fields when switching categories
     setName('')
     setCustomKindName('')
+    setNature('asset')
   }, [uiCategory])
 
   const handleCancel = useCallback(() => {
@@ -203,6 +205,8 @@ export default function AddAccountScreen() {
         name: accountName,
         kind,
         category: domainCategory,
+        // For "Other > Other", use user-selected nature; otherwise derive from kind
+        nature: (uiCategory === 'other' && kind === 'other') ? nature : undefined,
         customKindName: kind === 'other' ? customKindName.trim() : undefined,
         bankName: bankName.trim() || undefined,
         lastFourDigits: lastFour.trim() || undefined,
@@ -226,9 +230,11 @@ export default function AddAccountScreen() {
       const message = error instanceof Error ? error.message : 'Failed to create account'
       showToast(message)
     }
-  }, [name, kind, customKindName, bankName, lastFour, balanceCents, uiCategory, invalidateTransactions, invalidateAccounts, isFromAddTransaction, setPendingNewAccountKey, showToast])
+  }, [name, kind, customKindName, nature, bankName, lastFour, balanceCents, uiCategory, invalidateTransactions, invalidateAccounts, isFromAddTransaction, setPendingNewAccountKey, showToast])
 
-  const isLiability = kind === 'credit_card' || kind === 'loan' || kind === 'mortgage'
+  // Determine if account is a liability (affects balance display wording)
+  // "Other > Other" uses user-selected nature; "Invest > Other" is always asset
+  const isLiability = kind === 'credit_card' || kind === 'loan' || kind === 'mortgage' || (uiCategory === 'other' && kind === 'other' && nature === 'liability')
   // Cash accounts can submit without a name (defaults to "Cash")
   // Other accounts with kind='other' need customKindName
   const canSubmit = kind === 'cash'
@@ -613,6 +619,58 @@ export default function AddAccountScreen() {
                       </View>
                     </View>
                     <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+
+                    {/* Asset/Liability Toggle - Only for "Other > Other" (not "Invest > Other") */}
+                    {uiCategory === 'other' && (
+                      <>
+                        <View style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}>
+                          <Text style={[modalStyles.fieldLabel, { color: semantic.text }]}>
+                            This is
+                          </Text>
+                          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                            <Pressable
+                              onPress={() => setNature('asset')}
+                              style={[
+                                modalStyles.chip,
+                                {
+                                  backgroundColor: nature === 'asset' ? semantic.primary + '20' : semantic.surfaceAlt,
+                                  borderColor: nature === 'asset' ? semantic.primary : semantic.border,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  modalStyles.chipText,
+                                  { color: nature === 'asset' ? semantic.primary : semantic.text },
+                                ]}
+                              >
+                                Asset
+                              </Text>
+                            </Pressable>
+                            <Pressable
+                              onPress={() => setNature('liability')}
+                              style={[
+                                modalStyles.chip,
+                                {
+                                  backgroundColor: nature === 'liability' ? semantic.danger + '20' : semantic.surfaceAlt,
+                                  borderColor: nature === 'liability' ? semantic.danger : semantic.border,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  modalStyles.chipText,
+                                  { color: nature === 'liability' ? semantic.danger : semantic.text },
+                                ]}
+                              >
+                                Liability
+                              </Text>
+                            </Pressable>
+                          </View>
+                        </View>
+                        <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+                      </>
+                    )}
                   </>
                 )}
 
