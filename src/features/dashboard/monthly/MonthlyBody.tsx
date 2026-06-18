@@ -1,10 +1,11 @@
 import { FEATURE_FLAGS } from '@/shared/config'
 import { EmptyState, SectionHeader } from '@/shared/components'
 import { formatUsdInt } from '@/shared/format/currency'
+import { useZeroSpendStore, useTransactionFocusStore } from '@/shared/store'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
 import { useRouter } from 'expo-router'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 
 import { DashboardHero, StatsRow } from '../shared'
@@ -16,11 +17,12 @@ import { MonthlyCategoryContent, MonthlyIncomeContent } from './category'
 import { useMonthlySummary } from './useMonthlySummary'
 import { useMonthlyHeroData } from './useMonthlyHeroData'
 
-const TRANSACTIONS_ROUTE = '/transactions' as const
+const TRANSACTIONS_ROUTE = '/(tabs)/transactions' as const
 
 export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors }) {
   const { monthYYYYMM, colors } = props
   const router = useRouter()
+  const setFocusDate = useTransactionFocusStore((s) => s.setFocusDate)
 
   const { error, daily } = useMonthlyDailyFlow(monthYYYYMM)
   const { data: budgetData } = useBudgetSummary(monthYYYYMM)
@@ -31,10 +33,9 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
   const isLoading = loadingHero || loadingSummary
 
   function onPressDay(ymd: string) {
-    router.push({
-      pathname: TRANSACTIONS_ROUTE,
-      params: { focusDate: ymd }
-    })
+    // Set focusDate in store for reliable cross-screen communication
+    setFocusDate(ymd)
+    router.navigate(TRANSACTIONS_ROUTE)
   }
 
   // Calculate totals from summary data
@@ -46,21 +47,20 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
     return daily.filter(d => d.incomeDollar > 0 && d.expenseDollar === 0).length
   }, [daily])
 
-  // Manual zero-spend days (user-marked)
-  const [manualZeroSpendDays, setManualZeroSpendDays] = useState<Set<string>>(new Set())
+  // Manual zero-spend days (persisted in store)
+  const { days: manualZeroSpendDays, toggleDay, _hydrate, _hydrated } = useZeroSpendStore()
+
+  // Hydrate store on mount
+  useEffect(() => {
+    if (!_hydrated) {
+      _hydrate()
+    }
+  }, [_hydrate, _hydrated])
 
   // Toggle zero-spend for a day
   const handleToggleZeroSpend = useCallback((ymd: string, isZeroSpend: boolean) => {
-    setManualZeroSpendDays(prev => {
-      const next = new Set(prev)
-      if (isZeroSpend) {
-        next.add(ymd)
-      } else {
-        next.delete(ymd)
-      }
-      return next
-    })
-  }, [])
+    toggleDay(ymd, isZeroSpend)
+  }, [toggleDay])
 
   // Total zero-spend days (auto + manual, avoiding double-counting)
   const zeroSpendDays = useMemo(() => {

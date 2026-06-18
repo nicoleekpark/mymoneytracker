@@ -61,4 +61,5 @@ export const STORAGE_KEYS = {
   TAGS: 'store:tags',
   QUICK_CHIPS: 'store:quickChips',
   DASHBOARD_SECTIONS: 'store:dashboardSections',
+  ZERO_SPEND_DAYS: 'store:zeroSpendDays',
 } as const

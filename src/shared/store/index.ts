@@ -11,4 +11,6 @@ export * from './settings.store'
 export * from './suggestions.store'
 export * from './tags.store'
 export * from './theme.store'
+export * from './zeroSpend.store'
+export * from './transactionFocus.store'
 

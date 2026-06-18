@@ -6,7 +6,7 @@ import { radius } from '@/shared/theme/tokens/radius'
 import { getTodayYMD } from '@/shared/utils/date'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import type { BottomSheetModal } from '@gorhom/bottom-sheet'
+import type { DayDetailSheetRef } from './DayDetailSheet'
 import { useFocusEffect } from '@react-navigation/native'
 
 import { getDaysInMonth } from '@/core/domain/transaction'
@@ -76,7 +76,7 @@ export function MonthlyCalendar({ monthYYYYMM, daily, colors, onPressDay, manual
   const [selectedDay, setSelectedDay] = useState<SelectedDay | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loadingTx, setLoadingTx] = useState(false)
-  const bottomSheetRef = useRef<BottomSheetModal>(null)
+  const bottomSheetRef = useRef<DayDetailSheetRef>(null)
 
   // Dismiss sheet when navigating away to prevent stale state on return
   useFocusEffect(

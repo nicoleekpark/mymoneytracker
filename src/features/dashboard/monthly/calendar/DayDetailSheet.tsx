@@ -1,19 +1,12 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import {
-  BottomSheetBackdrop,
-  BottomSheetFooter,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  type BottomSheetBackdropProps,
-  type BottomSheetFooterProps,
-} from '@gorhom/bottom-sheet'
-import React, { forwardRef, useCallback, useMemo } from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useState } from 'react'
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Transaction } from '@/core/domain/transaction/transaction.types'
 import { formatUsdInt } from '@/shared/format/currency'
 import { modalStyles } from '@/shared/theme/tokens/modal'
+import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { MONTH_NAMES_SHORT } from '../../utils'
@@ -27,6 +20,11 @@ export type SelectedDay = {
   txCount: number
   net: number
   isFuture: boolean
+}
+
+export type DayDetailSheetRef = {
+  present: () => void
+  dismiss: () => void
 }
 
 type Props = {
@@ -64,7 +62,7 @@ function getTxDisplayName(tx: Transaction): string {
   return 'No description'
 }
 
-export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
+export const DayDetailSheet = forwardRef<DayDetailSheetRef, Props>(
   (
     {
       selectedDay,
@@ -79,9 +77,18 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
     ref
   ) => {
     const insets = useSafeAreaInsets()
-    // Full height for transactions, compact for empty days
-    const hasTransactions = (selectedDay?.txCount ?? 0) > 0
-    const snapPoints = hasTransactions ? ['90%'] : ['30%']
+    const [visible, setVisible] = useState(false)
+
+    // Expose present/dismiss methods via ref
+    useImperativeHandle(ref, () => ({
+      present: () => setVisible(true),
+      dismiss: () => setVisible(false),
+    }))
+
+    const handleClose = useCallback(() => {
+      setVisible(false)
+      onDismiss?.()
+    }, [onDismiss])
 
     // Filter out Opening Balance and sort by absolute value (impact-first)
     const sortedTx = useMemo(() => {
@@ -90,46 +97,203 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
         .sort((a, b) => Math.abs(b.money.amount) - Math.abs(a.money.amount))
     }, [transactions])
 
-    // Backdrop
-    const renderBackdrop = useCallback(
-      (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
-      ),
-      []
-    )
+    const hasTransactions = (selectedDay?.txCount ?? 0) > 0
 
-    // Custom handle with grabber
-    const renderHandle = useCallback(
-      () => (
-        <View style={modalStyles.dragHandleContainer}>
+    if (!selectedDay) return null
+
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleClose}
+      >
+        <View style={[styles.container, { backgroundColor: colors.surface }]}>
+          {/* Drag Handle */}
+          <View style={modalStyles.dragHandleContainer}>
+            <View
+              style={[
+                modalStyles.dragHandle,
+                { backgroundColor: colors.textSecondary, opacity: 0.4 },
+              ]}
+            />
+          </View>
+
+          {/* Title */}
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {formatDayLabel(selectedDay.ymd, selectedDay.dayNum)}
+            </Text>
+          </View>
+
+          {/* Scrollable Content */}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + (hasTransactions ? 120 : 80) },
+            ]}
+          >
+            {/* Content depends on whether there are transactions */}
+            {selectedDay.txCount > 0 ? (
+              <>
+                {/* Net - Center aligned */}
+                <View style={styles.netContainer}>
+                  <Text style={[styles.netLabel, { color: colors.textSecondary }]}>Net</Text>
+                  <Text
+                    style={[
+                      styles.netValue,
+                      { color: selectedDay.net >= 0 ? colors.success : colors.danger },
+                    ]}
+                  >
+                    {formatAmountAccounting(selectedDay.net)}
+                  </Text>
+                </View>
+
+                {/* Inflow / Outflow with middle divider */}
+                <View style={styles.flowContainer}>
+                  {/* Inflow */}
+                  <View style={styles.flowItem}>
+                    <Text style={[styles.flowLabel, { color: colors.textSecondary }]}>Inflow</Text>
+                    <Text
+                      style={[
+                        styles.flowValue,
+                        { color: selectedDay.income > 0 ? colors.success : colors.textSecondary },
+                      ]}
+                    >
+                      {formatUsdInt(selectedDay.income)}
+                    </Text>
+                  </View>
+
+                  {/* Middle divider */}
+                  <View style={[styles.flowDivider, { backgroundColor: colors.border }]} />
+
+                  {/* Outflow */}
+                  <View style={styles.flowItem}>
+                    <Text style={[styles.flowLabel, { color: colors.textSecondary }]}>Outflow</Text>
+                    <Text
+                      style={[
+                        styles.flowValue,
+                        { color: selectedDay.expense > 0 ? colors.danger : colors.textSecondary },
+                      ]}
+                    >
+                      ({formatUsdInt(selectedDay.expense)})
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Transaction List */}
+                <View style={styles.txListContainer}>
+                  <Text style={[styles.txListTitle, { color: colors.textSecondary }]}>
+                    Transactions
+                  </Text>
+
+                  {loadingTx ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color={colors.textSecondary} />
+                    </View>
+                  ) : (
+                    <View>
+                      {sortedTx.map((tx, idx) => (
+                        <View
+                          key={tx.id}
+                          style={[
+                            styles.txRow,
+                            idx < sortedTx.length - 1 && [
+                              styles.txRowBorder,
+                              { borderBottomColor: colors.border },
+                            ],
+                          ]}
+                        >
+                          <View style={styles.txInfo}>
+                            <Text style={[styles.txName, { color: colors.text }]} numberOfLines={1}>
+                              {getTxDisplayName(tx)}
+                            </Text>
+                            {tx.category && (
+                              <Text style={[styles.txCategory, { color: colors.textSecondary }]}>
+                                {tx.category.subCategoryKey || tx.category.categoryKey}
+                              </Text>
+                            )}
+                          </View>
+                          <Text
+                            style={[
+                              styles.txAmount,
+                              { color: tx.type === 'income' ? colors.success : colors.danger },
+                            ]}
+                          >
+                            {tx.type === 'income'
+                              ? formatUsdInt(tx.money.amount)
+                              : `(${formatUsdInt(tx.money.amount)})`}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </>
+            ) : (
+              /* No transactions - clean centered view */
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  No transactions
+                </Text>
+
+                {/* Zero-spend toggle (only for past/present dates) */}
+                {onToggleZeroSpend && !selectedDay.isFuture && (
+                  <Pressable
+                    onPress={() => {
+                      const isCurrentlyMarked = zeroSpendDays?.has(selectedDay.ymd) ?? false
+                      onToggleZeroSpend(selectedDay.ymd, !isCurrentlyMarked)
+                      setTimeout(() => handleClose(), 150)
+                    }}
+                    style={[
+                      styles.zeroSpendButton,
+                      {
+                        backgroundColor: zeroSpendDays?.has(selectedDay.ymd)
+                          ? colors.highlight + '20'
+                          : colors.surfaceAlt,
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        {
+                          borderColor: zeroSpendDays?.has(selectedDay.ymd)
+                            ? colors.highlight
+                            : colors.border,
+                          backgroundColor: zeroSpendDays?.has(selectedDay.ymd)
+                            ? colors.highlight
+                            : 'transparent',
+                        },
+                      ]}
+                    >
+                      {zeroSpendDays?.has(selectedDay.ymd) && (
+                        <FontAwesome name="check" size={10} color="#fff" />
+                      )}
+                    </View>
+                    <Text style={[styles.zeroSpendText, { color: colors.text }]}>
+                      Mark as zero-spend day
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Footer with buttons */}
           <View
             style={[
-              modalStyles.dragHandle,
-              { backgroundColor: colors.textSecondary, opacity: 0.4 },
-            ]}
-          />
-        </View>
-      ),
-      [colors.textSecondary]
-    )
-
-    // Footer with fixed "View all" button (only when there are transactions)
-    const renderFooter = useCallback(
-      (props: BottomSheetFooterProps) => {
-        if (!selectedDay || selectedDay.txCount === 0) return null
-
-        return (
-          <BottomSheetFooter {...props} bottomInset={0}>
-            <View
-              style={{
+              styles.footer,
+              {
                 backgroundColor: colors.surface,
-                borderTopWidth: 1,
                 borderTopColor: colors.border,
-                paddingHorizontal: spacing.xl,
-                paddingTop: spacing.md,
                 paddingBottom: Math.max(insets.bottom, spacing.lg),
-              }}
-            >
+              },
+            ]}
+          >
+            {/* View all button (only when there are transactions) */}
+            {hasTransactions && (
               <Pressable
                 onPress={onViewAll}
                 style={[modalStyles.saveButton, { backgroundColor: colors.primary }]}
@@ -138,279 +302,165 @@ export const DayDetailSheet = forwardRef<BottomSheetModal, Props>(
                   View all {selectedDay.txCount} transactions
                 </Text>
               </Pressable>
-            </View>
-          </BottomSheetFooter>
-        )
-      },
-      [selectedDay, colors, insets.bottom, onViewAll]
-    )
+            )}
 
-    if (!selectedDay) return null
-
-    return (
-      <BottomSheetModal
-        ref={ref}
-        index={0}
-        snapPoints={snapPoints}
-        bottomInset={0}
-        enableDynamicSizing={false}
-        backdropComponent={renderBackdrop}
-        handleComponent={renderHandle}
-        footerComponent={renderFooter}
-        backgroundStyle={[
-          modalStyles.modal,
-          {
-            backgroundColor: colors.surface,
-            borderWidth: 0,
-            shadowOpacity: 0,
-            elevation: 0,
-          },
-        ]}
-        enablePanDownToClose
-        onDismiss={onDismiss}
-      >
-        {/* Header with Close button */}
-        <View style={[modalStyles.header, { borderBottomWidth: 0 }]}>
-          <Pressable onPress={onDismiss} hitSlop={12} style={modalStyles.cancelButton}>
-            <Text style={[modalStyles.cancelText, { color: colors.textSecondary }]}>Close</Text>
-          </Pressable>
-        </View>
-
-        {/* Title - Center aligned */}
-        <View style={{ paddingHorizontal: spacing.xl, marginBottom: spacing.md, alignItems: 'center' }}>
-          <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text }}>
-            {formatDayLabel(selectedDay.ymd, selectedDay.dayNum)}
-          </Text>
-        </View>
-
-        <BottomSheetScrollView
-          contentContainerStyle={{
-            paddingHorizontal: spacing.xl,
-            paddingBottom: spacing.xl,
-          }}
-        >
-          {/* Content depends on whether there are transactions */}
-          {selectedDay.txCount > 0 ? (
-            <>
-              {/* Net - Center aligned */}
-              <View
-                style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', marginBottom: spacing.lg }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    color: colors.textSecondary,
-                    marginRight: spacing.sm,
-                  }}
-                >
-                  Net
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: fontWeight.bold,
-                    color: selectedDay.net >= 0 ? colors.success : colors.danger,
-                    fontVariant: ['tabular-nums'],
-                  }}
-                >
-                  {formatAmountAccounting(selectedDay.net)}
-                </Text>
-              </View>
-
-              {/* Inflow / Outflow with middle divider */}
-              <View style={{ flexDirection: 'row', marginBottom: spacing.xl }}>
-                {/* Inflow */}
-                <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: colors.textSecondary,
-                      letterSpacing: letterSpacing.wider,
-                      marginBottom: 2,
-                    }}
-                  >
-                    Inflow
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: fontSize.md,
-                      fontWeight: fontWeight.semibold,
-                      color: selectedDay.income > 0 ? colors.success : colors.textSecondary,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {formatUsdInt(selectedDay.income)}
-                  </Text>
-                </View>
-
-                {/* Middle divider */}
-                <View
-                  style={{ width: 1, backgroundColor: colors.border, marginVertical: spacing.xs }}
-                />
-
-                {/* Outflow */}
-                <View style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.sm }}>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: colors.textSecondary,
-                      letterSpacing: letterSpacing.wider,
-                      marginBottom: 2,
-                    }}
-                  >
-                    Outflow
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: fontSize.md,
-                      fontWeight: fontWeight.semibold,
-                      color: selectedDay.expense > 0 ? colors.danger : colors.textSecondary,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    ({formatUsdInt(selectedDay.expense)})
-                  </Text>
-                </View>
-              </View>
-
-              {/* Transaction List */}
-              <View style={{ marginBottom: spacing.lg }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    color: colors.textSecondary,
-                    marginBottom: spacing.md,
-                  }}
-                >
-                  Transactions
-                </Text>
-
-                {loadingTx ? (
-                  <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>
-                    <ActivityIndicator size="small" color={colors.textSecondary} />
-                  </View>
-                ) : (
-                  <View>
-                    {sortedTx.map((tx, idx) => (
-                      <View
-                        key={tx.id}
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          paddingVertical: spacing.sm,
-                          borderBottomWidth: idx < sortedTx.length - 1 ? 1 : 0,
-                          borderBottomColor: colors.border,
-                        }}
-                      >
-                        <View style={{ flex: 1, marginRight: spacing.sm }}>
-                          <Text
-                            style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.medium,
-                              color: colors.text,
-                            }}
-                            numberOfLines={1}
-                          >
-                            {getTxDisplayName(tx)}
-                          </Text>
-                          {tx.category && (
-                            <Text
-                              style={{
-                                fontSize: fontSize.xs,
-                                color: colors.textSecondary,
-                                marginTop: 2,
-                              }}
-                            >
-                              {tx.category.subCategoryKey || tx.category.categoryKey}
-                            </Text>
-                          )}
-                        </View>
-                        <Text
-                          style={{
-                            fontSize: fontSize.sm,
-                            fontWeight: fontWeight.semibold,
-                            color: tx.type === 'income' ? colors.success : colors.danger,
-                            fontVariant: ['tabular-nums'],
-                          }}
-                        >
-                          {tx.type === 'income'
-                            ? formatUsdInt(tx.money.amount)
-                            : `(${formatUsdInt(tx.money.amount)})`}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            </>
-          ) : (
-            /* No transactions - clean centered view */
-            <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  color: colors.textSecondary,
-                  marginBottom: spacing.lg,
-                }}
-              >
-                No transactions
+            {/* Close button (secondary style) */}
+            <Pressable
+              onPress={handleClose}
+              style={[
+                modalStyles.saveButton,
+                {
+                  backgroundColor: 'transparent',
+                  marginTop: hasTransactions ? spacing.sm : 0,
+                },
+              ]}
+            >
+              <Text style={[modalStyles.saveButtonText, { color: colors.textSecondary }]}>
+                Close
               </Text>
-
-              {/* Zero-spend toggle (only for past/present dates) */}
-              {onToggleZeroSpend && !selectedDay.isFuture && (
-                <Pressable
-                  onPress={() => {
-                    const isCurrentlyMarked = zeroSpendDays?.has(selectedDay.ymd) ?? false
-                    onToggleZeroSpend(selectedDay.ymd, !isCurrentlyMarked)
-                    setTimeout(() => onDismiss?.(), 150)
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing.sm,
-                    paddingVertical: spacing.sm,
-                    paddingHorizontal: spacing.lg,
-                    borderRadius: 20,
-                    backgroundColor: zeroSpendDays?.has(selectedDay.ymd)
-                      ? colors.highlight + '20'
-                      : colors.surfaceAlt,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 4,
-                      borderWidth: 2,
-                      borderColor: zeroSpendDays?.has(selectedDay.ymd)
-                        ? colors.highlight
-                        : colors.border,
-                      backgroundColor: zeroSpendDays?.has(selectedDay.ymd)
-                        ? colors.highlight
-                        : 'transparent',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {zeroSpendDays?.has(selectedDay.ymd) && (
-                      <FontAwesome name="check" size={10} color="#fff" />
-                    )}
-                  </View>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.text }}>
-                    Mark as zero-spend day
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-        </BottomSheetScrollView>
-      </BottomSheetModal>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     )
   }
 )
 
 DayDetailSheet.displayName = 'DayDetailSheet'
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+  },
+  titleContainer: {
+    paddingHorizontal: spacing.xl,
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+  },
+  netContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  netLabel: {
+    fontSize: fontSize.sm,
+    marginRight: spacing.sm,
+  },
+  netValue: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    fontVariant: ['tabular-nums'],
+  },
+  flowContainer: {
+    flexDirection: 'row',
+    marginBottom: spacing.xl,
+  },
+  flowItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  flowLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    letterSpacing: letterSpacing.wider,
+    marginBottom: 2,
+  },
+  flowValue: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    fontVariant: ['tabular-nums'],
+  },
+  flowDivider: {
+    width: 1,
+    marginVertical: spacing.xs,
+  },
+  txListContainer: {
+    marginBottom: spacing.lg,
+  },
+  txListTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing.md,
+  },
+  loadingContainer: {
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+  },
+  txRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: spacing.sm,
+  },
+  txRowBorder: {
+    borderBottomWidth: 1,
+  },
+  txInfo: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  txName: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+  },
+  txCategory: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  txAmount: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    fontVariant: ['tabular-nums'],
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  emptyText: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.lg,
+  },
+  zeroSpendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 20,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zeroSpendText: {
+    fontSize: fontSize.sm,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopWidth: 1,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+  },
+})

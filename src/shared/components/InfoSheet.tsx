@@ -1,16 +1,9 @@
-import {
-  BottomSheetBackdrop,
-  BottomSheetFooter,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  type BottomSheetBackdropProps,
-  type BottomSheetFooterProps,
-} from '@gorhom/bottom-sheet'
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import React, { forwardRef, useImperativeHandle } from 'react'
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { modalStyles } from '@/shared/theme/tokens/modal'
+import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 
@@ -35,8 +28,6 @@ type Props = {
   children: React.ReactNode
   showCloseButton?: boolean
   closeButtonText?: string
-  /** Fixed snap points - defaults to ['90%'] for full height */
-  snapPoints?: string[]
 }
 
 export const InfoSheet = forwardRef<InfoSheetRef, Props>(
@@ -49,74 +40,62 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
       children,
       showCloseButton = true,
       closeButtonText = 'Got it',
-      snapPoints: customSnapPoints,
     },
     ref
   ) => {
-    const bottomSheetRef = useRef<BottomSheetModal>(null)
     const insets = useSafeAreaInsets()
-    // Full height like other modals
-    const snapPoints = customSnapPoints ?? ['90%']
 
-    // Expose present/dismiss methods
+    // Expose present/dismiss methods for compatibility
     useImperativeHandle(ref, () => ({
-      present: () => bottomSheetRef.current?.present(),
-      dismiss: () => bottomSheetRef.current?.dismiss(),
+      present: () => {}, // No-op, controlled by visible prop
+      dismiss: () => onClose(),
     }))
 
-    // Present/dismiss based on visible prop
-    useEffect(() => {
-      if (visible) {
-        bottomSheetRef.current?.present()
-      } else {
-        bottomSheetRef.current?.dismiss()
-      }
-    }, [visible])
-
-    // Handle sheet dismissal
-    const handleDismiss = useCallback(() => {
-      onClose()
-    }, [onClose])
-
-    // Backdrop
-    const renderBackdrop = useCallback(
-      (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
-      ),
-      []
-    )
-
-    // Custom handle with grabber
-    const renderHandle = useCallback(
-      () => (
-        <View style={modalStyles.dragHandleContainer}>
-          <View
-            style={[
-              modalStyles.dragHandle,
-              { backgroundColor: colors.textSecondary, opacity: 0.4 },
-            ]}
-          />
-        </View>
-      ),
-      [colors.textSecondary]
-    )
-
-    // Footer with fixed close button
-    const renderFooter = useCallback(
-      (props: BottomSheetFooterProps) => {
-        if (!showCloseButton) return null
-
-        return (
-          <BottomSheetFooter {...props} bottomInset={0}>
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={onClose}
+      >
+        <View style={[styles.container, { backgroundColor: colors.surface }]}>
+          {/* Drag Handle */}
+          <View style={modalStyles.dragHandleContainer}>
             <View
-              style={{
-                backgroundColor: colors.surface,
-                borderTopWidth: 1,
-                borderTopColor: colors.textSecondary + '20',
-                paddingHorizontal: spacing.xl,
-                paddingTop: spacing.md,
-                paddingBottom: Math.max(insets.bottom, spacing.lg),
-              }}
+              style={[
+                modalStyles.dragHandle,
+                { backgroundColor: colors.textSecondary, opacity: 0.4 },
+              ]}
+            />
+          </View>
+
+          {/* Title */}
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+          </View>
+
+          {/* Scrollable Content */}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + (showCloseButton ? 100 : spacing.xl) },
+            ]}
+          >
+            {children}
+          </ScrollView>
+
+          {/* Footer with close button */}
+          {showCloseButton && (
+            <View
+              style={[
+                styles.footer,
+                {
+                  backgroundColor: colors.surface,
+                  borderTopColor: colors.textSecondary + '20',
+                  paddingBottom: Math.max(insets.bottom, spacing.lg),
+                },
+              ]}
             >
               <Pressable
                 onPress={onClose}
@@ -135,68 +114,44 @@ export const InfoSheet = forwardRef<InfoSheetRef, Props>(
                 </Text>
               </Pressable>
             </View>
-          </BottomSheetFooter>
-        )
-      },
-      [showCloseButton, colors, insets.bottom, onClose, closeButtonText]
-    )
-
-    return (
-      <BottomSheetModal
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        bottomInset={0}
-        enableDynamicSizing={false}
-        backdropComponent={renderBackdrop}
-        handleComponent={renderHandle}
-        footerComponent={renderFooter}
-        backgroundStyle={[
-          modalStyles.modal,
-          {
-            backgroundColor: colors.surface,
-            borderWidth: 0,
-            shadowOpacity: 0,
-            elevation: 0,
-          },
-        ]}
-        enablePanDownToClose
-        onDismiss={handleDismiss}
-      >
-        {/* Header with Close button */}
-        <View style={[modalStyles.header, { borderBottomWidth: 0 }]}>
-          <Pressable onPress={onClose} hitSlop={12} style={modalStyles.cancelButton}>
-            <Text style={[modalStyles.cancelText, { color: colors.textSecondary }]}>Close</Text>
-          </Pressable>
+          )}
         </View>
-
-        {/* Title - Center aligned */}
-        <View
-          style={{ paddingHorizontal: spacing.xl, marginBottom: spacing.lg, alignItems: 'center' }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.bold,
-              color: colors.text,
-            }}
-          >
-            {title}
-          </Text>
-        </View>
-
-        <BottomSheetScrollView
-          contentContainerStyle={{
-            paddingHorizontal: spacing.xl,
-            paddingBottom: spacing.xl,
-          }}
-        >
-          {/* Content */}
-          {children}
-        </BottomSheetScrollView>
-      </BottomSheetModal>
+      </Modal>
     )
   }
 )
 
 InfoSheet.displayName = 'InfoSheet'
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+  },
+  titleContainer: {
+    paddingHorizontal: spacing.xl,
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopWidth: 1,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+  },
+})

@@ -1,7 +1,6 @@
 import { EmptyState, InfoSheet, SettingsLink, TrackingSince } from '@/shared/components'
 import { formatCurrency } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
-import { MODAL_SNAP_HALF } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { displaySize, fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
@@ -71,7 +70,6 @@ function LiquidityInfoSheet({
         surfaceAlt: colors.surfaceAlt,
         primary: colors.primary,
       }}
-      snapPoints={MODAL_SNAP_HALF}
     >
       <Text
         style={{
@@ -154,7 +152,6 @@ function RunwayInfoSheet({
         surfaceAlt: colors.surfaceAlt,
         primary: colors.primary,
       }}
-      snapPoints={MODAL_SNAP_HALF}
     >
       <Text
         style={{
@@ -270,7 +267,6 @@ function LiabilitiesInfoSheet({
         surfaceAlt: colors.surfaceAlt,
         primary: colors.primary,
       }}
-      snapPoints={MODAL_SNAP_HALF}
     >
       <Text
         style={{
@@ -353,7 +349,6 @@ function WealthGoalInfoSheet({
         surfaceAlt: colors.surfaceAlt,
         primary: colors.primary,
       }}
-      snapPoints={MODAL_SNAP_HALF}
     >
       <Text
         style={{

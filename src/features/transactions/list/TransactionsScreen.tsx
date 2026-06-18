@@ -11,7 +11,7 @@ import { spacing } from '@/shared/theme/tokens/spacing'
 import { CATEGORY_DOT_SIZE_SM, FONT_SIZE_TINY } from '@/shared/theme/tokens/viewStyles'
 import { formatCurrency } from '@/shared/format/currency'
 import { formatDayHeader, formatMonthSectionTitle, monthKey, ymd } from '@/shared/format/date'
-import { useDraftsStore } from '@/shared/store'
+import { useDraftsStore, useTransactionFocusStore } from '@/shared/store'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useFocusEffect } from '@react-navigation/native'
@@ -29,6 +29,7 @@ import {
 } from './components'
 import type { TransactionFilters, TransactionType, ActiveFilterChip } from './components'
 import {
+  InteractionManager,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -143,16 +144,16 @@ function findScrollTarget(sections: DaySection[], focusDate?: string) {
 export default function TransactionsScreen() {
   const theme = useHoHTheme()
 
-  const params = useLocalSearchParams<{ focusDate?: string; accountId?: string; draftMode?: string }>()
-  const focusDate = typeof params.focusDate === 'string' ? params.focusDate : undefined
+  const params = useLocalSearchParams<{ accountId?: string; draftMode?: string }>()
   const accountIdFilter = typeof params.accountId === 'string' ? params.accountId : undefined
   const draftModeParam = params.draftMode as 'only' | 'all' | undefined
 
+  // Get focusDate from store (more reliable than URL params for tab navigation)
+  const { focusDate, focusId } = useTransactionFocusStore()
+
   const listRef = useRef<SectionList<TransactionOrDraft, DaySection>>(null)
-  const didAutoScrollRef = useRef(false)
   const detailSheetRef = useRef<BottomSheetModal>(null)
   const filterSheetRef = useRef<BottomSheetModal>(null)
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data, refetch, loadMore, isLoadingMore } = useTransactionsData()
   const { items, hasMore } = data
@@ -218,7 +219,6 @@ export default function TransactionsScreen() {
       ...DEFAULT_FILTERS,
       draftMode: prev.draftMode,
     }))
-    didAutoScrollRef.current = false
   }, [focusDate])
 
   // search debounce
@@ -250,12 +250,44 @@ export default function TransactionsScreen() {
   }, [accounts])
 
 
+  // Track which focusId we last scrolled for
+  const lastScrolledFocusIdRef = useRef(0)
+
   useFocusEffect(
     useCallback(() => {
       refetch()
-      didAutoScrollRef.current = false
     }, [refetch])
   )
+
+  // Scroll when focusId changes (new date selected)
+  useEffect(() => {
+    // Skip if no focusDate or already scrolled for this focusId
+    if (!focusDate || focusId <= lastScrolledFocusIdRef.current) return
+
+    // Wait for sections to be available
+    if (!sections.length) return
+
+    const target = findScrollTarget(sections, focusDate)
+    if (!target) return
+
+    // Store pending scroll for onScrollToIndexFailed handler
+    pendingScrollRef.current = target
+
+    // Scroll after a delay to ensure layout is ready
+    // Only mark as scrolled AFTER the scroll actually triggers (not before)
+    const timeoutId = setTimeout(() => {
+      listRef.current?.scrollToLocation({
+        sectionIndex: target.sectionIndex,
+        itemIndex: 0,
+        animated: true,
+        viewPosition: 0
+      })
+      // Mark this focusId as scrolled only after scroll is triggered
+      lastScrolledFocusIdRef.current = focusId
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [focusDate, focusId, sections])
 
   // Convert drafts to TransactionOrDraft format
   const draftsAsTransactions: TransactionOrDraft[] = useMemo(() => {
@@ -384,36 +416,44 @@ export default function TransactionsScreen() {
     }
   }, [])
 
-  // focusDate면 첫 매칭 row로 자동 scrollToLocation
-  useEffect(() => {
-    if (!focusDate) return
-    if (!sections.length) return
-    if (didAutoScrollRef.current) return
+  // Item layout constants for getItemLayout
+  const SECTION_HEADER_HEIGHT = 44
+  const ITEM_HEIGHT = 60
+  const SEPARATOR_HEIGHT = 1
 
-    const target = findScrollTarget(sections, focusDate)
-    if (!target) return
+  // Calculate item layout for reliable scrolling
+  const getItemLayout = useCallback((
+    data: DaySection[] | null,
+    index: number
+  ): { length: number; offset: number; index: number } => {
+    if (!data) return { length: 0, offset: 0, index }
 
-    scrollTimeoutRef.current = setTimeout(() => {
-      try {
-        pendingScrollRef.current = { sectionIndex: target.sectionIndex, itemIndex: target.itemIndex }
-        listRef.current?.scrollToLocation({
-          sectionIndex: target.sectionIndex,
-          itemIndex: target.itemIndex,
-          animated: true,
-          viewPosition: 0.05
-        })
-        didAutoScrollRef.current = true
-      } catch {
-        // Scroll error - non-critical, ignore silently
+    let offset = 0
+    let itemIndex = 0
+
+    for (const section of data) {
+      // Section header
+      if (itemIndex === index) {
+        return { length: SECTION_HEADER_HEIGHT, offset, index }
       }
-    }, 150)
+      offset += SECTION_HEADER_HEIGHT
+      itemIndex++
 
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
+      // Items in section
+      for (let i = 0; i < section.data.length; i++) {
+        if (itemIndex === index) {
+          return { length: ITEM_HEIGHT, offset, index }
+        }
+        offset += ITEM_HEIGHT
+        if (i < section.data.length - 1) {
+          offset += SEPARATOR_HEIGHT
+        }
+        itemIndex++
       }
     }
-  }, [focusDate, sections])
+
+    return { length: ITEM_HEIGHT, offset, index }
+  }, [])
 
   // Handle row tap - open detail sheet
   const handleRowPress = useCallback((tx: Transaction) => {
@@ -476,7 +516,6 @@ export default function TransactionsScreen() {
             <TextInput
               value={query}
               onChangeText={(t) => {
-                didAutoScrollRef.current = false
                 setQuery(t)
               }}
               placeholder="Search transactions"
@@ -640,6 +679,10 @@ export default function TransactionsScreen() {
           keyExtractor={(it) => it.id}
           stickySectionHeadersEnabled
           contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
+          initialNumToRender={50}
+          maxToRenderPerBatch={30}
+          windowSize={21}
+          getItemLayout={getItemLayout}
           ItemSeparatorComponent={() => (
             <View style={[styles.separator, { backgroundColor: theme.semantic.border }]} />
           )}
@@ -663,12 +706,13 @@ export default function TransactionsScreen() {
                   sectionIndex: p.sectionIndex,
                   itemIndex: p.itemIndex,
                   animated: true,
-                  viewPosition: 0
+                  viewPosition: 0,
+                  viewOffset: -50 // Same offset as initial scroll
                 })
               } catch (e) {
                 // Scroll error - non-critical, ignore silently
               }
-            }, 120)
+            }, 150)
           }}
 
           renderItem={({ item }) => {
