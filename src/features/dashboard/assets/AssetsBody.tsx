@@ -1,5 +1,5 @@
 import { EmptyState, InfoSheet, SettingsLink, TrackingSince } from '@/shared/components'
-import { formatUsdInt } from '@/shared/format/currency'
+import { formatCurrency } from '@/shared/format/currency'
 import { formatYearMonth } from '@/shared/format/date'
 import { MODAL_SNAP_HALF } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
@@ -190,7 +190,7 @@ function RunwayInfoSheet({
               marginTop: spacing.sm,
             }}
           >
-            Your avg monthly expense: {formatUsdInt(avgMonthlyExpense)}
+            Your avg monthly expense: {formatCurrency(avgMonthlyExpense)}
           </Text>
         )}
         {!hasEnoughData && (
@@ -378,7 +378,7 @@ function WealthGoalInfoSheet({
           Starting point
         </Text>
         <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-          Your net worth on {formatYearMonth(startYearMonth)}: {formatUsdInt(startNetWorth)}
+          Your net worth on {formatYearMonth(startYearMonth)}: {formatCurrency(startNetWorth)}
         </Text>
       </View>
 
@@ -394,7 +394,7 @@ function WealthGoalInfoSheet({
           Target
         </Text>
         <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 22 }}>
-          Where you want to be by year-end: {formatUsdInt(targetNetWorth)}
+          Where you want to be by year-end: {formatCurrency(targetNetWorth)}
         </Text>
       </View>
     </InfoSheet>
@@ -661,7 +661,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                     letterSpacing: -1,
                   }}
                 >
-                  {formatUsdInt(data.summary.netWorth)}
+                  {formatCurrency(data.summary.netWorth)}
                 </Text>
                 <Text
                   style={{
@@ -677,7 +677,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                     }}
                   >
                     {data.yearlySnapshot.growth >= 0 ? '+' : '-'}
-                    {formatUsdInt(Math.abs(data.yearlySnapshot.growth))}
+                    {formatCurrency(Math.abs(data.yearlySnapshot.growth))}
                   </Text>{' '}
                   since Jan {data.year}
                 </Text>
@@ -721,7 +721,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                       color: colors.text,
                     }}
                   >
-                    {formatUsdInt(accessible)}
+                    {formatCurrency(accessible)}
                   </Text>
                   {accessibleChangePercent !== null && comparisonLabel ? (
                     <Text
@@ -793,7 +793,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                       color: colors.text,
                     }}
                   >
-                    {formatUsdInt(liabilities)}
+                    {formatCurrency(liabilities)}
                   </Text>
                   {liabilitiesChangePercent !== null && comparisonLabel ? (
                     <Text
@@ -938,7 +938,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                     marginBottom: spacing.md,
                   }}
                 >
-                  {formatUsdInt(currentNetWorth)} of {formatUsdInt(targetNetWorth)}
+                  {formatCurrency(currentNetWorth)} of {formatCurrency(targetNetWorth)}
                 </Text>
 
                 {/* Progress bar */}
@@ -971,11 +971,11 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                 >
                   <Text style={{ fontSize: fontSize.sm, color: colors.text }}>
                     {isAchieved ? (
-                      <>Goal reached! +{formatUsdInt(Math.abs(remaining))} above</>
+                      <>Goal reached! +{formatCurrency(Math.abs(remaining))} above</>
                     ) : (
                       <>
                         <Text style={{ fontWeight: fontWeight.semibold }}>
-                          {formatUsdInt(remaining)}
+                          {formatCurrency(remaining)}
                         </Text>{' '}
                         to go
                       </>
@@ -1165,7 +1165,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                         opacity: isMuted ? 0.6 : 1,
                       }}
                     >
-                      {formatUsdInt(cat.value)}
+                      {formatCurrency(cat.value)}
                     </Text>
                   </Pressable>
                   {isExpanded && hasItems && (
@@ -1215,7 +1215,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                                 opacity: isMuted ? 0.4 : 0.7,
                               }}
                             >
-                              {formatUsdInt(item.value)}
+                              {formatCurrency(item.value)}
                             </Text>
                           </View>
                         ))}
@@ -1278,7 +1278,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                     fontVariant: ['tabular-nums'],
                   }}
                 >
-                  {formatUsdInt(total)}
+                  {formatCurrency(total)}
                 </Text>
               </View>
             )
@@ -1330,7 +1330,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                             fontVariant: ['tabular-nums'],
                           }}
                         >
-                          {formatUsdInt(displayedNet)}
+                          {formatCurrency(displayedNet)}
                         </Text>
                       </View>
                     </View>
@@ -1387,7 +1387,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                             fontVariant: ['tabular-nums'],
                           }}
                         >
-                          {formatUsdInt(displayedNet)}
+                          {formatCurrency(displayedNet)}
                         </Text>
                       </View>
                     </View>

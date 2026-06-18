@@ -22,7 +22,7 @@ import type { AssetCategory, AssetItem } from '@/core/domain/asset'
 import { getCategoryMeta } from '@/core/domain/asset'
 import { getAssetItems, getBalancesForMonth, getCurrentYearMonth } from '@/core/services/asset'
 import { EmptyState } from '@/shared/components'
-import { formatUsdInt } from '@/shared/format/currency'
+import { formatCurrency } from '@/shared/format/currency'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { modalStyles } from '@/shared/theme/tokens/modal'
@@ -280,7 +280,7 @@ export default function AssetSettingsScreen() {
                         },
                       ]}
                     >
-                      {formatUsdInt(Math.abs(asset.balance))}
+                      {formatCurrency(Math.abs(asset.balance))}
                     </Text>
                     {!linkedToAccount && (
                       <FontAwesome

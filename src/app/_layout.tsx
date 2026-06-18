@@ -6,7 +6,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome' // Icon library (pie-ch
 import { useFonts } from 'expo-font'                     // Hook to load custom fonts async
 import { Stack } from 'expo-router'                       // Stack = screen stack navigation
 import * as SplashScreen from 'expo-splash-screen'       // Native splash screen control
-import { useEffect, useState } from 'react'              // React hooks for state & side effects
+import { useEffect, useRef, useState } from 'react'      // React hooks for state & side effects
 import { GestureHandlerRootView } from 'react-native-gesture-handler' // Enables swipe gestures
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'       // Context for bottom sheets
 import 'react-native-reanimated'                         // Side-effect import: initializes animations
@@ -46,11 +46,15 @@ SplashScreen.preventAutoHideAsync() // Keep splash visible until WE say to hide 
 //   State 2: DB error → show error screen
 //   State 3: Everything ready → show actual app (RootLayoutNav)
 // ═══════════════════════════════════════════════════════════════════════════
+// Minimum time to show splash screen (ms)
+const MIN_SPLASH_DURATION = 2000
+
 export default function RootLayout() {
   // ─── State Variables ─────────────────────────────────────────────────────
   // useState returns [currentValue, setterFunction]
   const [dbReady, setDbReady] = useState(false)      // Has database initialized?
   const [dbError, setDbError] = useState<unknown>(null) // Any DB errors?
+  const splashStartTime = useRef(Date.now())         // Track when splash started
 
   // useFonts returns [loaded: boolean, error: Error | null]
   const [loaded, fontError] = useFonts({
@@ -116,10 +120,22 @@ export default function RootLayout() {
 
   // ─── Effect 3: Hide Splash When Ready ────────────────────────────────────
   // Runs when either 'loaded' or 'dbReady' changes
-  // Only hides splash when BOTH are true
+  // Only hides splash when BOTH are true AND minimum duration has passed
   useEffect(() => {
     if (loaded && dbReady) {
-      SplashScreen.hideAsync() // NOW show the app to the user
+      const elapsed = Date.now() - splashStartTime.current
+      const remaining = MIN_SPLASH_DURATION - elapsed
+
+      if (remaining > 0) {
+        // Wait for remaining time before hiding splash
+        const timer = setTimeout(() => {
+          SplashScreen.hideAsync()
+        }, remaining)
+        return () => clearTimeout(timer)
+      } else {
+        // Already past minimum duration, hide immediately
+        SplashScreen.hideAsync()
+      }
     }
   }, [loaded, dbReady])
 

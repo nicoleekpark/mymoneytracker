@@ -15,7 +15,7 @@ import type { Account, AccountKind } from '@/core/domain/account'
 import { getActiveAccounts, getArchivedAccounts, restoreAccount } from '@/core/services/account'
 import { getAccountBalanceAtEndOfMonth } from '@/core/services/transaction'
 import { EmptyState, useToast } from '@/shared/components'
-import { formatUsdInt } from '@/shared/format/currency'
+import { formatCurrency } from '@/shared/format/currency'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
 import { modalStyles } from '@/shared/theme/tokens/modal'
@@ -244,7 +244,7 @@ export default function AccountSettingsScreen() {
                       { color: isDebt && balance !== 0 ? semantic.danger : semantic.text },
                     ]}
                   >
-                    {formatUsdInt(Math.abs(balance))}
+                    {formatCurrency(Math.abs(balance))}
                   </Text>
                   <FontAwesome
                     name="chevron-right"
