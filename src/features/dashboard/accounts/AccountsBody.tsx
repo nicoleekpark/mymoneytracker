@@ -612,7 +612,14 @@ export function AccountsBody({ colors, scope, period }: Props) {
 
       {/* Summary section */}
       {visibleSummaries.length > 0 && (
-        <View style={{ marginBottom: SECTION_GAP }}>
+        <View style={{
+          marginBottom: SECTION_GAP,
+          backgroundColor: colors.primary + '0F',
+          borderRadius: 16,
+          marginHorizontal: -spacing.md,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+        }}>
           {visibleSummaries.map((summary, index) => (
             <SummarySectionRow
               key={summary.key}

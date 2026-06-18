@@ -148,7 +148,15 @@ export function YearlyBody({ year, colors, onMonthPress }: Props) {
       showsVerticalScrollIndicator={false}
     >
       {/* Section 1: Hero - Year Overview */}
-      <View style={{ marginBottom: SECTION_GAP }}>
+      <View style={{
+        marginBottom: SECTION_GAP,
+        backgroundColor: colors.primary + '0F',
+        borderRadius: 16,
+        paddingHorizontal: spacing.md,
+        paddingTop: spacing.sm,
+        paddingBottom: spacing.lg,
+        marginHorizontal: -spacing.md,
+      }}>
         <DashboardHero
           netDollar={heroData.netDollar}
           incomeDollar={heroData.incomeDollar}

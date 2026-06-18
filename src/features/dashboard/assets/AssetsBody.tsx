@@ -634,7 +634,14 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
           const netWorthLabel = scope === 'all' ? 'Current Net Worth' : 'Net Worth'
 
           return (
-            <View style={{ paddingVertical: spacing.xl, marginBottom: spacing.sm }}>
+            <View style={{
+              paddingVertical: spacing.xl,
+              marginBottom: spacing.sm,
+              backgroundColor: colors.primary + '0F',
+              borderRadius: 16,
+              marginHorizontal: -spacing.md,
+              paddingHorizontal: spacing.md,
+            }}>
               {/* Net Worth - centered */}
               <View style={{ alignItems: 'center', marginBottom: spacing.xl }}>
                 <Text
@@ -838,10 +845,11 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  backgroundColor: colors.surfaceAlt,
-                  borderRadius: radius.lg,
+                  backgroundColor: colors.primary + '0F',
+                  borderRadius: 16,
                   padding: spacing.lg,
                   marginBottom: spacing.lg,
+                  marginHorizontal: -spacing.md,
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>

@@ -15,9 +15,39 @@ import { TAB_BAR_HEIGHT, TAB_BAR_ICON_SIZE, TAB_BAR_ICON_OFFSET } from '@/shared
 import { spacing } from '@/shared/theme/tokens/spacing' // Spacing tokens
 
 // ─── Helper Component ──────────────────────────────────────────────────────
-// Creates tab bar icons with consistent size
-function TabBarIcon(props: { name: React.ComponentProps<typeof FontAwesome>['name']; color: string }) {
-  return <FontAwesome size={TAB_BAR_ICON_SIZE} style={{ marginBottom: TAB_BAR_ICON_OFFSET }} {...props} />
+// Creates tab bar icons - the entire tab half gets background when focused
+function TabBarIcon(props: {
+  name: React.ComponentProps<typeof FontAwesome>['name']
+  color: string
+  focused: boolean
+  primaryColor: string
+  position: 'left' | 'right'
+}) {
+  const { name, color, focused, primaryColor, position } = props
+
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: focused ? primaryColor + '0F' : 'transparent',
+        borderTopLeftRadius: position === 'left' ? 12 : 0,
+        borderBottomLeftRadius: position === 'left' ? 12 : 0,
+        borderTopRightRadius: position === 'right' ? 12 : 0,
+        borderBottomRightRadius: position === 'right' ? 12 : 0,
+        marginLeft: position === 'left' ? spacing.xs : 0,
+        marginRight: position === 'right' ? spacing.xs : 0,
+        marginVertical: spacing.xs,
+      }}
+    >
+      <FontAwesome name={name} size={TAB_BAR_ICON_SIZE} color={color} style={{ marginBottom: TAB_BAR_ICON_OFFSET }} />
+    </View>
+  )
 }
 
 // ─── Main Tab Layout ───────────────────────────────────────────────────────
@@ -40,13 +70,17 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,                              // We use custom AppBar, not default header
-          tabBarActiveTintColor: theme.semantic.text,      // Selected tab icon color
-          tabBarInactiveTintColor: theme.semantic.textSecondary, // Unselected tab icon color
+          tabBarActiveTintColor: theme.semantic.primary,   // Selected = primary/mint color
+          tabBarInactiveTintColor: theme.semantic.textSecondary, // Unselected = muted
           tabBarStyle: {
             backgroundColor: theme.semantic.background,
             height: TAB_BAR_HEIGHT,                        // Shared constant (used by DraftsFAB too)
-            paddingTop: spacing.sm,
-            paddingBottom: spacing.sm
+            paddingTop: spacing.xs,
+            paddingBottom: spacing.xs,
+            borderTopWidth: 0,
+          },
+          tabBarItemStyle: {
+            flex: 1,
           },
           tabBarShowLabel: false                           // Icons only, no text labels
         }}
@@ -57,7 +91,15 @@ export default function TabLayout() {
           name="index"                                     // Maps to src/app/(tabs)/index.tsx
           options={{
             title: 'Dashboard',
-            tabBarIcon: ({ color }) => <TabBarIcon name="pie-chart" color={color} />
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon
+                name="pie-chart"
+                color={focused ? theme.semantic.primary : color}
+                focused={focused}
+                primaryColor={theme.semantic.primary}
+                position="left"
+              />
+            )
           }}
         />
 
@@ -74,7 +116,15 @@ export default function TabLayout() {
           name="transactions"                              // Maps to src/app/(tabs)/transactions.tsx
           options={{
             title: 'Transactions',
-            tabBarIcon: ({ color }) => <TabBarIcon name="list" color={color} />
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon
+                name="list"
+                color={focused ? theme.semantic.primary : color}
+                focused={focused}
+                primaryColor={theme.semantic.primary}
+                position="right"
+              />
+            )
           }}
         />
 

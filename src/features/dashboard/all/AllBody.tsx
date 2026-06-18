@@ -396,7 +396,15 @@ export function AllBody({ colors }: Props) {
       />
 
       {/* Section 1: All-Time Overview */}
-      <View style={{ marginBottom: SECTION_GAP }}>
+      <View style={{
+        marginBottom: SECTION_GAP,
+        backgroundColor: colors.primary + '0F',
+        borderRadius: 16,
+        paddingHorizontal: spacing.md,
+        paddingTop: spacing.sm,
+        paddingBottom: spacing.lg,
+        marginHorizontal: -spacing.md,
+      }}>
         {/* Tracking since subtitle */}
         <TrackingSince date={data.firstTransactionDate} color={colors.textSecondary} />
 

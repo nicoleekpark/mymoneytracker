@@ -29,7 +29,6 @@ import {
 } from './components'
 import type { TransactionFilters, TransactionType, ActiveFilterChip } from './components'
 import {
-  InteractionManager,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -259,36 +258,6 @@ export default function TransactionsScreen() {
     }, [refetch])
   )
 
-  // Scroll when focusId changes (new date selected)
-  useEffect(() => {
-    // Skip if no focusDate or already scrolled for this focusId
-    if (!focusDate || focusId <= lastScrolledFocusIdRef.current) return
-
-    // Wait for sections to be available
-    if (!sections.length) return
-
-    const target = findScrollTarget(sections, focusDate)
-    if (!target) return
-
-    // Store pending scroll for onScrollToIndexFailed handler
-    pendingScrollRef.current = target
-
-    // Scroll after a delay to ensure layout is ready
-    // Only mark as scrolled AFTER the scroll actually triggers (not before)
-    const timeoutId = setTimeout(() => {
-      listRef.current?.scrollToLocation({
-        sectionIndex: target.sectionIndex,
-        itemIndex: 0,
-        animated: true,
-        viewPosition: 0
-      })
-      // Mark this focusId as scrolled only after scroll is triggered
-      lastScrolledFocusIdRef.current = focusId
-    }, 300)
-
-    return () => clearTimeout(timeoutId)
-  }, [focusDate, focusId, sections])
-
   // Convert drafts to TransactionOrDraft format
   const draftsAsTransactions: TransactionOrDraft[] = useMemo(() => {
     if (filters.draftMode === 'hidden') return []
@@ -390,6 +359,36 @@ export default function TransactionsScreen() {
 
     return baseSections
   }, [filteredItems, debouncedQuery, filters.draftMode, draftsAsTransactions])
+
+  // Scroll when focusId changes (new date selected)
+  useEffect(() => {
+    // Skip if no focusDate or already scrolled for this focusId
+    if (!focusDate || focusId <= lastScrolledFocusIdRef.current) return
+
+    // Wait for sections to be available
+    if (!sections.length) return
+
+    const target = findScrollTarget(sections, focusDate)
+    if (!target) return
+
+    // Store pending scroll for onScrollToIndexFailed handler
+    pendingScrollRef.current = target
+
+    // Scroll after a delay to ensure layout is ready
+    // Only mark as scrolled AFTER the scroll actually triggers (not before)
+    const timeoutId = setTimeout(() => {
+      listRef.current?.scrollToLocation({
+        sectionIndex: target.sectionIndex,
+        itemIndex: 0,
+        animated: true,
+        viewPosition: 0
+      })
+      // Mark this focusId as scrolled only after scroll is triggered
+      lastScrolledFocusIdRef.current = focusId
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [focusDate, focusId, sections])
 
   // Get filtered account name for display
   const filteredAccountName = accountIdFilter ? accountNameById.get(accountIdFilter) : null

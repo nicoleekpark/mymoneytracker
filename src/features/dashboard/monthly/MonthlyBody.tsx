@@ -111,7 +111,15 @@ export function MonthlyBody(props: { monthYYYYMM: string; colors: CalendarColors
       showsVerticalScrollIndicator={false}
     >
       {/* Section 1: Hero - Month Overview */}
-      <View style={{ marginBottom: SECTION_GAP }}>
+      <View style={{
+        marginBottom: SECTION_GAP,
+        backgroundColor: colors.primary + '0F',
+        borderRadius: 16,
+        paddingHorizontal: spacing.md,
+        paddingTop: spacing.sm,
+        paddingBottom: spacing.lg,
+        marginHorizontal: -spacing.md,
+      }}>
         <DashboardHero
           netDollar={heroData.netDollar}
           incomeDollar={heroData.incomeDollar}
