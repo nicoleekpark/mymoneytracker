@@ -76,30 +76,24 @@ export default function RootLayout() {
       initDbPragmas()         // 1. Set SQLite performance flags (foreign keys, journal mode)
       migrate()               // 2. Run all pending migrations (create/update tables)
 
-      /* eslint-disable no-console -- Hotfix logging for critical schema migrations */
-      // HOTFIX: Ensure new columns exist (in case migrations didn't run properly)
+      // Ensure new columns exist (in case migrations didn't run properly on existing installs)
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const sqlite = require('@/infrastructure/db/sqlite')
         const cols = (sqlite.queryAll(`PRAGMA table_info(transactions);`) as { name: string }[]).map((r) => r.name)
         if (!cols.includes('fee_cents')) {
           sqlite.exec(`ALTER TABLE transactions ADD COLUMN fee_cents INTEGER DEFAULT NULL;`)
-          console.log('[HOTFIX] Added fee_cents column')
         }
         if (!cols.includes('parent_transaction_id')) {
           sqlite.exec(`ALTER TABLE transactions ADD COLUMN parent_transaction_id TEXT REFERENCES transactions(id) ON DELETE CASCADE;`)
-          console.log('[HOTFIX] Added parent_transaction_id column')
         }
         if (!cols.includes('is_opening_balance')) {
           sqlite.exec(`ALTER TABLE transactions ADD COLUMN is_opening_balance INTEGER NOT NULL DEFAULT 0 CHECK (is_opening_balance IN (0, 1));`)
-          // Mark existing "Opening Balance" transactions
           sqlite.exec(`UPDATE transactions SET is_opening_balance = 1 WHERE item = 'Opening Balance' AND type = 'income';`)
-          console.log('[HOTFIX] Added is_opening_balance column')
         }
-      } catch (e) {
-        console.warn('[HOTFIX] Column check failed:', e)
+      } catch {
+        // Column migration already applied or failed - continue
       }
-      /* eslint-enable no-console */
       runSystemSeeds()        // 3. Seed default data (categories, accounts)
       runAppLaunchTriggers()  // 4. Check for notifications (budget alerts, draft reminders)
 
