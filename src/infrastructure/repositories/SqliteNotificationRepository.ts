@@ -161,6 +161,52 @@ export class SqliteNotificationRepository {
   }
 
   /**
+   * List all non-dismissed notifications by subtype.
+   * Used for checking existing budget alerts.
+   */
+  listBySubtype(subtype: string): Notification[] {
+    const rows = this.dataSource.queryAll<NotificationRow>(
+      `SELECT id, type, title, message, read, dismissed, created_at, read_at,
+              sender_id, sender_name, sender_avatar
+       FROM notifications
+       WHERE sender_id = ? AND dismissed = 0
+       ORDER BY created_at DESC;`,
+      [subtype]
+    )
+    return rows.map(rowToNotification)
+  }
+
+  /**
+   * Find a notification by subtype and month/year (from metadata).
+   * Used to check if budget alert already exists for this month.
+   */
+  findBySubtypeAndMonth(subtype: string, month: number, year: number): Notification | null {
+    // Query all non-dismissed notifications of this subtype
+    const rows = this.dataSource.queryAll<NotificationRow>(
+      `SELECT id, type, title, message, read, dismissed, created_at, read_at,
+              sender_id, sender_name, sender_avatar
+       FROM notifications
+       WHERE sender_id = ? AND dismissed = 0
+       ORDER BY created_at DESC;`,
+      [subtype]
+    )
+
+    // Check metadata for matching month/year
+    for (const row of rows) {
+      const notification = rowToNotification(row)
+      if (
+        notification.metadata &&
+        notification.metadata.month === month &&
+        notification.metadata.year === year
+      ) {
+        return notification
+      }
+    }
+
+    return null
+  }
+
+  /**
    * Clear all notifications (for dev/testing).
    */
   clearAll(): void {

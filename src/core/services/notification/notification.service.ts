@@ -9,6 +9,7 @@
 import { draftRepository, notificationRepository, transactionRepository } from '@/infrastructure/repositories'
 import { logError } from '@/shared/utils/logger'
 import { useSettingsStore } from '@/shared/store/settings.store'
+import { useNotificationsStore } from '@/shared/store/notifications.store'
 
 const DRAFT_REMINDER_SUBTYPE = 'draft_reminder'
 const BUDGET_ALERT_SUBTYPE = 'budget_alert'
@@ -42,6 +43,8 @@ export function checkDraftReminder(): void {
         draftIds: drafts.map((d) => d.id),
       },
     })
+    // Refresh store to update badge
+    useNotificationsStore.getState().loadNotifications()
   } catch (error) {
     logError('NotificationTriggers', error)
   }
@@ -60,13 +63,10 @@ export function checkBudgetAlert(): void {
       return
     }
 
-    // Don't create duplicate notification if one exists within 24h
-    if (notificationRepository.hasRecentBySubtype(BUDGET_ALERT_SUBTYPE, 24)) {
-      return
-    }
-
     // Get current month's expenses
     const now = new Date()
+    const currentMonth = now.getMonth() + 1
+    const currentYear = now.getFullYear()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
 
@@ -84,26 +84,51 @@ export function checkBudgetAlert(): void {
     // Calculate threshold in cents
     const thresholdCents = Math.round(settings.monthlyBudget * (settings.budgetAlertThreshold / 100))
 
-    if (totalExpensesCents >= thresholdCents) {
-      const percentUsed = Math.round((totalExpensesCents / settings.monthlyBudget) * 100)
-      const amountSpent = (totalExpensesCents / 100).toFixed(0)
-      const budgetAmount = (settings.monthlyBudget / 100).toFixed(0)
-      const monthYear = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-
-      notificationRepository.create({
-        type: 'system',
-        subtype: BUDGET_ALERT_SUBTYPE,
-        title: 'Budget Alert',
-        message: `[${monthYear}] You've spent $${amountSpent} of your $${budgetAmount} budget (${percentUsed}%)`,
-        metadata: {
-          totalExpensesCents,
-          monthlyBudget: settings.monthlyBudget,
-          percentUsed,
-          month: now.getMonth() + 1,
-          year: now.getFullYear(),
-        },
-      })
+    // Check if expenses exceed threshold
+    if (totalExpensesCents < thresholdCents) {
+      return // Not yet at threshold, no alert needed
     }
+
+    // Find ALL non-dismissed budget alerts for this month
+    // Check if any was created with the current budget amount
+    const existingAlerts = notificationRepository.listBySubtype(BUDGET_ALERT_SUBTYPE)
+
+    const alertForCurrentBudget = existingAlerts.find(alert => {
+      const meta = alert.metadata
+      if (!meta) return false
+      // Match by month/year AND same budget amount
+      return (
+        meta.month === currentMonth &&
+        meta.year === currentYear &&
+        meta.monthlyBudget === settings.monthlyBudget
+      )
+    })
+
+    if (alertForCurrentBudget) {
+      return // Already alerted for this budget amount this month
+    }
+
+    // Create alert - either first alert this month, or budget changed and threshold exceeded
+    const percentUsed = Math.round((totalExpensesCents / settings.monthlyBudget) * 100)
+    const amountSpent = (totalExpensesCents / 100).toFixed(0)
+    const budgetAmount = (settings.monthlyBudget / 100).toFixed(0)
+    const monthYear = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+
+    notificationRepository.create({
+      type: 'system',
+      subtype: BUDGET_ALERT_SUBTYPE,
+      title: 'Budget Alert',
+      message: `[${monthYear}] You've spent $${amountSpent} of your $${budgetAmount} budget (${percentUsed}%)`,
+      metadata: {
+        totalExpensesCents,
+        monthlyBudget: settings.monthlyBudget,
+        percentUsed,
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+      },
+    })
+    // Refresh store to update badge
+    useNotificationsStore.getState().loadNotifications()
   } catch (error) {
     logError('NotificationTriggers', error)
   }

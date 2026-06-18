@@ -14,6 +14,8 @@ type Props = {
   rightLabel?: string
   /** Optional description below the title */
   description?: string
+  /** Hide the divider above the section (useful for first section) */
+  hideDivider?: boolean
   /** Theme colors - requires at least text, textSecondary, border */
   colors: Pick<BaseViewColors, 'text' | 'textSecondary' | 'border'>
 }
@@ -28,19 +30,22 @@ export function SectionHeader({
   rightColor,
   rightLabel,
   description,
+  hideDivider,
   colors
 }: Props) {
   return (
     <View style={{ marginBottom: spacing.lg }}>
       {/* Divider above section */}
-      <View
-        style={{
-          height: 1,
-          backgroundColor: colors.border,
-          marginBottom: spacing.lg,
-          opacity: 0.5
-        }}
-      />
+      {!hideDivider && (
+        <View
+          style={{
+            height: 1,
+            backgroundColor: colors.border,
+            marginBottom: spacing.lg,
+            opacity: 0.5
+          }}
+        />
+      )}
       {/* Title row */}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Text

@@ -99,11 +99,49 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
     <View style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing['3xl'] }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
       >
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* Section: Primary Driver (no hero - Overview has the net already) */}
+        {/* Section 1: Net Trend (Hero) */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        <View style={{
+          marginBottom: SECTION_GAP,
+          backgroundColor: colors.primary + '0F',
+          borderRadius: 16,
+          paddingHorizontal: spacing.md,
+          paddingTop: spacing.lg,
+          paddingBottom: spacing.lg,
+          marginHorizontal: -spacing.md,
+        }}>
+          <SectionHeader
+            title="Net trend"
+            description="Long-term pattern and current position"
+            hideDivider
+            colors={colors}
+          />
+          {netTrend.length > 1 && medianNet !== null ? (
+            <NetSparkline
+              data={netTrend}
+              baseline={medianNet}
+              colors={colors}
+            />
+          ) : (
+            <View style={{
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.lg,
+              padding: spacing.lg,
+              alignItems: 'center'
+            }}>
+              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>
+                Need 2+ months to show trend
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* Section 2: Primary Driver */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         <View style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader
@@ -136,35 +174,6 @@ export function InsightsBody({ monthYYYYMM, colors }: Props) {
                 {availableMonths < 2
                   ? 'Need 2+ months to compare categories'
                   : 'No significant category changes this month'}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* Section: Net Trend */}
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        <View style={{ marginBottom: SECTION_GAP }}>
-          <SectionHeader
-            title="Net trend"
-            description="Long-term pattern and current position"
-            colors={colors}
-          />
-          {netTrend.length > 1 && medianNet !== null ? (
-            <NetSparkline
-              data={netTrend}
-              baseline={medianNet}
-              colors={colors}
-            />
-          ) : (
-            <View style={{
-              backgroundColor: colors.surfaceAlt,
-              borderRadius: radius.lg,
-              padding: spacing.lg,
-              alignItems: 'center'
-            }}>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>
-                Need 2+ months to show trend
               </Text>
             </View>
           )}

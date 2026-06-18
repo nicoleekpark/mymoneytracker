@@ -13,6 +13,8 @@ import { useDataRefreshStore } from './data-refresh.store'
 // Lazy import to avoid circular dependency / test issues
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getStorage = () => require('@/infrastructure/db/settingsStorage') as typeof import('@/infrastructure/db/settingsStorage')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const getNotificationService = () => require('@/core/services/notification') as typeof import('@/core/services/notification')
 
 type PersistedSettings = {
   budgetAlertEnabled: boolean
@@ -65,6 +67,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     persistSettings({ budgetAlertEnabled, budgetAlertThreshold, monthlyBudget })
     // Trigger refresh for components that depend on budget settings
     useDataRefreshStore.getState().invalidateSettings()
+    // Check if budget alert should trigger (e.g., budget lowered below current expenses)
+    getNotificationService().checkBudgetAlert()
   },
 
   _hydrate: () => {

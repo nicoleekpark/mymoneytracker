@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Text, View, Switch, TextInput, ScrollView, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect } from 'expo-router'
 import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -42,29 +42,46 @@ export default function SettingsScreen() {
   const [budgetInput, setBudgetInput] = useState(String(monthlyBudget / 100))
   const [thresholdInput, setThresholdInput] = useState(String(budgetAlertThreshold))
 
-  // Sync input state when store values change (e.g., after hydration)
+  // Track if user is currently editing to prevent sync conflicts
+  const isEditingBudget = useRef(false)
+  const isEditingThreshold = useRef(false)
+
+  // Sync input state when store values change (e.g., after hydration), but not while editing
   useEffect(() => {
-    setBudgetInput(String(monthlyBudget / 100))
+    if (!isEditingBudget.current) {
+      const newValue = String(monthlyBudget / 100)
+      // Only update if different to avoid unnecessary re-renders
+      setBudgetInput(prev => prev === newValue ? prev : newValue)
+    }
   }, [monthlyBudget])
 
   useEffect(() => {
-    setThresholdInput(String(budgetAlertThreshold))
+    if (!isEditingThreshold.current) {
+      const newValue = String(budgetAlertThreshold)
+      setThresholdInput(prev => prev === newValue ? prev : newValue)
+    }
   }, [budgetAlertThreshold])
 
-  // Save budget when leaving the screen (back button doesn't always trigger onBlur)
+  // Save when leaving the screen (back button may not trigger onBlur)
+  // Use refs to get latest values without causing re-renders
+  const budgetInputRef = useRef(budgetInput)
+  const monthlyBudgetRef = useRef(monthlyBudget)
+  budgetInputRef.current = budgetInput
+  monthlyBudgetRef.current = monthlyBudget
+
   useFocusEffect(
     useCallback(() => {
       return () => {
-        // Cleanup: save current input values when leaving screen
-        const budgetValue = parseFloat(budgetInput)
-        if (!isNaN(budgetValue) && budgetValue >= 0) {
-          const newBudgetCents = Math.round(budgetValue * 100)
-          if (newBudgetCents !== monthlyBudget) {
+        // Save on unmount/blur
+        const value = parseFloat(budgetInputRef.current)
+        if (!isNaN(value) && value >= 0) {
+          const newBudgetCents = Math.round(value * 100)
+          if (newBudgetCents !== monthlyBudgetRef.current) {
             setMonthlyBudget(newBudgetCents)
           }
         }
       }
-    }, [budgetInput, monthlyBudget, setMonthlyBudget])
+    }, [setMonthlyBudget])
   )
 
   const selection: ThemeSelection = mode ?? 'system'
@@ -74,7 +91,12 @@ export default function SettingsScreen() {
     else setMode(next)
   }
 
+  const handleBudgetFocus = () => {
+    isEditingBudget.current = true
+  }
+
   const handleBudgetBlur = () => {
+    isEditingBudget.current = false
     const value = parseFloat(budgetInput)
     if (!isNaN(value) && value >= 0) {
       setMonthlyBudget(Math.round(value * 100))
@@ -193,6 +215,7 @@ export default function SettingsScreen() {
               style={inputStyle}
               value={budgetInput}
               onChangeText={setBudgetInput}
+              onFocus={handleBudgetFocus}
               onBlur={handleBudgetBlur}
               onEndEditing={handleBudgetBlur}
               keyboardType="numeric"

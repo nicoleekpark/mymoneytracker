@@ -13,7 +13,7 @@ import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typog
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
-import { useNotificationsStore, useDraftsStore, useSettingsStore, type DraftTransaction } from '@/shared/store'
+import { useNotificationsStore, useDraftsStore, type DraftTransaction } from '@/shared/store'
 import { formatCurrency } from '@/shared/format/currency'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
@@ -51,9 +51,6 @@ export default function NotificationsScreen() {
   const actualDrafts = useDraftsStore((s) => s.drafts)
   const draftsLoaded = useDraftsStore((s) => s.isLoaded)
   const loadDrafts = useDraftsStore((s) => s.loadDrafts)
-
-  // Settings store - for current budget (used in dynamic budget alert messages)
-  const monthlyBudget = useSettingsStore((s) => s.monthlyBudget)
 
   // Load notifications and drafts on mount
   useEffect(() => {
@@ -198,34 +195,6 @@ export default function NotificationsScreen() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
-  // Get notification message - for budget_alert, use current budget settings
-  const getMessage = (notification: Notification): string => {
-    if (notification.subtype === 'budget_alert' && notification.metadata) {
-      const totalExpensesCents = notification.metadata.totalExpensesCents as number
-      const month = notification.metadata.month as number | undefined
-      const year = notification.metadata.year as number | undefined
-
-      if (totalExpensesCents && monthlyBudget > 0) {
-        const percentUsed = Math.round((totalExpensesCents / monthlyBudget) * 100)
-        const amountSpent = Math.round(totalExpensesCents / 100)
-        const budgetAmount = Math.round(monthlyBudget / 100)
-
-        // Format month/year if available, otherwise use notification creation date
-        let monthYear: string
-        if (month && year) {
-          const date = new Date(year, month - 1)
-          monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-        } else {
-          const date = new Date(notification.createdAt)
-          monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-        }
-
-        return `[${monthYear}] You've spent $${amountSpent} of your $${budgetAmount} budget (${percentUsed}%)`
-      }
-    }
-    return notification.message
-  }
-
   // Get icon for notification subtype
   const getIcon = (notification: Notification): { name: string; color: string } => {
     switch (notification.subtype) {
@@ -296,7 +265,7 @@ export default function NotificationsScreen() {
           style={[styles.rowMessage, { color: theme.semantic.textSecondary }]}
           numberOfLines={2}
         >
-          {getMessage(notification)}
+          {notification.message}
         </Text>
       </View>
       <View style={styles.rowRight}>
@@ -306,6 +275,13 @@ export default function NotificationsScreen() {
         <Text style={[styles.rowTime, { color: theme.semantic.textSecondary }]}>
           {formatTime(notification.createdAt)}
         </Text>
+        <Pressable
+          onPress={() => handleDismiss(notification)}
+          hitSlop={8}
+          style={{ marginLeft: spacing.sm, padding: spacing.xs }}
+        >
+          <FontAwesome name="times" size={14} color={theme.semantic.textSecondary} />
+        </Pressable>
       </View>
     </Pressable>
   )
