@@ -11,16 +11,9 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Keyboard,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { AssetCategory } from '@/core/domain/asset'
 import { getCategoryMeta } from '@/core/domain/asset'
@@ -61,10 +54,10 @@ const ASSET_TABS: { key: AssetTab; label: string }[] = [
 const CATEGORIES_BY_TAB: Record<AssetTab, { key: AssetCategory; label: string; icon: string }[]> = {
   assets: [
     { key: 'real_estate', label: 'Real Estate', icon: 'home' },
-    { key: 'other', label: 'Other', icon: 'ellipsis-h' },  // Vehicles, collectibles, etc.
+    { key: 'other', label: 'Other', icon: 'ellipsis-h' }, // Vehicles, collectibles, etc.
   ],
   liabilities: [
-    { key: 'other', label: 'Other', icon: 'ellipsis-h' },  // Informal debts
+    { key: 'other', label: 'Other', icon: 'ellipsis-h' }, // Informal debts
   ],
 }
 
@@ -72,6 +65,7 @@ const CATEGORIES_BY_TAB: Record<AssetTab, { key: AssetCategory; label: string; i
 
 export default function AddAssetScreen() {
   const theme = useHoHTheme()
+  const insets = useSafeAreaInsets()
   const { semantic } = theme
   const { invalidateAssets } = useDataRefreshStore()
   const nameInputRef = useRef<TextInput>(null)
@@ -118,7 +112,7 @@ export default function AddAssetScreen() {
   const showToast = useCallback((message: string) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
     setToastMessage(message)
-    setToastKey(k => k + 1)
+    setToastKey((k) => k + 1)
     toastTimeoutRef.current = setTimeout(() => setToastMessage(null), MODAL_TOAST_DURATION)
   }, [])
 
@@ -136,7 +130,7 @@ export default function AddAssetScreen() {
 
   // Amount keypad handlers
   const handleKeypadDigit = useCallback((digit: string) => {
-    setValueCents(prev => {
+    setValueCents((prev) => {
       let next = prev
       for (const d of digit) {
         next = next * 10 + parseInt(d, 10)
@@ -146,7 +140,7 @@ export default function AddAssetScreen() {
   }, [])
 
   const handleKeypadBackspace = useCallback(() => {
-    setValueCents(prev => Math.floor(prev / 10))
+    setValueCents((prev) => Math.floor(prev / 10))
   }, [])
 
   const handleKeypadClear = useCallback(() => {
@@ -173,12 +167,7 @@ export default function AddAssetScreen() {
     Keyboard.dismiss()
 
     try {
-      const newAsset = createAssetItem(
-        selectedMeta.field,
-        category,
-        trimmedName,
-        null
-      )
+      const newAsset = createAssetItem(selectedMeta.field, category, trimmedName, null)
 
       if (valueCents > 0) {
         const dollars = valueCents / 100
@@ -203,8 +192,21 @@ export default function AddAssetScreen() {
       style={{ flex: 1 }}
       contentStyle={{ flex: 1 }}
     >
-      {/* Header - slide navigation style */}
-      <View style={[modalStyles.header, { justifyContent: 'space-between' }]}>
+      {/* Drag Handle */}
+      <View style={modalStyles.dragHandleContainer}>
+        <View style={[modalStyles.dragHandle, { backgroundColor: semantic.border }]} />
+      </View>
+
+      {/* Header */}
+      <View
+        style={[
+          modalStyles.header,
+          {
+            justifyContent: 'space-between',
+            borderBottomWidth: 0,
+          },
+        ]}
+      >
         <Pressable onPress={handleCancel} hitSlop={12} style={modalStyles.cancelButton}>
           <Text style={[modalStyles.cancelText, { color: semantic.primary }]}>‹ Back</Text>
         </Pressable>
@@ -373,13 +375,7 @@ export default function AddAssetScreen() {
       </ScrollView>
 
       {/* Save Button - fixed at bottom, moves with keyboard */}
-      {/* Note: bottomInset=0 because iOS card-style modals already handle safe area */}
-      <ModalSaveBar
-        label="Save"
-        disabled={!canSubmit}
-        bottomInset={0}
-        onPress={handleSubmit}
-      />
+      <ModalSaveBar label="Save" disabled={!canSubmit} bottomInset={insets.bottom} onPress={handleSubmit} />
 
       {/* Toast */}
       {toastMessage && (
@@ -398,9 +394,7 @@ export default function AddAssetScreen() {
           ]}
           pointerEvents="none"
         >
-          <Text style={[modalStyles.toastText, { color: semantic.surface }]}>
-            {toastMessage}
-          </Text>
+          <Text style={[modalStyles.toastText, { color: semantic.surface }]}>{toastMessage}</Text>
         </Animated.View>
       )}
 

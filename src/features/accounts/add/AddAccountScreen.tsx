@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { AccountCategory as DomainAccountCategory, AccountKind, AccountNature } from '@/core/domain/account'
 import { getDefaultCategoryForKind } from '@/core/domain/account'
@@ -72,6 +73,7 @@ const ACCOUNT_SUBTYPES: Record<
 
 export default function AddAccountScreen() {
   const theme = useHoHTheme()
+  const insets = useSafeAreaInsets()
   const segments = useSegments()
   const { invalidateTransactions, invalidateAccounts } = useDataRefreshStore()
   const { setPendingNewAccountKey } = useAddTransactionNavStore()
@@ -272,13 +274,24 @@ export default function AddAccountScreen() {
         </View>
 
         {/* Header */}
-        <View style={modalStyles.header}>
+        <View
+          style={[
+            modalStyles.header,
+            {
+              justifyContent: 'space-between',
+              borderBottomWidth: 0,
+            },
+          ]}
+        >
           <Pressable onPress={handleCancel} hitSlop={12} style={modalStyles.cancelButton}>
             <Text style={[modalStyles.cancelText, { color: semantic.textSecondary }]}>
               {isNestedFlow ? '‹ Back' : 'Cancel'}
             </Text>
           </Pressable>
+          <Text style={[modalStyles.headerTitle, { color: semantic.text }]}>Add Account</Text>
+          <View style={{ minWidth: 50 }} />
         </View>
+        <View style={{ height: 1, backgroundColor: semantic.border }} />
 
         {/* Category Tabs */}
         <View style={[modalStyles.typeTabs, { borderBottomColor: semantic.border }]}>
@@ -711,11 +724,10 @@ export default function AddAccountScreen() {
         </ScrollView>
 
         {/* Save Button - fixed at bottom, moves with keyboard */}
-        {/* Note: bottomInset=0 because iOS card-style modals already handle safe area */}
         <ModalSaveBar
           label="Save"
           disabled={!canSubmit}
-          bottomInset={0}
+          bottomInset={insets.bottom}
           onPress={handleSubmit}
         />
 
