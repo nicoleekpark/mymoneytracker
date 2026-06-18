@@ -25,10 +25,13 @@ export function useBudgetSummary(monthYYYYMM: string) {
 
   // Get user-configured budget (stored in cents), fall back to app default
   const monthlyBudgetCents = useSettingsStore((s) => s.monthlyBudget)
-  const userBudgetDollar = monthlyBudgetCents > 0 ? monthlyBudgetCents / 100 : 0
+  const budgetDollar = monthlyBudgetCents > 0
+    ? monthlyBudgetCents / 100
+    : APP_CONFIG.budget.defaultMonthlyBudgetDollar
 
-  // Subscribe to transaction changes to auto-refresh
+  // Subscribe to transaction and settings changes to auto-refresh
   const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
+  const settingsVersion = useDataRefreshStore((s) => s.settingsVersion)
 
   useEffect(() => {
     let alive = true
@@ -46,10 +49,6 @@ export function useBudgetSummary(monthYYYYMM: string) {
 
         if (!alive) return
 
-        // Use user-configured budget if set, otherwise use app default
-        const budgetDollar = userBudgetDollar > 0
-          ? userBudgetDollar
-          : APP_CONFIG.budget.defaultMonthlyBudgetDollar
         const spentDollar = summary.expenseTotalDollar
         const remainingDollar = budgetDollar - spentDollar
         const percentUsed = budgetDollar > 0 ? (spentDollar / budgetDollar) * 100 : 0
@@ -91,7 +90,7 @@ export function useBudgetSummary(monthYYYYMM: string) {
     return () => {
       alive = false
     }
-  }, [monthYYYYMM, userBudgetDollar, transactionVersion])
+  }, [monthYYYYMM, budgetDollar, transactionVersion, settingsVersion])
 
   return { loading, error, data }
 }

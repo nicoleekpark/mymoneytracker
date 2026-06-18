@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Text, View, Switch, TextInput, ScrollView, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 
+import { useFocusEffect } from '@react-navigation/native'
 import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -38,10 +39,33 @@ export default function SettingsScreen() {
   const setMonthlyBudget = useSettingsStore((s) => s.setMonthlyBudget)
 
   // Local state for budget input (allows editing without instant persistence)
-  const [budgetInput, setBudgetInput] = useState(
-    monthlyBudget > 0 ? String(monthlyBudget / 100) : ''
-  )
+  const [budgetInput, setBudgetInput] = useState(String(monthlyBudget / 100))
   const [thresholdInput, setThresholdInput] = useState(String(budgetAlertThreshold))
+
+  // Sync input state when store values change (e.g., after hydration)
+  useEffect(() => {
+    setBudgetInput(String(monthlyBudget / 100))
+  }, [monthlyBudget])
+
+  useEffect(() => {
+    setThresholdInput(String(budgetAlertThreshold))
+  }, [budgetAlertThreshold])
+
+  // Save budget when leaving the screen (back button doesn't always trigger onBlur)
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // Cleanup: save current input values when leaving screen
+        const budgetValue = parseFloat(budgetInput)
+        if (!isNaN(budgetValue) && budgetValue >= 0) {
+          const newBudgetCents = Math.round(budgetValue * 100)
+          if (newBudgetCents !== monthlyBudget) {
+            setMonthlyBudget(newBudgetCents)
+          }
+        }
+      }
+    }, [budgetInput, monthlyBudget, setMonthlyBudget])
+  )
 
   const selection: ThemeSelection = mode ?? 'system'
 
@@ -55,7 +79,7 @@ export default function SettingsScreen() {
     if (!isNaN(value) && value >= 0) {
       setMonthlyBudget(Math.round(value * 100))
     } else {
-      setBudgetInput(monthlyBudget > 0 ? String(monthlyBudget / 100) : '')
+      setBudgetInput(String(monthlyBudget / 100))
     }
   }
 
@@ -170,6 +194,7 @@ export default function SettingsScreen() {
               value={budgetInput}
               onChangeText={setBudgetInput}
               onBlur={handleBudgetBlur}
+              onEndEditing={handleBudgetBlur}
               keyboardType="numeric"
               placeholder="0"
               placeholderTextColor={theme.semantic.textSecondary}

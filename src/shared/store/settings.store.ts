@@ -8,6 +8,7 @@
  */
 
 import { create } from 'zustand'
+import { useDataRefreshStore } from './data-refresh.store'
 
 // Lazy import to avoid circular dependency / test issues
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -33,7 +34,7 @@ type SettingsState = PersistedSettings & {
 const DEFAULT_SETTINGS: PersistedSettings = {
   budgetAlertEnabled: true,
   budgetAlertThreshold: 80,
-  monthlyBudget: 0,
+  monthlyBudget: 100000, // $1000 in cents
 }
 
 function persistSettings(state: PersistedSettings): void {
@@ -62,6 +63,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ monthlyBudget: Math.max(0, amountCents) })
     const { budgetAlertEnabled, budgetAlertThreshold, monthlyBudget } = get()
     persistSettings({ budgetAlertEnabled, budgetAlertThreshold, monthlyBudget })
+    // Trigger refresh for components that depend on budget settings
+    useDataRefreshStore.getState().invalidateSettings()
   },
 
   _hydrate: () => {
@@ -70,7 +73,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const { getStoredValue, STORAGE_KEYS } = getStorage()
       const stored = getStoredValue<PersistedSettings>(STORAGE_KEYS.SETTINGS)
       if (stored) {
-        set({ ...stored, _hydrated: true })
+        // Migrate users with no budget set (0) to the new default
+        const migratedBudget = stored.monthlyBudget > 0
+          ? stored.monthlyBudget
+          : DEFAULT_SETTINGS.monthlyBudget
+        set({ ...stored, monthlyBudget: migratedBudget, _hydrated: true })
       } else {
         set({ _hydrated: true })
       }

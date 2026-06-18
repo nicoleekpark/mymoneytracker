@@ -8,6 +8,6 @@ export const APP_CONFIG: AppConfig = {
   currency: CURRENCIES.USD,
   featureFlags: FEATURE_FLAGS,
   budget: {
-    defaultMonthlyBudgetDollar: 5000
+    defaultMonthlyBudgetDollar: 1000
   }
 }

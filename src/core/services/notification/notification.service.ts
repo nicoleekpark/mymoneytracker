@@ -88,16 +88,19 @@ export function checkBudgetAlert(): void {
       const percentUsed = Math.round((totalExpensesCents / settings.monthlyBudget) * 100)
       const amountSpent = (totalExpensesCents / 100).toFixed(0)
       const budgetAmount = (settings.monthlyBudget / 100).toFixed(0)
+      const monthYear = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 
       notificationRepository.create({
         type: 'system',
         subtype: BUDGET_ALERT_SUBTYPE,
         title: 'Budget Alert',
-        message: `You've spent $${amountSpent} of your $${budgetAmount} monthly budget (${percentUsed}%)`,
+        message: `[${monthYear}] You've spent $${amountSpent} of your $${budgetAmount} budget (${percentUsed}%)`,
         metadata: {
           totalExpensesCents,
           monthlyBudget: settings.monthlyBudget,
           percentUsed,
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
         },
       })
     }

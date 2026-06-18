@@ -13,7 +13,7 @@ import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typog
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { getScrollContentPadding } from '@/shared/theme/tokens/modal'
-import { useNotificationsStore, useDraftsStore, type DraftTransaction } from '@/shared/store'
+import { useNotificationsStore, useDraftsStore, useSettingsStore, type DraftTransaction } from '@/shared/store'
 import { formatCurrency } from '@/shared/format/currency'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { router } from 'expo-router'
@@ -51,6 +51,9 @@ export default function NotificationsScreen() {
   const actualDrafts = useDraftsStore((s) => s.drafts)
   const draftsLoaded = useDraftsStore((s) => s.isLoaded)
   const loadDrafts = useDraftsStore((s) => s.loadDrafts)
+
+  // Settings store - for current budget (used in dynamic budget alert messages)
+  const monthlyBudget = useSettingsStore((s) => s.monthlyBudget)
 
   // Load notifications and drafts on mount
   useEffect(() => {
@@ -195,6 +198,34 @@ export default function NotificationsScreen() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
+  // Get notification message - for budget_alert, use current budget settings
+  const getMessage = (notification: Notification): string => {
+    if (notification.subtype === 'budget_alert' && notification.metadata) {
+      const totalExpensesCents = notification.metadata.totalExpensesCents as number
+      const month = notification.metadata.month as number | undefined
+      const year = notification.metadata.year as number | undefined
+
+      if (totalExpensesCents && monthlyBudget > 0) {
+        const percentUsed = Math.round((totalExpensesCents / monthlyBudget) * 100)
+        const amountSpent = Math.round(totalExpensesCents / 100)
+        const budgetAmount = Math.round(monthlyBudget / 100)
+
+        // Format month/year if available, otherwise use notification creation date
+        let monthYear: string
+        if (month && year) {
+          const date = new Date(year, month - 1)
+          monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        } else {
+          const date = new Date(notification.createdAt)
+          monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        }
+
+        return `[${monthYear}] You've spent $${amountSpent} of your $${budgetAmount} budget (${percentUsed}%)`
+      }
+    }
+    return notification.message
+  }
+
   // Get icon for notification subtype
   const getIcon = (notification: Notification): { name: string; color: string } => {
     switch (notification.subtype) {
@@ -222,11 +253,6 @@ export default function NotificationsScreen() {
   // Handle swipe to dismiss
   const handleDismiss = (notification: Notification) => {
     dismissNotification(notification.id)
-  }
-
-  // Navigate to transactions with drafts filter enabled
-  const handleGoToTransactions = () => {
-    router.push('/transactions?draftMode=only')
   }
 
   // Render icon
@@ -268,9 +294,9 @@ export default function NotificationsScreen() {
         </Text>
         <Text
           style={[styles.rowMessage, { color: theme.semantic.textSecondary }]}
-          numberOfLines={1}
+          numberOfLines={2}
         >
-          {notification.message}
+          {getMessage(notification)}
         </Text>
       </View>
       <View style={styles.rowRight}>
@@ -357,27 +383,6 @@ export default function NotificationsScreen() {
     })
   }
 
-  // Render drafts summary card - shows actual draft count from drafts store
-  const renderDraftsSummary = () => {
-    if (actualDrafts.length === 0) return null
-
-    return (
-      <View style={[styles.draftsSummary, { backgroundColor: theme.semantic.surfaceAlt }]}>
-        <Text style={[styles.draftsSummaryTitle, { color: theme.semantic.textSecondary }]}>
-          Pending review
-        </Text>
-        <Text style={[styles.draftsSummaryValue, { color: theme.semantic.warning }]}>
-          {actualDrafts.length} {actualDrafts.length === 1 ? 'draft' : 'drafts'}
-        </Text>
-        <Pressable onPress={handleGoToTransactions} hitSlop={8}>
-          <Text style={[styles.draftsSummaryAction, { color: theme.semantic.primary }]}>
-            Go to Transactions →
-          </Text>
-        </Pressable>
-      </View>
-    )
-  }
-
   // Check if there are any notifications
   const hasNotifications = filteredItems.length > 0
 
@@ -457,7 +462,14 @@ export default function NotificationsScreen() {
       {/* Content */}
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingBottom: getScrollContentPadding(insets.bottom) }}
+        contentContainerStyle={{
+          paddingBottom: getScrollContentPadding(insets.bottom),
+          // Center empty states vertically
+          ...((activeTab === 'drafts' ? actualDrafts.length === 0 : !hasNotifications) && {
+            flexGrow: 1,
+            justifyContent: 'center',
+          }),
+        }}
         showsVerticalScrollIndicator={false}
       >
         {activeTab === 'drafts' ? (
@@ -620,23 +632,5 @@ const styles = StyleSheet.create({
   },
   rowTime: {
     fontSize: fontSize.xs,
-  },
-  // Drafts summary card
-  draftsSummary: {
-    borderRadius: radius.lg,
-    margin: spacing.lg,
-    padding: spacing.lg,
-  },
-  draftsSummaryTitle: {
-    fontSize: fontSize.sm,
-    marginBottom: spacing.sm,
-  },
-  draftsSummaryValue: {
-    fontSize: fontSize.xl + 4,
-    fontWeight: fontWeight.bold,
-  },
-  draftsSummaryAction: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.md,
   },
 })
