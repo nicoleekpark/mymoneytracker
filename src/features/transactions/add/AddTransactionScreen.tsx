@@ -594,10 +594,12 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
         const newTx = await addTransaction(CATEGORIES_INDEX, transactionInput)
         savedTransactionId = newTx?.id
 
-        // Create linked fee expense when fee is added
+        // Create linked tax/fee expense when fee is added
         if (hasFee && feeCents > 0 && savedTransactionId) {
           const feeAccountId = type === 'transfer' ? fromAccountId! : accountId!
-          const feeItem = type === 'transfer' ? 'Transfer Fee' : 'Service Fee'
+          // Use transaction description with (Tax/Fee) suffix, fallback to type-based name
+          const baseName = description.trim() || (type === 'transfer' ? 'Transfer' : 'Expense')
+          const feeItem = `${baseName} (Tax/Fee)`
           await addTransaction(CATEGORIES_INDEX, {
             type: 'expense',
             item: feeItem,
@@ -855,10 +857,12 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
 
       const newTx = await addTransaction(CATEGORIES_INDEX, transactionInput)
 
-      // Create linked fee expense when fee is added
+      // Create linked tax/fee expense when fee is added
       if (hasFee && feeCents > 0 && newTx?.id) {
         const feeAccountId = type === 'transfer' ? fromAccountId! : accountId!
-        const feeItem = type === 'transfer' ? 'Transfer Fee' : 'Service Fee'
+        // Use transaction description with (Tax/Fee) suffix, fallback to type-based name
+        const baseName = description.trim() || (type === 'transfer' ? 'Transfer' : 'Expense')
+        const feeItem = `${baseName} (Tax/Fee)`
         await addTransaction(CATEGORIES_INDEX, {
           type: 'expense',
           item: feeItem,
@@ -1259,7 +1263,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               </View>
             </Pressable>
             <Text style={[styles.feeLabel, { color: theme.semantic.textSecondary }]}>
-              Fee
+              Tax/Fee
             </Text>
             {hasFee ? (
               <View style={styles.feeValueRow}>
@@ -1278,7 +1282,7 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
               </View>
             ) : (
               <Text style={[styles.feeAddHint, { color: theme.semantic.textSecondary }]}>
-                Add service fee
+                Add tax or fee
               </Text>
             )}
           </Pressable>
@@ -1753,42 +1757,22 @@ export default function AddTransactionScreen({ mode = 'add' }: Props) {
                   <TagSection selectedTags={tags} onTagsChange={setTags} />
                 </View>
 
-                {/* Receipt */}
-                <Pressable onPress={onReceiptPress} style={[styles.fieldRow, styles.fieldRowLast]}>
-                  <Text
-                    style={[
-                      styles.fieldLabel,
-                      { color: receiptUri ? theme.semantic.textSecondary : theme.semantic.text },
-                    ]}
-                  >
+                {/* Receipt - disabled for now */}
+                <View style={[styles.fieldRow, styles.fieldRowLast, { opacity: 0.4 }]}>
+                  <Text style={[styles.fieldLabel, { color: theme.semantic.textSecondary }]}>
                     Receipt
                   </Text>
                   <View style={styles.fieldValueRow}>
                     <FontAwesome
-                      name={receiptUri ? 'check-circle' : 'camera'}
+                      name="camera"
                       size={14}
-                      color={receiptUri ? theme.semantic.success : theme.semantic.textSecondary}
+                      color={theme.semantic.textSecondary as string}
                     />
-                    <Text
-                      style={[
-                        receiptUri ? styles.fieldValue : styles.fieldPlaceholder,
-                        { color: receiptUri ? theme.semantic.text : theme.semantic.textSecondary },
-                      ]}
-                    >
-                      {receiptUri ? 'Attached' : 'Attach photo'}
+                    <Text style={[styles.fieldPlaceholder, { color: theme.semantic.textSecondary }]}>
+                      Coming soon
                     </Text>
                   </View>
-                </Pressable>
-
-                {receiptUri && (
-                  <Pressable onPress={onReceiptPress} style={styles.receiptPreview}>
-                    <Image
-                      source={{ uri: receiptUri }}
-                      style={styles.receiptImage}
-                      resizeMode="cover"
-                    />
-                  </Pressable>
-                )}
+                </View>
               </View>
             )}
           </>
