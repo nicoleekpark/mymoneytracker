@@ -94,7 +94,8 @@ export default function AssetSettingsScreen() {
     for (const category of MANUAL_CATEGORIES) {
       const items = groups.get(category)
       if (items && items.length > 0) {
-        const meta = getCategoryMeta(category)
+        // Use first item's field to get correct meta (for 'other' which exists in multiple fields)
+        const meta = getCategoryMeta(category, items[0].field)
         if (meta) {
           result.push({
             category,
@@ -110,7 +111,8 @@ export default function AssetSettingsScreen() {
     for (const category of ACCOUNT_LINKED_CATEGORIES) {
       const items = groups.get(category)
       if (items && items.length > 0) {
-        const meta = getCategoryMeta(category)
+        // Use first item's field to get correct meta
+        const meta = getCategoryMeta(category, items[0].field)
         if (meta) {
           result.push({
             category,

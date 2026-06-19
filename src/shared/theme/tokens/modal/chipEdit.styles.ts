@@ -101,8 +101,15 @@ export const chipEditStyles = StyleSheet.create({
   chipRowAdd: {
     paddingLeft: spacing.lg,
   },
-  chipLabel: {
+  labelContainer: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  parentLabel: {
+    fontSize: fontSize.xs,
+    marginBottom: 1,
+  },
+  chipLabel: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
   },

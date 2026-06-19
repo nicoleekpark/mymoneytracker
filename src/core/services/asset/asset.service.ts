@@ -260,18 +260,23 @@ export function createAssetItem(
   field: AssetField,
   category: AssetCategory,
   name: string,
-  memberId: string | null
+  memberId: string | null,
+  isLiquidifiable?: boolean
 ): AssetItem {
   const items = getAssetItems()
   const sameCategory = items.filter(i => i.category === category)
   const maxOrder = sameCategory.length > 0 ? Math.max(...sameCategory.map(i => i.sortOrder)) : 0
+
+  // Default liquidifiable based on category, but allow override for 'other' category
+  const defaultLiquidifiable = category === 'cash_savings' || category === 'investments'
+  const finalLiquidifiable = isLiquidifiable !== undefined ? isLiquidifiable : defaultLiquidifiable
 
   return assetRepository.createAssetItem({
     field,
     category,
     name,
     memberId,
-    isLiquidifiable: category === 'cash_savings' || category === 'investments',
+    isLiquidifiable: finalLiquidifiable,
     sortOrder: maxOrder + 1,
     isArchived: false,
   })
@@ -280,7 +285,7 @@ export function createAssetItem(
 /**
  * Update an asset item's properties
  */
-export function updateAssetItem(id: string, updates: { name?: string }): void {
+export function updateAssetItem(id: string, updates: { name?: string; isLiquidifiable?: boolean }): void {
   assetRepository.updateAssetItem(id, updates)
 }
 

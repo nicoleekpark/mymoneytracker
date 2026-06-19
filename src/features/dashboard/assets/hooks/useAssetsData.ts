@@ -350,7 +350,7 @@ export function useAssetsData({ scope, period, selectedMemberIds }: UseAssetsDat
         const categories: AssetCategoryGroup[] = []
 
         for (const [category, items] of categoryMap) {
-          const meta = getCategoryMeta(category)
+          const meta = getCategoryMeta(category, field)
           if (!meta) continue
 
           const itemsWithBalance: AssetItemWithBalance[] = items.map(item => ({

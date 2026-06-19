@@ -97,8 +97,9 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
       const month = 'month' in state.period ? clampMonth(state.period.month) : max.month
       set({ mode, scope: 'month', period: { year: state.period.year, month } })
     } else if (mode === 'assets') {
-      // Assets mode uses yearly scope
-      set({ mode, scope: 'year', period: { year: state.period.year } })
+      // Assets mode defaults to monthly scope
+      const month = 'month' in state.period ? clampMonth(state.period.month) : max.month
+      set({ mode, scope: 'month', period: { year: state.period.year, month } })
     } else {
       set({ mode })
     }

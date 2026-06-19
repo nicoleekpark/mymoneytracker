@@ -30,6 +30,8 @@ export type ChipDisplayInfo = {
   subCategoryKey?: string
   type: 'category' | 'payment' | 'special'
   label: string
+  /** Parent category name (for subcategories) */
+  parentLabel?: string
   icon: string
   color: string
 }
@@ -230,9 +232,16 @@ function DraggableRow({
 
         {/* Chip info */}
         <CategoryIcon name={chip.icon} size={16} color={chip.color} />
-        <Text style={[styles.chipLabel, { color: theme.semantic.text }]} numberOfLines={1}>
-          {chip.label}
-        </Text>
+        <View style={styles.labelContainer}>
+          {chip.parentLabel && (
+            <Text style={[styles.parentLabel, { color: theme.semantic.textSecondary }]} numberOfLines={1}>
+              {chip.parentLabel}
+            </Text>
+          )}
+          <Text style={[styles.chipLabel, { color: theme.semantic.text }]} numberOfLines={1}>
+            {chip.label}
+          </Text>
+        </View>
         <Text style={[styles.chipType, { color: theme.semantic.textSecondary }]}>
           {typeLabel}
         </Text>
@@ -324,8 +333,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipLabel: {
+  labelContainer: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  parentLabel: {
+    fontSize: fontSize.xs,
+    marginBottom: 1,
+  },
+  chipLabel: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
   },

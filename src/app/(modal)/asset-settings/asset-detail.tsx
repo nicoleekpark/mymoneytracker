@@ -28,7 +28,7 @@ import {
   setBalance,
   updateAssetItem,
 } from '@/core/services/asset'
-import { AmountKeypadSheet } from '@/shared/components'
+import { AmountKeypadSheet, InfoSheet } from '@/shared/components'
 import { formatCentsForDisplay, formatUsdInt } from '@/shared/format/currency'
 import { Screen } from '@/shared/layout/Screen'
 import { useHoHTheme } from '@/shared/providers'
@@ -48,6 +48,7 @@ export default function AssetDetailScreen() {
   const [asset, setAsset] = useState<AssetItem | null>(null)
   const [currentBalance, setCurrentBalance] = useState<number>(0)
   const [name, setName] = useState('')
+  const [isAccessible, setIsAccessible] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   // Balance editing state
@@ -55,6 +56,7 @@ export default function AssetDetailScreen() {
   const [balanceCents, setBalanceCents] = useState(0)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastKey, setToastKey] = useState(0)
+  const [showAccessibleInfo, setShowAccessibleInfo] = useState(false)
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentMonth = getCurrentYearMonth()
@@ -88,6 +90,7 @@ export default function AssetDetailScreen() {
 
     if (found) {
       setName(found.name)
+      setIsAccessible(found.isLiquidifiable)
       const balances = getBalancesForMonth(currentMonth)
       const balance = balances.get(assetId) ?? 0
       setCurrentBalance(balance)
@@ -98,7 +101,7 @@ export default function AssetDetailScreen() {
 
   const categoryMeta = useMemo(() => {
     if (!asset) return null
-    return getCategoryMeta(asset.category)
+    return getCategoryMeta(asset.category, asset.field)
   }, [asset])
 
   const isLiability = asset?.field === 'liabilities'
@@ -109,6 +112,25 @@ export default function AssetDetailScreen() {
     if (!asset) return false
     return name !== asset.name
   }, [asset, name])
+
+  // Handle accessible toggle - persists immediately
+  const handleAccessibleToggle = useCallback(() => {
+    if (!asset) return
+
+    const newValue = !isAccessible
+    setIsAccessible(newValue)
+
+    try {
+      updateAssetItem(asset.id, { isLiquidifiable: newValue })
+      invalidateAssets()
+      showToast(newValue ? 'Marked as accessible' : 'Marked as non-accessible')
+    } catch (error) {
+      // Revert on error
+      setIsAccessible(!newValue)
+      console.error('Failed to update accessible status:', error)
+      showToast('Failed to update')
+    }
+  }, [asset, isAccessible, invalidateAssets, showToast])
 
   // Balance keypad helpers
   const balanceDisplay = useMemo(() => {
@@ -425,6 +447,47 @@ export default function AssetDetailScreen() {
           </View>
         </View>
 
+        {/* Accessible Toggle - only for 'other' category */}
+        {asset.category === 'other' && (
+          <View style={styles.section}>
+            <View style={[styles.actionList, { backgroundColor: semantic.surfaceAlt }]}>
+              <View style={styles.actionRow}>
+                <Pressable
+                  onPress={handleAccessibleToggle}
+                  style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: spacing.md }}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      {
+                        backgroundColor: isAccessible ? semantic.primary : 'transparent',
+                        borderColor: isAccessible ? semantic.primary : semantic.border,
+                      },
+                    ]}
+                  >
+                    {isAccessible && (
+                      <FontAwesome name="check" size={10} color={semantic.onPrimary} />
+                    )}
+                  </View>
+                  <Text style={[styles.actionLabel, { color: semantic.text }]}>
+                    Accessible
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowAccessibleInfo(true)}
+                  hitSlop={12}
+                >
+                  <View style={[styles.infoIndicator, { borderColor: semantic.textSecondary }]}>
+                    <Text style={{ fontSize: 9, fontWeight: fontWeight.bold, color: semantic.textSecondary }}>
+                      i
+                    </Text>
+                  </View>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: semantic.textSecondary }]}>
@@ -521,6 +584,40 @@ export default function AssetDetailScreen() {
         onDone={handleKeypadDone}
         onClose={() => setShowKeypad(false)}
       />
+
+      {/* Accessible Info Sheet */}
+      <InfoSheet
+        visible={showAccessibleInfo}
+        onClose={() => setShowAccessibleInfo(false)}
+        title="Accessible Assets"
+        colors={{
+          surface: semantic.surface,
+          text: semantic.text,
+          textSecondary: semantic.textSecondary,
+          surfaceAlt: semantic.surfaceAlt,
+          primary: semantic.primary,
+        }}
+      >
+        <Text style={{ fontSize: fontSize.md, color: semantic.textSecondary, lineHeight: 22, marginBottom: spacing.xl }}>
+          Assets you can quickly convert to cash if needed — typically within days or weeks, not months.
+        </Text>
+        <View style={{ backgroundColor: semantic.surfaceAlt, padding: spacing.lg, borderRadius: 12, marginBottom: spacing.xl }}>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: semantic.textSecondary, marginBottom: spacing.sm }}>
+            Examples
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: semantic.text }}>
+            Cash, savings accounts, stocks, bonds, money market funds
+          </Text>
+        </View>
+        <View>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: semantic.text, marginBottom: spacing.sm }}>
+            Why it matters
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: semantic.textSecondary, lineHeight: 22 }}>
+            Knowing your accessible assets helps you understand how much financial runway you have in case of emergencies or opportunities.
+          </Text>
+        </View>
+      </InfoSheet>
     </Screen>
   )
 }
@@ -629,5 +726,22 @@ const styles = StyleSheet.create({
   actionDivider: {
     height: 1,
     marginLeft: spacing.md + 16 + spacing.md, // icon width + gaps
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoIndicator: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.6,
   },
 })

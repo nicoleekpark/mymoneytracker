@@ -42,6 +42,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
       key: string
       subCategoryKey?: string
       label: string
+      parentLabel?: string
       icon: string
       color: string
     }[] = []
@@ -85,7 +86,8 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
             type: 'category',
             key: cat.key,
             subCategoryKey: sub.key,
-            label: `${cat.name} › ${sub.name}`,
+            label: sub.name,
+            parentLabel: cat.name,
             icon: sub.icon,
             color: sub.color,
           })
@@ -115,7 +117,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
       const cat = CATEGORIES.find((c) => c.key === chip.key)
       if (!cat) return null
 
-      // If subcategory, find it and show combined label
+      // If subcategory, show on two lines
       if (chip.subCategoryKey) {
         const sub = cat.subCategories?.find((s) => s.key === chip.subCategoryKey)
         if (sub) {
@@ -123,7 +125,8 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
             key: chip.key,
             subCategoryKey: chip.subCategoryKey,
             type: 'category',
-            label: `${cat.name} › ${sub.name}`,
+            label: sub.name,
+            parentLabel: cat.name,
             icon: sub.icon,
             color: sub.color,
           }
@@ -217,12 +220,22 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
                 ]}
               >
                 <CategoryIcon name={item.icon} size={16} color={item.color} />
-                <Text
-                  style={[chipEditStyles.chipLabel, { color: theme.semantic.text }]}
-                  numberOfLines={1}
-                >
-                  {item.label}
-                </Text>
+                <View style={chipEditStyles.labelContainer}>
+                  {item.parentLabel && (
+                    <Text
+                      style={[chipEditStyles.parentLabel, { color: theme.semantic.textSecondary }]}
+                      numberOfLines={1}
+                    >
+                      {item.parentLabel}
+                    </Text>
+                  )}
+                  <Text
+                    style={[chipEditStyles.chipLabel, { color: theme.semantic.text }]}
+                    numberOfLines={1}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
                 <Text style={[chipEditStyles.chipType, { color: theme.semantic.textSecondary }]}>
                   {item.type === 'special'
                     ? 'Special'

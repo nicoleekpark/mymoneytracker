@@ -554,6 +554,7 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
             id: item.id,
             name: item.name,
             value: Math.abs(item.balance),
+            isLiquidifiable: item.isLiquidifiable,
           }))
           .sort((a, b) => b.value - a.value),
       }))
@@ -1086,19 +1087,51 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
           {(() => {
             // Get all categories
             // Category keys from asset.model.ts:
-            // Liquid: cash_savings, investments
-            // Long-term: real_estate, retirement_funds, kids
-            const liquidCategories = breakdownByField
+            // Liquid: cash_savings, investments, + 'other' items marked as accessible
+            // Long-term: real_estate, retirement_funds, kids, + 'other' items NOT marked as accessible
+            const allAssetCategories = breakdownByField
               .filter((g) => g.field !== 'liabilities')
               .flatMap((g) => g.categories)
+
+            // Standard liquid categories
+            const standardLiquidCategories = allAssetCategories
               .filter((c) => ['cash_savings', 'investments'].includes(c.key))
               .filter((c) => c.value > 0)
 
-            const longTermCategories = breakdownByField
-              .filter((g) => g.field !== 'liabilities')
-              .flatMap((g) => g.categories)
+            // 'Other' category split by isLiquidifiable
+            const otherCategory = allAssetCategories.find((c) => c.key === 'other')
+            const otherAccessibleItems = otherCategory?.items.filter((i) => i.isLiquidifiable) ?? []
+            const otherLongTermItems = otherCategory?.items.filter((i) => !i.isLiquidifiable) ?? []
+
+            // Create pseudo-category for accessible 'other' items
+            const liquidCategories = [
+              ...standardLiquidCategories,
+              ...(otherAccessibleItems.length > 0
+                ? [{
+                    key: 'other' as const,
+                    label: 'Other',
+                    value: otherAccessibleItems.reduce((sum, i) => sum + i.value, 0),
+                    items: otherAccessibleItems,
+                  }]
+                : []),
+            ]
+
+            // Standard long-term categories + non-accessible 'other' items
+            const standardLongTermCategories = allAssetCategories
               .filter((c) => ['retirement_funds', 'real_estate', 'kids'].includes(c.key))
               .filter((c) => c.value > 0)
+
+            const longTermCategories = [
+              ...standardLongTermCategories,
+              ...(otherLongTermItems.length > 0
+                ? [{
+                    key: 'other' as const,
+                    label: 'Other',
+                    value: otherLongTermItems.reduce((sum, i) => sum + i.value, 0),
+                    items: otherLongTermItems,
+                  }]
+                : []),
+            ]
 
             const liabilityGroup = breakdownByField.find((g) => g.field === 'liabilities')
             const liabilityCategories = (liabilityGroup?.categories ?? []).filter(

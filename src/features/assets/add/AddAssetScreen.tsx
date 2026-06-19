@@ -81,11 +81,13 @@ export default function AddAssetScreen() {
   const [nameFocused, setNameFocused] = useState(false)
   const [valueCents, setValueCents] = useState(0)
   const [showKeypad, setShowKeypad] = useState(false)
+  const [isAccessible, setIsAccessible] = useState(false)
 
   // UI state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastKey, setToastKey] = useState(0)
   const [highlightName, setHighlightName] = useState(false)
+  const [showAccessibleInfo, setShowAccessibleInfo] = useState(false)
 
   // Timeout refs
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -107,6 +109,7 @@ export default function AddAssetScreen() {
     }
     setName('')
     setValueCents(0)
+    setIsAccessible(false)
   }, [tab])
 
   const showToast = useCallback((message: string) => {
@@ -117,8 +120,16 @@ export default function AddAssetScreen() {
   }, [])
 
   // Derived state
-  const selectedMeta = useMemo(() => getCategoryMeta(category), [category])
   const isLiability = tab === 'liabilities'
+  const derivedField = isLiability
+    ? 'liabilities'
+    : category === 'real_estate'
+      ? 'fixed_assets'
+      : 'current_assets'
+  const selectedMeta = useMemo(
+    () => getCategoryMeta(category, derivedField),
+    [category, derivedField]
+  )
   const valueDisplay = formatCentsForDisplay(valueCents)
   const canSubmit = name.trim().length > 0
   const categories = CATEGORIES_BY_TAB[tab]
@@ -167,7 +178,15 @@ export default function AddAssetScreen() {
     Keyboard.dismiss()
 
     try {
-      const newAsset = createAssetItem(selectedMeta.field, category, trimmedName, null)
+      // Determine field based on tab, not getCategoryMeta (which may return wrong field for 'other')
+      const field = isLiability
+        ? 'liabilities'
+        : category === 'real_estate'
+          ? 'fixed_assets'
+          : 'current_assets'
+      // For 'other' category, use user's selection for isLiquidifiable
+      const liquidifiable = category === 'other' ? isAccessible : undefined
+      const newAsset = createAssetItem(field, category, trimmedName, null, liquidifiable)
 
       if (valueCents > 0) {
         const dollars = valueCents / 100
@@ -182,7 +201,16 @@ export default function AddAssetScreen() {
       const message = error instanceof Error ? error.message : 'Failed to create asset'
       showToast(message)
     }
-  }, [name, category, selectedMeta, valueCents, isLiability, invalidateAssets, showToast])
+  }, [
+    name,
+    category,
+    selectedMeta,
+    valueCents,
+    isLiability,
+    isAccessible,
+    invalidateAssets,
+    showToast,
+  ])
 
   return (
     <Screen
@@ -371,11 +399,46 @@ export default function AddAssetScreen() {
               This will be tracked as a liability
             </Text>
           )}
+
+          {/* Accessible checkbox - only for 'other' category */}
+          {category === 'other' && (
+            <>
+              <View style={[modalStyles.sectionDivider, { backgroundColor: semantic.border }]} />
+              <View
+                style={[modalStyles.fieldRow, modalStyles.fieldRowNoBorder, { paddingRight: 0 }]}
+              >
+                <Pressable
+                  onPress={() => setIsAccessible(!isAccessible)}
+                  style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: spacing.sm }}
+                >
+                  <View
+                    style={[
+                      localStyles.checkbox,
+                      {
+                        backgroundColor: isAccessible ? semantic.primary : 'transparent',
+                        borderColor: isAccessible ? semantic.primary : semantic.border,
+                      },
+                    ]}
+                  >
+                    {isAccessible && (
+                      <FontAwesome name="check" size={10} color={semantic.onPrimary} />
+                    )}
+                  </View>
+                  <Text style={[modalStyles.fieldLabel, { color: semantic.text }]}>Accessible</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
       {/* Save Button - fixed at bottom, moves with keyboard */}
-      <ModalSaveBar label="Save" disabled={!canSubmit} bottomInset={insets.bottom} onPress={handleSubmit} />
+      <ModalSaveBar
+        label="Save"
+        disabled={!canSubmit}
+        bottomInset={insets.bottom}
+        onPress={handleSubmit}
+      />
 
       {/* Toast */}
       {toastMessage && (
@@ -464,5 +527,25 @@ const localStyles = StyleSheet.create({
   heroHint: {
     fontSize: fontSize.xs,
     marginTop: spacing.md,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoButton: {
+    padding: spacing.xs,
+  },
+  infoIndicator: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.6,
   },
 })

@@ -1,6 +1,7 @@
 import { getDailyFlowDollarForMonth } from '@/core/services/transaction'
 import { useDataRefreshStore } from '@/shared/store'
-import { useEffect, useState } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
+import { useCallback, useEffect, useState } from 'react'
 
 export type DailyFlow = Readonly<{
   day: string
@@ -14,9 +15,17 @@ export function useMonthlyDailyFlow(monthYYYYMM: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [daily, setDaily] = useState<DailyFlow[]>([])
+  const [focusVersion, setFocusVersion] = useState(0)
 
   // Subscribe to transaction changes to auto-refresh
   const transactionVersion = useDataRefreshStore((s) => s.transactionVersion)
+
+  // Refetch when screen gains focus (e.g., returning from modal)
+  useFocusEffect(
+    useCallback(() => {
+      setFocusVersion((v) => v + 1)
+    }, [])
+  )
 
   useEffect(() => {
     let alive = true
@@ -42,7 +51,7 @@ export function useMonthlyDailyFlow(monthYYYYMM: string) {
     return () => {
       alive = false
     }
-  }, [monthYYYYMM, transactionVersion])
+  }, [monthYYYYMM, transactionVersion, focusVersion])
 
   return { loading, error, daily }
 }

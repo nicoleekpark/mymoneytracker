@@ -19,6 +19,7 @@ export const ASSET_CATEGORIES: AssetCategoryMeta[] = [
   { field: 'current_assets', category: 'cash_savings', name: 'Cash & Savings', icon: 'money', isLiquidifiable: true },
   { field: 'current_assets', category: 'investments', name: 'Investments', icon: 'line-chart', isLiquidifiable: true },
   { field: 'current_assets', category: 'kids', name: 'Kids', icon: 'child', isLiquidifiable: false },
+  { field: 'current_assets', category: 'other', name: 'Other', icon: 'ellipsis-h', isLiquidifiable: false },
   // Liabilities
   { field: 'liabilities', category: 'credit_card', name: 'Credit Cards', icon: 'credit-card', isLiquidifiable: false },
   { field: 'liabilities', category: 'loans', name: 'Loans', icon: 'bank', isLiquidifiable: false },
@@ -56,8 +57,12 @@ export function getCategorySortOrder(category: AssetCategory): number {
 
 /**
  * Get category metadata
+ * If field is provided, matches both category and field (for 'other' which exists in multiple fields)
  */
-export function getCategoryMeta(category: AssetCategory): AssetCategoryMeta | undefined {
+export function getCategoryMeta(category: AssetCategory, field?: AssetField): AssetCategoryMeta | undefined {
+  if (field) {
+    return ASSET_CATEGORIES.find(c => c.category === category && c.field === field)
+  }
   return ASSET_CATEGORIES.find(c => c.category === category)
 }
 

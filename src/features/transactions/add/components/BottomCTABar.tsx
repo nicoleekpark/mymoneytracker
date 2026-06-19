@@ -18,7 +18,6 @@ import Animated, {
   useAnimatedStyle,
   withSequence,
   withTiming,
-  withSpring,
 } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { useHoHTheme } from '@/shared/providers'
@@ -50,27 +49,38 @@ export function BottomCTABar({
   const theme = useHoHTheme()
   const { animatedStyle } = useKeyboardOffset(bottomInset)
 
-  // Animation for success state
-  const scale = useSharedValue(1)
+  // Animation for success state - subtle opacity pulse instead of scale (avoids modal corner clipping)
+  const opacity = useSharedValue(1)
 
   useEffect(() => {
     if (saved) {
-      // Subtle pop animation on success
-      scale.value = withSequence(
-        withSpring(1.02, { damping: 10, stiffness: 400 }),
-        withSpring(1, { damping: 12, stiffness: 300 })
+      // Quick flash to draw attention
+      opacity.value = withSequence(
+        withTiming(0.7, { duration: 100 }),
+        withTiming(1, { duration: 200 })
       )
     } else {
-      scale.value = 1
+      opacity.value = 1
     }
-  }, [saved, scale])
+  }, [saved, opacity])
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
   }))
 
   return (
-    <Animated.View style={[modalStyles.ctaContainerAbsolute, { backgroundColor: theme.semantic.background }, animatedStyle]}>
+    <Animated.View
+      style={[
+        modalStyles.ctaContainerAbsolute,
+        {
+          backgroundColor: theme.semantic.background,
+          // Extra padding to avoid iOS modal rounded corners clipping
+          paddingBottom: spacing.xl,
+          paddingHorizontal: spacing.xl,
+        },
+        animatedStyle,
+      ]}
+    >
       {/* Primary: Save $X.XX - shows success state when saved */}
       <Animated.View style={animatedButtonStyle}>
         <Pressable
