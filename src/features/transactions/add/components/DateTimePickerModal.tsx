@@ -1,10 +1,10 @@
 import { useHoHTheme } from '@/shared/providers'
+import { BACKDROP } from '@/shared/theme/tokens/backdrop'
 import { HIT_SLOP_LG_VALUE } from '@/shared/theme/tokens/buttons'
-import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
+import { coreStyles, getSheetBottomPadding } from '@/shared/theme/tokens/modal'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { getSheetBottomPadding } from '@/shared/theme/tokens/modal'
-import { BACKDROP } from '@/shared/theme/tokens/backdrop'
+import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import React, { useState } from 'react'
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
@@ -17,12 +17,7 @@ type Props = Readonly<{
   onConfirm: (date: Date) => void
 }>
 
-export function DateTimePickerModal({
-  visible,
-  value,
-  onClose,
-  onConfirm,
-}: Props) {
+export function DateTimePickerModal({ visible, value, onClose, onConfirm }: Props) {
   const theme = useHoHTheme()
   const insets = useSafeAreaInsets()
 
@@ -75,26 +70,36 @@ export function DateTimePickerModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleCancel}>
-      {/* Backdrop - tap to dismiss */}
-      <Pressable style={styles.backdrop} onPress={handleCancel} />
+      {/* Full screen container */}
+      <View style={styles.container}>
+        {/* Backdrop - tap to dismiss */}
+        <Pressable style={styles.backdrop} onPress={handleCancel} />
 
-      {/* Sheet */}
-      <View style={[styles.sheet, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border, paddingBottom: getSheetBottomPadding(insets.bottom) }]}>
-        {/* Drag Handle */}
-        <View style={styles.handleContainer}>
-          <View style={[styles.handle, { backgroundColor: theme.semantic.border }]} />
-        </View>
+        {/* Sheet */}
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: theme.semantic.surface,
+              paddingBottom: getSheetBottomPadding(insets.bottom),
+            },
+          ]}
+        >
+          {/* Drag Handle */}
+          <View style={coreStyles.dragHandleContainer}>
+            <View style={[coreStyles.dragHandle, { backgroundColor: theme.semantic.border }]} />
+          </View>
 
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: theme.semantic.border }]}>
           <Pressable onPress={handleCancel} hitSlop={HIT_SLOP_LG_VALUE}>
-            <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Cancel</Text>
+            <Text style={[coreStyles.textLink, { color: theme.semantic.primary }]}>Cancel</Text>
           </Pressable>
 
-          <Text style={[styles.headerTitle, { color: theme.semantic.text }]}>Date & Time</Text>
+          <Text style={[coreStyles.textTitle, { color: theme.semantic.text }]}>Date & Time</Text>
 
           <Pressable onPress={handleConfirm} hitSlop={HIT_SLOP_LG_VALUE}>
-            <Text style={[styles.headerLink, { color: theme.semantic.primary }]}>Done</Text>
+            <Text style={[coreStyles.textLink, { color: theme.semantic.primary }]}>Done</Text>
           </Pressable>
         </View>
 
@@ -119,7 +124,9 @@ export function DateTimePickerModal({
           <View style={[styles.timeRow, { borderTopColor: theme.semantic.border }]}>
             <Text style={[styles.timeLabel, { color: theme.semantic.text }]}>Time</Text>
             <Pressable onPress={() => setShowTimePicker(!showTimePicker)}>
-              <Text style={[styles.timeValue, { color: theme.semantic.primary }]}>{timeDisplay}</Text>
+              <Text style={[styles.timeValue, { color: theme.semantic.primary }]}>
+                {timeDisplay}
+              </Text>
             </Pressable>
           </View>
 
@@ -138,30 +145,24 @@ export function DateTimePickerModal({
           )}
         </View>
       </View>
+      </View>
     </Modal>
   )
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  container: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: BACKDROP.dark,
   },
   sheet: {
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-  },
-  handleContainer: {
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  handle: {
-    width: 40,
-    height: 5,
-    borderRadius: radius.full,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -170,14 +171,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-  },
-  headerLink: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-  },
-  headerTitle: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.heavy,
   },
   calendarContainer: {
     marginHorizontal: spacing.lg,
