@@ -33,14 +33,16 @@ function smartFormat(amount: number): string {
 }
 
 /**
- * Format a currency amount with 2 decimal places.
+ * Format a currency amount.
+ * Shows 2 decimal places only if there are cents, otherwise whole number.
+ * e.g., 1234.56 → "$ 1,234.56", 1234.00 → "$ 1,234"
  * Negative amounts are shown in parentheses: ($ 123.45)
  */
 export function formatCurrency(amount: number): string {
-  if (!Number.isFinite(amount)) return '$ 0.00'
+  if (!Number.isFinite(amount)) return '$ 0'
 
   const abs = Math.abs(amount)
-  const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const formatted = smartFormat(abs)
   if (amount < 0) {
     return `($ ${formatted})`
   }

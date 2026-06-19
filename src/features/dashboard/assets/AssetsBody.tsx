@@ -723,6 +723,8 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                       fontWeight: fontWeight.bold,
                       color: colors.text,
                     }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
                   >
                     {formatCurrency(accessible)}
                   </Text>
@@ -795,6 +797,8 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                       fontWeight: fontWeight.bold,
                       color: colors.text,
                     }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
                   >
                     {formatCurrency(liabilities)}
                   </Text>
@@ -1195,11 +1199,13 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                         fontSize: fontSize.sm,
                         fontWeight: fontWeight.semibold,
                         color: isMuted ? colors.textSecondary : colors.text, // NEUTRAL
-                        width: 100,
+                        minWidth: 80,
                         textAlign: 'right',
                         fontVariant: ['tabular-nums'],
                         opacity: isMuted ? 0.6 : 1,
                       }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
                     >
                       {formatCurrency(cat.value)}
                     </Text>
@@ -1245,11 +1251,13 @@ export function AssetsBody({ colors, scope, period, selectedMemberIds }: Props) 
                               style={{
                                 fontSize: fontSize.xs,
                                 color: colors.textSecondary, // NEUTRAL
-                                width: 90,
+                                minWidth: 70,
                                 textAlign: 'right',
                                 fontVariant: ['tabular-nums'],
                                 opacity: isMuted ? 0.4 : 0.7,
                               }}
+                              numberOfLines={1}
+                              adjustsFontSizeToFit
                             >
                               {formatCurrency(item.value)}
                             </Text>

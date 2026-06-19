@@ -36,6 +36,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
   }, [transactionType])
 
   // Build list of available items (not already in chips)
+  // Sorted alphabetically by category, with subcategories grouped under parents
   const availableItems = useMemo(() => {
     const items: {
       type: 'category' | 'payment' | 'special'
@@ -45,6 +46,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
       parentLabel?: string
       icon: string
       color: string
+      sortKey: string // For sorting: category name, then subcategory name
     }[] = []
 
     // Special chips first - Repeat Last
@@ -57,6 +59,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
         label: 'Repeat Last',
         icon: 'repeat',
         color: '#5A7A8A',
+        sortKey: '', // Special items come first
       })
     }
 
@@ -72,6 +75,7 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
           label: cat.name,
           icon: cat.icon,
           color: cat.color,
+          sortKey: `${cat.name.toLowerCase()}\x00`, // \x00 ensures parent comes before subcategories
         })
       }
 
@@ -90,10 +94,14 @@ export function QuickChipsEditModal({ visible, transactionType, accounts, onClos
             parentLabel: cat.name,
             icon: sub.icon,
             color: sub.color,
+            sortKey: `${cat.name.toLowerCase()}\x01${sub.name.toLowerCase()}`, // Group under parent, then sort by sub name
           })
         }
       })
     })
+
+    // Sort: special items first (empty sortKey), then alphabetically by category/subcategory
+    items.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 
     // Note: Payment methods are managed separately in PaymentChipsReorderModal
 

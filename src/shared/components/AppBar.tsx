@@ -207,25 +207,18 @@ export function AppBar({ userInitials = 'NP' }: AppBarProps) {
           <FontAwesome name="plus" size={20} color={theme.semantic.text} />
         </Pressable>
 
-        {/* Center: DEV chip or invisible toggle */}
-        {showDevChip ? (
-          <Pressable
-            onPress={() => setDevMenuOpen(true)}
-            onLongPress={handleDevToggle}
-            style={[styles.devChip, { backgroundColor: theme.semantic.surface, borderColor: theme.semantic.border }]}
-            hitSlop={HIT_SLOP_MD_VALUE}
-          >
-            <Text style={[styles.devChipText, { color: theme.semantic.text }]}>
-              DEV {devMenuOpen ? '▾' : '▸'}
-            </Text>
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={handleDevToggle}
-            style={styles.centerTouch}
-            hitSlop={16}
-          />
-        )}
+        {/* Center: tap to toggle dev tools, or open menu if already enabled */}
+        <Pressable
+          onPress={() => {
+            if (devToolsVisible) {
+              setDevMenuOpen(true)
+            } else {
+              handleDevToggle()
+            }
+          }}
+          style={styles.centerTouch}
+          hitSlop={16}
+        />
 
         {/* Actions */}
         <View style={styles.actions}>
