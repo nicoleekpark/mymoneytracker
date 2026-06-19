@@ -306,6 +306,18 @@ export const componentStyles = {
 /** Standard spacing between major sections */
 export const SECTION_GAP = spacing['2xl']
 
+// -----------------------------------------------------------------------------
+// List Layout Constants (for SectionList/FlatList getItemLayout)
+// -----------------------------------------------------------------------------
+/** Transaction list row height - fixed for consistent scrolling */
+export const LIST_ROW_HEIGHT = 56
+
+/** Section header height (day headers in transaction list) */
+export const LIST_SECTION_HEADER_HEIGHT = 40
+
+/** List item separator height */
+export const LIST_SEPARATOR_HEIGHT = 1
+
 /** Tab bar height - used by tab navigator and FAB positioning */
 export const TAB_BAR_HEIGHT = 72
 

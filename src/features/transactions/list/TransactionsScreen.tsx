@@ -8,7 +8,13 @@ import { EmptyState } from '@/shared/components'
 import { fontSize, fontWeight, letterSpacing } from '@/shared/theme/tokens/typography'
 import { radius } from '@/shared/theme/tokens/radius'
 import { spacing } from '@/shared/theme/tokens/spacing'
-import { CATEGORY_DOT_SIZE_SM, FONT_SIZE_TINY } from '@/shared/theme/tokens/viewStyles'
+import {
+  CATEGORY_DOT_SIZE_SM,
+  FONT_SIZE_TINY,
+  LIST_ROW_HEIGHT,
+  LIST_SECTION_HEADER_HEIGHT,
+  LIST_SEPARATOR_HEIGHT,
+} from '@/shared/theme/tokens/viewStyles'
 import { formatCurrency } from '@/shared/format/currency'
 import { formatDayHeader, formatMonthSectionTitle, monthKey, ymd } from '@/shared/format/date'
 import { useDraftsStore, useTransactionFocusStore } from '@/shared/store'
@@ -186,7 +192,6 @@ export default function TransactionsScreen() {
   }, [draftsLoaded, loadDrafts])
 
   const [highlightDate, setHighlightDate] = useState<string | null>(null)
-  const pendingScrollRef = useRef<{ sectionIndex: number; itemIndex: number } | null>(null)
 
   // Detail sheet state
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
@@ -360,6 +365,7 @@ export default function TransactionsScreen() {
     return baseSections
   }, [filteredItems, debouncedQuery, filters.draftMode, draftsAsTransactions])
 
+
   // Scroll when focusId changes (new date selected)
   useEffect(() => {
     // Skip if no focusDate or already scrolled for this focusId
@@ -371,21 +377,22 @@ export default function TransactionsScreen() {
     const target = findScrollTarget(sections, focusDate)
     if (!target) return
 
-    // Store pending scroll for onScrollToIndexFailed handler
-    pendingScrollRef.current = target
+    // Calculate scroll offset to target section
+    let scrollOffset = 0
+    for (let i = 0; i < target.sectionIndex; i++) {
+      scrollOffset += LIST_SECTION_HEADER_HEIGHT
+      scrollOffset += sections[i].data.length * LIST_ROW_HEIGHT
+      scrollOffset += Math.max(0, sections[i].data.length - 1) * LIST_SEPARATOR_HEIGHT
+    }
 
     // Scroll after a delay to ensure layout is ready
-    // Only mark as scrolled AFTER the scroll actually triggers (not before)
     const timeoutId = setTimeout(() => {
-      listRef.current?.scrollToLocation({
-        sectionIndex: target.sectionIndex,
-        itemIndex: 0,
+      listRef.current?.getScrollResponder()?.scrollTo({
+        y: scrollOffset,
         animated: true,
-        viewPosition: 0
       })
-      // Mark this focusId as scrolled only after scroll is triggered
       lastScrolledFocusIdRef.current = focusId
-    }, 300)
+    }, 100)
 
     return () => clearTimeout(timeoutId)
   }, [focusDate, focusId, sections])
@@ -415,44 +422,6 @@ export default function TransactionsScreen() {
     }
   }, [])
 
-  // Item layout constants for getItemLayout
-  const SECTION_HEADER_HEIGHT = 44
-  const ITEM_HEIGHT = 60
-  const SEPARATOR_HEIGHT = 1
-
-  // Calculate item layout for reliable scrolling
-  const getItemLayout = useCallback((
-    data: DaySection[] | null,
-    index: number
-  ): { length: number; offset: number; index: number } => {
-    if (!data) return { length: 0, offset: 0, index }
-
-    let offset = 0
-    let itemIndex = 0
-
-    for (const section of data) {
-      // Section header
-      if (itemIndex === index) {
-        return { length: SECTION_HEADER_HEIGHT, offset, index }
-      }
-      offset += SECTION_HEADER_HEIGHT
-      itemIndex++
-
-      // Items in section
-      for (let i = 0; i < section.data.length; i++) {
-        if (itemIndex === index) {
-          return { length: ITEM_HEIGHT, offset, index }
-        }
-        offset += ITEM_HEIGHT
-        if (i < section.data.length - 1) {
-          offset += SEPARATOR_HEIGHT
-        }
-        itemIndex++
-      }
-    }
-
-    return { length: ITEM_HEIGHT, offset, index }
-  }, [])
 
   // Handle row tap - open detail sheet
   const handleRowPress = useCallback((tx: Transaction) => {
@@ -678,10 +647,9 @@ export default function TransactionsScreen() {
           keyExtractor={(it) => it.id}
           stickySectionHeadersEnabled
           contentContainerStyle={sections.length ? undefined : styles.emptyContainer}
-          initialNumToRender={50}
-          maxToRenderPerBatch={30}
-          windowSize={21}
-          getItemLayout={getItemLayout}
+          initialNumToRender={200}
+          maxToRenderPerBatch={50}
+          windowSize={31}
           ItemSeparatorComponent={() => (
             <View style={[styles.separator, { backgroundColor: theme.semantic.border }]} />
           )}
@@ -695,24 +663,6 @@ export default function TransactionsScreen() {
           )}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-          onScrollToIndexFailed={() => {
-            const p = pendingScrollRef.current
-            if (!p) return
-
-            setTimeout(() => {
-              try {
-                listRef.current?.scrollToLocation({
-                  sectionIndex: p.sectionIndex,
-                  itemIndex: p.itemIndex,
-                  animated: true,
-                  viewPosition: 0,
-                  viewOffset: -50 // Same offset as initial scroll
-                })
-              } catch (e) {
-                // Scroll error - non-critical, ignore silently
-              }
-            }, 150)
-          }}
 
           renderItem={({ item }) => {
             const amt = item.money.amount
@@ -1005,18 +955,18 @@ const styles = StyleSheet.create({
   },
 
   separator: {
-    height: 1,
-    marginLeft: spacing.md + CATEGORY_DOT_SIZE_SM + spacing.sm, // align with text after category dot
-    opacity: 0.5
+    height: LIST_SEPARATOR_HEIGHT,
+    marginLeft: spacing.md + CATEGORY_DOT_SIZE_SM + spacing.sm,
+    opacity: 0.5,
   },
   emptyContainer: { flexGrow: 1 },
 
   dayBar: {
+    height: LIST_SECTION_HEADER_HEIGHT,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1
+    borderBottomWidth: 1,
   },
   dayHeaderText: {
     fontSize: fontSize.xs,
@@ -1028,8 +978,9 @@ const styles = StyleSheet.create({
   },
 
   row: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md
+    height: LIST_ROW_HEIGHT,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
   },
 
   rowTop: {
