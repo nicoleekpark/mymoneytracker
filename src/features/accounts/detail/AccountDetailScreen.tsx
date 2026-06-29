@@ -140,17 +140,21 @@ export default function AccountDetailScreen() {
       return
     }
 
+    const isLiability = account.nature === 'liability'
     const currentBalanceInCents = Math.round(currentBalance * 100)
-    const newBalanceInCents = balanceCents
+
+    // For liabilities: user enters debt as positive, but balance is stored negative
+    // For assets: user enters balance as-is
+    const targetBalanceInCents = isLiability ? -balanceCents : balanceCents
 
     // No change, just close
-    if (currentBalanceInCents === newBalanceInCents) {
+    if (currentBalanceInCents === targetBalanceInCents) {
       setShowKeypad(false)
       return
     }
 
     // Calculate the adjustment amount (difference)
-    const adjustmentCents = newBalanceInCents - currentBalanceInCents
+    const adjustmentCents = targetBalanceInCents - currentBalanceInCents
     const adjustmentAmount = adjustmentCents / 100
 
     try {

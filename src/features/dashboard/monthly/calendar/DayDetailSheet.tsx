@@ -44,7 +44,7 @@ type Props = {
 // Format amount with parentheses for negatives (accounting style)
 function formatAmountAccounting(amount: number): string {
   const formatted = formatUsdInt(Math.abs(amount))
-  return amount < 0 ? `(${formatted})` : formatted
+  return amount < 0 ? `-${formatted}` : formatted
 }
 
 // Format date for display
@@ -177,7 +177,7 @@ export const DayDetailSheet = forwardRef<DayDetailSheetRef, Props>(
                         { color: selectedDay.expense > 0 ? colors.danger : colors.textSecondary },
                       ]}
                     >
-                      ({formatUsdInt(selectedDay.expense)})
+                      {selectedDay.expense > 0 ? `-${formatUsdInt(selectedDay.expense)}` : formatUsdInt(0)}
                     </Text>
                   </View>
                 </View>
@@ -223,7 +223,7 @@ export const DayDetailSheet = forwardRef<DayDetailSheetRef, Props>(
                           >
                             {tx.type === 'income'
                               ? formatUsdInt(tx.money.amount)
-                              : `(${formatUsdInt(tx.money.amount)})`}
+                              : `-${formatUsdInt(tx.money.amount)}`}
                           </Text>
                         </View>
                       ))}

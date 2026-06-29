@@ -67,13 +67,18 @@ export function checkBudgetAlert(): void {
     const now = new Date()
     const currentMonth = now.getMonth() + 1
     const currentYear = now.getFullYear()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+
+    // Format dates as YYYY-MM-DD for repository (it appends time suffix)
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate()
+    const startOfMonthStr = `${year}-${month}-01`
+    const endOfMonthStr = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
 
     // Query transactions for current month
     const result = transactionRepository.listInDateRange(
-      startOfMonth.toISOString(),
-      endOfMonth.toISOString()
+      startOfMonthStr,
+      endOfMonthStr
     )
 
     // Sum up expenses only

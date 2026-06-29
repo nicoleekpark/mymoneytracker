@@ -36,7 +36,7 @@ function smartFormat(amount: number): string {
  * Format a currency amount.
  * Shows 2 decimal places only if there are cents, otherwise whole number.
  * e.g., 1234.56 → "$ 1,234.56", 1234.00 → "$ 1,234"
- * Negative amounts are shown in parentheses: ($ 123.45)
+ * Negative amounts are shown with minus sign: -$ 123.45
  */
 export function formatCurrency(amount: number): string {
   if (!Number.isFinite(amount)) return '$ 0'
@@ -44,7 +44,7 @@ export function formatCurrency(amount: number): string {
   const abs = Math.abs(amount)
   const formatted = smartFormat(abs)
   if (amount < 0) {
-    return `($ ${formatted})`
+    return `-$ ${formatted}`
   }
   return `$ ${formatted}`
 }

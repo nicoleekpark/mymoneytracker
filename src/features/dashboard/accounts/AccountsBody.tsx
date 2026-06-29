@@ -49,9 +49,10 @@ function SummarySectionRow({
     if (delta === null || delta === 0) return 'No change'
     const absChange = Math.abs(delta)
     if (isLiability) {
+      // delta > 0 means debt increased (bad), delta < 0 means debt decreased (good)
       return delta > 0
-        ? `${formatCurrency(absChange)} less debt`
-        : `${formatCurrency(absChange)} more debt`
+        ? `${formatCurrency(absChange)} more debt`
+        : `${formatCurrency(absChange)} less debt`
     }
     return delta > 0 ? `${formatCurrency(absChange)} more` : `${formatCurrency(absChange)} less`
   }
@@ -59,7 +60,8 @@ function SummarySectionRow({
   const getChangeColor = () => {
     if (delta === null || delta === 0) return colors.textSecondary
     if (isLiability) {
-      return delta > 0 ? colors.success : colors.danger
+      // For liabilities: debt increase (delta > 0) is bad (danger), decrease is good (success)
+      return delta > 0 ? colors.danger : colors.success
     }
     return delta > 0 ? colors.success : colors.danger
   }
