@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Text, View, Switch, TextInput, ScrollView, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
-
-import { useFocusEffect } from 'expo-router'
 import { useHoHTheme } from '@/shared/providers'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { spacing } from '@/shared/theme/tokens/spacing'
@@ -38,51 +36,59 @@ export default function SettingsScreen() {
   const setBudgetAlertThreshold = useSettingsStore((s) => s.setBudgetAlertThreshold)
   const setMonthlyBudget = useSettingsStore((s) => s.setMonthlyBudget)
 
-  // Local state for budget input (allows editing without instant persistence)
+  // Local state for inputs
   const [budgetInput, setBudgetInput] = useState(String(monthlyBudget / 100))
   const [thresholdInput, setThresholdInput] = useState(String(budgetAlertThreshold))
 
-  // Track if user is currently editing to prevent sync conflicts
-  const isEditingBudget = useRef(false)
-  const isEditingThreshold = useRef(false)
+  // Track if user has started editing (to prevent overwriting during typing)
+  const hasEditedBudget = useRef(false)
+  const hasEditedThreshold = useRef(false)
 
-  // Sync input state when store values change (e.g., after hydration), but not while editing
+  // Sync input state when store values change (e.g., after hydration), but not if user edited
   useEffect(() => {
-    if (!isEditingBudget.current) {
-      const newValue = String(monthlyBudget / 100)
-      // Only update if different to avoid unnecessary re-renders
-      setBudgetInput(prev => prev === newValue ? prev : newValue)
+    if (!hasEditedBudget.current) {
+      setBudgetInput(String(monthlyBudget / 100))
     }
   }, [monthlyBudget])
 
   useEffect(() => {
-    if (!isEditingThreshold.current) {
-      const newValue = String(budgetAlertThreshold)
-      setThresholdInput(prev => prev === newValue ? prev : newValue)
+    if (!hasEditedThreshold.current) {
+      setThresholdInput(String(budgetAlertThreshold))
     }
   }, [budgetAlertThreshold])
 
-  // Save when leaving the screen (back button may not trigger onBlur)
-  // Use refs to get latest values without causing re-renders
-  const budgetInputRef = useRef(budgetInput)
-  const monthlyBudgetRef = useRef(monthlyBudget)
-  budgetInputRef.current = budgetInput
-  monthlyBudgetRef.current = monthlyBudget
+  // Debounced auto-save for budget (500ms after typing stops)
+  useEffect(() => {
+    if (!hasEditedBudget.current) return // Skip initial render
 
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        // Save on unmount/blur
-        const value = parseFloat(budgetInputRef.current)
-        if (!isNaN(value) && value >= 0) {
-          const newBudgetCents = Math.round(value * 100)
-          if (newBudgetCents !== monthlyBudgetRef.current) {
-            setMonthlyBudget(newBudgetCents)
-          }
+    const timer = setTimeout(() => {
+      const value = parseFloat(budgetInput)
+      if (!isNaN(value) && value >= 0) {
+        const newBudgetCents = Math.round(value * 100)
+        if (newBudgetCents !== monthlyBudget) {
+          setMonthlyBudget(newBudgetCents)
         }
       }
-    }, [setMonthlyBudget])
-  )
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [budgetInput, monthlyBudget, setMonthlyBudget])
+
+  // Debounced auto-save for threshold (500ms after typing stops)
+  useEffect(() => {
+    if (!hasEditedThreshold.current) return // Skip initial render
+
+    const timer = setTimeout(() => {
+      const value = parseInt(thresholdInput, 10)
+      if (!isNaN(value) && value >= 0 && value <= 100) {
+        if (value !== budgetAlertThreshold) {
+          setBudgetAlertThreshold(value)
+        }
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [thresholdInput, budgetAlertThreshold, setBudgetAlertThreshold])
 
   const selection: ThemeSelection = mode ?? 'system'
 
@@ -91,27 +97,15 @@ export default function SettingsScreen() {
     else setMode(next)
   }
 
-  const handleBudgetFocus = () => {
-    isEditingBudget.current = true
+  // Mark as edited when user types (enables debounced auto-save)
+  const handleBudgetChange = (text: string) => {
+    hasEditedBudget.current = true
+    setBudgetInput(text)
   }
 
-  const handleBudgetBlur = () => {
-    isEditingBudget.current = false
-    const value = parseFloat(budgetInput)
-    if (!isNaN(value) && value >= 0) {
-      setMonthlyBudget(Math.round(value * 100))
-    } else {
-      setBudgetInput(String(monthlyBudget / 100))
-    }
-  }
-
-  const handleThresholdBlur = () => {
-    const value = parseInt(thresholdInput, 10)
-    if (!isNaN(value) && value >= 0 && value <= 100) {
-      setBudgetAlertThreshold(value)
-    } else {
-      setThresholdInput(String(budgetAlertThreshold))
-    }
+  const handleThresholdChange = (text: string) => {
+    hasEditedThreshold.current = true
+    setThresholdInput(text)
   }
 
   const inputStyle = {
@@ -214,10 +208,7 @@ export default function SettingsScreen() {
             <TextInput
               style={inputStyle}
               value={budgetInput}
-              onChangeText={setBudgetInput}
-              onFocus={handleBudgetFocus}
-              onBlur={handleBudgetBlur}
-              onEndEditing={handleBudgetBlur}
+              onChangeText={handleBudgetChange}
               keyboardType="numeric"
               placeholder="0"
               placeholderTextColor={theme.semantic.textSecondary}
@@ -240,8 +231,7 @@ export default function SettingsScreen() {
             <TextInput
               style={inputStyle}
               value={thresholdInput}
-              onChangeText={setThresholdInput}
-              onBlur={handleThresholdBlur}
+              onChangeText={handleThresholdChange}
               keyboardType="numeric"
               placeholder="80"
               placeholderTextColor={theme.semantic.textSecondary}

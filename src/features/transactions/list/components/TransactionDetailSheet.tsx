@@ -129,9 +129,17 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
     minute: '2-digit'
   })
 
-  const accountName = accountNameById.get(transaction.accountId ?? '') || 'Unknown'
   const isIncome = transaction.type === 'income'
   const isTransfer = transaction.type === 'transfer'
+
+  // For transfers, get from/to account names; for others, get the single account name
+  const accountName = accountNameById.get(transaction.accountId ?? '') || 'Unknown'
+  const fromAccountName = isTransfer
+    ? accountNameById.get(transaction.fromAccountId ?? '') || 'Unknown'
+    : null
+  const toAccountName = isTransfer
+    ? accountNameById.get(transaction.toAccountId ?? '') || 'Unknown'
+    : null
 
   // Fallback chain for display: item → merchant → category → type
   const itemRaw = (transaction.item ?? '').trim()
@@ -221,13 +229,26 @@ export function TransactionDetailSheet({ transaction, sheetRef, onDismiss, onEdi
               <Text style={[modalStyles.detailValue, { color: theme.semantic.text }]}>{dateTimeStr}</Text>
             </View>
 
-            {/* Account */}
-            <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
-              <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>
-                {isIncome ? 'Account' : 'Paid with'}
-              </Text>
-              <Text style={[modalStyles.detailValue, { color: theme.semantic.text }]}>{accountName}</Text>
-            </View>
+            {/* Account - show From/To for transfers, single account for others */}
+            {isTransfer ? (
+              <>
+                <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+                  <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>From</Text>
+                  <Text style={[modalStyles.detailValue, { color: theme.semantic.text }]}>{fromAccountName}</Text>
+                </View>
+                <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+                  <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>To</Text>
+                  <Text style={[modalStyles.detailValue, { color: theme.semantic.text }]}>{toAccountName}</Text>
+                </View>
+              </>
+            ) : (
+              <View style={[modalStyles.detailRow, { borderBottomColor: theme.semantic.border }]}>
+                <Text style={[modalStyles.detailLabel, { color: theme.semantic.textSecondary }]}>
+                  {isIncome ? 'Account' : 'Paid with'}
+                </Text>
+                <Text style={[modalStyles.detailValue, { color: theme.semantic.text }]}>{accountName}</Text>
+              </View>
+            )}
 
             {/* Category */}
             {transaction.category && (() => {

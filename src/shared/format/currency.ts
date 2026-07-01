@@ -125,3 +125,66 @@ export function formatCompactAmount(amount: number): string {
   return `$ ${smartFormat(abs)}`
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Balance Change Formatting (for account activity breakdowns)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Type of balance change flow
+ */
+export type BalanceFlowType = 'in' | 'out'
+
+/**
+ * Formatted balance change with sign and sentiment
+ */
+export type FormattedBalanceChange = {
+  /** Display text with sign, e.g., "+ $ 100" or "− $ 50" */
+  text: string
+  /** Whether this change is positive for the user (green) or negative (red) */
+  isPositive: boolean
+}
+
+/**
+ * Format a balance change amount for display in account breakdowns.
+ *
+ * Handles the sign inversion needed for liability accounts:
+ * - Assets: money in = +, money out = −
+ * - Liabilities: money in (payment) = − (reduces displayed debt), money out (charge) = + (increases debt)
+ *
+ * @param amount - The absolute amount (always positive)
+ * @param flowType - 'in' for money coming in, 'out' for money going out
+ * @param isLiability - Whether this is a liability account (debt)
+ * @returns Formatted text and sentiment for coloring
+ *
+ * @example
+ * // Asset account - money in
+ * formatBalanceChange(100, 'in', false) // { text: '+ $ 100', isPositive: true }
+ *
+ * // Credit card - payment received (reduces debt)
+ * formatBalanceChange(100, 'in', true)  // { text: '− $ 100', isPositive: true }
+ *
+ * // Credit card - charge (increases debt)
+ * formatBalanceChange(50, 'out', true)  // { text: '+ $ 50', isPositive: false }
+ */
+export function formatBalanceChange(
+  amount: number,
+  flowType: BalanceFlowType,
+  isLiability: boolean
+): FormattedBalanceChange {
+  const formatted = formatCurrency(amount)
+
+  // For assets: in = positive (+), out = negative (−)
+  // For liabilities: in = negative (−, reduces debt), out = positive (+, increases debt)
+  const isInFlow = flowType === 'in'
+  const showPlus = isLiability ? !isInFlow : isInFlow
+
+  // Sentiment: money in is always good, money out is always bad
+  // (regardless of how it's displayed)
+  const isPositive = isInFlow
+
+  const sign = showPlus ? '+' : '−'
+  const text = `${sign} ${formatted}`
+
+  return { text, isPositive }
+}
+

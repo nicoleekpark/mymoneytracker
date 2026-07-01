@@ -1,5 +1,5 @@
 import { EmptyState, SectionHeader, SettingsLink, TrackingSince } from '@/shared/components'
-import { formatCurrency } from '@/shared/format/currency'
+import { formatCurrency, formatBalanceChange } from '@/shared/format/currency'
 import { spacing } from '@/shared/theme/tokens/spacing'
 import { fontSize, fontWeight } from '@/shared/theme/tokens/typography'
 import { SECTION_GAP } from '@/shared/theme/tokens/viewStyles'
@@ -173,6 +173,44 @@ function SummarySectionRow({
 }
 
 /**
+ * Balance change row for the expanded breakdown
+ */
+function BalanceChangeRow({
+  label,
+  amount,
+  flowType,
+  isLiability,
+  colors,
+}: {
+  label: string
+  amount: number
+  flowType: 'in' | 'out'
+  isLiability: boolean
+  colors: AccountsColors
+}) {
+  if (amount <= 0) return null
+
+  const change = formatBalanceChange(amount, flowType, isLiability)
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3 }}>
+      <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontSize: fontSize.xs,
+          color: change.isPositive ? colors.success : colors.danger,
+          fontVariant: ['tabular-nums'],
+        }}
+      >
+        {change.text}
+      </Text>
+    </View>
+  )
+}
+
+/**
  * Account row - expandable with activity breakdown
  */
 function AccountRow({
@@ -189,7 +227,7 @@ function AccountRow({
   onViewTransactions: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  const { account, startBalance, endBalance, totalOut, totalIn, transactionCount, hasActivity } =
+  const { account, startBalance, endBalance, totalOut, totalIn, transferOut, transferIn, transactionCount, hasActivity } =
     activity
   const isLiability = account.nature === 'liability'
   const hasBalanceData = showBalanceChange && startBalance !== null
@@ -211,8 +249,11 @@ function AccountRow({
   }
   const { outLabel, inLabel } = getLabels()
 
+  // Has any money flow (income/expense OR transfers)
+  const hasMoneyFlow = totalIn > 0 || totalOut > 0 || transferIn > 0 || transferOut > 0
+
   // Can expand if has activity with money flow breakdown (monthly/yearly view only)
-  const canExpand = hasActivity && hasBalanceData && (totalIn > 0 || totalOut > 0)
+  const canExpand = hasActivity && hasBalanceData && hasMoneyFlow
 
   const handleRowPress = () => {
     // Only expand/collapse - no navigation to account detail
@@ -431,39 +472,37 @@ function AccountRow({
               </Text>
             </View>
             {/* Money In / Paid back */}
-            {totalIn > 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3 }}>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>
-                  {inLabel}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: colors.success,
-                    fontVariant: ['tabular-nums'],
-                  }}
-                >
-                  + {formatCurrency(totalIn)}
-                </Text>
-              </View>
-            )}
+            <BalanceChangeRow
+              label={inLabel}
+              amount={totalIn}
+              flowType="in"
+              isLiability={isLiability}
+              colors={colors}
+            />
+            {/* Transfer In */}
+            <BalanceChangeRow
+              label={isLiability ? 'Payment' : 'Transfer in'}
+              amount={transferIn}
+              flowType="in"
+              isLiability={isLiability}
+              colors={colors}
+            />
             {/* Money Out / Charged */}
-            {totalOut > 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3 }}>
-                <Text style={{ fontSize: fontSize.xs, color: colors.textSecondary, flex: 1 }}>
-                  {outLabel}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: colors.danger,
-                    fontVariant: ['tabular-nums'],
-                  }}
-                >
-                  − {formatCurrency(totalOut)}
-                </Text>
-              </View>
-            )}
+            <BalanceChangeRow
+              label={outLabel}
+              amount={totalOut}
+              flowType="out"
+              isLiability={isLiability}
+              colors={colors}
+            />
+            {/* Transfer Out */}
+            <BalanceChangeRow
+              label={isLiability ? 'Borrowed' : 'Transfer out'}
+              amount={transferOut}
+              flowType="out"
+              isLiability={isLiability}
+              colors={colors}
+            />
             {/* End/Current (with top border as "equals" line) */}
             <View
               style={{

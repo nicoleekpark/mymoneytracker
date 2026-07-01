@@ -81,10 +81,11 @@ export function checkBudgetAlert(): void {
       endOfMonthStr
     )
 
-    // Sum up expenses only
-    const totalExpensesCents = result.items
+    // Sum up expenses only (tx.money.amount is in dollars, convert to cents)
+    const totalExpensesDollars = result.items
       .filter((tx) => tx.type === 'expense')
       .reduce((sum, tx) => sum + tx.money.amount, 0)
+    const totalExpensesCents = Math.round(totalExpensesDollars * 100)
 
     // Calculate threshold in cents
     const thresholdCents = Math.round(settings.monthlyBudget * (settings.budgetAlertThreshold / 100))
